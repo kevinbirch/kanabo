@@ -2,6 +2,8 @@
 
 include project.mk
 
+# xxx - precompile headers?
+
 PROGRAM ?= $(shell basename `pwd`)
 VERSION ?= 1.0.0-SNAPSHOT
 DEPENDENCIES ?=
@@ -26,7 +28,10 @@ ifeq ($(BUILD_DEBUG),yes)
 # 	strip --strip-all $(PROGRAM)
 endif
 
-SOURCES := $(shell find $(SOURCE_DIR) -type f -name '*c')
+SOURCE_FILE_GLOBS = '*c' '*C' '*cpp'
+
+# xxx - fix dep checking, currently always does a rebuild
+SOURCES := $(shell find $(SOURCE_DIR) -type f \( -name '*.c' -or -name '*.cpp' -or -name '*.C' \))
 OBJECTS := $(foreach s, $(SOURCES), $(basename $(notdir $(s))).o)
 
 VPATH = $(shell find $(SOURCE_DIR) -type d | tr '\n' :)
