@@ -23,26 +23,26 @@ enum emit_mode
     ZSH
 };
 
-typedef enum emit_mode emit_t;
+typedef enum emit_mode emit_mode;
 
 struct settings
 {
-    bool interactive;
-    emit_t emit_mode;
-    char *input_file_name;
+    emit_mode  emit_mode;
+    const char *json_path;
+    const char *input_file_name;
 };
-    
+
 enum
 {
     SHOW_VERSION,
     SHOW_WARRANTY,
     SHOW_HELP,
     ENTER_INTERACTIVE,
-    EVAL_PATH,
-    EMIT_SHELL,
-    ERROR = -1
+    EVAL_PATH
 };
 
-int process_options(int argc, char **argv, struct settings *settings);
+typedef int cmd;
+
+cmd process_options(const int argc, char * const *argv, struct settings *settings);
 
 #endif

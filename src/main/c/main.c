@@ -7,18 +7,21 @@
 #include "options.h"
 #include "shell.h"
 
-int dispatch(int command, struct settings *settings);
+void dispatch(int command, struct settings *settings);
 
-int main(int argc, char **argv)
+int main(const int argc, char * const *argv)
 {
+    if(NULL == argv || NULL == argv[0])
+    {
+        fprintf(stderr, "error: whoa! something is wrong, there are no program arguments.\n");
+        exit(-1);
+    }
+
     struct settings settings;
     
     memset(&settings, 0, sizeof(settings));
 
-    int command = process_options(argc, argv, &settings);
-
-    argc -= optind;
-    argv += optind;
+    cmd command = process_options(argc, argv, &settings);
 
     dispatch(command, &settings);
     
@@ -29,9 +32,21 @@ int main(int argc, char **argv)
     return 0;
 }
 
-int dispatch(int command, struct settings *settings)
+void dispatch(int command, struct settings *settings)
 {
-    int result = 0;
+    if(settings->input_file_name)
+    {
+        fprintf(stdout, "using input file: %s\n", settings->input_file_name);
+    }
+    switch(settings->emit_mode)
+    {
+        case BASH:
+            fprintf(stdout, "using bash mode\n");
+            break;
+        case ZSH:
+            fprintf(stdout, "using zsh mode\n");
+            break;
+    }
     
     switch(command)
     {
@@ -46,33 +61,14 @@ int dispatch(int command, struct settings *settings)
             break;
         case ENTER_INTERACTIVE:
             fprintf(stdout, "interactive mode\n");
-            if(settings->input_file_name)
-            {
-                fprintf(stdout, "using input file: %s\n", settings->input_file_name);
-            }
             break;
         case EVAL_PATH:
-            fprintf(stdout, "json path evaluation\n");
-            if(settings->input_file_name)
-            {
-                fprintf(stdout, "using input file: %s\n", settings->input_file_name);
-            }
-            break;
-        case EMIT_SHELL:
-            fprintf(stdout, "shell expressions\n");
-            if(settings->input_file_name)
-            {
-                fprintf(stdout, "using input file: %s\n", settings->input_file_name);
-            }
-            break;
-        case ERROR:
-            result = ERROR;
+            fprintf(stdout, "single path evaluation\n");
+            fprintf(stdout, "evaluating path: \"%s\"\n", settings->json_path);
             break;
         default:
             fprintf(stderr, "panic: unknown command state! this should not happen.\n");
-            result = -1;
+            // we should exit ungracefully here?
             break;
     }
-
-    return result;
 }
