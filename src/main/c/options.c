@@ -7,7 +7,7 @@
  *
  * For more information, consult the README in the project root.
  *
- * Distributed under an [MIT-style] license.
+ * Distributed under an [MIT-style][license] license.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * [MIT-style]: http://www.opensource.org/licenses/mit-license.php
+ * [license]: http://www.opensource.org/licenses/mit-license.php
  */
 
 #include <stdio.h>
