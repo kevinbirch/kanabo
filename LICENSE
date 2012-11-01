@@ -1,10 +1,4 @@
-# 金棒 (kanabō)
-
-[金棒][wiki] is a tool to bludgeon YAML and JSON files from the shell: the strong made stronger.
-
-This is a work in progress.
-
-## License
+# -*- markdown -*-
 
 Copyright (c) 2012 [Kevin Birch](kmb@pobox.com)
 
@@ -27,5 +21,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-[wiki]: http://en.wikipedia.org/wiki/Kanabō "Wikipedia entry for kanabō"
