@@ -39,7 +39,7 @@
 #include "options.h"
 
 inline emit_mode process_emit_mode(const char *argument);
-inline const char *program_name(const char *argv0);
+const char *program_name(const char *argv0);
 
 static struct option options[] = 
 {
@@ -61,7 +61,8 @@ cmd process_options(const int argc, char * const *argv, struct settings *setting
     int opt;
     int command = -1;
     bool done = false;
-    
+
+    settings->program_name = program_name(argv[0]);
     settings->emit_mode = BASH;
     settings->expression = NULL;
     settings->input_file_name = NULL;
@@ -105,7 +106,7 @@ cmd process_options(const int argc, char * const *argv, struct settings *setting
                 settings->emit_mode = process_emit_mode(optarg);
                 if(-1 == settings->emit_mode)
                 {
-                    fprintf(stderr, "%s: unsupported shell mode `%s'\n", program_name(argv[0]), optarg);
+                    fprintf(stderr, "%s: unsupported shell mode `%s'\n", settings->program_name, optarg);
                     command = SHOW_HELP;
                     done = true;
                 }
@@ -124,7 +125,7 @@ cmd process_options(const int argc, char * const *argv, struct settings *setting
 
     if(-1 == command)
     {
-        fprintf(stderr, "%s: either `--query <expression>' or `--interactive' must be specified.\n", program_name(argv[0]));
+        fprintf(stderr, "%s: either `--query <expression>' or `--interactive' must be specified.\n", settings->program_name);
         command = SHOW_HELP;
     }
     else if(ENTER_INTERACTIVE == command && NULL == settings->input_file_name)
@@ -153,6 +154,15 @@ inline emit_mode process_emit_mode(const char *argument)
 
 inline const char *program_name(const char *argv0)
 {
-    char *result = strrchr(argv0, '/');
-    return NULL == result ? argv0 : result + 1;
+    char *slash = strrchr(argv0, '/');
+    if(NULL == slash)
+    {
+        return argv0;
+    }
+    else
+    {
+        char *result = (char *)malloc(sizeof(char) * strlen(slash + 1));
+        memcpy(result, slash + 1, strlen(slash + 1));
+        return result;
+    }
 }

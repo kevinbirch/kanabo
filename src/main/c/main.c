@@ -32,30 +32,30 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/errno.h>
 #include <string.h>
 
 #include "options.h"
-#include "shell.h"
 #include "loader.h"
+#include "shell.h"
 
 int dispatch(int command, struct settings *settings);
+FILE *open_input(struct settings *settings);
+int interactive_mode(struct settings *settings);
+int expression_mode(struct settings *settings);
+int load_model(struct settings *settings, document_model *model);
 
 int main(const int argc, char * const *argv)
 {
     if(NULL == argv || NULL == argv[0])
     {
         fprintf(stderr, "error: whoa! something is wrong, there are no program arguments.\n");
-        exit(-1);
+        return -1;
     }
 
     struct settings settings;
-    
     memset(&settings, 0, sizeof(settings));
-
     cmd command = process_options(argc, argv, &settings);
-
-    // open input
-    // load input
 
     return dispatch(command, &settings);
 }
@@ -76,10 +76,10 @@ int dispatch(int command, struct settings *settings)
             fprintf(stdout, "warranty information\n");
             break;
         case ENTER_INTERACTIVE:
-            fprintf(stdout, "interactive mode\n");
+            result = interactive_mode(settings);
             break;
         case EVAL_PATH:
-            fprintf(stdout, "evaluating expression: \"%s\"\n", settings->expression);
+            result = expression_mode(settings);
             break;
         default:
             fprintf(stderr, "panic: unknown command state! this should not happen.\n");
@@ -89,3 +89,62 @@ int dispatch(int command, struct settings *settings)
 
     return result;
 }
+
+int interactive_mode(struct settings *settings)
+{
+    document_model model;
+
+    int result = load_model(settings, &model);
+    if(result)
+    {
+        return result;
+    }
+    
+    fprintf(stdout, "interactive mode\n");
+    return 0;
+}
+
+int expression_mode(struct settings *settings)
+{
+    document_model model;
+
+    int result = load_model(settings, &model);
+    if(result)
+    {
+        return result;
+    }
+    
+    fprintf(stdout, "evaluating expression: \"%s\"\n", settings->expression);
+    return 0;
+}
+
+int load_model(struct settings *settings, document_model *model)
+{
+    FILE *input = open_input(settings);
+    if(NULL == input)
+    {
+        perror(settings->program_name);
+        return errno;
+    }
+    
+    int result = load_file(input, model);
+    if(result)
+    {
+        return result;
+    }
+
+    return 0;
+}
+
+FILE *open_input(struct settings *settings)
+{
+    if(NULL == settings->input_file_name)
+    {
+        return stdin;
+    }
+    else
+    {
+        return fopen(settings->input_file_name, "r");
+    }
+}
+
