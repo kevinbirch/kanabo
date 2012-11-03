@@ -2,7 +2,7 @@
 
 # Informational files for [金棒][home] (kanabō)
 
-Copyright (c) 2012 [Kevin Birch](kmb@pobox.com)
+Copyright (c) 2012 [Kevin Birch](kmb@pobox.com).  All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of an [MIT-style License][license] as described in
@@ -22,5 +22,4 @@ This is the history of visble changes for [金棒][home] (kanabō)
 - Project is started
 
 [home]: https://github.com/kevinbirch/kanabo "project home"
-[license]: http://www.opensource.org/licenses/mit-license.php
-[issues]: https://github.com/kevinbirch/kanabo/issues "issues list"
+[license]: http://www.opensource.org/licenses/ncsa
