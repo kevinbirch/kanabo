@@ -78,7 +78,7 @@ int dispatch(int command, struct settings *settings)
             fprintf(stdout, "interactive mode\n");
             break;
         case EVAL_PATH:
-            fprintf(stdout, "evaluating path: \"%s\"\n", settings->json_path);
+            fprintf(stdout, "evaluating expression: \"%s\"\n", settings->expression);
             break;
         default:
             fprintf(stderr, "panic: unknown command state! this should not happen.\n");

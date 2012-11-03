@@ -38,8 +38,8 @@
 
 #include "options.h"
 
-emit_mode process_emit_mode(const char *argument);
-const char *program_name(const char *argv0);
+inline emit_mode process_emit_mode(const char *argument);
+inline const char *program_name(const char *argv0);
 
 static struct option options[] = 
 {
@@ -49,7 +49,7 @@ static struct option options[] =
     {"help",        no_argument,       NULL, 'h'}, // print help and exit
     // operating modes:
     {"interactive", no_argument,       NULL, 'I'}, // enter interactive mode (requres -f/--file), specify the shell to emit for
-    {"path",        required_argument, NULL, 'P'}, // evaluate given path expression and exit (the default mode, with a path of "$")
+    {"query",       required_argument, NULL, 'Q'}, // evaluate given expression and exit
     // optional arguments:
     {"file",        required_argument, NULL, 'f'}, // read input from file instead of stdin (required for interactive mode)
     {"shell",       required_argument, NULL, 's'}, // emit expressions for the given shell (the default is Bash)
@@ -59,15 +59,14 @@ static struct option options[] =
 cmd process_options(const int argc, char * const *argv, struct settings *settings)
 {
     int opt;
-    int command = EVAL_PATH;
+    int command = -1;
     bool done = false;
-    bool mode_set = false;
     
     settings->emit_mode = BASH;
-    settings->json_path = "$";
+    settings->expression = NULL;
     settings->input_file_name = NULL;
 
-    while(!done && (opt = getopt_long(argc, argv, "vwhIP:s:f:", options, NULL)) != -1)
+    while(!done && (opt = getopt_long(argc, argv, "vwhIQ:s:f:", options, NULL)) != -1)
     {
         switch(opt)
         {
@@ -94,15 +93,13 @@ cmd process_options(const int argc, char * const *argv, struct settings *setting
                 done = true;
                 break;
             case 'I':
-                ENSURE_COMMAND_ORTHOGONALITY(mode_set);
+                ENSURE_COMMAND_ORTHOGONALITY(-1 != command);
                 command = ENTER_INTERACTIVE;
-                mode_set = true;
                 break;
-            case 'P':
-                ENSURE_COMMAND_ORTHOGONALITY(mode_set);
+            case 'Q':
+                ENSURE_COMMAND_ORTHOGONALITY(-1 != command);
                 command = EVAL_PATH;
-                settings->json_path = optarg;
-                mode_set = true;
+                settings->expression = optarg;
                 break;
             case 's':
                 settings->emit_mode = process_emit_mode(optarg);
@@ -125,7 +122,12 @@ cmd process_options(const int argc, char * const *argv, struct settings *setting
         }
     }
 
-    if(ENTER_INTERACTIVE == command && NULL == settings->input_file_name)
+    if(-1 == command)
+    {
+        fprintf(stderr, "%s: either `--query <expression>' or `--interactive' must be specified.\n", program_name(argv[0]));
+        command = SHOW_HELP;
+    }
+    else if(ENTER_INTERACTIVE == command && NULL == settings->input_file_name)
     {
         command = SHOW_HELP;
     }
@@ -133,7 +135,7 @@ cmd process_options(const int argc, char * const *argv, struct settings *setting
     return command;
 }
 
-emit_mode process_emit_mode(const char *argument)
+inline emit_mode process_emit_mode(const char *argument)
 {
     if(strncmp("bash", argument, 4) == 0)
     {
@@ -149,7 +151,7 @@ emit_mode process_emit_mode(const char *argument)
     }
 }
 
-const char *program_name(const char *argv0)
+inline const char *program_name(const char *argv0)
 {
     char *result = strrchr(argv0, '/');
     return NULL == result ? argv0 : result + 1;

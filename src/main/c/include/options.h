@@ -59,7 +59,7 @@ typedef enum emit_mode emit_mode;
 struct settings
 {
     emit_mode  emit_mode;
-    const char *json_path;
+    const char *expression;
     const char *input_file_name;
 };
 
