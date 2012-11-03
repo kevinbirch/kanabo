@@ -78,6 +78,7 @@ void test_loader(FILE *input)
 
 int main()
 {
+    // xxx - use fmemopen impl here instead of temp file
     FILE *data = tmpfile();
     size_t written = fwrite(yaml, sizeof(char), strlen(yaml), data);
     if(written != strlen(yaml))
