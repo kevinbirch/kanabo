@@ -65,10 +65,15 @@ void test_loader(FILE *input)
     
     assert(0 == result);
     assert(1 == model.size);
-    assert(DOCUMENT == model.documents[0]->tag.kind);
-    assert(MAPPING == model.documents[0]->content.document.root->tag.kind);
-    assert(5 == model.documents[0]->content.document.root->content.size);
+
+    node *document = model.documents[0];
     
+    assert(DOCUMENT == document->tag.kind);
+
+    node *root = document->content.document.root;
+    
+    assert(MAPPING == root->tag.kind);
+    assert(5 == root->content.size);
 }
 
 int main()
