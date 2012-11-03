@@ -5,7 +5,7 @@
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
- * For more information, consult the README in the project root.
+ * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
  * 
@@ -39,11 +39,11 @@
 #include "loader.h"
 #include "shell.h"
 
-int dispatch(int command, struct settings *settings);
-FILE *open_input(struct settings *settings);
-int interactive_mode(struct settings *settings);
-int expression_mode(struct settings *settings);
-int load_model(struct settings *settings, document_model *model);
+static int dispatch(int command, struct settings *settings);
+static FILE *open_input(struct settings *settings);
+static int interactive_mode(struct settings *settings);
+static int expression_mode(struct settings *settings);
+static int load_model(struct settings *settings, document_model *model);
 
 int main(const int argc, char * const *argv)
 {
@@ -60,7 +60,7 @@ int main(const int argc, char * const *argv)
     return dispatch(command, &settings);
 }
 
-int dispatch(int command, struct settings *settings)
+static int dispatch(int command, struct settings *settings)
 {
     int result = 0;
     
@@ -90,7 +90,7 @@ int dispatch(int command, struct settings *settings)
     return result;
 }
 
-int interactive_mode(struct settings *settings)
+static int interactive_mode(struct settings *settings)
 {
     document_model model;
 
@@ -104,7 +104,7 @@ int interactive_mode(struct settings *settings)
     return 0;
 }
 
-int expression_mode(struct settings *settings)
+static int expression_mode(struct settings *settings)
 {
     document_model model;
 
@@ -118,7 +118,7 @@ int expression_mode(struct settings *settings)
     return 0;
 }
 
-int load_model(struct settings *settings, document_model *model)
+static int load_model(struct settings *settings, document_model *model)
 {
     FILE *input = open_input(settings);
     if(NULL == input)
@@ -136,7 +136,7 @@ int load_model(struct settings *settings, document_model *model)
     return 0;
 }
 
-FILE *open_input(struct settings *settings)
+static FILE *open_input(struct settings *settings)
 {
     if(NULL == settings->input_file_name)
     {

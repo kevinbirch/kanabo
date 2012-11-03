@@ -75,6 +75,6 @@ enum
 
 typedef int cmd;
 
-cmd process_options(const int argc, char * const *argv, struct settings *settings);
+cmd process_options(const int argc, char * const *argv, struct settings * restrict settings);
 
 #endif

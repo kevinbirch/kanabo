@@ -38,8 +38,8 @@
 
 #include "options.h"
 
-inline emit_mode process_emit_mode(const char *argument);
-const char *program_name(const char *argv0);
+static inline emit_mode process_emit_mode(const char * restrict argument);
+static inline const char *process_program_name(const char *argv0);
 
 static struct option options[] = 
 {
@@ -56,13 +56,13 @@ static struct option options[] =
     {0, 0, 0, 0}
 };
 
-cmd process_options(const int argc, char * const *argv, struct settings *settings)
+cmd process_options(const int argc, char * const *argv, struct settings * restrict settings)
 {
     int opt;
     int command = -1;
     bool done = false;
 
-    settings->program_name = program_name(argv[0]);
+    settings->program_name = process_program_name(argv[0]);
     settings->emit_mode = BASH;
     settings->expression = NULL;
     settings->input_file_name = NULL;
@@ -136,7 +136,7 @@ cmd process_options(const int argc, char * const *argv, struct settings *setting
     return command;
 }
 
-inline emit_mode process_emit_mode(const char *argument)
+static inline emit_mode process_emit_mode(const char * restrict argument)
 {
     if(strncmp("bash", argument, 4) == 0)
     {
@@ -152,17 +152,8 @@ inline emit_mode process_emit_mode(const char *argument)
     }
 }
 
-inline const char *program_name(const char *argv0)
+static inline const char *process_program_name(const char *argv0)
 {
     char *slash = strrchr(argv0, '/');
-    if(NULL == slash)
-    {
-        return argv0;
-    }
-    else
-    {
-        char *result = (char *)malloc(sizeof(char) * strlen(slash + 1));
-        memcpy(result, slash + 1, strlen(slash + 1));
-        return result;
-    }
+    return NULL == slash ? argv0 : slash + 1;
 }
