@@ -36,6 +36,7 @@
 
 #include "options.h"
 #include "shell.h"
+#include "loader.h"
 
 int dispatch(int command, struct settings *settings);
 
