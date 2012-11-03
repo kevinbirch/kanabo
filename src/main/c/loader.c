@@ -35,7 +35,7 @@
 #include <stdbool.h>
 #include <yaml.h>
 
-#include "reader.h"
+#include "loader.h"
 
 struct cell
 {
