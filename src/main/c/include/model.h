@@ -87,8 +87,6 @@ struct key_value_pair
     node *value;
 };
 
-typedef struct key_value_pair key_value_pair;
-
 struct model
 {
     size_t size;

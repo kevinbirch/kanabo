@@ -30,8 +30,8 @@
  * [license]: http://www.opensource.org/licenses/mit-license.php
  */
 
-#ifndef READER_H
-#define READER_H
+#ifndef LOADER_H
+#define LOADER_H
 
 #include "model.h"
 

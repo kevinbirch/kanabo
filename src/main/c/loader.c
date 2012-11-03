@@ -61,29 +61,31 @@ struct context
 typedef struct context document_context;
 
 int build_model(yaml_parser_t *parser, document_model * restrict model);
-inline bool dispatch_event(yaml_event_t *event, document_context *context);
+
+static inline bool dispatch_event(yaml_event_t *event, document_context *context);
+
+static inline void push_context(document_context *context, node *value);
+static inline node *pop_context(document_context *context);
+
+static inline void save_excursion(document_context *context);
+static inline size_t unwind_excursion(document_context *context);
+
+static inline void unwind_sequence(document_context *context);
+static inline void unwind_mapping(document_context *context);
+static inline void unwind_document(document_context *context);
+static inline void unwind_model(document_context *context, document_model *model);
+
+static inline enum kind context_kind(document_context *context);
+static inline node *context_top(document_context *context);
+
+static inline node *make_document_node();
+static inline node *make_scalar_node(size_t length, unsigned char *value);
+static inline node *make_sequence_node();
+static inline node *make_mapping_node();
+static inline node *make_node(enum kind kind);
+static inline void set_node_name(node *lvalue, unsigned char *name);
+
 void parser_error(yaml_parser_t *parser);
-
-inline void push_context(document_context *context, node *value);
-inline node *pop_context(document_context *context);
-
-inline void save_excursion(document_context *context);
-inline size_t unwind_excursion(document_context *context);
-
-inline void unwind_document(document_context *context);
-inline void unwind_sequence(document_context *context);
-inline void unwind_mapping(document_context *context);
-inline void unwind_model(document_context *context, document_model *model);
-
-inline enum kind context_kind(document_context *context);
-inline node *context_top(document_context *context);
-
-inline node *make_document_node();
-inline node *make_scalar_node(size_t length, unsigned char *value);
-inline node *make_sequence_node();
-inline node *make_mapping_node();
-inline node *make_node(enum kind kind);
-inline void set_node_name(node *lvalue, unsigned char *name);
 
 int load_file(FILE * restrict istream, document_model * restrict model)
 {
@@ -143,7 +145,7 @@ int build_model(yaml_parser_t *parser, document_model * restrict model)
     return result;
 }
 
-inline bool dispatch_event(yaml_event_t *event, document_context *context)
+static inline bool dispatch_event(yaml_event_t *event, document_context *context)
 {
     bool result = false;
     
@@ -178,8 +180,8 @@ inline bool dispatch_event(yaml_event_t *event, document_context *context)
 
         case YAML_SEQUENCE_START_EVENT:
             // xxx - gather tag and anchor
-            save_excursion(context);
             push_context(context, make_sequence_node());
+            save_excursion(context);
             break;                
                 
         case YAML_SEQUENCE_END_EVENT:
@@ -188,8 +190,8 @@ inline bool dispatch_event(yaml_event_t *event, document_context *context)
             
         case YAML_MAPPING_START_EVENT:
             // xxx - gather tag and anchor
-            save_excursion(context);
             push_context(context, make_mapping_node());
+            save_excursion(context);
             break;
 
         case YAML_MAPPING_END_EVENT:
@@ -200,11 +202,12 @@ inline bool dispatch_event(yaml_event_t *event, document_context *context)
     return result;
 }
 
-inline void save_excursion(document_context *context)
+static inline void save_excursion(document_context *context)
 {
     struct excursion *excursion = malloc(sizeof(struct excursion));
+    // xxx - check for malloc error
     excursion->length = 0;
-    
+
     if(NULL == context->excursions)
     {
         context->excursions = excursion;
@@ -217,7 +220,7 @@ inline void save_excursion(document_context *context)
     }
 }
 
-inline size_t unwind_excursion(document_context *context)
+static inline size_t unwind_excursion(document_context *context)
 {
     if(NULL == context || NULL == context->excursions)
     {
@@ -233,9 +236,10 @@ inline size_t unwind_excursion(document_context *context)
     return result;
 }
 
-inline void push_context(document_context *context, node *value)
-{
+static inline void push_context(document_context *context, node *value)
+{    
     struct cell *current = (struct cell *)malloc(sizeof(struct cell));
+    // xxx - check for malloc error
     current->this = value;
     
     if(NULL == context->stack)
@@ -246,20 +250,18 @@ inline void push_context(document_context *context, node *value)
         current->next = NULL;
         context->top = current;
     }
-    else
+
+    context->depth++;
+    if(NULL != context->excursions)
     {
-        context->depth++;
-        if(NULL != context->excursions)
-        {
-            context->excursions->length++;
-        }
-        
-        current->next = context->top;
-        context->top = current;
+        context->excursions->length++;
     }
+        
+    current->next = context->top;
+    context->top = current;
 }
 
-inline node *pop_context(document_context *context)
+static inline node *pop_context(document_context *context)
 {
     if(NULL == context || NULL == context->stack || NULL == context->top)
     {
@@ -281,18 +283,13 @@ inline node *pop_context(document_context *context)
     return result;
 }
 
-inline void unwind_document(document_context *context)
-{
-    node *value = pop_context(context);
-    context_top(context)->content.document.root = value;
-}
-
-inline void unwind_sequence(document_context *context)
+static inline void unwind_sequence(document_context *context)
 {
     size_t count = unwind_excursion(context);
     node **sequence = (node **)malloc(sizeof(node *) * count);
+    // xxx - check for malloc error
     
-    for(size_t i = 0; i < count; i++)
+    for(long i = count - 1; i >= 0; i--)
     {
         sequence[i] = pop_context(context);
     }
@@ -301,28 +298,37 @@ inline void unwind_sequence(document_context *context)
     context_top(context)->content.sequence.value = sequence;
 }
 
-inline void unwind_mapping(document_context *context)
+static inline void unwind_mapping(document_context *context)
 {
     size_t count = unwind_excursion(context) / 2;
-    key_value_pair **mapping = (key_value_pair **)malloc(sizeof(key_value_pair *) * count);
+    struct key_value_pair **mapping = (struct key_value_pair **)malloc(sizeof(struct key_value_pair *) * count);
+    // xxx - check for malloc error
     
-    key_value_pair *each;
+    struct key_value_pair *each;
     for(size_t i = 0; i < count; i++)
     {
-        each = (key_value_pair *)malloc(sizeof(key_value_pair));
+        each = (struct key_value_pair *)malloc(sizeof(struct key_value_pair));
+        // xxx - check for malloc error
         
-        each->key = pop_context(context);
         each->value = pop_context(context);
+        each->key = pop_context(context);
     }
 
     context_top(context)->content.size = count;
     context_top(context)->content.mapping.value = mapping;
 }
 
-inline void unwind_model(document_context *context, document_model *model)
+static inline void unwind_document(document_context *context)
+{
+    node *value = pop_context(context);
+    context_top(context)->content.document.root = value;
+}
+
+static inline void unwind_model(document_context *context, document_model *model)
 {
     model->size = context->depth;
     model->documents = (node **)malloc(sizeof(node *) * model->size);
+    // xxx - check for malloc error
     
     for(long i = model->size - 1; i >= 0; i--)
     {
@@ -330,17 +336,17 @@ inline void unwind_model(document_context *context, document_model *model)
     }
 }
 
-inline enum kind context_kind(document_context *context)
+static inline enum kind context_kind(document_context *context)
 {
     return context_top(context)->tag.kind;
 }
 
-inline node *context_top(document_context *context)
+static inline node *context_top(document_context *context)
 {
     return context->top->this;
 }
 
-inline node *make_document_node()
+static inline node *make_document_node()
 {
     node *result = make_node(DOCUMENT);
     result->content.size = 1;
@@ -348,7 +354,7 @@ inline node *make_document_node()
     return result;
 }
 
-inline node *make_scalar_node(size_t length, unsigned char *value)
+static inline node *make_scalar_node(size_t length, unsigned char *value)
 {
     node *result = make_node(SCALAR);
     result->content.size = length;
@@ -357,7 +363,7 @@ inline node *make_scalar_node(size_t length, unsigned char *value)
     return result;
 }
 
-inline node *make_sequence_node()
+static inline node *make_sequence_node()
 {
     node *result = make_node(SEQUENCE);
     result->content.size = 0;
@@ -366,7 +372,7 @@ inline node *make_sequence_node()
     return result;
 }    
 
-inline node *make_mapping_node()
+static inline node *make_mapping_node()
 {
     node *result = make_node(MAPPING);
     result->content.size = 0;
@@ -375,21 +381,23 @@ inline node *make_mapping_node()
     return result;
 }    
 
-inline node *make_node(enum kind kind)
+static inline node *make_node(enum kind kind)
 {
     node *result = (node *)malloc(sizeof(struct node));
+    // xxx - check for malloc error
     result->tag.kind = kind;
     
     return result;
 }
 
-inline void set_node_name(node *lvalue, unsigned char *name)
+static inline void set_node_name(node *lvalue, unsigned char *name)
 {
     lvalue->tag.name = name;
 }
 
 void parser_error(yaml_parser_t *parser)
 {
+    // xxx - add support for quiet mode
     switch (parser->error)
     {
         case YAML_MEMORY_ERROR:
