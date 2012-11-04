@@ -132,7 +132,7 @@ static int load_model(struct settings *settings, document_model *model)
         return errno;
     }
     
-    int result = load_file(input, model);
+    int result = build_model_from_file(input, model);
     if(result)
     {
         return result;
