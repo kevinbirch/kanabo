@@ -38,8 +38,11 @@
 #ifndef LOADER_H
 #define LOADER_H
 
+#include <stdio.h>
+
 #include "model.h"
 
-int load_file(FILE * restrict istream, document_model * restrict model);
+int build_model_from_string(const unsigned char *input, size_t size, document_model * restrict model);
+int build_model_from_file(FILE * restrict input, document_model * restrict model);
 
 #endif

@@ -36,7 +36,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
 #include <yaml.h>
 
@@ -65,6 +64,29 @@ struct context
 
 typedef struct context document_context;
 
+struct input_holder
+{
+    enum
+    {
+        STRING_INPUT,
+        FILE_INPUT
+    } kind;
+
+    union
+    {
+        struct
+        {
+            const unsigned char *string;
+            size_t size;
+        };
+        FILE *file;
+    };
+};
+
+typedef struct input_holder input_holder;
+
+int build_model_from_input(const input_holder * restrict holder, document_model * restrict model);
+void prepare_parser_input(yaml_parser_t *parser, const input_holder * restrict holder);
 int build_model(yaml_parser_t *parser, document_model * restrict model);
 
 static inline bool dispatch_event(yaml_event_t *event, document_context *context);
@@ -92,7 +114,26 @@ static inline void set_node_name(node *lvalue, unsigned char *name);
 
 void parser_error(yaml_parser_t *parser);
 
-int load_file(FILE * restrict istream, document_model * restrict model)
+int build_model_from_string(const unsigned char *input, size_t size, document_model * restrict model)
+{
+    input_holder holder;
+    holder.kind = STRING_INPUT;
+    holder.string = input;
+    holder.size = size;
+    
+    return build_model_from_input(&holder, model);
+}
+
+int build_model_from_file(FILE * restrict input, document_model * restrict model)
+{
+    input_holder holder;
+    holder.kind = FILE_INPUT;
+    holder.file = input;
+    
+    return build_model_from_input(&holder, model);
+}
+
+int build_model_from_input(const input_holder * restrict holder, document_model * restrict model)
 {
     if(NULL == model)
     {
@@ -103,22 +144,35 @@ int load_file(FILE * restrict istream, document_model * restrict model)
     yaml_parser_t parser;
     
     memset(&parser, 0, sizeof(parser));
-    memset(model, 0, sizeof(*model));
+    memset(model, 0, sizeof(document_model));
 
     if (!yaml_parser_initialize(&parser))
     {
         parser_error(&parser);
         result = parser.error;
-        yaml_parser_delete(&parser);
-        return result;
     }
-
-    yaml_parser_set_input_file(&parser, istream);
-    result = build_model(&parser, model);
+    else
+    {
+        prepare_parser_input(&parser, holder);
+        result = build_model(&parser, model);
+    }
     
     yaml_parser_delete(&parser);
     
     return result;
+}
+
+void prepare_parser_input(yaml_parser_t *parser, const input_holder * restrict holder)
+{
+    switch(holder->kind)
+    {
+        case STRING_INPUT:
+            yaml_parser_set_input_string(parser, holder->string, holder->size);
+            break;
+        case FILE_INPUT:
+            yaml_parser_set_input_file(parser, holder->file);
+            break;
+    }
 }
 
 int build_model(yaml_parser_t *parser, document_model * restrict model)
