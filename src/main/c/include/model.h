@@ -38,7 +38,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#include <stdint.h>
+#include <stdlib.h>
 
 enum kind 
 {
