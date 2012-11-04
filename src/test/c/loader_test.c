@@ -41,7 +41,7 @@
 
 #include "loader.h"
 
-static const char *yaml =
+static const unsigned char * const yaml = (unsigned char *)
     "one:\n"
     "  - foo1"
     "  - bar1\n"
@@ -56,17 +56,40 @@ static const char *yaml =
     "\n"
     "five: foo5\n";
 
-void test_loader(FILE *input);
+static const size_t yaml_size = 83;
 
-void test_loader(FILE *input)
+void test_load_from_file();
+void test_load_from_string();
+void assert_model_state(int result, document_model *model);
+
+void test_load_from_file()
+{
+    FILE *input = tmpfile();
+    size_t written = fwrite(yaml, sizeof(char), yaml_size, input);
+    // xxx - use fmemopen impl here instead of temp file
+    assert(written == yaml_size);
+    rewind(input);
+
+    document_model model;
+    int result = build_model_from_file(input, &model);
+
+    assert_model_state(result, &model);
+}
+
+void test_load_from_string()
 {
     document_model model;
-    int result = load_file(input, &model);
-    
-    assert(0 == result);
-    assert(1 == model.size);
+    int result = build_model_from_string(yaml, yaml_size, &model);
 
-    node *document = model.documents[0];
+    assert_model_state(result, &model);
+}
+    
+void assert_model_state(int result, document_model *model)
+{
+    assert(0 == result);
+    assert(1 == model->size);
+
+    node *document = model->documents[0];
     
     assert(DOCUMENT == document->tag.kind);
 
@@ -78,17 +101,8 @@ void test_loader(FILE *input)
 
 int main()
 {
-    // xxx - use fmemopen impl here instead of temp file
-    FILE *data = tmpfile();
-    size_t written = fwrite(yaml, sizeof(char), strlen(yaml), data);
-    if(written != strlen(yaml))
-    {
-        fprintf(stderr, "unable to write temp file\n");
-        return 1;
-    }
-    
-    rewind(data);
-    test_loader(data);
-    
+    test_load_from_file();
+    test_load_from_string();
+
     return 0;
 }
