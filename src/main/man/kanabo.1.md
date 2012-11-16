@@ -1,5 +1,5 @@
-% KANABO(1) Kanabo Manual
-% Kevin Birch <kmb@pobox.com>
+% KANABO(1) Kanabo Manual  
+% Kevin Birch <kmb@pobox.com>  
 % October 23, 2012
 
 # NAME
@@ -14,7 +14,7 @@ kanabo \[--shell *shell*\] --file *input-file* --interactive
 # DESCRIPTION
 
 Kanabo is a utility to query and examine JSON and YAML files from
-shell scripts.
+shell scripts: the strong made stronger.
 
 There are two modes of operation: single expression mode and
 interactive mode.  In the first, a single JSONPath or YPath query
@@ -26,8 +26,6 @@ If no *input-file* is specified in single expression mode, then the
 input file is read from *stdin*.  The *input-file* is required to be
 specified in interactive mode, as *stdin* will be monitored for
 expressions to evaluate.
-
-Kanabo - the strong made stronger.
 
 # OPTIONS
 
@@ -86,17 +84,20 @@ JSON input files due to the stricter nature of JSON.
 **jshon**(1)
 :    Home page <http://kmkeen.com/jshon>
 
+**jq**(1)
+:    Home page <http://stedolan.github.com/jq/>
+
 JSONPath Query Langauge
-:    The defacto specification for JSONPath <http://goessner.net/articles/JsonPath>
+:    The defacto specification <http://goessner.net/articles/JsonPath>
 
 YPath Query Language
-:    The defacto specification for YPath <http://www.pkmurphy.com.au/images/ypathspec.pdf>
+:    The defacto specification <http://www.pkmurphy.com.au/images/ypathspec.pdf>
 
 GNU Bash shell
-:    GNU Bash shell home page <http://www.gnu.org/software/bash>
+:    Home page <http://www.gnu.org/software/bash>
 
 Z shell
-:    Z shell home page <http://zsh.sourceforge.net>
+:    Home page <http://zsh.sourceforge.net>
 
 Wikipedia
 :    Entry on kanabo <http://en.wikipedia.org/wiki/Kanabo>
