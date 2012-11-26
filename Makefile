@@ -129,20 +129,20 @@ $(TEST_OBJECT_DIR)/%.o: %.c
 
 $(LIBRARY_TARGET): $(OBJECTS)
 	@echo ""
-	@echo " Builing library $(LIBRARY_TARGET)"
+	@echo " -- Builing library $(LIBRARY_TARGET)"
 	@echo "------------------------------------------------------------------------"
 	$(AR) rcs $(LIBRARY_TARGET) $(wildcard $(OBJECT_DIR)/*.o)
 
 $(PROGRAM_TARGET): $(LIBRARY_TARGET)
 	@echo ""
-	@echo " Building program $(PROGRAM_TARGET)"
+	@echo " -- Building program $(PROGRAM_TARGET)"
 	@echo "------------------------------------------------------------------------"
 	$(CC) -o $(PROGRAM_TARGET) $(LDLIBS) -L$(TARGET_DIR) -l$(LIBRARY_NAME_BASE)
 
 ifeq ($(strip $(SKIP_TESTS)),)
 $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	@echo ""
-	@echo " Building test harness $(TEST_PROGRAM_TARGET)"
+	@echo " -- Building test harness $(TEST_PROGRAM_TARGET)"
 	@echo "------------------------------------------------------------------------"
 	$(CC) -o $(TEST_PROGRAM_TARGET) $(TEST_LDLIBS) $(LIBRARY_TARGET) $(wildcard $(TEST_OBJECT_DIR)/*.o)
 endif
@@ -190,7 +190,7 @@ process-resources: generate-resources
 
 announce-compile-sources:
 	@echo ""
-	@echo " Compiling soures"
+	@echo " -- Compiling sources"
 	@echo "------------------------------------------------------------------------"
 
 compile: process-resources announce-compile-sources $(OBJECTS)
@@ -216,7 +216,7 @@ process-test-resources: generate-test-resources
 announce-compile-test-sources:
 ifeq ($(strip $(SKIP_TESTS)),)
 	@echo ""
-	@echo " Compiling test sources"
+	@echo " -- Compiling test sources"
 	@echo "------------------------------------------------------------------------"
 endif
 
@@ -227,12 +227,12 @@ process-test-objects: test-compile $(TEST_PROGRAM_TARGET)
 test: process-test-objects
 ifeq ($(strip $(SKIP_TESTS)),)
 	@echo ""
-	@echo " Executing test harness"
+	@echo " -- Executing test harness"
 	@echo "------------------------------------------------------------------------"
 	@$(TEST_PROGRAM_TARGET)
 else
 	@echo ""
-	@echo " Skipping tests"
+	@echo " -- Skipping tests"
 	@echo "------------------------------------------------------------------------"
 endif
 
