@@ -35,79 +35,19 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <stdio.h>
+#include <stdlib.h>
 #include <check.h>
 
-#include "loader.h"
 #include "test.h"
 
-static const unsigned char * const yaml = (unsigned char *)
-    "one:\n"
-    "  - foo1"
-    "  - bar1\n"
-    "\n"
-    "two: foo2\n"
-    "\n"
-    "three: foo3\n"
-    "\n"
-    "four:\n"
-    "  - foo4\n"
-    "  - bar4\n"
-    "\n"
-    "five: foo5\n";
-
-static const size_t yaml_size = 83;
-
-static void assert_model_state(int result, document_model *model);
-
-START_TEST (load_from_file)
+int main()
 {
-    FILE *input = tmpfile();
-    size_t written = fwrite(yaml, sizeof(char), yaml_size, input);
-    // xxx - use fmemopen impl here instead of temp file
-    ck_assert_int_eq(written, yaml_size);
-    rewind(input);
+    SRunner *runner = srunner_create(loader_suite());
 
-    document_model model;
-    int result = build_model_from_file(input, &model);
+    srunner_run_all(runner, CK_VERBOSE);
 
-    assert_model_state(result, &model);
-}
-END_TEST
-
-START_TEST (load_from_string)
-{
-    document_model model;
-    int result = build_model_from_string(yaml, yaml_size, &model);
-
-    assert_model_state(result, &model);
-}
-END_TEST
-
-static void assert_model_state(int result, document_model *model)
-{
-    ck_assert_int_eq(0, result);
-    ck_assert_int_eq(1, model->size);
-
-    node *document = model->documents[0];
+    int failures = srunner_ntests_failed(runner);
+    srunner_free(runner);
     
-    ck_assert_int_eq(DOCUMENT, document->tag.kind);
-
-    node *root = document->content.document.root;
-    
-    ck_assert_int_eq(MAPPING, root->tag.kind);
-    ck_assert_int_eq(5, root->content.size);
+    return 0 == failures ? EXIT_SUCCESS : EXIT_FAILURE;
 }
-
-Suite *loader_suite()
-{
-    TCase *loader = tcase_create("loader");
-    tcase_add_test(loader, load_from_file);
-    tcase_add_test(loader, load_from_string);
-
-    Suite *model = suite_create("Model");
-    suite_add_tcase(model, loader);
-    
-    return model;
-}
-
