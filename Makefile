@@ -1,67 +1,261 @@
 # -*- mode: Makefile-gmake -*-
 
+# 金棒 (kanabō)
+# Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
+#
+# 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
+# made stronger.
+#
+# For more information, consult the README file in the project root.
+#
+# Distributed under an [MIT-style][license] license.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal with
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# - Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimers.
+# - Redistributions in binary form must reproduce the above copyright notice, this
+#   list of conditions and the following disclaimers in the documentation and/or
+#   other materials provided with the distribution.
+# - Neither the names of the copyright holders, nor the names of the authors, nor
+#   the names of other contributors may be used to endorse or promote products
+#   derived from this Software without specific prior written permission.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE CONTRIBUTORS
+# OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+#
+# [license]: http://www.opensource.org/licenses/ncsa
+
 include project.mk
 
-# xxx - precompile headers?
-
-PROGRAM ?= $(shell basename `pwd`)
+## Defaults for project settings
 VERSION ?= 1.0.0-SNAPSHOT
+PACKAGING ?= program
 DEPENDENCIES ?=
+TEST_DEPENDENCIES ?=
+EXTRA_INCLUDES ?=
+CFLAGS ?=
 
-LIBRARY = $(PROGRAM).a
-
+## Defaults for project source directories
+# xxx - there should be multiple module support
 SOURCE_DIR  ?= src/main/c
 INCLUDE_DIR ?= $(SOURCE_DIR)/include
 
-TARGET_DIR  ?= target
-OBJECT_DIR  ?= $(TARGET_DIR)/objects/$(PROGRAM)
+## Defaults for project test source directories
+TEST_SOURCE_DIR  ?= src/test/c
+TEST_INCLUDE_DIR ?= $(TEST_SOURCE_DIR)/include
 
-# xxx - this must be configurable
-CFLAGS := -std=c11 -Wall -pedantic -Wextra -Werror -O2 -I$(INCLUDE_DIR) $(CFLAGS)
+## Defaults for project output directories
+TARGET_DIR  ?= target
+OBJECT_DIR  ?= $(TARGET_DIR)/objects
+TEST_OBJECT_DIR  ?= $(TARGET_DIR)/test-objects
+
+## Project target artifact settings
+PROGRAM_NAME ?= $(ARTIFACT_ID)
+PROGRAM_TARGET = $(TARGET_DIR)/$(PROGRAM_NAME)
+LIBRARY_NAME_BASE ?= $(ARTIFACT_ID)
+LIBRARY_NAME ?= lib$(LIBRARY_NAME_BASE).a
+LIBRARY_TARGET = $(TARGET_DIR)/$(LIBRARY_NAME)
+ifeq ($(strip $(SKIP_TESTS)),)
+TEST_PROGRAM_TARGET = $(TARGET_DIR)/$(ARTIFACT_ID)_test
+endif
+
+## Project source compiler settings
+INCLUDES := $(addprefix -I, $(EXTRA_INCLUDES))
+CFLAGS := -I$(INCLUDE_DIR) $(INCLUDES) $(CFLAGS)
 LDLIBS := $(addprefix -l, $(DEPENDENCIES))
 
 ifeq ($(BUILD_DEBUG),yes)
-	CFLAGS := $(CFLAGS) -g
-# xxx - add strip to default target if not debug
-# else
-# strip: $(PROGRAM)
-# 	strip --strip-all $(PROGRAM)
+CFLAGS := $(CFLAGS) -g
 endif
 
-SOURCE_FILE_GLOBS = '*c' '*C' '*cpp'
+## Project test source compiler settings
+TEST_CFLAGS := -I$(TEST_INCLUDE_DIR) $(CFLAGS)
+TEST_LDLIBS := $(addprefix -l, $(DEPENDENCIES)) $(addprefix -l, $(TEST_DEPENDENCIES))
 
-# xxx - fix dep checking, currently always does a rebuild
-SOURCES := $(shell find $(SOURCE_DIR) -type f \( -name '*.c' -or -name '*.cpp' -or -name '*.C' \))
-OBJECTS := $(foreach s, $(SOURCES), $(basename $(notdir $(s))).o)
+## Project source file locations
+vpath %.c $(shell find $(SOURCE_DIR) -type d | tr '\n' :)
+SOURCES := $(shell find $(SOURCE_DIR) -type f \( -name '*.c' -or -name '*.C' \))
+OBJECTS := $(foreach s, $(SOURCES), $(OBJECT_DIR)/$(basename $(notdir $(s))).o)
+vpath %.h $(INCLUDE_DIR)
 
-VPATH = $(shell find $(SOURCE_DIR) -type d | tr '\n' :)
+## Project test source file locations
+ifeq ($(strip $(SKIP_TESTS)),)
+vpath %.c $(shell find $(TEST_SOURCE_DIR) -type d | tr '\n' :)
+TEST_SOURCES := $(shell find $(TEST_SOURCE_DIR) -type f \( -name '*.c' -or -name '*.C' \))
+TEST_OBJECTS := $(foreach s, $(TEST_SOURCES), $(TEST_OBJECT_DIR)/$(basename $(notdir $(s))).o)
+vpath %.h $(TEST_INCLUDE_DIR)
+endif
 
-# xxx - can this be done another way?
-%.o: %.c
-	$(CC) $(CFLAGS) $(CDEFS) -c $< -o $(OBJECT_DIR)/$@
+vpath %.a $(TARGET_DIR)
 
-default: $(PROGRAM)
+# compatibility target
+all: help
 
-$(LIBRARY): output $(OBJECTS)
-	$(AR) rcs $(TARGET_DIR)/$(LIBRARY) $(wildcard $(OBJECT_DIR)/*.o)
+# compatibility target
+check: test
 
-$(PROGRAM): $(LIBRARY)
-	$(CC) -o $(TARGET_DIR)/$(PROGRAM) $(LDLIBS) $(TARGET_DIR)/$(LIBRARY)
+help:
+	@echo "usage: make <goal>"
+	@echo ""
+	@echo "The value of <goal> can be one of: clean compile target test package install"
+	@echo ""
+	@echo "clean    - remove all build artifacts"
+	@echo "compile  - build object files"
+	@echo "target   - build the target library or program"
+	@echo "test     - build and run the test harness"
+	@echo "package  - collect the target artifacts info a distributable bundle"
+	@echo "install  - install the target artifacts onto the local system"
 
-output:
-	mkdir -p $(OBJECT_DIR)
+$(OBJECT_DIR)/%.o: %.c
+	$(CC) $(CFLAGS) $(CDEFS) -c $< -o $@
+
+$(TEST_OBJECT_DIR)/%.o: %.c
+	$(CC) $(TEST_CFLAGS) $(CDEFS) -c $< -o $@
+
+# xxx - create a deps system to capture header file changes
+%.d: %.c
+	@set -e; rm -f $@; \
+	$(CC) -M $(CPPFLAGS) $< > $@.$$$$
+
+$(LIBRARY_TARGET): $(OBJECTS)
+	@echo ""
+	@echo " Builing library $(LIBRARY_TARGET)"
+	@echo "------------------------------------------------------------------------"
+	$(AR) rcs $(LIBRARY_TARGET) $(wildcard $(OBJECT_DIR)/*.o)
+
+$(PROGRAM_TARGET): $(LIBRARY_TARGET)
+	@echo ""
+	@echo " Building program $(PROGRAM_TARGET)"
+	@echo "------------------------------------------------------------------------"
+	$(CC) -o $(PROGRAM_TARGET) $(LDLIBS) -L$(TARGET_DIR) -l$(LIBRARY_NAME_BASE)
+
+ifeq ($(strip $(SKIP_TESTS)),)
+$(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
+	@echo ""
+	@echo " Building test harness $(TEST_PROGRAM_TARGET)"
+	@echo "------------------------------------------------------------------------"
+	$(CC) -o $(TEST_PROGRAM_TARGET) $(TEST_LDLIBS) $(LIBRARY_TARGET) $(wildcard $(TEST_OBJECT_DIR)/*.o)
+endif
 
 clean:
-	rm -rf $(OBJECT_DIR)
+	@echo ""
+	@echo " Deleting directory `pwd`/$(TARGET_DIR)"
+	@rm -rf $(TARGET_DIR)
 
-reallyclean:
-	rm -rf $(TARGET_DIR)
+validate:
+ifeq ($(strip $(GROUP_ID)),)
+	$(error "Please set a value for GROUP_ID in project.mk")
+endif
+ifeq ($(strip $(ARTIFACT_ID)),)
+	$(error "Please set a value for ARTIFACT_ID in project.mk")
+endif
+ifeq ($(PACKAGING),program)
+TARGET = $(PROGRAM_TARGET)
+else ifeq ($(PACKAGING),library)
+TARGET = $(LIBRARY_TARGET)
+else
+$(error "Unsupported value of PACKAGING: $(PACKAGING)")
+endif
 
-# dist: clean
-# 	sed -i "s/#define JSHONVER .*/#define JSHONVER ${VERSION}/" jshon.c
-# 	mkdir jshon-${VERSION}
-# 	cp jshon.c jshon.1 Makefile jshon-${VERSION}
-# 	tar czf jshon-${VERSION}.tar.gz jshon-${VERSION}
-# 	${RM} -r jshon-${VERSION}
+initialize: validate
+	@echo ""
+	@echo " Buidling $(GROUP_ID):$(ARTIFACT_ID):$(VERSION)"
+	@mkdir -p $(OBJECT_DIR)
+	@mkdir -p $(TEST_OBJECT_DIR)
 
-.PHONY: all clean dist strip
+announce-compile-phase:
+	@echo ""
+	@echo "------------------------------------------------------------------------"
+	@echo " Compile phase"
+	@echo "------------------------------------------------------------------------"
+
+generate-sources: initialize announce-compile-phase
+# xxx - add some way to generate the version.h file
+
+process-sources: generate-sources
+
+generate-resources: process-sources
+
+process-resources: generate-resources
+
+announce-compile-sources:
+	@echo ""
+	@echo " Compiling soures"
+	@echo "------------------------------------------------------------------------"
+
+compile: process-resources announce-compile-sources $(OBJECTS)
+
+process-objects: compile $(LIBRARY_TARGET)
+
+target: process-objects $(TARGET)
+
+announce-test-phase:
+	@echo ""
+	@echo "------------------------------------------------------------------------"
+	@echo " Test phase"
+	@echo "------------------------------------------------------------------------"
+
+generate-test-sources: target announce-test-phase
+
+process-test-sources: generate-test-sources
+
+generate-test-resources: process-test-sources
+
+process-test-resources: generate-test-resources
+
+announce-compile-test-sources:
+ifeq ($(strip $(SKIP_TESTS)),)
+	@echo ""
+	@echo " Compiling test sources"
+	@echo "------------------------------------------------------------------------"
+endif
+
+test-compile: process-test-resources announce-compile-test-sources $(TEST_OBJECTS)
+
+process-test-objects: test-compile $(TEST_PROGRAM_TARGET)
+
+test: process-test-objects
+ifeq ($(strip $(SKIP_TESTS)),)
+	@echo ""
+	@echo " Executing test harness"
+	@echo "------------------------------------------------------------------------"
+	@$(TEST_PROGRAM_TARGET)
+else
+	@echo ""
+	@echo " Skipping tests"
+	@echo "------------------------------------------------------------------------"
+endif
+
+announce-package-phase:
+	@echo ""
+	@echo "------------------------------------------------------------------------"
+	@echo " Package phase"
+	@echo "------------------------------------------------------------------------"
+
+prepare-package: test announce-package-phase
+
+package: prepare-package
+	$(error "Not implemented yet")
+
+announce-install-phase:
+	@echo ""
+	@echo "------------------------------------------------------------------------"
+	@echo " Install phase"
+	@echo "------------------------------------------------------------------------"
+
+verify: test announce-install-phase
+
+install: verify
+	$(error "Not implemented yet")
+
+.PHONY: all check help clean initialize announce-compile-phase generate-sources process-sources generate-resources process-resources announce-compile-sources compile process-objects announce-test-phase generate-test-sources process-test-sources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test announce-package-phase prepare-package package verify announce-install-phase install

@@ -35,9 +35,14 @@
 #
 # [license]: http://www.opensource.org/licenses/ncsa
 
-PROGRAM = kanabo
+GROUP_ID = com.webguys
+ARTIFACT_ID = kanabo
 VERSION = 1.0.0-SNAPSHOT
+PACKAGING = program
+
 DEPENDENCIES = yaml
+CFLAGS = -std=c11 -Wall -pedantic -Wextra -Werror -O2
+TEST_DEPENDENCIES = check
 
 BUILD_DEBUG = yes
 
