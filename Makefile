@@ -144,7 +144,7 @@ $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	@echo ""
 	@echo " -- Building test harness $(TEST_PROGRAM_TARGET)"
 	@echo "------------------------------------------------------------------------"
-	$(CC) -o $(TEST_PROGRAM_TARGET) $(TEST_LDLIBS) $(LIBRARY_TARGET) $(wildcard $(TEST_OBJECT_DIR)/*.o)
+	$(CC) -o $(TEST_PROGRAM_TARGET) $(TEST_LDLIBS) -L$(TARGET_DIR) -l$(LIBRARY_NAME_BASE) $(wildcard $(TEST_OBJECT_DIR)/*.o)
 endif
 
 clean:
@@ -178,6 +178,7 @@ announce-compile-phase:
 	@echo "------------------------------------------------------------------------"
 	@echo " Compile phase"
 	@echo "------------------------------------------------------------------------"
+
 
 generate-sources: initialize announce-compile-phase
 # xxx - add some way to generate the version.h file
