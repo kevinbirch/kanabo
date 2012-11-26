@@ -1,0 +1,126 @@
+
+path
+    = absolute path
+    | relative path
+    ;
+
+absolute path
+    = "$", [ qualified path ]
+    ;
+
+qualified path
+    = ".", relative path
+    | abbreviated relative path
+    ;
+
+relative path
+    = step, { qualified path }
+    ;
+
+abbreviated relative path
+    = "..", relative path
+    ;
+
+step
+    = node test, { predicate }
+    ;
+
+node test
+    = name test
+    | node type, "()"
+    ;
+
+name test
+    = "*"
+    | qname
+    ;
+
+node type
+    = "object"
+    | "array"
+    | "string"
+    | "number"
+    | "boolean"
+    | "null"
+    ;
+
+qname
+    = prefixed name
+    | unprefixed name
+    ;
+
+prefixed name
+    = prefix, ":", local part
+    ;
+
+unprefixed name
+    = local part
+    ;
+
+prefix
+    = ncname
+    ;
+
+local part
+    = ncname
+    ;
+
+ncname
+    = ? any sequence of unicode characters and/or escape sequences, except ':' ?
+    ;
+
+predicate
+    = wildcard
+    | subscript
+    | slice
+    | union
+    | filter
+    | script
+    ;
+
+wildcard
+    = "[", "*", "]"
+    ;
+
+subscript
+     = "[", integer, "]"
+     ;
+
+slice
+    = "[" [ integer ], ":", integer, [ ":", integer ], "]"
+    ;
+
+union
+    = "[", path expression, ",", path expression, "]"
+    ;
+
+path expression
+    = path
+    (* xxx - more needs to be added here, eg @path expressions *)
+    ;
+
+filter
+    = "[", "?(", expression, ")", "]"
+    ;
+
+expression
+    = "yow"
+    ;
+
+script
+    = "[", "(", script expression, ")", "]"
+    ;
+
+script expression
+    = "whee"
+    ;
+
+integer
+    = digit, { digit }
+    ;
+
+digit
+    = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+    ;
+
+
