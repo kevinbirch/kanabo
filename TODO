@@ -15,6 +15,49 @@ LICENSE file for more details.
 
 ## TODO
 
+### Makefile
+
+* add auto dependency generation for headers
+* add submodule build support
+* add version header generation support
+* add package phase impl
+* add install phase impl
+* extract as its own project
+
+### Path languages
+
+* impl jsonpath lexer
+* finish jsonpath parser
+* extract as project, add as submodule
+* ypath support
+
+### unit testing
+
+frameworks:
+
+* Check http://check.sourceforge.net
+  * pro: forks tests, still alive
+  * con: installed as a library, macro based test setup
+* CuTest http://cutest.sourceforge.net
+  * pro: embedible - single c/h file, has an API
+  * con: does not fork, not updated in 2 years, many outstanding bugs and patches, originated on Windows
+  * non-starter, not maintained
+* CTest https://github.com/bvdberg/ctest
+  * candidate for improvement using forking
+  * pro: embedible - single h file, suite support, setup/teardown support, fixture support
+  * con: does not fork, uses macro based test setup
+* head-unit https://github.com/boothj5/head-unit
+  * pro: has an API, C/C++ support, nice output
+  * con: does not fork, installed as a library, no user base?
+  * non-starter, no other users
+* AceUnit http://aceunit.sourceforge.net
+  * pro: JUnit 4 style
+  * con: requires Java
+  * non-starter, using java is crazy
+* CUnit http://cunit.sourceforge.net
+  * pro: uses an API, various runners, nice output
+  * con: API is very cumbersome, does not fork, not updated for several years, installed as a library, complex, many outstanding bugs and patches, requires glib
+  * non-starter, API is terrible
 
 [home]: https://github.com/kevinbirch/kanabo "project home"
 [license]: http://www.opensource.org/licenses/ncsa
