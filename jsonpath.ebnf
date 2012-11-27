@@ -49,6 +49,7 @@ qname
     | unprefixed name
     ;
 
+(* this production may be quoted with single quotes, which will be discarded *)
 prefixed name
     = prefix, ":", local part
     ;
@@ -65,6 +66,7 @@ local part
     = ncname
     ;
 
+(* this production may be quoted with single quotes, which will be discarded *)
 ncname
     = ? any sequence of unicode characters and/or escape sequences, except ':' ?
     ;
