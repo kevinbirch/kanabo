@@ -39,7 +39,7 @@
 
 #include "zsh.h"
 
-int emit_zsh()
+int emit_zsh(void)
 {
     return 0;
 }

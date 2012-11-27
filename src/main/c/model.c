@@ -81,7 +81,7 @@ size_t model_get_document_count(document_model *model)
 
 enum kind node_get_kind(node *node)
 {
-    enum kind result = -1;
+    enum kind result;
     if(NULL != node)
     {
         result = node->tag.kind;

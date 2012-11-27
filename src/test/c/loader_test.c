@@ -151,7 +151,7 @@ static void assert_model_state(int result, document_model *model)
     ck_assert_buf_eq("foo5", 4, scalar_get_value(five->value), node_get_size(five->value));
 }
 
-Suite *loader_suite()
+Suite *loader_suite(void)
 {
     TCase *loader = tcase_create("loader");
     tcase_add_test(loader, load_from_file);

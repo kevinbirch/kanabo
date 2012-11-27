@@ -39,7 +39,6 @@
 
 #include "bash.h"
 
-int emit_bash()
+void emit_bash(void)
 {
-    return 0;
 }

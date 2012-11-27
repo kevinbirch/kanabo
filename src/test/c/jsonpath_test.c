@@ -106,7 +106,7 @@ START_TEST (dollar_only)
 }
 END_TEST
 
-Suite *jsonpath_suite()
+Suite *jsonpath_suite(void)
 {
     TCase *bad_input = tcase_create("bad input");
     tcase_add_test(bad_input, null_expression);

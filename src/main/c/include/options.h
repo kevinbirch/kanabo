@@ -56,7 +56,8 @@ struct help
 enum emit_mode
 {
     BASH,
-    ZSH
+    ZSH,
+    UNKNOWN
 };
 
 typedef enum emit_mode emit_mode;

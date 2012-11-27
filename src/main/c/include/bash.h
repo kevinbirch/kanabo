@@ -38,7 +38,8 @@
 #ifndef BASH_H
 #define BASH_H
 
-int emit_bash(/* tree */);
+
+void emit_bash(void);
 
 
 #endif

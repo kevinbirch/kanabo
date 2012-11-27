@@ -109,7 +109,7 @@ node  *model_get_document_root(document_model *model, size_t index);
 size_t model_get_document_count(document_model *model);
 
 enum kind      node_get_kind(node *node);
-unsigned char *get_name(node *node);
+unsigned char *node_get_name(node *node);
 size_t         node_get_name_length(node *node);
 size_t         node_get_size(node *node);
 

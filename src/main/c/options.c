@@ -109,7 +109,7 @@ cmd process_options(const int argc, char * const *argv, struct settings * restri
                 break;
             case 's':
                 settings->emit_mode = process_emit_mode(optarg);
-                if(-1 == settings->emit_mode)
+                if(UNKNOWN == settings->emit_mode)
                 {
                     fprintf(stderr, "%s: unsupported shell mode `%s'\n", settings->program_name, optarg);
                     command = SHOW_HELP;
@@ -153,7 +153,7 @@ static inline emit_mode process_emit_mode(const char * restrict argument)
     }
     else
     {
-        return -1;
+        return UNKNOWN;
     }
 }
 

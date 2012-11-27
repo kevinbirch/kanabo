@@ -379,9 +379,9 @@ static inline void unwind_model(document_context *context, document_model *model
     model->size = context->depth;
     model->documents = (node **)malloc(sizeof(node *) * model->size);
     
-    for(long i = model->size - 1; i >= 0; i--)
+    for(size_t i = 0; i < model->size; i++)
     {
-        model->documents[i] = pop_context(context);
+        model->documents[(model->size - 1) - i] = pop_context(context);
     }
 }
 

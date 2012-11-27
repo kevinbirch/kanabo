@@ -253,5 +253,3 @@ static void relative_path(parser_context *context)
     context->state = RELATIVE_PATH;
     
 }
-
-

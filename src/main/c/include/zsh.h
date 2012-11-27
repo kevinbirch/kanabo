@@ -38,7 +38,7 @@
 #ifndef ZSH_H
 #define ZSH_H
 
-int emit_zsh(/* tree */);
+int emit_zsh(void);
 
 
 #endif
