@@ -1,4 +1,4 @@
--*- markdown -*-
+-*- gfm -*-
 
 # Informational files for [金棒][home] (kanabō)
 
@@ -45,6 +45,13 @@ LICENSE file for more details.
 ### makefile
 
 * add auto dependency generation for headers
+  * http://www.gnu.org/software/make/manual/make.html#Automatic-Prerequisites
+```
+sources = foo.c bar.c
+include $(sources:.c=.d)
+$(GENERATED_DEPEND_DIR)/%.d: %.c
+	$(CC) -MM -MG -MT '$(OBJECT_DIR)/$< $@' $(CFLAGS) $< > $@    
+```
 * add submodule build support
 * add version header generation support
 * add package phase impl

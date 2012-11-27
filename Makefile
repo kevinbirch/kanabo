@@ -122,11 +122,6 @@ $(OBJECT_DIR)/%.o: %.c
 $(TEST_OBJECT_DIR)/%.o: %.c
 	$(CC) $(TEST_CFLAGS) $(CDEFS) -c $< -o $@
 
-# xxx - create a deps system to capture header file changes
-%.d: %.c
-	@set -e; rm -f $@; \
-	$(CC) -M $(CPPFLAGS) $< > $@.$$$$
-
 $(LIBRARY_TARGET): $(OBJECTS)
 	@echo ""
 	@echo " -- Builing library $(LIBRARY_TARGET)"
