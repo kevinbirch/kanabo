@@ -15,7 +15,17 @@ LICENSE file for more details.
 
 ## TODO
 
-### Makefile
+### loader
+
+* add api to free a model
+* add malloc failure checks
+* support returning error message string from main api
+* eliminate printf calls
+* handle anchors and aliase
+* handle tags
+* move lazy context init from push_context() to start document event handler
+  
+### makefile
 
 * add auto dependency generation for headers
 * add submodule build support
