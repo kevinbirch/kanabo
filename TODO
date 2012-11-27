@@ -21,7 +21,8 @@ LICENSE file for more details.
 * add malloc failure checks
 * support returning error message string from main api
 * eliminate printf calls
-* handle anchors and aliase
+* handle anchors and aliases
+  * https://en.wikipedia.org/wiki/Hashed_array_tree
 * handle tags
 * move lazy context init from push_context() to start document event handler
 
@@ -85,6 +86,11 @@ LICENSE file for more details.
   * pro: uses an API, various runners, nice output
   * con: API is very cumbersome, does not fork, not updated for several years, installed as a library, complex, many outstanding bugs and patches, requires glib
   * non-starter, API is terrible
+
+### site
+
+* add site target
+* http://tinytree.info
 
 [home]: https://github.com/kevinbirch/kanabo "project home"
 [license]: http://www.opensource.org/licenses/ncsa
