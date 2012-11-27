@@ -24,7 +24,23 @@ LICENSE file for more details.
 * handle anchors and aliase
 * handle tags
 * move lazy context init from push_context() to start document event handler
-  
+
+### model
+
+* add tree walker api
+* add printing visitor
+  * for printing scalar node values:
+```
+    char *format;
+    int ret = asprintf(&format, "scalar: '%%.%zds'\n", event->data.scalar.length);
+    if(-1 != ret)
+    {
+        printf(format, event->data.scalar.value);
+    }
+    free(format);
+```
+* add model mutation api
+
 ### makefile
 
 * add auto dependency generation for headers
@@ -43,19 +59,20 @@ LICENSE file for more details.
 
 ### unit testing
 
-frameworks:
+* upgrade to latest version of check
+* try CTest
 
 * Check http://check.sourceforge.net
   * pro: forks tests, still alive
   * con: installed as a library, macro based test setup
-* CuTest http://cutest.sourceforge.net
-  * pro: embedible - single c/h file, has an API
-  * con: does not fork, not updated in 2 years, many outstanding bugs and patches, originated on Windows
-  * non-starter, not maintained
 * CTest https://github.com/bvdberg/ctest
   * candidate for improvement using forking
   * pro: embedible - single h file, suite support, setup/teardown support, fixture support
   * con: does not fork, uses macro based test setup
+* CuTest http://cutest.sourceforge.net
+  * pro: embedible - single c/h file, has an API
+  * con: does not fork, not updated in 2 years, many outstanding bugs and patches, originated on Windows
+  * non-starter, not maintained
 * head-unit https://github.com/boothj5/head-unit
   * pro: has an API, C/C++ support, nice output
   * con: does not fork, installed as a library, no user base?
