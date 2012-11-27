@@ -35,13 +35,12 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#include <stdio.h>
+
 #include <check.h>
 
 #include "jsonpath.h"
 #include "test.h"
-
-#define ck_assert_null(X) ck_assert_msg((X) == NULL, "Assert '"#X"==NULL' failed")
-#define ck_assert_not_null(X) ck_assert_msg((X) != NULL, "Assert '"#X"!=NULL' failed")
 
 START_TEST (null_expression)
 {
@@ -51,6 +50,9 @@ START_TEST (null_expression)
     ck_assert_not_null(result);
     ck_assert_int_eq(ERR_NULL_EXPRESSION, result->code);
     ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
     ck_assert_int_eq(0, result->position);
 
     free_parser_result(result);
@@ -65,6 +67,9 @@ START_TEST (zero_length)
     ck_assert_not_null(result);
     ck_assert_int_eq(ERR_ZERO_LENGTH, result->code);
     ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
     ck_assert_int_eq(0, result->position);
 
     free_parser_result(result);
@@ -78,6 +83,9 @@ START_TEST (null_path)
     ck_assert_not_null(result);
     ck_assert_int_eq(ERR_NULL_OUTPUT_PATH, result->code);
     ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
     ck_assert_int_eq(0, result->position);
 
     free_parser_result(result);
@@ -86,7 +94,15 @@ END_TEST
 
 START_TEST (dollar_only)
 {
+    jsonpath path;
+    parser_result *result = parse_jsonpath((uint8_t *)"$", 1, &path);
     
+    ck_assert_not_null(result);
+    ck_assert_int_eq(SUCCESS, result->code);
+    ck_assert_not_null(result->message);
+    ck_assert_int_ne(0, result->position);
+
+    free_parser_result(result);
 }
 END_TEST
 
