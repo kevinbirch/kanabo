@@ -39,86 +39,219 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
+
+#include "jsonpath.h"
 
 struct context
 {
     uint8_t *input;
     size_t  length;
     size_t  cursor;
+
+    uint8_t expected;
+    
+    jsonpath *model;
+    
+    enum
+    {
+        START,
+        ABSOLUTE_PATH,
+        QUALIFIED_PATH,
+        RELATIVE_PATH,
+        ABBREVIATED_RELATIVE_PATH,
+        STEP,
+        NAME_TEST,
+        WILDCARD_NAME_TEST,
+        QNAME_TEST,
+        TYPE_TEST,
+        JSON_OBJECT_TYPE_TEST,
+        JSON_ARRAY_TYPE_TEST,
+        JSON_STRING_TYPE_TEST,
+        JSON_NUMBER_TYPE_TEST,
+        JSON_BOOLEAN_TYPE_TEST,
+        JSON_NULL_TYPE_TEST,
+        PREDICATE,
+        WILDCARD_PREDICATE,
+        SUBSCRIPT_PREDICATE,
+        SLICE_PREDICATE,
+        JOIN_PREDICATE,
+        FILTER_PREDICATE,
+        SCRIPT_PREDICATE
+    } state;
+    
+    status_code code;
 };
 
 typedef struct context parser_context;
 
-enum result
-{
-    SUCCESS = 0,
-    ERR_EOF,
-    ERR_UNEXPECTED_CHAR,
-    ERR_EXPECTED_INTEGER
-};
-
-typedef enum result parser_result;
-
-static const char *MESSAGES[] = 
+static const char * const MESSAGES[] = 
 {
     "Success",
-    "Premature end of stream",
-    "Unexpected char %c, was expecting %c instead",
-    "Expected an integer, but found %c"
-};
-#pragma unused(MESSAGES)
-
-struct error
-{
-    uint_fast16_t code;
-    char *message;
+    "Expression is NULL",
+    "Expression length is 0",
+    "Output path is NULL",
+    "Unable to allocate memory",
+    "Not a JSONPath expression",
+    "Premature end of input at position %d",
+    "At position %d: unexpected char %c, was expecting %c instead",
+    "At position %d: expected an integer"
 };
 
-typedef struct error error;
+static inline void prepare_context(parser_context *context, uint8_t *expression, size_t length, jsonpath *path);
+static inline bool validate(parser_result *result, uint8_t *expression, size_t length, jsonpath *model);
+static inline char *prepare_message(parser_context *context);
+static inline char *prepare_simple_message(status_code code);
 
-typedef parser_result (*parser)(parser_context *);
-//typedef parser_result *(*combinator)(parser_result *(*first)(, ...);
+//typedef void (*parser)(parser_context *);
+//typedef void *(*combinator)(parser_result *(*first)(, ...);
 
 // combinators
-//parser_result *one(parser only);
-//parser_result *concat(combinator one, ...);
-//parser_result *choice(combinator one, ...);
-//parser_result *optional(combinator one, ...);
+//void *one(parser only);
+//void *concat(combinator one, ...);
+//void *choice(combinator one, ...);
+//void *optional(combinator one, ...);
 
 // production parsers
-parser_result path(parser_context *context);
-parser_result absolute_path(parser_context *context);
-parser_result relative_path(parser_context *context);
+static void path(parser_context *context);
+static void absolute_path(parser_context *context);
+static void relative_path(parser_context *context);
 
 // terminal parsers
-parser_result string(parser_context *context);
-parser_result integer(parser_context *context);
-parser_result string_literal(parser_context *context, char *value);
+/* static void string(parser_context *context); */
+/* static void integer(parser_context *context); */
+/* static void string_literal(parser_context *context, char *value); */
 
-parser_result path(parser_context *context)
+void free_parser_result(parser_result *result)
 {
-    // need a way to to push back from the input stream
-    parser_result result = absolute_path(context);
-    if(result == SUCCESS)
+    if(NULL != result)
+    {
+        if(NULL != result->message)
+        {
+            free(result->message);
+        }
+        free(result);
+    }
+}
+
+parser_result *parse_jsonpath(uint8_t *expression, size_t length, jsonpath *model)
+{
+    parser_result *result = (parser_result *)malloc(sizeof(parser_result));
+    result->position = 0;
+    if(!validate(result, expression, length, model))
     {
         return result;
     }
-    else
+
+    parser_context context;
+    prepare_context(&context, expression, length, model);
+    
+    path(&context);
+
+    result->code = context.code;
+    result->message = prepare_message(&context);
+    result->position = context.cursor;
+    
+    return result;
+}
+
+static inline bool validate(parser_result *result, uint8_t *expression, size_t length, jsonpath *model)
+{
+    if(NULL == result)
     {
-        return relative_path(context);
+        return false;
     }
+    if(NULL == expression)
+    {
+        result->code = ERR_NULL_EXPRESSION;
+        result->message = prepare_simple_message(result->code);
+        return false;
+    }
+    if(0 == length)
+    {
+        result->code = ERR_ZERO_LENGTH;
+        result->message = prepare_simple_message(result->code);
+        return false;
+    }
+    if(NULL == model)
+    {
+        result->code = ERR_NULL_OUTPUT_PATH;
+        result->message = prepare_simple_message(result->code);
+        return false;
+    }
+
+    return true;
 }
 
-parser_result absolute_path(parser_context *context)
+static inline void prepare_context(parser_context *context, uint8_t *expression, size_t length, jsonpath *path)
 {
-#pragma unused(context)
-    return ERR_UNEXPECTED_CHAR;
+    path->length = 0;
+    path->steps = NULL;
+    
+    context->input = expression;
+    context->length = length;
+    context->cursor = 0;
+    context->state = START;
+    context->model = path;    
 }
 
-parser_result relative_path(parser_context *context)
+static inline char *prepare_message(parser_context *context)
 {
-#pragma unused(context)
-    return ERR_UNEXPECTED_CHAR;
+    char *message = NULL;
+    
+    switch(context->code)
+    {
+        case ERR_PREMATURE_END_OF_INPUT:
+        case ERR_EXPECTED_INTEGER:
+            asprintf(&message, MESSAGES[context->code], context->cursor);
+            break;
+        case ERR_UNEXPECTED_VALUE:
+            asprintf(&message, MESSAGES[context->code], context->cursor, 
+                     context->input[context->cursor], context->expected);
+            break;
+        default:
+            message = prepare_simple_message(context->code);
+            break;
+    }
+
+    return message;
+}
+
+static inline char *prepare_simple_message(status_code code)
+{
+    char *message = NULL;
+    
+    size_t len = strlen(MESSAGES[code]) + 1;
+    message = (char *)malloc(len);
+    if(NULL != message)
+    {
+        memcpy(message, (void *)MESSAGES[code], len);
+    }
+
+    return message;
+}
+
+static void path(parser_context *context)
+{
+    context->state = START;
+    absolute_path(context);
+
+    context->state = START;
+    relative_path(context);
+
+    context->code = ERR_NOT_JSONPATH;
+}
+
+static void absolute_path(parser_context *context)
+{
+    context->state = ABSOLUTE_PATH;
+
+}
+
+static void relative_path(parser_context *context)
+{
+    context->state = RELATIVE_PATH;
+    
 }
 
 
