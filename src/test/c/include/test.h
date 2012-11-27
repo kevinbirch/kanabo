@@ -39,6 +39,7 @@
 #define TEST_H
 
 Suite *loader_suite();
+Suite *jsonpath_suite();
 
 
 #endif

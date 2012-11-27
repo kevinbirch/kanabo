@@ -38,10 +38,140 @@
 #ifndef JSONPATH_H
 #define JSONPATH_H
 
-enum jsonpath_error_code
+#include <stdlib.h>
+#include <stdint.h>
+
+typedef struct jsonpath jsonpath;
+
+struct predicate
 {
-    JSONPATH_NOT_JSONPATH,
-    JSONPATH_NULL_EXPRESSION
+    enum
+    {
+        WILDCARD,
+        SUBSCRIPT,
+        SLICE,
+        JOIN,
+        FILTER,
+        SCRIPT
+    } kind;
+    
+    union
+    {
+        struct
+        {
+            uint_fast32_t index;
+        } subscript;
+        
+        struct
+        {
+            uint_fast32_t from;
+            uint_fast32_t to;
+        } slice;
+        
+        struct
+        {
+            jsonpath *left;
+            jsonpath *right;
+        } join;
+
+        struct
+        {
+            uint8_t *expression;
+            size_t length;
+        } filter;
+
+        struct
+        {
+            uint8_t *expression;
+            size_t length;
+        } script;
+    };
 };
+
+typedef struct predicate predicate;
+
+struct step
+{
+    enum
+    {
+        ROOT,
+        SINGLE,
+        RECURSIVE
+    } kind;
+    
+    struct
+    {
+        enum
+        {
+            NAME_TEST,
+            TYPE_TEST
+        } kind;
+
+        union
+        {
+            struct
+            {
+                uint8_t *prefix;
+                size_t  prefix_length;
+                uint8_t *local;
+                size_t  local_length;
+            } name;
+        
+            enum
+            {
+                JSON_OBJECT,
+                JSON_ARRAY,
+                JSON_STRING,
+                JSON_NUMBER,
+                JSON_BOOLEAN,
+                JSON_NULL
+            } type;
+        };
+    } test;    
+
+    size_t    predicate_count;
+    predicate **predicates;
+};
+
+typedef struct step step;
+
+struct jsonpath
+{
+    enum
+    {
+        ABSOLUTE_PATH,
+        RELATIVE_PATH
+    } kind;
+  
+    size_t length;
+    step **steps;
+};
+
+enum status_code
+{
+    SUCCESS = 0,
+    ERR_NULL_EXPRESSION,
+    ERR_ZERO_LENGTH,
+    ERR_NULL_OUTPUT_PATH,
+    ERR_OUT_OF_MEMORY,
+    ERR_NOT_JSONPATH,
+    ERR_PREMATURE_END_OF_INPUT,
+    ERR_UNEXPECTED_VALUE,
+    ERR_EXPECTED_INTEGER
+};
+
+typedef enum status_code status_code;
+
+struct parser_result
+{
+    status_code code;
+    char *message;
+    size_t position;
+};
+
+typedef struct parser_result parser_result;
+
+parser_result *parse_jsonpath(uint8_t *expression, size_t length, jsonpath *path);
+void free_parser_result(parser_result *result);
 
 #endif

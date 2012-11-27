@@ -35,20 +35,74 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <stdlib.h>
 #include <check.h>
 
+#include "jsonpath.h"
 #include "test.h"
 
-int main()
+#define ck_assert_null(X) ck_assert_msg((X) == NULL, "Assert '"#X"==NULL' failed")
+#define ck_assert_not_null(X) ck_assert_msg((X) != NULL, "Assert '"#X"!=NULL' failed")
+
+START_TEST (null_expression)
 {
-    SRunner *runner = srunner_create(loader_suite());
-    srunner_add_suite(runner, jsonpath_suite());
+    jsonpath path;
+    parser_result *result = parse_jsonpath(NULL, 50, &path);
     
-    srunner_run_all(runner, CK_VERBOSE);
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_NULL_EXPRESSION, result->code);
+    ck_assert_not_null(result->message);
+    ck_assert_int_eq(0, result->position);
+
+    free_parser_result(result);
+}
+END_TEST
+
+START_TEST (zero_length)
+{
+    jsonpath path;
+    parser_result *result = parse_jsonpath((uint8_t *)"", 0, &path);
     
-    int failures = srunner_ntests_failed(runner);
-    srunner_free(runner);
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_ZERO_LENGTH, result->code);
+    ck_assert_not_null(result->message);
+    ck_assert_int_eq(0, result->position);
+
+    free_parser_result(result);
+}
+END_TEST
+
+START_TEST (null_path)
+{
+    parser_result *result = parse_jsonpath((uint8_t *)"", 5, NULL);
     
-    return 0 == failures ? EXIT_SUCCESS : EXIT_FAILURE;
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_NULL_OUTPUT_PATH, result->code);
+    ck_assert_not_null(result->message);
+    ck_assert_int_eq(0, result->position);
+
+    free_parser_result(result);
+}
+END_TEST
+
+START_TEST (dollar_only)
+{
+    
+}
+END_TEST
+
+Suite *jsonpath_suite()
+{
+    TCase *bad_input = tcase_create("bad input");
+    tcase_add_test(bad_input, null_expression);
+    tcase_add_test(bad_input, zero_length);
+    tcase_add_test(bad_input, null_path);
+    
+    TCase *basic = tcase_create("basic");
+    tcase_add_test(basic, dollar_only);
+
+    Suite *jsonpath = suite_create("JSONPath");
+    suite_add_tcase(jsonpath, bad_input);
+    suite_add_tcase(jsonpath, basic);
+    
+    return jsonpath;
 }
