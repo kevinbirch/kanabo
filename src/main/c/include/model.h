@@ -39,6 +39,7 @@
 #define MODEL_H
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 enum kind 
 {
@@ -54,6 +55,7 @@ struct node
     {
         enum kind     kind;
         unsigned char *name;
+        size_t        name_length;
     } tag;
 
     struct
@@ -92,6 +94,8 @@ struct key_value_pair
     node *value;
 };
 
+typedef struct key_value_pair key_value_pair;
+
 struct model
 {
     size_t size;
@@ -99,5 +103,32 @@ struct model
 };
 
 typedef struct model document_model;
+
+node  *model_get_document(document_model *model, size_t index);
+node  *model_get_document_root(document_model *model, size_t index);
+size_t model_get_document_count(document_model *model);
+
+enum kind      node_get_kind(node *node);
+unsigned char *get_name(node *node);
+size_t         node_get_name_length(node *node);
+size_t         node_get_size(node *node);
+
+node *document_get_root(node *document);
+
+unsigned char *scalar_get_value(node *scalar);
+
+node  *sequence_get_item(node *sequence, size_t index);
+node **sequence_get_all(node *sequence);
+
+typedef void (*sequence_iterator)(node *each);
+void iterate_sequence(node *sequence, sequence_iterator iterator);
+
+key_value_pair  *mapping_get_key_value(node *mapping, size_t index);
+key_value_pair **mapping_get_all(node *mapping);
+node            *mapping_get_value(node *mapping, node *key);
+bool             mapping_contains_key(node *mapping, node *key);
+
+typedef void (*mapping_iterator)(node *key, node *value);
+void iterate_mapping(node *mapping, mapping_iterator iterator);
 
 #endif
