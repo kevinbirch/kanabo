@@ -126,7 +126,7 @@ $(LIBRARY_TARGET): $(OBJECTS)
 	@echo ""
 	@echo " -- Builing library $(LIBRARY_TARGET)"
 	@echo "------------------------------------------------------------------------"
-	$(AR) rcs $(LIBRARY_TARGET) $(wildcard $(OBJECT_DIR)/*.o)
+	$(AR) rcs $(LIBRARY_TARGET) $?
 
 $(PROGRAM_TARGET): $(LIBRARY_TARGET)
 	@echo ""
