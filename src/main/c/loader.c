@@ -200,7 +200,6 @@ int build_model(yaml_parser_t *parser, document_model * restrict model)
 
     unwind_model(&context, model);
     
-    // xxx - should this return a result object instead of an int?
     return result;
 }
 
@@ -229,16 +228,13 @@ static inline bool dispatch_event(yaml_event_t *event, document_context *context
             break;
                 
         case YAML_ALIAS_EVENT:
-            // xxx - gather and process anchors and aliases!!!
             break;
                 
         case YAML_SCALAR_EVENT:
-            // xxx - gather tag and anchor
             push_context(context, make_scalar_node(event->data.scalar.length, event->data.scalar.value));
             break;                
 
         case YAML_SEQUENCE_START_EVENT:
-            // xxx - gather tag and anchor
             push_context(context, make_sequence_node());
             save_excursion(context);
             break;                
@@ -248,7 +244,6 @@ static inline bool dispatch_event(yaml_event_t *event, document_context *context
             break;
             
         case YAML_MAPPING_START_EVENT:
-            // xxx - gather tag and anchor
             push_context(context, make_mapping_node());
             save_excursion(context);
             break;
@@ -264,7 +259,6 @@ static inline bool dispatch_event(yaml_event_t *event, document_context *context
 static inline void save_excursion(document_context *context)
 {
     struct excursion *excursion = malloc(sizeof(struct excursion));
-    // xxx - check for malloc error
     excursion->length = 0;
 
     if(NULL == context->excursions)
@@ -298,7 +292,6 @@ static inline size_t unwind_excursion(document_context *context)
 static inline void push_context(document_context *context, node *value)
 {    
     struct cell *current = (struct cell *)malloc(sizeof(struct cell));
-    // xxx - check for malloc error
     current->this = value;
     
     if(NULL == context->stack)
@@ -346,11 +339,10 @@ static inline void unwind_sequence(document_context *context)
 {
     size_t count = unwind_excursion(context);
     node **sequence = (node **)malloc(sizeof(node *) * count);
-    // xxx - check for malloc error
     
-    for(long i = count - 1; i >= 0; i--)
+    for(size_t i = 0; i < count; i++)
     {
-        sequence[i] = pop_context(context);
+        sequence[(count - 1) - i] = pop_context(context);
     }
 
     context_top(context)->content.size = count;
@@ -361,16 +353,15 @@ static inline void unwind_mapping(document_context *context)
 {
     size_t count = unwind_excursion(context) / 2;
     struct key_value_pair **mapping = (struct key_value_pair **)malloc(sizeof(struct key_value_pair *) * count);
-    // xxx - check for malloc error
     
     struct key_value_pair *each;
     for(size_t i = 0; i < count; i++)
     {
         each = (struct key_value_pair *)malloc(sizeof(struct key_value_pair));
-        // xxx - check for malloc error
         
         each->value = pop_context(context);
         each->key = pop_context(context);
+        mapping[(count - 1) - i] = each;
     }
 
     context_top(context)->content.size = count;
@@ -387,7 +378,6 @@ static inline void unwind_model(document_context *context, document_model *model
 {
     model->size = context->depth;
     model->documents = (node **)malloc(sizeof(node *) * model->size);
-    // xxx - check for malloc error
     
     for(long i = model->size - 1; i >= 0; i--)
     {
@@ -443,8 +433,9 @@ static inline node *make_mapping_node()
 static inline node *make_node(enum kind kind)
 {
     node *result = (node *)malloc(sizeof(struct node));
-    // xxx - check for malloc error
     result->tag.kind = kind;
+    result->tag.name = NULL;
+    result->tag.name_length = 0;
     
     return result;
 }
@@ -456,7 +447,6 @@ static inline void set_node_name(node *lvalue, unsigned char *name)
 
 void parser_error(yaml_parser_t *parser)
 {
-    // xxx - add support for quiet mode
     switch (parser->error)
     {
         case YAML_MEMORY_ERROR:

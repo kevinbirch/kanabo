@@ -36,14 +36,16 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include <check.h>
 
 #include "loader.h"
 #include "test.h"
 
-static const unsigned char * const yaml = (unsigned char *)
+static const unsigned char * const YAML = (unsigned char *)
     "one:\n"
-    "  - foo1"
+    "  - foo1\n"
     "  - bar1\n"
     "\n"
     "two: foo2\n"
@@ -56,29 +58,34 @@ static const unsigned char * const yaml = (unsigned char *)
     "\n"
     "five: foo5\n";
 
-static const size_t yaml_size = 83;
-
 static void assert_model_state(int result, document_model *model);
 
 START_TEST (load_from_file)
 {
+    size_t yaml_size = strlen((char *)YAML);
+
     FILE *input = tmpfile();
-    size_t written = fwrite(yaml, sizeof(char), yaml_size, input);
-    // xxx - use fmemopen impl here instead of temp file
+    size_t written = fwrite(YAML, sizeof(char), yaml_size, input);
     ck_assert_int_eq(written, yaml_size);
+    int ret = fflush(input);
+    ck_assert_int_eq(0, ret);
+
     rewind(input);
 
     document_model model;
     int result = build_model_from_file(input, &model);
 
     assert_model_state(result, &model);
+
+    fclose(input);
 }
 END_TEST
 
 START_TEST (load_from_string)
 {
     document_model model;
-    int result = build_model_from_string(yaml, yaml_size, &model);
+    size_t yaml_size = strlen((char *)YAML);
+    int result = build_model_from_string(YAML, yaml_size, &model);
 
     assert_model_state(result, &model);
 }
@@ -87,16 +94,61 @@ END_TEST
 static void assert_model_state(int result, document_model *model)
 {
     ck_assert_int_eq(0, result);
-    ck_assert_int_eq(1, model->size);
+    ck_assert_not_null(model);
+    ck_assert_int_eq(1, model_get_document_count(model));
 
-    node *document = model->documents[0];
+    node *root = model_get_document_root(model, 0);
+    ck_assert_not_null(root);
     
-    ck_assert_int_eq(DOCUMENT, document->tag.kind);
+    ck_assert_int_eq(MAPPING, node_get_kind(root));
+    ck_assert_int_eq(5, node_get_size(root));
+    ck_assert_not_null(mapping_get_all(root));
 
-    node *root = document->content.document.root;
-    
-    ck_assert_int_eq(MAPPING, root->tag.kind);
-    ck_assert_int_eq(5, root->content.size);
+    key_value_pair *one = mapping_get_key_value(root, 0);
+    ck_assert_not_null(one);
+    ck_assert_int_eq(SCALAR, node_get_kind(one->key));
+    ck_assert_buf_eq("one", 3, scalar_get_value(one->key), node_get_size(one->key));
+    ck_assert_int_eq(SEQUENCE, node_get_kind(one->value));
+    ck_assert_int_eq(2, node_get_size(one->value));
+    node *s0_0 = sequence_get_item(one->value, 0);
+    ck_assert_int_eq(SCALAR, node_get_kind(s0_0));
+    ck_assert_buf_eq("foo1", 4, scalar_get_value(s0_0), node_get_size(s0_0));
+    node *s0_1 = sequence_get_item(one->value, 1);
+    ck_assert_int_eq(SCALAR, node_get_kind(s0_1));
+    ck_assert_buf_eq("bar1", 4, scalar_get_value(s0_1), node_get_size(s0_1));
+
+    key_value_pair *two = mapping_get_key_value(root, 1);
+    ck_assert_not_null(two);
+    ck_assert_int_eq(SCALAR, node_get_kind(two->key));
+    ck_assert_buf_eq("two", 3, scalar_get_value(two->key), node_get_size(two->key));
+    ck_assert_int_eq(SCALAR, node_get_kind(two->value));
+    ck_assert_buf_eq("foo2", 4, scalar_get_value(two->value), node_get_size(two->value));
+
+    key_value_pair *three = mapping_get_key_value(root, 2);
+    ck_assert_not_null(three);
+    ck_assert_int_eq(SCALAR, node_get_kind(three->key));
+    ck_assert_buf_eq("three", 5, scalar_get_value(three->key), node_get_size(three->key));
+    ck_assert_int_eq(SCALAR, node_get_kind(three->value));
+    ck_assert_buf_eq("foo3", 4, scalar_get_value(three->value), node_get_size(three->value));
+
+    key_value_pair *four = mapping_get_key_value(root, 3);
+    ck_assert_not_null(four);
+    ck_assert_int_eq(SCALAR, node_get_kind(four->key));
+    ck_assert_buf_eq("four", 4, scalar_get_value(four->key), node_get_size(four->key));
+    ck_assert_int_eq(SEQUENCE, node_get_kind(four->value));
+    node *s3_0 = sequence_get_item(four->value, 0);
+    ck_assert_int_eq(SCALAR, node_get_kind(s3_0));
+    ck_assert_buf_eq("foo4", 4, scalar_get_value(s3_0), node_get_size(s3_0));
+    node *s3_1 = sequence_get_item(four->value, 1);
+    ck_assert_int_eq(SCALAR, node_get_kind(s3_0));
+    ck_assert_buf_eq("bar4", 4, scalar_get_value(s3_1), node_get_size(s3_1));
+
+    key_value_pair *five = mapping_get_key_value(root, 4);
+    ck_assert_not_null(five);
+    ck_assert_int_eq(SCALAR, node_get_kind(five->key));
+    ck_assert_buf_eq("five", 4, scalar_get_value(five->key), node_get_size(five->key));
+    ck_assert_int_eq(SCALAR, node_get_kind(five->value));
+    ck_assert_buf_eq("foo5", 4, scalar_get_value(five->value), node_get_size(five->value));
 }
 
 Suite *loader_suite()
