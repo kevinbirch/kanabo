@@ -120,15 +120,16 @@ unsigned char *scalar_get_value(node *scalar);
 node  *sequence_get_item(node *sequence, size_t index);
 node **sequence_get_all(node *sequence);
 
-typedef void (*sequence_iterator)(node *each);
-void iterate_sequence(node *sequence, sequence_iterator iterator);
+typedef void (*sequence_iterator)(node *each, void *context);
+void iterate_sequence(node *sequence, sequence_iterator iterator, void *context);
 
 key_value_pair  *mapping_get_key_value(node *mapping, size_t index);
 key_value_pair **mapping_get_all(node *mapping);
 node            *mapping_get_value(node *mapping, node *key);
 bool             mapping_contains_key(node *mapping, node *key);
 
-typedef void (*mapping_iterator)(node *key, node *value);
-void iterate_mapping(node *mapping, mapping_iterator iterator);
+typedef void (*mapping_iterator)(node *key, node *value, void *context);
+void iterate_mapping(node *mapping, mapping_iterator iterator, void *context);
+
 
 #endif
