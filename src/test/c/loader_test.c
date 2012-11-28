@@ -153,13 +153,13 @@ static void assert_model_state(int result, document_model *model)
 
 Suite *loader_suite(void)
 {
-    TCase *loader = tcase_create("loader");
-    tcase_add_test(loader, load_from_file);
-    tcase_add_test(loader, load_from_string);
+    TCase *basic = tcase_create("basic");
+    tcase_add_test(basic, load_from_file);
+    tcase_add_test(basic, load_from_string);
 
-    Suite *model = suite_create("Model");
-    suite_add_tcase(model, loader);
+    Suite *loader = suite_create("Loader");
+    suite_add_tcase(loader, basic);
     
-    return model;
+    return loader;
 }
 
