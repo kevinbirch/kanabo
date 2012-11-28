@@ -49,6 +49,7 @@ LICENSE file for more details.
 * add package phase impl
 * add install phase impl
 * extract as its own project
+* can the warnings from include be supressed somehow? they show up when the depend files don't exist yet
 
 ### Path languages
 
