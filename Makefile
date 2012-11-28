@@ -46,7 +46,6 @@ EXTRA_INCLUDES ?=
 CFLAGS ?=
 
 ## Defaults for project source directories
-# xxx - there should be multiple module support
 SOURCE_DIR  ?= src/main/c
 INCLUDE_DIR ?= $(SOURCE_DIR)/include
 
@@ -58,6 +57,10 @@ TEST_INCLUDE_DIR ?= $(TEST_SOURCE_DIR)/include
 TARGET_DIR  ?= target
 OBJECT_DIR  ?= $(TARGET_DIR)/objects
 TEST_OBJECT_DIR  ?= $(TARGET_DIR)/test-objects
+GENERATED_SOURCE_DIR ?= $(TARGET_DIR)/generated-sources
+GENERATED_DEPEND_DIR ?= $(TARGET_DIR)/generated-sources/depend
+GENERATED_TEST_SOURCE_DIR ?= $(TARGET_DIR)/generated-test-sources
+GENERATED_TEST_DEPEND_DIR ?= $(TARGET_DIR)/generated-test-sources/depend
 
 ## Project target artifact settings
 PROGRAM_NAME ?= $(ARTIFACT_ID)
@@ -87,6 +90,11 @@ vpath %.c $(shell find $(SOURCE_DIR) -type d | tr '\n' :)
 SOURCES := $(shell find $(SOURCE_DIR) -type f \( -name '*.c' -or -name '*.C' \))
 OBJECTS := $(foreach s, $(SOURCES), $(OBJECT_DIR)/$(basename $(notdir $(s))).o)
 vpath %.h $(INCLUDE_DIR)
+DEPENDS := $(foreach s, $(SOURCES), $(GENERATED_DEPEND_DIR)/$(basename $(notdir $(s))).d)
+
+ifneq ($(MAKECMDGOALS),clean)
+include $(DEPENDS)
+endif
 
 ## Project test source file locations
 ifeq ($(strip $(SKIP_TESTS)),)
@@ -94,6 +102,11 @@ vpath %.c $(shell find $(TEST_SOURCE_DIR) -type d | tr '\n' :)
 TEST_SOURCES := $(shell find $(TEST_SOURCE_DIR) -type f \( -name '*.c' -or -name '*.C' \))
 TEST_OBJECTS := $(foreach s, $(TEST_SOURCES), $(TEST_OBJECT_DIR)/$(basename $(notdir $(s))).o)
 vpath %.h $(TEST_INCLUDE_DIR)
+
+TEST_DEPENDS := $(foreach s, $(TEST_SOURCES), $(GENERATED_TEST_DEPEND_DIR)/$(basename $(notdir $(s))).d)
+ifneq ($(MAKECMDGOALS),clean)
+include $(TEST_DEPENDS)
+endif
 endif
 
 vpath %.a $(TARGET_DIR)
@@ -115,6 +128,18 @@ help:
 	@echo "test     - build and run the test harness"
 	@echo "package  - collect the target artifacts info a distributable bundle"
 	@echo "install  - install the target artifacts onto the local system"
+
+$(GENERATED_DEPEND_DIR):
+	@mkdir -p $(GENERATED_DEPEND_DIR)
+
+$(GENERATED_DEPEND_DIR)/%.d: %.c | $(GENERATED_DEPEND_DIR)
+	@$(CC) -MM -MG -MT '$(OBJECT_DIR)/$(*F).o $@' $(CFLAGS) $(CDEFS) $< > $@
+
+$(GENERATED_TEST_DEPEND_DIR):
+	@mkdir -p $(GENERATED_TEST_DEPEND_DIR)
+
+$(GENERATED_TEST_DEPEND_DIR)/%.d: %.c | $(GENERATED_TEST_DEPEND_DIR)
+	@$(CC) -MM -MG -MT '$(TEST_OBJECT_DIR)/$(*F).o $@' $(TEST_CFLAGS) $(CDEFS) $< > $@
 
 $(OBJECT_DIR)/%.o: %.c
 	$(CC) $(CFLAGS) $(CDEFS) -c $< -o $@
@@ -167,6 +192,8 @@ initialize: validate
 	@echo " Buidling $(GROUP_ID):$(ARTIFACT_ID):$(VERSION)"
 	@mkdir -p $(OBJECT_DIR)
 	@mkdir -p $(TEST_OBJECT_DIR)
+	@mkdir -p $(GENERATED_DEPEND_DIR)
+	@mkdir -p $(GENERATED_TEST_DEPEND_DIR)
 
 announce-compile-phase:
 	@echo ""
@@ -175,8 +202,8 @@ announce-compile-phase:
 	@echo "------------------------------------------------------------------------"
 
 
-generate-sources: initialize announce-compile-phase
 # xxx - add some way to generate the version.h file
+generate-sources: initialize announce-compile-phase $(DEPENDS)
 
 process-sources: generate-sources
 
