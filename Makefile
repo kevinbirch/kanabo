@@ -92,10 +92,6 @@ OBJECTS := $(foreach s, $(SOURCES), $(OBJECT_DIR)/$(basename $(notdir $(s))).o)
 vpath %.h $(INCLUDE_DIR)
 DEPENDS := $(foreach s, $(SOURCES), $(GENERATED_DEPEND_DIR)/$(basename $(notdir $(s))).d)
 
-ifneq ($(MAKECMDGOALS),clean)
-include $(DEPENDS)
-endif
-
 ## Project test source file locations
 ifeq ($(strip $(SKIP_TESTS)),)
 vpath %.c $(shell find $(TEST_SOURCE_DIR) -type d | tr '\n' :)
@@ -104,9 +100,6 @@ TEST_OBJECTS := $(foreach s, $(TEST_SOURCES), $(TEST_OBJECT_DIR)/$(basename $(no
 vpath %.h $(TEST_INCLUDE_DIR)
 
 TEST_DEPENDS := $(foreach s, $(TEST_SOURCES), $(GENERATED_TEST_DEPEND_DIR)/$(basename $(notdir $(s))).d)
-ifneq ($(MAKECMDGOALS),clean)
-include $(TEST_DEPENDS)
-endif
 endif
 
 vpath %.a $(TARGET_DIR)
@@ -128,6 +121,16 @@ help:
 	@echo "test     - build and run the test harness"
 	@echo "package  - collect the target artifacts info a distributable bundle"
 	@echo "install  - install the target artifacts onto the local system"
+
+ifneq ($(MAKECMDGOALS),clean)
+include $(DEPENDS)
+endif
+
+ifeq ($(strip $(SKIP_TESTS)),)
+ifneq ($(MAKECMDGOALS),clean)
+include $(TEST_DEPENDS)
+endif
+endif
 
 $(GENERATED_DEPEND_DIR):
 	@mkdir -p $(GENERATED_DEPEND_DIR)
