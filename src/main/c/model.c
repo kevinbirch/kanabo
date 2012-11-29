@@ -81,12 +81,12 @@ size_t model_get_document_count(document_model *model)
 
 enum kind node_get_kind(node *node)
 {
-    enum kind result;
+    enum kind result = (enum kind)-1;
     if(NULL != node)
     {
         result = node->tag.kind;
     }
-    return result;    
+    return result;
 }
 
 unsigned char *node_get_name(node *node)
@@ -159,13 +159,13 @@ node **sequence_get_all(node *sequence)
     return result;
 }
 
-void iterate_sequence(node *sequence, sequence_iterator iterator)
+void iterate_sequence(node *sequence, sequence_iterator iterator, void *context)
 {
     if(NULL != sequence && SEQUENCE == node_get_kind(sequence))
     {
         for(size_t i = node_get_size(sequence); i < node_get_size(sequence); i++)
         {
-            iterator(sequence->content.sequence.value[i]);
+            iterator(sequence->content.sequence.value[i], context);
         }
     }
 }
@@ -213,13 +213,13 @@ bool mapping_contains_key(node *mapping, node *key)
     return NULL != mapping_get_value(mapping, key);
 }
 
-void iterate_mapping(node *mapping, mapping_iterator iterator)
+void iterate_mapping(node *mapping, mapping_iterator iterator, void *context)
 {
     if(NULL != mapping && MAPPING == node_get_kind(mapping))
     {
         for(size_t i = node_get_size(mapping); i < node_get_size(mapping); i++)
         {
-            iterator(mapping->content.mapping.value[i]->key, mapping->content.mapping.value[i]->value);
+            iterator(mapping->content.mapping.value[i]->key, mapping->content.mapping.value[i]->value, context);
         }
     }
 }
