@@ -35,22 +35,20 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <stdlib.h>
+#include <stdio.h>
+
 #include <check.h>
 
+#include "options.h"
 #include "test.h"
 
-int main()
+
+Suite *master_suite(void)
 {
-    SRunner *runner = srunner_create(master_suite());
-    srunner_add_suite(runner, loader_suite());
-    srunner_add_suite(runner, jsonpath_suite());
-    srunner_add_suite(runner, model_suite());
+    TCase *options = tcase_create("options");
+
+    Suite *master = suite_create("Master");
+    suite_add_tcase(master, options);
     
-    srunner_run_all(runner, CK_VERBOSE);
-    
-    int failures = srunner_ntests_failed(runner);
-    srunner_free(runner);
-    
-    return 0 == failures ? EXIT_SUCCESS : EXIT_FAILURE;
+    return master;
 }
