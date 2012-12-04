@@ -105,11 +105,6 @@ static inline void unwind_model(document_context *context, document_model *model
 static inline enum kind context_kind(document_context *context);
 static inline node *context_top(document_context *context);
 
-static inline node *make_document_node();
-static inline node *make_scalar_node(size_t length, unsigned char *value);
-static inline node *make_sequence_node();
-static inline node *make_mapping_node();
-static inline node *make_node(enum kind kind);
 static inline void set_node_name(node *lvalue, unsigned char *name);
 
 void parser_error(yaml_parser_t *parser);
@@ -231,7 +226,7 @@ static inline bool dispatch_event(yaml_event_t *event, document_context *context
             break;
                 
         case YAML_SCALAR_EVENT:
-            push_context(context, make_scalar_node(event->data.scalar.length, event->data.scalar.value));
+            push_context(context, make_scalar_node(event->data.scalar.value, event->data.scalar.length));
             break;                
 
         case YAML_SEQUENCE_START_EVENT:
@@ -393,51 +388,6 @@ static inline enum kind context_kind(document_context *context)
 static inline node *context_top(document_context *context)
 {
     return context->top->this;
-}
-
-static inline node *make_document_node()
-{
-    node *result = make_node(DOCUMENT);
-    result->content.size = 1;
-    
-    return result;
-}
-
-static inline node *make_scalar_node(size_t length, unsigned char *value)
-{
-    node *result = make_node(SCALAR);
-    result->content.size = length;
-    result->content.scalar.value = value;
-    
-    return result;
-}
-
-static inline node *make_sequence_node()
-{
-    node *result = make_node(SEQUENCE);
-    result->content.size = 0;
-    result->content.sequence.value = NULL;
-    
-    return result;
-}    
-
-static inline node *make_mapping_node()
-{
-    node *result = make_node(MAPPING);
-    result->content.size = 0;
-    result->content.mapping.value = NULL;
-    
-    return result;
-}    
-
-static inline node *make_node(enum kind kind)
-{
-    node *result = (node *)malloc(sizeof(struct node));
-    result->tag.kind = kind;
-    result->tag.name = NULL;
-    result->tag.name_length = 0;
-    
-    return result;
 }
 
 static inline void set_node_name(node *lvalue, unsigned char *name)
