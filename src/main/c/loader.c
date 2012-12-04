@@ -215,7 +215,6 @@ static inline bool dispatch_event(yaml_event_t *event, document_context *context
             break;
                 
         case YAML_DOCUMENT_START_EVENT:
-            push_context(context, make_document_node(make_scalar_node((unsigned char *)"dummy", 5)));
             break;
 
         case YAML_DOCUMENT_END_EVENT:
@@ -230,7 +229,6 @@ static inline bool dispatch_event(yaml_event_t *event, document_context *context
             break;                
 
         case YAML_SEQUENCE_START_EVENT:
-            push_context(context, make_sequence_node(0));
             save_excursion(context);
             break;                
                 
@@ -239,7 +237,6 @@ static inline bool dispatch_event(yaml_event_t *event, document_context *context
             break;
             
         case YAML_MAPPING_START_EVENT:
-            push_context(context, make_mapping_node(0));
             save_excursion(context);
             break;
 
@@ -287,8 +284,8 @@ static inline size_t unwind_excursion(document_context *context)
 static inline void push_context(document_context *context, node *value)
 {    
     struct cell *current = (struct cell *)malloc(sizeof(struct cell));
-    current->this = value;
-    
+    current->this = value;    
+
     if(NULL == context->stack)
     {
         context->depth = 0;
@@ -333,40 +330,40 @@ static inline node *pop_context(document_context *context)
 static inline void unwind_sequence(document_context *context)
 {
     size_t count = unwind_excursion(context);
-    node **sequence = (node **)malloc(sizeof(node *) * count);
+    node **items = (node **)malloc(sizeof(node *) * count);
     
     for(size_t i = 0; i < count; i++)
     {
-        sequence[(count - 1) - i] = pop_context(context);
+        items[(count - 1) - i] = pop_context(context);
     }
 
-    context_top(context)->content.size = count;
-    context_top(context)->content.sequence.value = sequence;
+    node *sequence = make_sequence_node(count);
+    sequence_add_all(sequence, items, count);
+    free(items);
+    push_context(context, sequence);
 }
 
 static inline void unwind_mapping(document_context *context)
 {
     size_t count = unwind_excursion(context) / 2;
-    struct key_value_pair **mapping = (struct key_value_pair **)malloc(sizeof(struct key_value_pair *) * count);
+    node *mapping = make_mapping_node(count);
     
-    struct key_value_pair *each;
+    node *key, *value;
     for(size_t i = 0; i < count; i++)
     {
-        each = (struct key_value_pair *)malloc(sizeof(struct key_value_pair));
-        
-        each->value = pop_context(context);
-        each->key = pop_context(context);
-        mapping[(count - 1) - i] = each;
+        value = pop_context(context);
+        key = pop_context(context);
+        mapping_put(mapping, key, value);
     }
 
-    context_top(context)->content.size = count;
-    context_top(context)->content.mapping.value = mapping;
+    push_context(context, mapping);
 }
 
 static inline void unwind_document(document_context *context)
 {
-    node *value = pop_context(context);
-    context_top(context)->content.document.root = value;
+    node *root = pop_context(context);
+    node *document = make_document_node(root);
+    push_context(context, document);
 }
 
 static inline void unwind_model(document_context *context, document_model *model)

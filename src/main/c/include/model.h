@@ -145,10 +145,12 @@ node *make_mapping_node(size_t capacity);
 node *make_scalar_node(unsigned char *value, size_t length);
 
 void free_model(document_model *model);
+void free_node(node *value);
 
 bool model_add(document_model *model, node *document);
 bool document_set_root(node *document, node *root);
 bool sequence_add(node *sequence, node *item);
+bool sequence_add_all(node *sequence, node **items, size_t count);
 bool mapping_put(node *mapping, node *key, node *value);
 
 

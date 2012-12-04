@@ -187,7 +187,8 @@ START_TEST (constructors)
     ck_assert_null(d);
     d = make_document_node(s);
     ck_assert_not_null(d);
-    
+    free_node(d); // N.B. - this will also free `s'
+
     node *v = make_sequence_node(0);
     ck_assert_null(v);
     v = make_sequence_node(1);
@@ -195,6 +196,7 @@ START_TEST (constructors)
     ck_assert_not_null(v->content.sequence.value);
     ck_assert_int_eq(1, v->content.sequence.capacity);
     ck_assert_int_eq(0, v->content.size);
+    free_node(v);
     
     node *m = make_mapping_node(0);
     ck_assert_null(m);
@@ -203,6 +205,7 @@ START_TEST (constructors)
     ck_assert_not_null(m->content.mapping.value);
     ck_assert_int_eq(1, m->content.mapping.capacity);
     ck_assert_int_eq(0, m->content.size);
+    free_node(m);
 }
 END_TEST
 
@@ -280,6 +283,26 @@ START_TEST (sequence)
     ck_assert_not_null(all);
     ck_assert_int_eq(zero, all[0]);
     ck_assert_int_eq(one, all[1]);
+
+    node *x = make_scalar_node((unsigned char *)"x", 1);
+    ck_assert_not_null(x);
+    node *y = make_scalar_node((unsigned char *)"y", 1);
+    ck_assert_not_null(y);
+    node *z = make_scalar_node((unsigned char *)"z", 1);
+    ck_assert_not_null(z);
+    node *items[] = {x, y, z};
+    node *xyz = make_sequence_node(2);
+    ck_assert_not_null(xyz);
+    ck_assert_int_eq(0, xyz->content.size);
+    ck_assert_int_eq(2, xyz->content.sequence.capacity);
+
+    sequence_add_all(xyz, items, 3);
+    ck_assert_int_eq(3, xyz->content.size);
+    ck_assert_int_eq(5, xyz->content.sequence.capacity);
+    ck_assert_int_eq(x, sequence_get_item(xyz, 0));
+    ck_assert_int_eq(y, sequence_get_item(xyz, 1));
+    ck_assert_int_eq(z, sequence_get_item(xyz, 2));
+    free_node(xyz);
 }
 END_TEST
 

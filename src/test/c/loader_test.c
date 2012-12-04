@@ -78,6 +78,7 @@ START_TEST (load_from_file)
     assert_model_state(result, &model);
 
     fclose(input);
+    free_model(&model);
 }
 END_TEST
 
@@ -88,6 +89,7 @@ START_TEST (load_from_string)
     int result = build_model_from_string(YAML, yaml_size, &model);
 
     assert_model_state(result, &model);
+    free_model(&model);
 }
 END_TEST
 

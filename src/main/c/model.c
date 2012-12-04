@@ -49,7 +49,6 @@ static bool mapping_equals(node *one, node *two);
 
 static inline node *make_node(enum kind kind);
 
-static inline void free_node(node *value);
 static inline void free_sequence(node *sequence);
 static inline void free_mapping(node *mapping);
 
@@ -438,7 +437,7 @@ void free_model(document_model *model)
     model->documents = NULL;
 }
 
-static inline void free_node(node *value)
+void free_node(node *value)
 {
     if(NULL == value)
     {
@@ -526,7 +525,7 @@ bool init_model(document_model *model, size_t capacity)
     return result;
 }
 
-#define ensure_capacity(T, A, S, C) if(((S) + 1) == (C))                \
+#define ensure_capacity(T, A, S, C) if((S) > (C))                       \
     {                                                                   \
         size_t size_plus_50_percent = ((S) * 3) / 2 + 1;                \
         T **old = (A);                                                  \
@@ -550,7 +549,7 @@ bool model_add(document_model *model, node *document)
 
     errno = 0;
     bool result = true;
-    ensure_capacity(node, model->documents, model->size, model->capacity);
+    ensure_capacity(node, model->documents, model->size + 1, model->capacity);
     model->documents[model->size++] = document;
     return result;
 }
@@ -578,9 +577,27 @@ bool sequence_add(node *sequence, node *item)
 
     errno = 0;
     bool result = true;
-    ensure_capacity(node, sequence->content.sequence.value, sequence->content.size, sequence->content.sequence.capacity);
+    ensure_capacity(node, sequence->content.sequence.value, sequence->content.size + 1, sequence->content.sequence.capacity);
     sequence->content.sequence.value[sequence->content.size++] = item;
-    
+
+    return result;
+}
+
+bool sequence_add_all(node *sequence, node **items, size_t count)
+{
+    if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || NULL == items || 0 == count)
+    {
+        errno = EINVAL;
+        return false;
+    }
+
+    errno = 0;
+    bool result = true;
+    ensure_capacity(node, sequence->content.sequence.value, count, sequence->content.sequence.capacity);
+    for(size_t i = 0; i < count; i++)
+    {
+        sequence->content.sequence.value[sequence->content.size++] = items[i];
+    }
     return result;
 }
 
@@ -601,7 +618,7 @@ bool mapping_put(node *mapping, node *key, node *value)
     }
     pair->key = key;
     pair->value = value;
-    ensure_capacity(key_value_pair, mapping->content.mapping.value, mapping->content.size, mapping->content.mapping.capacity);
+    ensure_capacity(key_value_pair, mapping->content.mapping.value, mapping->content.size + 1, mapping->content.mapping.capacity);
     mapping->content.mapping.value[mapping->content.size++] = pair;
 
     return result;
