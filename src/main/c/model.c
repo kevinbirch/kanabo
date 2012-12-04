@@ -169,7 +169,7 @@ void iterate_sequence(node *sequence, sequence_iterator iterator, void *context)
 {
     if(NULL != sequence && SEQUENCE == node_get_kind(sequence))
     {
-        for(size_t i = node_get_size(sequence); i < node_get_size(sequence); i++)
+        for(size_t i = 0; i < node_get_size(sequence); i++)
         {
             iterator(sequence->content.sequence.value[i], context);
         }
@@ -239,7 +239,7 @@ void iterate_mapping(node *mapping, mapping_iterator iterator, void *context)
 {
     if(NULL != mapping && MAPPING == node_get_kind(mapping))
     {
-        for(size_t i = node_get_size(mapping); i < node_get_size(mapping); i++)
+        for(size_t i = 0; i < node_get_size(mapping); i++)
         {
             iterator(mapping->content.mapping.value[i]->key, mapping->content.mapping.value[i]->value, context);
         }
