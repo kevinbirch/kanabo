@@ -132,13 +132,16 @@ static int load_model(struct settings *settings, document_model *model)
         return errno;
     }
     
-    int result = build_model_from_file(input, model);
-    if(result)
+    int status = EXIT_SUCCESS;
+    loader_result *result = load_model_from_file(input, model);
+    if(result->code)
     {
-        return result;
+        fprintf(stderr, "%s", result->message);
+        status = result->code;
     }
 
-    return 0;
+    free_loader_result(result);
+    return status;
 }
 
 static FILE *open_input(struct settings *settings)

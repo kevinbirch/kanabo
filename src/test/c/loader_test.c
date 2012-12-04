@@ -58,7 +58,7 @@ static const unsigned char * const YAML = (unsigned char *)
     "\n"
     "five: foo5\n";
 
-static void assert_model_state(int result, document_model *model);
+static void assert_model_state(loader_result *result, document_model *model);
 
 START_TEST (load_from_file)
 {
@@ -73,12 +73,13 @@ START_TEST (load_from_file)
     rewind(input);
 
     document_model model;
-    int result = build_model_from_file(input, &model);
+    loader_result *result = load_model_from_file(input, &model);
 
     assert_model_state(result, &model);
 
     fclose(input);
     free_model(&model);
+    free_loader_result(result);
 }
 END_TEST
 
@@ -86,16 +87,17 @@ START_TEST (load_from_string)
 {
     document_model model;
     size_t yaml_size = strlen((char *)YAML);
-    int result = build_model_from_string(YAML, yaml_size, &model);
+    loader_result *result = load_model_from_string(YAML, yaml_size, &model);
 
     assert_model_state(result, &model);
     free_model(&model);
+    free(result);
 }
 END_TEST
 
-static void assert_model_state(int result, document_model *model)
+static void assert_model_state(loader_result *result, document_model *model)
 {
-    ck_assert_int_eq(0, result);
+    ck_assert_int_eq(SUCCESS, result->code);
     ck_assert_not_null(model);
     ck_assert_int_eq(1, model_get_document_count(model));
 

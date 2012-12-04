@@ -85,14 +85,15 @@ struct source
 
 typedef struct source source;
 
-static int build_model_from_source(const source * restrict input, document_model * restrict model);
+static loader_result *load_model_from_source(const source * restrict input, document_model * restrict model);
 static void prepare_parser_source(yaml_parser_t *parser, const source * restrict input);
-static int build_model(yaml_parser_t *parser, document_model * restrict model);
+static loader_result *build_model(yaml_parser_t *parser, document_model * restrict model, loader_result * restrict result);
 
 static bool dispatch_event(yaml_event_t *event, document_context *context);
 
 static void push_context(document_context *context, node *value);
 static node *pop_context(document_context *context);
+static void abort_context(document_context *context);
 
 static void save_excursion(document_context *context);
 static size_t unwind_excursion(document_context *context);
@@ -105,50 +106,68 @@ static void unwind_model(document_context *context, document_model *model);
 static inline enum kind context_kind(document_context *context);
 static inline node *context_top(document_context *context);
 
-void parser_error(yaml_parser_t *parser);
+static inline loader_result *invalid_input(void);
+static inline loader_result *memory_exhausted(loader_result *result);
+static inline loader_result *success(loader_result *result);
+static loader_result *parser_error(yaml_parser_t *parser, loader_result *result);
 
-int build_model_from_string(const unsigned char *string, size_t size, document_model * restrict model)
+loader_result *load_model_from_string(const unsigned char *string, size_t size, document_model * restrict model)
 {
+    if(NULL == model || NULL == string || 0 == size)
+    {        
+        return invalid_input();
+    }
+    
     source input;
     input.kind = STRING_INPUT;
     input.string = string;
     input.size = size;
     
-    return build_model_from_source(&input, model);
+    return load_model_from_source(&input, model);
 }
 
-int build_model_from_file(FILE * restrict file, document_model * restrict model)
+loader_result *load_model_from_file(FILE * restrict file, document_model * restrict model)
 {
+    if(NULL == model || NULL == file)
+    {        
+        return invalid_input();
+    }
+    
     source input;
     input.kind = FILE_INPUT;
     input.file = file;
     
-    return build_model_from_source(&input, model);
+    return load_model_from_source(&input, model);
 }
 
-static int build_model_from_source(const source * restrict input, document_model * restrict model)
+static loader_result *load_model_from_source(const source * restrict input, document_model * restrict model)
 {
-    if(NULL == model)
-    {
-        return -1;
-    }
-    
-    int result = 0;
-    yaml_parser_t parser;
-    
-    memset(&parser, 0, sizeof(parser));
     memset(model, 0, sizeof(document_model));
+    loader_result *result = (loader_result *)malloc(sizeof(loader_result));
+    if(NULL == result)
+    {
+        return NULL; // N.B. - memory is exhausted, abort early
+    }
 
-    if (!yaml_parser_initialize(&parser))
+    yaml_parser_t parser;    
+    memset(&parser, 0, sizeof(parser));
+
+    if(!yaml_parser_initialize(&parser))
     {
-        parser_error(&parser);
-        result = parser.error;
+        parser_error(&parser, result);
+        yaml_parser_delete(&parser);
+        return result;
     }
-    else
+
+    if(!init_model(model, 1))
     {
-        prepare_parser_source(&parser, input);
-        result = build_model(&parser, model);
+        yaml_parser_delete(&parser);
+        free_model(model);
+        return memory_exhausted(result);
     }
+
+    prepare_parser_source(&parser, input);
+    result = build_model(&parser, model, result);
     
     yaml_parser_delete(&parser);
     
@@ -168,9 +187,8 @@ static void prepare_parser_source(yaml_parser_t *parser, const source * restrict
     }
 }
 
-static int build_model(yaml_parser_t *parser, document_model * restrict model)
+static loader_result *build_model(yaml_parser_t *parser, document_model * restrict model, loader_result * restrict result)
 {
-    int result = 0;
     yaml_event_t event;
     
     memset(&event, 0, sizeof(event));
@@ -178,13 +196,15 @@ static int build_model(yaml_parser_t *parser, document_model * restrict model)
     document_context context;
     memset(&context, 0, sizeof(context));
     
+    result = success(result);
     bool done = false;
     while(!done)
     {
         if (!yaml_parser_parse(parser, &event))
         {
-            parser_error(parser);
-            result = parser->error;
+            result = parser_error(parser, result);
+            free_model(model);
+            abort_context(&context);
             break;
         }
 
@@ -192,7 +212,7 @@ static int build_model(yaml_parser_t *parser, document_model * restrict model)
     }
 
     unwind_model(&context, model);
-    
+
     return result;
 }
 
@@ -309,6 +329,22 @@ static node *pop_context(document_context *context)
     return result;
 }
 
+static void abort_context(document_context *context)
+{
+    node *top = pop_context(context);
+    while(NULL != top)
+    {
+        free_node(top);
+        top = pop_context(context);
+    }
+
+    size_t length = unwind_excursion(context);
+    while(0 != length)
+    {
+        length = unwind_excursion(context);
+    }
+}
+
 static size_t unwind_excursion(document_context *context)
 {
     if(NULL == context || NULL == context->excursions)
@@ -366,12 +402,24 @@ static void unwind_document(document_context *context)
 
 static void unwind_model(document_context *context, document_model *model)
 {
-    model->size = context->depth;
-    model->documents = (node **)malloc(sizeof(node *) * model->size);
-    
-    for(size_t i = 0; i < model->size; i++)
+    if(1 == context->depth)
     {
-        model->documents[(model->size - 1) - i] = pop_context(context);
+        model_add(model, pop_context(context));
+    }
+    else
+    {
+        node **documents = (node **)malloc(sizeof(node *) * context->depth);
+    
+        for(size_t i = 0; i < context->depth; i++)
+        {
+            documents[(context->depth - 1) - i] = pop_context(context);
+        }
+
+        for(size_t i = 0; i < context->depth; i++)
+        {
+            model_add(model, documents[i]);
+        }
+        free(documents);    
     }
 }
 
@@ -385,62 +433,143 @@ static inline node *context_top(document_context *context)
     return context->top->this;
 }
 
-void parser_error(yaml_parser_t *parser)
+static inline loader_result *invalid_input(void)
+{
+    loader_result *result = (loader_result *)malloc(sizeof(loader_result));
+    if(NULL == result)
+    {
+        return NULL; // N.B. - memory is exhausted, abort early
+    }
+    result->code = ERR_INVALID_ARGUMENTS;
+    result->dynamic_message = false;
+    result->message = "Invalid arguments";
+    result->position = 0;
+    result->line = 0;
+
+    return result;
+}
+
+static inline loader_result *memory_exhausted(loader_result *result)
+{
+    result->code = ERR_NO_MEMORY;
+    result->dynamic_message = false;
+    result->message = "Memory is exhausted";
+    result->position = 0;
+    result->line = 0;
+
+    return result;
+}
+
+static inline loader_result *success(loader_result *result)
+{
+    result->code = SUCCESS;
+    result->dynamic_message = false;
+    result->message = "Success";
+    result->position = 0;
+    result->line = 0;
+
+    return result;
+}
+
+static loader_result *parser_error(yaml_parser_t *parser, loader_result *result)
 {
     switch (parser->error)
     {
         case YAML_MEMORY_ERROR:
-            fprintf(stderr, "Memory error: Not enough memory for parsing\n");
-            break;
+            return memory_exhausted(result);
 	
         case YAML_READER_ERROR:
+            result->code = ERR_READER_FAILED;
+            result->position = parser->problem_offset;
+            result->line = 0;
             if (parser->problem_value != -1)
             {
-                fprintf(stderr, "Reader error: %s: #%X at %zd\n", parser->problem, parser->problem_value, parser->problem_offset);
+                result->dynamic_message = true;
+                asprintf(&result->message, "Reader error: %s: #%X at %zd", parser->problem, parser->problem_value, parser->problem_offset);
             }
             else
             {
-                fprintf(stderr, "Reader error: %s at %zd\n", parser->problem, parser->problem_offset);
+                result->dynamic_message = true;
+                asprintf(&result->message, "Reader error: %s at %zd", parser->problem, parser->problem_offset);
+            }
+            if(NULL == result->message)
+            {
+                result->dynamic_message = false;
+                result->message = "Reader error";
             }
             break;
 	
         case YAML_SCANNER_ERROR:
+            result->code = ERR_SCANNER_FAILED;
+            result->position = parser->problem_offset;
+            result->line = parser->problem_mark.line+1;
             if (parser->context)
             {
-                fprintf(stderr, "Scanner error: %s at line %ld, column %ld\n"
-                        "%s at line %ld, column %ld\n", parser->context,
-                        parser->context_mark.line+1, parser->context_mark.column+1,
-                        parser->problem, parser->problem_mark.line+1,
-                        parser->problem_mark.column+1);
+                result->dynamic_message = true;
+                asprintf(&result->message, "Scanner error: %s at line %ld, column %ld; %s at line %ld, column %ld",
+                         parser->context, parser->context_mark.line+1, parser->context_mark.column+1,
+                         parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
             }
             else
             {
-                fprintf(stderr, "Scanner error: %s at line %ld, column %ld\n",
-                        parser->problem, parser->problem_mark.line+1,
-                        parser->problem_mark.column+1);
+                result->dynamic_message = true;
+                asprintf(&result->message, "Scanner error: %s at line %ld, column %ld",
+                         parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
+            }
+            if(NULL == result->message)
+            {
+                result->dynamic_message = false;
+                result->message = "Scanner error";
             }
             break;
 	
         case YAML_PARSER_ERROR:
+            result->code = ERR_PARSER_FAILED;
+            result->position = parser->problem_offset;
+            result->line = parser->problem_mark.line+1;
             if (parser->context)
             {
-                fprintf(stderr, "Parser error: %s at line %ld, column %ld\n"
-                        "%s at line %ld, column %ld\n", parser->context,
-                        parser->context_mark.line+1, parser->context_mark.column+1,
-                        parser->problem, parser->problem_mark.line+1,
-                        parser->problem_mark.column+1);
+                result->dynamic_message = true;
+                asprintf(&result->message, "Parser error: %s at line %ld, column %ld; %s at line %ld, column %ld",
+                         parser->context, parser->context_mark.line+1, parser->context_mark.column+1,
+                         parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
             }
             else
             {
-                fprintf(stderr, "Parser error: %s at line %ld, column %ld\n",
-                        parser->problem, parser->problem_mark.line+1,
-                        parser->problem_mark.column+1);
+                result->dynamic_message = true;
+                asprintf(&result->message, "Parser error: %s at line %ld, column %ld",
+                         parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
+            }
+            if(NULL == result->message)
+            {
+                result->dynamic_message = false;
+                result->message = "Parser error";
             }
             break;
 	
         default:
-            /* Couldn't happen. */
-            fprintf(stderr, "Internal error\n");
+            result->code = ERR_OTHER;
+            result->position = 0;
+            result->line = 0;
+            result->dynamic_message = false;
+            result->message = "Other error";
             break;
     }
+
+    return result;
 }
+
+void free_loader_result(loader_result *result)
+{
+    if(NULL == result)
+    {
+        return;
+    }
+    if(result->dynamic_message)
+    {
+        free(result->message);
+    }
+    free(result);
+}
+
+

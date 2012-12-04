@@ -429,6 +429,10 @@ static inline node *make_node(enum kind kind)
 
 void free_model(document_model *model)
 {
+    if(NULL == model)
+    {
+        return;
+    }
     for(size_t i = 0; i < model->size; i++)
     {
         free_node(model_get_document(model, i));
@@ -511,15 +515,16 @@ bool init_model(document_model *model, size_t capacity)
 
     errno = 0;
     bool result = true;
+    model->size = 0;
     model->documents = (node **)malloc(sizeof(node *) * capacity);
-    if(NULL != model->documents)
+    if(NULL == model->documents)
     {
-        model->size = 0;
-        model->capacity = capacity;
+        model->capacity = 0;
+        result = false;
     }
     else
     {
-        result = false;
+        model->capacity = capacity;
     }
 
     return result;

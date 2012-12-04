@@ -147,7 +147,7 @@ struct jsonpath
     step **steps;
 };
 
-enum status_code
+enum jsonpath_status_code
 {
     SUCCESS = 0,
     ERR_NULL_EXPRESSION,
@@ -160,11 +160,11 @@ enum status_code
     ERR_EXPECTED_INTEGER
 };
 
-typedef enum status_code status_code;
+typedef enum jsonpath_status_code jsonpath_status_code;
 
 struct parser_result
 {
-    status_code code;
+    jsonpath_status_code code;
     char *message;
     size_t position;
 };

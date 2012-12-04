@@ -42,7 +42,34 @@
 
 #include "model.h"
 
-int build_model_from_string(const unsigned char *input, size_t size, document_model * restrict model);
-int build_model_from_file(FILE * restrict input, document_model * restrict model);
+enum loader_status_code
+{
+    SUCCESS = 0,
+    ERR_INVALID_ARGUMENTS,
+    ERR_NO_MEMORY,
+    ERR_READER_FAILED,
+    ERR_SCANNER_FAILED,
+    ERR_PARSER_FAILED,
+    ERR_OTHER
+};
+
+typedef enum loader_status_code loader_status_code;
+
+struct loader_result
+{
+    loader_status_code code;
+    char *message;
+    bool dynamic_message;
+    size_t position;
+    size_t line;
+};
+
+typedef struct loader_result loader_result;
+
+loader_result *load_model_from_string(const unsigned char *input, size_t size, document_model * restrict model);
+loader_result *load_model_from_file(FILE * restrict input, document_model * restrict model);
+
+void free_loader_result(loader_result *result);
+
 
 #endif

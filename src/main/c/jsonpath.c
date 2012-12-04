@@ -80,7 +80,7 @@ struct context
         SCRIPT_PREDICATE
     } state;
     
-    status_code code;
+    jsonpath_status_code code;
 };
 
 typedef struct context parser_context;
@@ -101,7 +101,7 @@ static const char * const MESSAGES[] =
 static inline void prepare_context(parser_context *context, uint8_t *expression, size_t length, jsonpath *path);
 static inline bool validate(parser_result *result, uint8_t *expression, size_t length, jsonpath *model);
 static inline char *prepare_message(parser_context *context);
-static inline char *prepare_simple_message(status_code code);
+static inline char *prepare_simple_message(jsonpath_status_code code);
 
 //typedef void (*parser)(parser_context *);
 //typedef void *(*combinator)(parser_result *(*first)(, ...);
@@ -217,7 +217,7 @@ static inline char *prepare_message(parser_context *context)
     return message;
 }
 
-static inline char *prepare_simple_message(status_code code)
+static inline char *prepare_simple_message(jsonpath_status_code code)
 {
     char *message = NULL;
     
