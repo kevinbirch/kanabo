@@ -64,7 +64,7 @@ struct context
 
 typedef struct context document_context;
 
-struct input_holder
+struct source
 {
     enum
     {
@@ -83,52 +83,50 @@ struct input_holder
     };
 };
 
-typedef struct input_holder input_holder;
+typedef struct source source;
 
-int build_model_from_input(const input_holder * restrict holder, document_model * restrict model);
-void prepare_parser_input(yaml_parser_t *parser, const input_holder * restrict holder);
-int build_model(yaml_parser_t *parser, document_model * restrict model);
+static int build_model_from_source(const source * restrict input, document_model * restrict model);
+static void prepare_parser_source(yaml_parser_t *parser, const source * restrict input);
+static int build_model(yaml_parser_t *parser, document_model * restrict model);
 
-static inline bool dispatch_event(yaml_event_t *event, document_context *context);
+static bool dispatch_event(yaml_event_t *event, document_context *context);
 
-static inline void push_context(document_context *context, node *value);
-static inline node *pop_context(document_context *context);
+static void push_context(document_context *context, node *value);
+static node *pop_context(document_context *context);
 
-static inline void save_excursion(document_context *context);
-static inline size_t unwind_excursion(document_context *context);
+static void save_excursion(document_context *context);
+static size_t unwind_excursion(document_context *context);
 
-static inline void unwind_sequence(document_context *context);
-static inline void unwind_mapping(document_context *context);
-static inline void unwind_document(document_context *context);
-static inline void unwind_model(document_context *context, document_model *model);
+static void unwind_sequence(document_context *context);
+static void unwind_mapping(document_context *context);
+static void unwind_document(document_context *context);
+static void unwind_model(document_context *context, document_model *model);
 
 static inline enum kind context_kind(document_context *context);
 static inline node *context_top(document_context *context);
 
-static inline void set_node_name(node *lvalue, unsigned char *name);
-
 void parser_error(yaml_parser_t *parser);
 
-int build_model_from_string(const unsigned char *input, size_t size, document_model * restrict model)
+int build_model_from_string(const unsigned char *string, size_t size, document_model * restrict model)
 {
-    input_holder holder;
-    holder.kind = STRING_INPUT;
-    holder.string = input;
-    holder.size = size;
+    source input;
+    input.kind = STRING_INPUT;
+    input.string = string;
+    input.size = size;
     
-    return build_model_from_input(&holder, model);
+    return build_model_from_source(&input, model);
 }
 
-int build_model_from_file(FILE * restrict input, document_model * restrict model)
+int build_model_from_file(FILE * restrict file, document_model * restrict model)
 {
-    input_holder holder;
-    holder.kind = FILE_INPUT;
-    holder.file = input;
+    source input;
+    input.kind = FILE_INPUT;
+    input.file = file;
     
-    return build_model_from_input(&holder, model);
+    return build_model_from_source(&input, model);
 }
 
-int build_model_from_input(const input_holder * restrict holder, document_model * restrict model)
+static int build_model_from_source(const source * restrict input, document_model * restrict model)
 {
     if(NULL == model)
     {
@@ -148,7 +146,7 @@ int build_model_from_input(const input_holder * restrict holder, document_model 
     }
     else
     {
-        prepare_parser_input(&parser, holder);
+        prepare_parser_source(&parser, input);
         result = build_model(&parser, model);
     }
     
@@ -157,20 +155,20 @@ int build_model_from_input(const input_holder * restrict holder, document_model 
     return result;
 }
 
-void prepare_parser_input(yaml_parser_t *parser, const input_holder * restrict holder)
+static void prepare_parser_source(yaml_parser_t *parser, const source * restrict input)
 {
-    switch(holder->kind)
+    switch(input->kind)
     {
         case STRING_INPUT:
-            yaml_parser_set_input_string(parser, holder->string, holder->size);
+            yaml_parser_set_input_string(parser, input->string, input->size);
             break;
         case FILE_INPUT:
-            yaml_parser_set_input_file(parser, holder->file);
+            yaml_parser_set_input_file(parser, input->file);
             break;
     }
 }
 
-int build_model(yaml_parser_t *parser, document_model * restrict model)
+static int build_model(yaml_parser_t *parser, document_model * restrict model)
 {
     int result = 0;
     yaml_event_t event;
@@ -198,7 +196,7 @@ int build_model(yaml_parser_t *parser, document_model * restrict model)
     return result;
 }
 
-static inline bool dispatch_event(yaml_event_t *event, document_context *context)
+static bool dispatch_event(yaml_event_t *event, document_context *context)
 {
     bool result = false;
     
@@ -248,7 +246,7 @@ static inline bool dispatch_event(yaml_event_t *event, document_context *context
     return result;
 }
 
-static inline void save_excursion(document_context *context)
+static void save_excursion(document_context *context)
 {
     struct excursion *excursion = malloc(sizeof(struct excursion));
     excursion->length = 0;
@@ -265,23 +263,7 @@ static inline void save_excursion(document_context *context)
     }
 }
 
-static inline size_t unwind_excursion(document_context *context)
-{
-    if(NULL == context || NULL == context->excursions)
-    {
-        return 0;
-    }
-    
-    struct excursion *top = context->excursions;
-    size_t result = top->length;
-    context->excursions = top->next;
-
-    free(top);
-    
-    return result;
-}
-
-static inline void push_context(document_context *context, node *value)
+static void push_context(document_context *context, node *value)
 {    
     struct cell *current = (struct cell *)malloc(sizeof(struct cell));
     current->this = value;    
@@ -305,7 +287,7 @@ static inline void push_context(document_context *context, node *value)
     context->top = current;
 }
 
-static inline node *pop_context(document_context *context)
+static node *pop_context(document_context *context)
 {
     if(NULL == context || NULL == context->stack || NULL == context->top)
     {
@@ -327,7 +309,23 @@ static inline node *pop_context(document_context *context)
     return result;
 }
 
-static inline void unwind_sequence(document_context *context)
+static size_t unwind_excursion(document_context *context)
+{
+    if(NULL == context || NULL == context->excursions)
+    {
+        return 0;
+    }
+    
+    struct excursion *top = context->excursions;
+    size_t result = top->length;
+    context->excursions = top->next;
+
+    free(top);
+    
+    return result;
+}
+
+static void unwind_sequence(document_context *context)
 {
     size_t count = unwind_excursion(context);
     node **items = (node **)malloc(sizeof(node *) * count);
@@ -343,7 +341,7 @@ static inline void unwind_sequence(document_context *context)
     push_context(context, sequence);
 }
 
-static inline void unwind_mapping(document_context *context)
+static void unwind_mapping(document_context *context)
 {
     size_t count = unwind_excursion(context) / 2;
     node *mapping = make_mapping_node(count);
@@ -359,14 +357,14 @@ static inline void unwind_mapping(document_context *context)
     push_context(context, mapping);
 }
 
-static inline void unwind_document(document_context *context)
+static void unwind_document(document_context *context)
 {
     node *root = pop_context(context);
     node *document = make_document_node(root);
     push_context(context, document);
 }
 
-static inline void unwind_model(document_context *context, document_model *model)
+static void unwind_model(document_context *context, document_model *model)
 {
     model->size = context->depth;
     model->documents = (node **)malloc(sizeof(node *) * model->size);
@@ -379,17 +377,12 @@ static inline void unwind_model(document_context *context, document_model *model
 
 static inline enum kind context_kind(document_context *context)
 {
-    return context_top(context)->tag.kind;
+    return node_get_kind(context_top(context));
 }
 
 static inline node *context_top(document_context *context)
 {
     return context->top->this;
-}
-
-static inline void set_node_name(node *lvalue, unsigned char *name)
-{
-    lvalue->tag.name = name;
 }
 
 void parser_error(yaml_parser_t *parser)
