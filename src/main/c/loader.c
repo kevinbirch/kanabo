@@ -215,7 +215,7 @@ static inline bool dispatch_event(yaml_event_t *event, document_context *context
             break;
                 
         case YAML_DOCUMENT_START_EVENT:
-            push_context(context, make_document_node());
+            push_context(context, make_document_node(make_scalar_node((unsigned char *)"dummy", 5)));
             break;
 
         case YAML_DOCUMENT_END_EVENT:
@@ -230,7 +230,7 @@ static inline bool dispatch_event(yaml_event_t *event, document_context *context
             break;                
 
         case YAML_SEQUENCE_START_EVENT:
-            push_context(context, make_sequence_node());
+            push_context(context, make_sequence_node(0));
             save_excursion(context);
             break;                
                 
@@ -239,7 +239,7 @@ static inline bool dispatch_event(yaml_event_t *event, document_context *context
             break;
             
         case YAML_MAPPING_START_EVENT:
-            push_context(context, make_mapping_node());
+            push_context(context, make_mapping_node(0));
             save_excursion(context);
             break;
 

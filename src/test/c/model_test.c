@@ -40,17 +40,18 @@
 #include <check.h>
 
 #include "model.h"
-#include "loader.h"
 #include "test.h"
 
-static const unsigned char * const YAML = (unsigned char *)
-    "one:\n"
-    "  - foo1\n"
-    "  - bar1\n"
-    "\n"
-    "two: foo2\n"
-    "\n"
-    "three: foo3\n";
+/* 
+  The document that will be used for testing this module is as follows:
+
+  one:
+    - foo1
+    - bar1
+  two: foo2
+  three: foo3
+
+ */
 
 static document_model model;
 
@@ -132,32 +133,40 @@ START_TEST (null_mapping)
 }
 END_TEST
 
-START_TEST (constructors)
-{
-    node *d = make_document_node();
-    ck_assert_not_null(d);
-    
-    node *s = make_scalar_node(NULL, 0);
-    ck_assert_null(s);
-    s = make_scalar_node((unsigned char *)"foo", 3);
-    ck_assert_not_null(s);
-    
-    node *v = make_sequence_node();
-    ck_assert_not_null(v);
-    
-    node *m = make_mapping_node();
-    ck_assert_not_null(m);    
-}
-END_TEST
-
 void setup(void)
 {
-    size_t yaml_size = strlen((char *)YAML);
-    int result = build_model_from_string(YAML, yaml_size, &model);
+    ck_assert_true(init_model(&model, 1));
 
-    ck_assert_int_eq(0, result);
-    ck_assert_not_null(model.documents);
-    ck_assert_int_eq(1, model_get_document_count(&model));
+    node *root = make_mapping_node(3);
+    ck_assert_not_null(root);
+
+    node *foo1 = make_scalar_node((unsigned char *)"foo1", 4);
+    ck_assert_not_null(foo1);
+    node *bar1 = make_scalar_node((unsigned char *)"bar1", 4);
+    ck_assert_not_null(bar1);
+    node *one_value = make_sequence_node(2);
+    ck_assert_not_null(one_value);
+    sequence_add(one_value, foo1);
+    sequence_add(one_value, bar1);
+    node *one = make_scalar_node((unsigned char *)"one", 3);
+    ck_assert_not_null(one);
+    mapping_put(root, one, one_value);
+    
+    node *two = make_scalar_node((unsigned char *)"two", 3);
+    ck_assert_not_null(two);
+    node *two_value = make_scalar_node((unsigned char *)"foo2", 4);
+    ck_assert_not_null(two_value);
+    mapping_put(root, two, two_value);
+    
+    node *three = make_scalar_node((unsigned char *)"three", 4);
+    ck_assert_not_null(three);
+    node *three_value = make_scalar_node((unsigned char *)"foo3", 4);
+    ck_assert_not_null(three_value);
+    mapping_put(root, three, three_value);
+
+    node *document = make_document_node(root);
+    ck_assert_not_null(document);
+    model_add(&model, document);
 }
 
 void teardown(void)
@@ -166,6 +175,36 @@ void teardown(void)
     ck_assert_null(model.documents);
     ck_assert_int_eq(0, model.size);
 }
+
+START_TEST (constructors)
+{
+    node *s = make_scalar_node(NULL, 0);
+    ck_assert_null(s);
+    s = make_scalar_node((unsigned char *)"foo", 3);
+    ck_assert_not_null(s);
+    
+    node *d = make_document_node(NULL);
+    ck_assert_null(d);
+    d = make_document_node(s);
+    ck_assert_not_null(d);
+    
+    node *v = make_sequence_node(0);
+    ck_assert_null(v);
+    v = make_sequence_node(1);
+    ck_assert_not_null(v);
+    ck_assert_not_null(v->content.sequence.value);
+    ck_assert_int_eq(1, v->content.sequence.capacity);
+    ck_assert_int_eq(0, v->content.size);
+    
+    node *m = make_mapping_node(0);
+    ck_assert_null(m);
+    m = make_mapping_node(1);
+    ck_assert_not_null(m);
+    ck_assert_not_null(m->content.mapping.value);
+    ck_assert_int_eq(1, m->content.mapping.capacity);
+    ck_assert_int_eq(0, m->content.size);
+}
+END_TEST
 
 START_TEST (document)
 {

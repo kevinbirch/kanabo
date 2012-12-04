@@ -70,11 +70,13 @@ struct node
         
             struct
             {
+                size_t capacity;
                 struct node **value;
             } sequence;
         
             struct
             {
+                size_t capacity;
                 struct key_value_pair **value;
             } mapping;
 
@@ -99,6 +101,7 @@ typedef struct key_value_pair key_value_pair;
 struct model
 {
     size_t size;
+    size_t capacity;
     node **documents;
 };
 
@@ -133,12 +136,21 @@ key_value_pair **mapping_get_all(node *mapping);
 typedef void (*mapping_iterator)(node *key, node *value, void *context);
 void iterate_mapping(node *mapping, mapping_iterator iterator, void *context);
 
-node *make_document_node(void);
+document_model *make_model(size_t capacity);
+bool init_model(document_model *model, size_t capacity);
+
+node *make_document_node(node *root);
+node *make_sequence_node(size_t capacity);
+node *make_mapping_node(size_t capacity);
 node *make_scalar_node(unsigned char *value, size_t length);
-node *make_sequence_node(void);
-node *make_mapping_node(void);
 
 void free_model(document_model *model);
+
+bool model_add(document_model *model, node *document);
+bool document_set_root(node *document, node *root);
+bool sequence_add(node *sequence, node *item);
+bool mapping_put(node *mapping, node *key, node *value);
+
 
 
 #endif
