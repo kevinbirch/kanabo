@@ -38,12 +38,16 @@
 #ifndef TEST_H
 #define TEST_H
 
-#define ck_assert_null(X) ck_assert_msg((X) == NULL, "Assert '"#X"==NULL' failed")
-#define ck_assert_not_null(X) ck_assert_msg((X) != NULL, "Assert '"#X"!=NULL' failed")
-#define ck_assert_buf_eq(X, N1, Y, N2) ck_assert_msg(memcmp((X), (Y), (N1) > (N2) ? (N2) : (N1)) == 0, "Assert 'memcmp("#X", "#Y", %zd)' failed", (N1) > (N2) ? (N2) : (N1))
+#define ck_assert_null(X) ck_assert_msg((X) == NULL, "Assertion '"#X"==NULL' failed")
+#define ck_assert_not_null(X) ck_assert_msg((X) != NULL, "Assertion '"#X"!=NULL' failed")
+#define ck_assert_buf_eq(X, N1, Y, N2) ck_assert_msg(memcmp((X), (Y), (N1) > (N2) ? (N2) : (N1)) == 0, "Assertion 'memcmp("#X", "#Y", %zd)' failed", (N1) > (N2) ? (N2) : (N1))
+#define ck_assert_true(X) ck_assert_msg((X) == true, "Assertion '"#X"==true' failed")
+#define ck_assert_false(X) ck_assert_msg((X) == false, "Assertion '"#X"==false' failed")
 
+Suite *master_suite(void);
 Suite *loader_suite(void);
 Suite *jsonpath_suite(void);
+Suite *model_suite(void);
 
 
 #endif
