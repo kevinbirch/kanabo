@@ -123,13 +123,22 @@ node **sequence_get_all(node *sequence);
 typedef void (*sequence_iterator)(node *each, void *context);
 void iterate_sequence(node *sequence, sequence_iterator iterator, void *context);
 
-key_value_pair  *mapping_get_key_value(node *mapping, size_t index);
+node            *mapping_get_value(node *mapping, char *key);
+node            *mapping_get_value_scalar_key(node *mapping, unsigned char *key, size_t key_length);
+node            *mapping_get_value_node_key(node *mapping, node *key);
+bool             mapping_contains_key(node *mapping, char *key);
+bool             mapping_contains_node_key(node *mapping, node *key);
 key_value_pair **mapping_get_all(node *mapping);
-node            *mapping_get_value(node *mapping, node *key);
-bool             mapping_contains_key(node *mapping, node *key);
 
 typedef void (*mapping_iterator)(node *key, node *value, void *context);
 void iterate_mapping(node *mapping, mapping_iterator iterator, void *context);
+
+node *make_document_node(void);
+node *make_scalar_node(unsigned char *value, size_t length);
+node *make_sequence_node(void);
+node *make_mapping_node(void);
+
+void free_model(document_model *model);
 
 
 #endif

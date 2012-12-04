@@ -46,6 +46,12 @@ static bool string_equals(unsigned char *one, size_t n1, unsigned char *two, siz
 static bool sequence_equals(node *one, node *two);
 static bool mapping_equals(node *one, node *two);
 
+static inline node *make_node(enum kind kind);
+
+static inline void free_node(node *value);
+static inline void free_sequence(node *sequence);
+static inline void free_mapping(node *mapping);
+
 node *model_get_document(document_model *model, size_t index)
 {
     node *result = NULL;
@@ -170,32 +176,33 @@ void iterate_sequence(node *sequence, sequence_iterator iterator, void *context)
     }
 }
 
-key_value_pair *mapping_get_key_value(node *mapping, size_t index)
-{
-    key_value_pair *result = NULL;
-    if(NULL != mapping && MAPPING == node_get_kind(mapping) && index <= (node_get_size(mapping) - 1))
-    {
-        result = mapping->content.mapping.value[index];
-    }
-    return result;
-}
-
-key_value_pair **mapping_get_all(node *mapping)
-{
-    key_value_pair **result = NULL;
-    if(NULL != mapping && MAPPING == node_get_kind(mapping))
-    {
-        result = mapping->content.mapping.value;
-    }
-    return result;
-}
-
-node *mapping_get_value(node *mapping, node *key)
+node *mapping_get_value(node *mapping, char *key)
 {
     node *result = NULL;
     if(NULL != mapping && MAPPING == node_get_kind(mapping) && NULL != key)
     {
-        for(size_t i = node_get_size(mapping); i < node_get_size(mapping); i++)
+        result = mapping_get_value_scalar_key(mapping, (unsigned char *)key, strlen(key));
+    }
+    return result;
+}
+
+node *mapping_get_value_scalar_key(node *mapping, unsigned char *key, size_t key_length)
+{
+    node *result = NULL;
+    if(NULL != mapping && MAPPING == node_get_kind(mapping) && NULL != key && 0 != key_length)
+    {
+        node *scalar = make_scalar_node(key, key_length);
+        result = mapping_get_value_node_key(mapping, scalar);
+    }
+    return result;
+}
+
+node *mapping_get_value_node_key(node *mapping, node *key)
+{
+    node *result = NULL;
+    if(NULL != mapping && MAPPING == node_get_kind(mapping) && NULL != key)
+    {
+        for(size_t i = 0; i < mapping->content.size; i++)
         {
             if(node_equals(key, mapping->content.mapping.value[i]->key))
             {
@@ -208,9 +215,24 @@ node *mapping_get_value(node *mapping, node *key)
     return result;
 }
 
-bool mapping_contains_key(node *mapping, node *key)
+bool mapping_contains_key(node *mapping, char *key)
 {
     return NULL != mapping_get_value(mapping, key);
+}
+
+bool mapping_contains_node_key(node *mapping, node *key)
+{
+    return NULL != mapping_get_value_node_key(mapping, key);
+}
+
+key_value_pair **mapping_get_all(node *mapping)
+{
+    key_value_pair **result = NULL;
+    if(NULL != mapping && MAPPING == node_get_kind(mapping))
+    {
+        result = mapping->content.mapping.value;
+    }
+    return result;
 }
 
 void iterate_mapping(node *mapping, mapping_iterator iterator, void *context)
@@ -288,4 +310,112 @@ static bool mapping_equals(node *one, node *two)
         }
     }
     return true;
+}
+
+node *make_document_node(void)
+{
+    node *result = make_node(DOCUMENT);
+    result->content.size = 1;
+    
+    return result;
+}
+
+node *make_scalar_node(unsigned char *value, size_t length)
+{
+    node *result = NULL;
+    if(NULL != value && 0 != length)
+    {
+        result = make_node(SCALAR);
+        result->content.size = length;
+        result->content.scalar.value = value;
+    }
+    
+    return result;
+}
+
+node *make_sequence_node(void)
+{
+    node *result = make_node(SEQUENCE);
+    result->content.size = 0;
+    result->content.sequence.value = NULL;
+    
+    return result;
+}    
+
+node *make_mapping_node(void)
+{
+    node *result = make_node(MAPPING);
+    result->content.size = 0;
+    result->content.mapping.value = NULL;
+    
+    return result;
+}    
+
+static inline node *make_node(enum kind kind)
+{
+    node *result = (node *)malloc(sizeof(struct node));
+    result->tag.kind = kind;
+    result->tag.name = NULL;
+    result->tag.name_length = 0;
+    
+    return result;
+}
+
+void free_model(document_model *model)
+{
+    for(size_t i = 0; i < model->size; i++)
+    {
+        free_node(model_get_document(model, i));
+    }
+    model->size = 0;
+    model->documents = NULL;
+}
+
+static inline void free_node(node *value)
+{
+    if(NULL == value)
+    {
+        return;
+    }
+    switch(node_get_kind(value))
+    {
+        case DOCUMENT:
+            free_node(document_get_root(value));
+            break;
+        case SCALAR:
+            free(scalar_get_value(value));
+            break;
+        case SEQUENCE:
+            free_sequence(value);
+            break;
+        case MAPPING:
+            free_mapping(value);
+            break;
+    }
+    free(value);
+}
+
+static inline void free_sequence(node *sequence)
+{
+    for(size_t i = 0; i < node_get_size(sequence); i++)
+    {
+        free_node(sequence_get_item(sequence, i));
+    }
+    free(sequence_get_all(sequence));
+}
+
+static inline void free_mapping(node *mapping)
+{
+    key_value_pair **pairs = mapping_get_all(mapping);
+    if(NULL == pairs)
+    {
+        return;
+    }
+    for(size_t i = 0; i < node_get_size(mapping); i++)
+    {
+        free_node(pairs[i]->key);
+        free_node(pairs[i]->value);
+        free(pairs[i]);
+    }
+    free(pairs);
 }
