@@ -14,7 +14,8 @@ qualified path
     ;
 
 relative path
-    = step, { qualified path }
+    = node type test, "()"
+    | step, [ qualified path ]
     ;
 
 abbreviated relative path
@@ -22,17 +23,7 @@ abbreviated relative path
     ;
 
 step
-    = node test, { predicate }
-    ;
-
-(* 
-   xxx - refactor this:
-   node type tests should be terminal,  and not support predicates
-   only name tests have predicates and can continue
- *)
-node test
-    = name test
-    | node type test, "()"
+    = name test, { predicate }
     ;
 
 name test

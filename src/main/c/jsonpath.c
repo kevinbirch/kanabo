@@ -59,7 +59,6 @@ static const char * const STATES[] =
     "relative path",
     "abbreviated relative path",
     "step",
-    "node test",
     "name test",
     "wildcard name test",
     "name",
@@ -87,7 +86,6 @@ enum state
     ST_RELATIVE_PATH,
     ST_ABBREVIATED_RELATIVE_PATH,
     ST_STEP,
-    ST_NODE_TEST,
     ST_NAME_TEST,
     ST_WILDCARD_NAME_TEST,
     ST_NAME,
@@ -149,7 +147,6 @@ static void qualified_path(parser_context *context);
 static void relative_path(parser_context *context);
 static void abbreviated_relative_path(parser_context *context);
 static void path_step(parser_context *context);
-static void node_test(parser_context *context);
 static void name_test(parser_context *context);
 static void wildcard_name(parser_context *context, step *name_test);
 static void name(parser_context *context, step *name_test);
@@ -266,20 +263,21 @@ parser_result *parse_jsonpath(uint8_t *expression, size_t length, jsonpath *mode
     prepare_context(&context, expression, length, model);
     
     path(&context);
+
+    result->code = context.code;
+    result->message = prepare_message(&context);
+    result->position = context.cursor;
+
     if(SUCCESS != context.code)
     {
-        fprintf(stdout, "aborted.\n");
         abort_context(&context);
+        fprintf(stdout, "aborted. %s\n", result->message);
     }
     else
     {
         unwind_context(&context);
         fprintf(stdout, "done. found %zd steps.\n", model->length);
     }
-
-    result->code = context.code;
-    result->message = prepare_message(&context);
-    result->position = context.cursor;
     
     return result;
 }
@@ -389,11 +387,17 @@ static void relative_path(parser_context *context)
 {
     enter_state(context, ST_RELATIVE_PATH);
 
-    path_step(context);
-
-    if(SUCCESS == context->code && has_more_input(context))
+    if(look_for(context, "()"))
     {
-        qualified_path(context);
+        node_type_test(context);
+    }
+    else
+    {
+        path_step(context);
+        if(SUCCESS == context->code && has_more_input(context))
+        {
+            qualified_path(context);
+        }
     }
 }
 
@@ -419,23 +423,9 @@ static void path_step(parser_context *context)
         context->code = ERR_PREMATURE_END_OF_INPUT;
         return;
     }
-    node_test(context);
+    name_test(context);
 
     // xxx - parse predicates here
-}
-
-static void node_test(parser_context *context)
-{
-    enter_state(context, ST_NODE_TEST);
-    
-    if(look_for(context, "()"))
-    {
-        node_type_test(context);
-    }
-    else
-    {
-        name_test(context);
-    }
 }
 
 static void name_test(parser_context *context)
@@ -493,6 +483,7 @@ static void name(parser_context *context, step *name_step)
         }
         offset++;
     }
+    // xxx - strip single quotes around name
     name_step->test.name.length = offset - context->cursor;
     name_step->test.name.value = (uint8_t *)malloc(name_step->test.name.length);
     if(NULL == name_step->test.name.value)
@@ -510,6 +501,18 @@ static void node_type_test(parser_context *context)
 
     // xxx - parse type tests here
     context->code = ERR_NOT_JSONPATH;
+    /*
+      scan ahead until '('
+      if test is 0 length, error
+      else create node and consume
+      if test length is < smallest test, error
+      else find matching test name
+      if not found, error
+      consume '('
+      consume whitespace
+      if current is not ')', error
+      else consume ')'
+     */
 }
 
 static bool look_for(parser_context *context, char *target)
