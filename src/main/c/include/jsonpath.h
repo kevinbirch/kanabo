@@ -92,7 +92,7 @@ typedef struct predicate predicate;
 
 struct step
 {
-    enum
+    enum kind
     {
         ROOT,
         SINGLE,
@@ -173,5 +173,8 @@ typedef struct parser_result parser_result;
 
 parser_result *parse_jsonpath(uint8_t *expression, size_t length, jsonpath *path);
 void free_parser_result(parser_result *result);
+
+void free_jsonpath(jsonpath *model);
+
 
 #endif
