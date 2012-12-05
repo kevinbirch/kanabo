@@ -92,7 +92,7 @@ typedef struct predicate predicate;
 
 struct step
 {
-    enum kind
+    enum step_kind
     {
         ROOT,
         SINGLE,
@@ -101,7 +101,7 @@ struct step
     
     struct
     {
-        enum
+        enum test_kind
         {
             NAME_TEST,
             TYPE_TEST
@@ -111,13 +111,11 @@ struct step
         {
             struct
             {
-                uint8_t *prefix;
-                size_t  prefix_length;
-                uint8_t *local;
-                size_t  local_length;
+                uint8_t *value;
+                size_t  length;
             } name;
         
-            enum
+            enum type_test_kind
             {
                 JSON_OBJECT,
                 JSON_ARRAY,
@@ -137,7 +135,7 @@ typedef struct step step;
 
 struct jsonpath
 {
-    enum
+    enum path_kind
     {
         ABSOLUTE_PATH,
         RELATIVE_PATH
@@ -172,8 +170,8 @@ struct parser_result
 typedef struct parser_result parser_result;
 
 parser_result *parse_jsonpath(uint8_t *expression, size_t length, jsonpath *path);
-void free_parser_result(parser_result *result);
 
+void free_parser_result(parser_result *result);
 void free_jsonpath(jsonpath *model);
 
 

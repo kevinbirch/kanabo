@@ -42,6 +42,15 @@
 #include "jsonpath.h"
 #include "test.h"
 
+static void assert_parser_result(parser_result *result, jsonpath *path, enum path_kind expected_kind, size_t expected_length);
+
+static void assert_root_step(jsonpath *path);
+static void assert_single_name_step(jsonpath *path, size_t index, char *name);
+//static void assert_recursive_name_step(jsonpath *path, size_t index, char *prefix, size_t prefix_length, char *local, size_t local_length);
+static void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind);
+static void assert_name(step * step, uint8_t *value, size_t length);
+static void assert_no_predicates(jsonpath *path, size_t index);
+
 START_TEST (null_expression)
 {
     jsonpath path;
@@ -92,25 +101,102 @@ START_TEST (null_path)
 }
 END_TEST
 
+static void assert_parser_result(parser_result *result, jsonpath *path, enum path_kind expected_kind, size_t expected_length)
+{
+    ck_assert_not_null(result);
+    ck_assert_int_eq(SUCCESS, result->code);
+    ck_assert_not_null(result->message);
+    ck_assert_int_ne(0, result->position);
+    ck_assert_int_eq(expected_kind, path->kind);
+    ck_assert_not_null(path->steps);
+    ck_assert_int_eq(expected_length, path->length);
+}
+
+static void assert_root_step(jsonpath *path)
+{
+    assert_step(path, 0, ROOT, NAME_TEST);
+    assert_no_predicates(path, 0);
+}
+
+static void assert_single_name_step(jsonpath *path, size_t index, char *name)
+{
+    assert_step(path, index, SINGLE, NAME_TEST);
+    assert_name(path->steps[index], (uint8_t *)name, strlen(name));
+}
+
+/*
+static void assert_recursive_name_step(jsonpath *path, size_t index, char *prefix, size_t prefix_length, char *local, size_t local_length)
+{
+    assert_step(path, index, RECURSIVE, NAME_TEST);
+    assert_qname(path->steps[index], (uint8_t *)prefix, prefix_length, (uint8_t *)local, local_length);
+}
+*/
+
+static void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind)
+{
+    ck_assert_int_eq(expected_step_kind, path->steps[index]->kind);
+    ck_assert_int_eq(expected_test_kind, path->steps[index]->test.kind);
+}
+
+static void assert_name(step * step, uint8_t *name, size_t length)
+{
+    ck_assert_buf_eq(name, length, step->test.name.value, step->test.name.length);
+}
+
+static void assert_no_predicates(jsonpath *path, size_t index)
+{
+    ck_assert_int_eq(0, path->steps[index]->predicate_count);
+    ck_assert_null(path->steps[index]->predicates);
+}
+
 START_TEST (dollar_only)
 {
     jsonpath path;
     parser_result *result = parse_jsonpath((uint8_t *)"$", 1, &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(SUCCESS, result->code);
-    ck_assert_not_null(result->message);
-    ck_assert_int_ne(0, result->position);
-
-    ck_assert_int_eq(ABSOLUTE_PATH, path.kind);
-    ck_assert_not_null(path.steps);
-    ck_assert_int_eq(1, path.length);
-    ck_assert_int_eq(ROOT, path.steps[0]->kind);
-    ck_assert_int_eq(0, path.steps[0]->predicate_count);
-    ck_assert_null(path.steps[0]->predicates);
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 1);
+    assert_root_step(&path);
 
     free_parser_result(result);
     free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (absolute_single_step)
+{
+    jsonpath path;
+    parser_result *result = parse_jsonpath((uint8_t *)"$.foo", 5, &path);
+    
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 2);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_no_predicates(&path, 0);
+
+    free_parser_result(result);
+    free_jsonpath(&path);    
+}
+END_TEST
+
+START_TEST (absolute_multi_step)
+{
+    jsonpath path;
+    char *expression = "$.foo.baz.yobble.thingum";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 5);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_single_name_step(&path, 2, "baz");
+    assert_single_name_step(&path, 3, "yobble");
+    assert_single_name_step(&path, 4, "thingum");
+    assert_no_predicates(&path, 0);
+    assert_no_predicates(&path, 1);
+    assert_no_predicates(&path, 2);
+    assert_no_predicates(&path, 3);
+    assert_no_predicates(&path, 4);
+
+    free_parser_result(result);
+    free_jsonpath(&path);    
 }
 END_TEST
 
@@ -123,6 +209,8 @@ Suite *jsonpath_suite(void)
     
     TCase *basic = tcase_create("basic");
     tcase_add_test(basic, dollar_only);
+    tcase_add_test(basic, absolute_single_step);
+    tcase_add_test(basic, absolute_multi_step);
 
     Suite *jsonpath = suite_create("JSONPath");
     suite_add_tcase(jsonpath, bad_input);

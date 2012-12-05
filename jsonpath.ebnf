@@ -25,17 +25,22 @@ step
     = node test, { predicate }
     ;
 
+(* 
+   refactor this:
+   node type tests should be terminal,  and not support predicates
+   only name tests have predicates and can continue
+ *)
 node test
     = name test
-    | node type, "()"
+    | node type test, "()"
     ;
 
 name test
     = "*"
-    | qname
+    | name
     ;
 
-node type
+node type test
     = "object"
     | "array"
     | "string"
@@ -44,31 +49,9 @@ node type
     | "null"
     ;
 
-qname
-    = prefixed name
-    | unprefixed name
-    ;
-
 (* this production may be quoted with single quotes, which will be discarded *)
-prefixed name
-    = prefix, ":", local part
-    ;
-
-unprefixed name
-    = local part
-    ;
-
-prefix
-    = ncname
-    ;
-
-local part
-    = ncname
-    ;
-
-(* this production may be quoted with single quotes, which will be discarded *)
-ncname
-    = ? any sequence of unicode characters and/or escape sequences, except ':' ?
+name
+    = ? any sequence of unicode characters and/or escape sequences, except '.' and '[' ?
     ;
 
 predicate
