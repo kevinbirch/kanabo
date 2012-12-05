@@ -153,7 +153,22 @@ START_TEST (missing_dot)
 }
 END_TEST
 
-// xxx - test for dot at begining of name
+START_TEST (relative_path_begins_with_dot)
+{
+    jsonpath path;
+    parser_result *result = parse_jsonpath((uint8_t *)".x", 2, &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EXPECTED_NAME_CHAR, result->code);
+    ck_assert_int_eq(1, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
 
 static void assert_parser_result(parser_result *result, jsonpath *path, enum path_kind expected_kind, size_t expected_length)
 {
@@ -270,6 +285,25 @@ START_TEST (absolute_multi_step)
 }
 END_TEST
 
+START_TEST (relative_multi_step)
+{
+    jsonpath path;
+    char *expression = "foo.bar..baz";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(result, &path, RELATIVE_PATH, 3);
+    assert_single_name_step(&path, 0, "foo");
+    assert_single_name_step(&path, 1, "bar");
+    assert_recursive_name_step(&path, 2, "baz");
+    assert_no_predicates(&path, 0);
+    assert_no_predicates(&path, 1);
+    assert_no_predicates(&path, 2);
+
+    free_parser_result(result);
+    free_jsonpath(&path);    
+}
+END_TEST
+
 START_TEST (quoted_multi_step)
 {
     jsonpath path;
@@ -299,6 +333,7 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input, missing_step_test);
     tcase_add_test(bad_input, missing_recursive_step_test);
     tcase_add_test(bad_input, missing_dot);
+    tcase_add_test(bad_input, relative_path_begins_with_dot);
     
     TCase *basic = tcase_create("basic");
     tcase_add_test(basic, dollar_only);
@@ -306,6 +341,7 @@ Suite *jsonpath_suite(void)
     tcase_add_test(basic, absolute_recursive_step);
     tcase_add_test(basic, absolute_multi_step);
     tcase_add_test(basic, quoted_multi_step);
+    tcase_add_test(basic, relative_multi_step);
 
     Suite *jsonpath = suite_create("JSONPath");
     suite_add_tcase(jsonpath, bad_input);

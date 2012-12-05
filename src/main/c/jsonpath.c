@@ -132,7 +132,8 @@ static const char * const MESSAGES[] =
     "Unable to allocate memory",
     "Not a JSONPath expression",
     "Premature end of input after position %d",
-    "At position %d: unexpected value '%c', was expecting '%c' instead",
+    "At position %d: unexpected character '%c', was expecting '%c' instead",
+    "At position %d: expected a name character, but found '%c' instead",
     "At position %d: expected an integer"
 };
 
@@ -322,6 +323,7 @@ static void path(parser_context *context)
     if(ERR_UNEXPECTED_VALUE == context->code && '$' == context->expected)
     {
         enter_state(context, ST_START);
+        context->current_step_kind = SINGLE;
         relative_path(context);
     }
 }
@@ -384,6 +386,11 @@ static void relative_path(parser_context *context)
 {
     enter_state(context, ST_RELATIVE_PATH);
 
+    if('.' == get_char(context))
+    {
+        context->code = ERR_EXPECTED_NAME_CHAR;
+        return;
+    }
     if(!has_more_input(context))
     {
         context->code = ERR_PREMATURE_END_OF_INPUT;
@@ -704,7 +711,7 @@ static inline void unexpected_value(parser_context *context, uint8_t expected)
 static inline void enter_state(parser_context *context, enum state state)
 {
     context->state = state;
-    //fprintf(stdout, "entering state: '%s'\n", STATES[state]);
+    fprintf(stdout, "entering state: '%s'\n", STATES[state]);
 }
 
 static char *prepare_message(parser_context *context)
@@ -722,6 +729,9 @@ static char *prepare_message(parser_context *context)
         case ERR_UNEXPECTED_VALUE:
             asprintf(&message, MESSAGES[context->code], context->cursor + 1,
                      context->input[context->cursor], context->expected);
+            break;
+        case ERR_EXPECTED_NAME_CHAR:
+            asprintf(&message, MESSAGES[context->code], context->cursor + 1, context->input[context->cursor]);
             break;
         default:
             message = prepare_simple_message(context->code);
