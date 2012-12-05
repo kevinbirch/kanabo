@@ -9,8 +9,8 @@ absolute path
     ;
 
 qualified path
-    = ".", relative path
-    | abbreviated relative path
+    = abbreviated relative path
+    | ".", relative path
     ;
 
 relative path

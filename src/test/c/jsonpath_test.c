@@ -102,6 +102,40 @@ START_TEST (null_path)
 }
 END_TEST
 
+START_TEST (missing_step_test)
+{
+    jsonpath path;
+    parser_result *result = parse_jsonpath((uint8_t *)"$.", 2, &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_PREMATURE_END_OF_INPUT, result->code);
+    ck_assert_int_eq(2, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (missing_recursive_step_test)
+{
+    jsonpath path;
+    parser_result *result = parse_jsonpath((uint8_t *)"$..", 3, &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_PREMATURE_END_OF_INPUT, result->code);
+    ck_assert_int_eq(3, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
 static void assert_parser_result(parser_result *result, jsonpath *path, enum path_kind expected_kind, size_t expected_length)
 {
     ck_assert_not_null(result);
@@ -243,6 +277,8 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input, null_expression);
     tcase_add_test(bad_input, zero_length);
     tcase_add_test(bad_input, null_path);
+    tcase_add_test(bad_input, missing_step_test);
+    tcase_add_test(bad_input, missing_recursive_step_test);
     
     TCase *basic = tcase_create("basic");
     tcase_add_test(basic, dollar_only);

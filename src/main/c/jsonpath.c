@@ -131,7 +131,7 @@ static const char * const MESSAGES[] =
     "Output path is NULL",
     "Unable to allocate memory",
     "Not a JSONPath expression",
-    "Premature end of input at position %d",
+    "Premature end of input after position %d",
     "At position %d: unexpected char %c, was expecting %c instead",
     "At position %d: expected an integer"
 };
@@ -160,6 +160,7 @@ static inline uint8_t get_char(parser_context *context);
 static inline uint8_t peek(parser_context *context, size_t offset);
 static inline void consume_char(parser_context *context);
 static inline void consume_chars(parser_context *context, size_t count);
+static inline void push_back(parser_context *context);
 
 // step constructors
 static step *make_root_step(void);
@@ -362,14 +363,10 @@ static void qualified_path(parser_context *context)
 {
     enter_state(context, ST_QUALIFIED_PATH);
 
-    if(2 > remaining(context))
+    abbreviated_relative_path(context);
+    if(SUCCESS == context->code)
     {
-        context->code = ERR_PREMATURE_END_OF_INPUT;
         return;
-    }
-    if('.' == get_char(context) && '.' == peek(context, 1))
-    {
-        abbreviated_relative_path(context);
     }
     else if('.' == get_char(context))
     {
@@ -386,6 +383,12 @@ static void qualified_path(parser_context *context)
 static void relative_path(parser_context *context)
 {
     enter_state(context, ST_RELATIVE_PATH);
+
+    if(!has_more_input(context))
+    {
+        context->code = ERR_PREMATURE_END_OF_INPUT;
+        return;
+    }
 
     if(look_for(context, "()"))
     {
@@ -404,13 +407,20 @@ static void relative_path(parser_context *context)
 static void abbreviated_relative_path(parser_context *context)
 {
     enter_state(context, ST_ABBREVIATED_RELATIVE_PATH);
-    if(3 > remaining(context))
+    if('.' != get_char(context))
     {
-        context->code = ERR_PREMATURE_END_OF_INPUT;
+        unexpected_value(context, '.');
         return;
     }
     consume_char(context);
+    if('.' != get_char(context))
+    {
+        unexpected_value(context, '.');
+        push_back(context);
+        return;
+    }
     consume_char(context);
+
     context->current_step_kind = RECURSIVE;
     relative_path(context);
 }
@@ -570,6 +580,11 @@ static inline void consume_chars(parser_context *context, size_t count)
     context->cursor += count;
 }
 
+static inline void push_back(parser_context *context)
+{
+    context->cursor--;
+}
+
 static inline size_t remaining(parser_context *context)
 {
     return (context->length - 1) - context->cursor;
@@ -689,7 +704,7 @@ static inline void unexpected_value(parser_context *context, uint8_t expected)
 static inline void enter_state(parser_context *context, enum state state)
 {
     context->state = state;
-    fprintf(stdout, "entering state: '%s'\n", STATES[state]);
+    //fprintf(stdout, "entering state: '%s'\n", STATES[state]);
 }
 
 static char *prepare_message(parser_context *context)
