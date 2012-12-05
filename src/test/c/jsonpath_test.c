@@ -207,11 +207,30 @@ START_TEST (absolute_multi_step)
     assert_single_name_step(&path, 2, "baz");
     assert_recursive_name_step(&path, 3, "yobble");
     assert_single_name_step(&path, 4, "thingum");
-    assert_no_predicates(&path, 0);
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
     assert_no_predicates(&path, 3);
     assert_no_predicates(&path, 4);
+
+    free_parser_result(result);
+    free_jsonpath(&path);    
+}
+END_TEST
+
+START_TEST (quoted_multi_step)
+{
+    jsonpath path;
+    char *expression = "$.foo.'happy fun ball'.bar";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 4);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_single_name_step(&path, 2, "happy fun ball");
+    assert_single_name_step(&path, 3, "bar");
+    assert_no_predicates(&path, 1);
+    assert_no_predicates(&path, 2);
+    assert_no_predicates(&path, 3);
 
     free_parser_result(result);
     free_jsonpath(&path);    
@@ -230,6 +249,7 @@ Suite *jsonpath_suite(void)
     tcase_add_test(basic, absolute_single_step);
     tcase_add_test(basic, absolute_recursive_step);
     tcase_add_test(basic, absolute_multi_step);
+    tcase_add_test(basic, quoted_multi_step);
 
     Suite *jsonpath = suite_create("JSONPath");
     suite_add_tcase(jsonpath, bad_input);

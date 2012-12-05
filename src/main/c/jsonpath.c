@@ -484,6 +484,13 @@ static void name(parser_context *context, step *name_step)
         offset++;
     }
     // xxx - strip single quotes around name
+    bool quoted = false;
+    if('\'' == get_char(context) && '\'' == context->input[offset - 1])
+    {
+        consume_char(context);
+        offset--;
+        quoted = true;
+    }
     name_step->test.name.length = offset - context->cursor;
     name_step->test.name.value = (uint8_t *)malloc(name_step->test.name.length);
     if(NULL == name_step->test.name.value)
@@ -493,6 +500,10 @@ static void name(parser_context *context, step *name_step)
     }
     memcpy(name_step->test.name.value, context->input + context->cursor, name_step->test.name.length);
     consume_chars(context, name_step->test.name.length);
+    if(quoted)
+    {
+        consume_char(context);
+    }
 }
 
 static void node_type_test(parser_context *context)
