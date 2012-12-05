@@ -46,7 +46,8 @@ static void assert_parser_result(parser_result *result, jsonpath *path, enum pat
 
 static void assert_root_step(jsonpath *path);
 static void assert_single_name_step(jsonpath *path, size_t index, char *name);
-//static void assert_recursive_name_step(jsonpath *path, size_t index, char *prefix, size_t prefix_length, char *local, size_t local_length);
+static void assert_recursive_name_step(jsonpath *path, size_t index, char *name);
+static void assert_name_step(jsonpath *path, size_t index, char *name, enum step_kind expected_step_kind);
 static void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind);
 static void assert_name(step * step, uint8_t *value, size_t length);
 static void assert_no_predicates(jsonpath *path, size_t index);
@@ -120,17 +121,19 @@ static void assert_root_step(jsonpath *path)
 
 static void assert_single_name_step(jsonpath *path, size_t index, char *name)
 {
-    assert_step(path, index, SINGLE, NAME_TEST);
-    assert_name(path->steps[index], (uint8_t *)name, strlen(name));
+    assert_name_step(path, index, name, SINGLE);
 }
 
-/*
-static void assert_recursive_name_step(jsonpath *path, size_t index, char *prefix, size_t prefix_length, char *local, size_t local_length)
+static void assert_recursive_name_step(jsonpath *path, size_t index, char *name)
 {
-    assert_step(path, index, RECURSIVE, NAME_TEST);
-    assert_qname(path->steps[index], (uint8_t *)prefix, prefix_length, (uint8_t *)local, local_length);
+    assert_name_step(path, index, name, RECURSIVE);
 }
-*/
+
+static void assert_name_step(jsonpath *path, size_t index, char *name, enum step_kind expected_step_kind)
+{
+    assert_step(path, index, expected_step_kind, NAME_TEST);
+    assert_name(path->steps[index], (uint8_t *)name, strlen(name));
+}
 
 static void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind)
 {
@@ -177,17 +180,32 @@ START_TEST (absolute_single_step)
 }
 END_TEST
 
+START_TEST (absolute_recursive_step)
+{
+    jsonpath path;
+    parser_result *result = parse_jsonpath((uint8_t *)"$..foo", 6, &path);
+    
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 2);
+    assert_root_step(&path);
+    assert_recursive_name_step(&path, 1, "foo");
+    assert_no_predicates(&path, 0);
+
+    free_parser_result(result);
+    free_jsonpath(&path);    
+}
+END_TEST
+
 START_TEST (absolute_multi_step)
 {
     jsonpath path;
-    char *expression = "$.foo.baz.yobble.thingum";
+    char *expression = "$.foo.baz..yobble.thingum";
     parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 5);
     assert_root_step(&path);
     assert_single_name_step(&path, 1, "foo");
     assert_single_name_step(&path, 2, "baz");
-    assert_single_name_step(&path, 3, "yobble");
+    assert_recursive_name_step(&path, 3, "yobble");
     assert_single_name_step(&path, 4, "thingum");
     assert_no_predicates(&path, 0);
     assert_no_predicates(&path, 1);
@@ -210,6 +228,7 @@ Suite *jsonpath_suite(void)
     TCase *basic = tcase_create("basic");
     tcase_add_test(basic, dollar_only);
     tcase_add_test(basic, absolute_single_step);
+    tcase_add_test(basic, absolute_recursive_step);
     tcase_add_test(basic, absolute_multi_step);
 
     Suite *jsonpath = suite_create("JSONPath");

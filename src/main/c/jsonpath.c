@@ -408,9 +408,7 @@ static void abbreviated_relative_path(parser_context *context)
     consume_char(context);
     consume_char(context);
     context->current_step_kind = RECURSIVE;
-    // xxx - create recursive step here
-
-    context->code = ERR_NOT_JSONPATH;
+    relative_path(context);
 }
 
 static void path_step(parser_context *context)
