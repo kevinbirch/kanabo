@@ -54,7 +54,7 @@ typedef struct node node;
 static const char * const STATES[] =
 {
     "start",
-    "absoute path",
+    "absolute path",
     "qualified path",
     "relative path",
     "abbreviated relative path",
@@ -132,7 +132,7 @@ static const char * const MESSAGES[] =
     "Unable to allocate memory",
     "Not a JSONPath expression",
     "Premature end of input after position %d",
-    "At position %d: unexpected char %c, was expecting %c instead",
+    "At position %d: unexpected value '%c', was expecting '%c' instead",
     "At position %d: expected an integer"
 };
 
@@ -267,7 +267,7 @@ parser_result *parse_jsonpath(uint8_t *expression, size_t length, jsonpath *mode
 
     result->code = context.code;
     result->message = prepare_message(&context);
-    result->position = context.cursor;
+    result->position = context.cursor + 1;
 
     if(SUCCESS != context.code)
     {
@@ -318,18 +318,18 @@ static void path(parser_context *context)
 {
     enter_state(context, ST_START);
     absolute_path(context);
-    if(SUCCESS == context->code)
-    {
-        return;
-    }
 
-    enter_state(context, ST_START);
-    relative_path(context);
+    if(ERR_UNEXPECTED_VALUE == context->code && '$' == context->expected)
+    {
+        enter_state(context, ST_START);
+        relative_path(context);
+    }
 }
 
 static void absolute_path(parser_context *context)
 {
     enter_state(context, ST_ABSOLUTE_PATH);
+
     if('$' == get_char(context))
     {
         context->code = SUCCESS;
@@ -364,7 +364,7 @@ static void qualified_path(parser_context *context)
     enter_state(context, ST_QUALIFIED_PATH);
 
     abbreviated_relative_path(context);
-    if(SUCCESS == context->code)
+    if(SUCCESS == context->code || !has_more_input(context))
     {
         return;
     }
@@ -435,7 +435,7 @@ static void path_step(parser_context *context)
     }
     name_test(context);
 
-    // xxx - parse predicates here
+    // xxx - if success, parse predicates here
 }
 
 static void name_test(parser_context *context)
@@ -493,7 +493,7 @@ static void name(parser_context *context, step *name_step)
         }
         offset++;
     }
-    // xxx - strip single quotes around name
+
     bool quoted = false;
     if('\'' == get_char(context) && '\'' == context->input[offset - 1])
     {
@@ -714,11 +714,13 @@ static char *prepare_message(parser_context *context)
     switch(context->code)
     {
         case ERR_PREMATURE_END_OF_INPUT:
-        case ERR_EXPECTED_INTEGER:
             asprintf(&message, MESSAGES[context->code], context->cursor);
             break;
+        case ERR_EXPECTED_INTEGER:
+            asprintf(&message, MESSAGES[context->code], context->cursor + 1);
+            break;
         case ERR_UNEXPECTED_VALUE:
-            asprintf(&message, MESSAGES[context->code], context->cursor, 
+            asprintf(&message, MESSAGES[context->code], context->cursor + 1,
                      context->input[context->cursor], context->expected);
             break;
         default:
