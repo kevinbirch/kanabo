@@ -80,29 +80,29 @@ static const char * const STATES[] =
 
 enum state
 {
-    START = 0,
-    ABSOLUTE_PATH,
-    QUALIFIED_PATH,
-    RELATIVE_PATH,
-    ABBREVIATED_RELATIVE_PATH,
-    STEP,
-    NAME_TEST,
-    WILDCARD_NAME_TEST,
-    QNAME_TEST,
-    TYPE_TEST,
-    JSON_OBJECT_TYPE_TEST,
-    JSON_ARRAY_TYPE_TEST,
-    JSON_STRING_TYPE_TEST,
-    JSON_NUMBER_TYPE_TEST,
-    JSON_BOOLEAN_TYPE_TEST,
-    JSON_NULL_TYPE_TEST,
-    PREDICATE,
-    WILDCARD_PREDICATE,
-    SUBSCRIPT_PREDICATE,
-    SLICE_PREDICATE,
-    JOIN_PREDICATE,
-    FILTER_PREDICATE,
-    SCRIPT_PREDICATE
+    ST_START = 0,
+    ST_ABSOLUTE_PATH,
+    ST_QUALIFIED_PATH,
+    ST_RELATIVE_PATH,
+    ST_ABBREVIATED_RELATIVE_PATH,
+    ST_STEP,
+    ST_NAME_TEST,
+    ST_WILDCARD_NAME_TEST,
+    ST_QNAME_TEST,
+    ST_TYPE_TEST,
+    ST_JSON_OBJECT_TYPE_TEST,
+    ST_JSON_ARRAY_TYPE_TEST,
+    ST_JSON_STRING_TYPE_TEST,
+    ST_JSON_NUMBER_TYPE_TEST,
+    ST_JSON_BOOLEAN_TYPE_TEST,
+    ST_JSON_NULL_TYPE_TEST,
+    ST_PREDICATE,
+    ST_WILDCARD_PREDICATE,
+    ST_SUBSCRIPT_PREDICATE,
+    ST_SLICE_PREDICATE,
+    ST_JOIN_PREDICATE,
+    ST_FILTER_PREDICATE,
+    ST_SCRIPT_PREDICATE
 };
 
 struct context
@@ -313,20 +313,20 @@ static void unwind_context(parser_context *context)
 
 static void path(parser_context *context)
 {
-    enter_state(context, START);
+    enter_state(context, ST_START);
     absolute_path(context);
     if(SUCCESS == context->code)
     {
         return;
     }
 
-    enter_state(context, START);
+    enter_state(context, ST_START);
     relative_path(context);
 }
 
 static void absolute_path(parser_context *context)
 {
-    enter_state(context, ABSOLUTE_PATH);
+    enter_state(context, ST_ABSOLUTE_PATH);
     if('$' == get_char(context))
     {
         context->code = SUCCESS;
@@ -357,12 +357,12 @@ static void absolute_path(parser_context *context)
 
 static void qualified_path(parser_context *context)
 {
-    enter_state(context, QUALIFIED_PATH);
+    enter_state(context, ST_QUALIFIED_PATH);
 }
 
 static void relative_path(parser_context *context)
 {
-    enter_state(context, RELATIVE_PATH);
+    enter_state(context, ST_RELATIVE_PATH);
 
     context->code = SUCCESS;
     context->model->kind = RELATIVE_PATH;
@@ -481,7 +481,7 @@ static inline void prepare_context(parser_context *context, uint8_t *expression,
     context->input = expression;
     context->length = length;
     context->cursor = 0;
-    context->state = START;
+    context->state = ST_START;
     context->model = path;    
 }
 

@@ -102,9 +102,12 @@ START_TEST (dollar_only)
     ck_assert_not_null(result->message);
     ck_assert_int_ne(0, result->position);
 
+    ck_assert_int_eq(ABSOLUTE_PATH, path.kind);
     ck_assert_not_null(path.steps);
     ck_assert_int_eq(1, path.length);
     ck_assert_int_eq(ROOT, path.steps[0]->kind);
+    ck_assert_int_eq(0, path.steps[0]->predicate_count);
+    ck_assert_null(path.steps[0]->predicates);
 
     free_parser_result(result);
     free_jsonpath(&path);
