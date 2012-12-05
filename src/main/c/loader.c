@@ -89,19 +89,19 @@ static loader_result *load_model_from_source(const source * restrict input, docu
 static void prepare_parser_source(yaml_parser_t *parser, const source * restrict input);
 static loader_result *build_model(yaml_parser_t *parser, document_model * restrict model, loader_result * restrict result);
 
-static bool dispatch_event(yaml_event_t *event, document_context *context);
+static bool dispatch_event(yaml_event_t *event, document_context *context, loader_result * restrict result);
 
-static void push_context(document_context *context, node *value);
+static bool push_context(document_context *context, node *value);
 static node *pop_context(document_context *context);
 static void abort_context(document_context *context);
 
-static void save_excursion(document_context *context);
+static bool save_excursion(document_context *context);
 static size_t unwind_excursion(document_context *context);
 
-static void unwind_sequence(document_context *context);
-static void unwind_mapping(document_context *context);
-static void unwind_document(document_context *context);
-static void unwind_model(document_context *context, document_model *model);
+static bool unwind_sequence(document_context *context);
+static bool unwind_mapping(document_context *context);
+static bool unwind_document(document_context *context);
+static bool unwind_model(document_context *context, document_model *model);
 
 static inline enum kind context_kind(document_context *context);
 static inline node *context_top(document_context *context);
@@ -203,22 +203,28 @@ static loader_result *build_model(yaml_parser_t *parser, document_model * restri
         if (!yaml_parser_parse(parser, &event))
         {
             result = parser_error(parser, result);
-            free_model(model);
-            abort_context(&context);
             break;
         }
 
-        done = dispatch_event(&event, &context);        
+        done = dispatch_event(&event, &context, result);
     }
 
-    unwind_model(&context, model);
+    if(SUCCESS == result->code)
+    {
+        unwind_model(&context, model);
+    }
+    else
+    {
+        free_model(model);
+        abort_context(&context);
+    }
 
     return result;
 }
 
-static bool dispatch_event(yaml_event_t *event, document_context *context)
+static bool dispatch_event(yaml_event_t *event, document_context *context, loader_result * restrict result)
 {
-    bool result = false;
+    bool done = false;
     
     switch(event->type)
     {
@@ -229,46 +235,74 @@ static bool dispatch_event(yaml_event_t *event, document_context *context)
             break;
                 
         case YAML_STREAM_END_EVENT:
-            result = true;
+            done = true;
             break;
                 
         case YAML_DOCUMENT_START_EVENT:
             break;
 
         case YAML_DOCUMENT_END_EVENT:
-            unwind_document(context);
+            if(!unwind_document(context))
+            {
+                result = memory_exhausted(result);
+                done = true;
+            }
             break;
                 
         case YAML_ALIAS_EVENT:
             break;
                 
         case YAML_SCALAR_EVENT:
-            push_context(context, make_scalar_node(event->data.scalar.value, event->data.scalar.length));
+            if(!push_context(context, make_scalar_node(event->data.scalar.value, event->data.scalar.length)))
+            {
+                result = memory_exhausted(result);
+                done = true;
+            }
             break;                
 
         case YAML_SEQUENCE_START_EVENT:
-            save_excursion(context);
+            if(!save_excursion(context))
+            {
+                result = memory_exhausted(result);
+                done = true;
+            }
             break;                
                 
         case YAML_SEQUENCE_END_EVENT:
-            unwind_sequence(context);
+            if(!unwind_sequence(context))
+            {
+                result = memory_exhausted(result);
+                done = true;
+            }
             break;
             
         case YAML_MAPPING_START_EVENT:
-            save_excursion(context);
+            if(!save_excursion(context))
+            {
+                result = memory_exhausted(result);
+                done = true;
+            }
             break;
 
         case YAML_MAPPING_END_EVENT:
-            unwind_mapping(context);
+            if(!unwind_mapping(context))
+            {
+                result = memory_exhausted(result);
+                done = true;
+            }
             break;                
     }
 
-    return result;
+    return done;
 }
 
-static void save_excursion(document_context *context)
+static bool save_excursion(document_context *context)
 {
     struct excursion *excursion = malloc(sizeof(struct excursion));
+    if(NULL == excursion)
+    {
+        return false;
+    }
     excursion->length = 0;
 
     if(NULL == context->excursions)
@@ -281,11 +315,16 @@ static void save_excursion(document_context *context)
         excursion->next = context->excursions;
         context->excursions = excursion;
     }
+    return true;
 }
 
-static void push_context(document_context *context, node *value)
+static bool push_context(document_context *context, node *value)
 {    
     struct cell *current = (struct cell *)malloc(sizeof(struct cell));
+    if(NULL == current)
+    {
+        return false;
+    }
     current->this = value;    
 
     if(NULL == context->stack)
@@ -305,6 +344,8 @@ static void push_context(document_context *context, node *value)
         
     current->next = context->top;
     context->top = current;
+
+    return true;
 }
 
 static node *pop_context(document_context *context)
@@ -361,11 +402,14 @@ static size_t unwind_excursion(document_context *context)
     return result;
 }
 
-static void unwind_sequence(document_context *context)
+static bool unwind_sequence(document_context *context)
 {
     size_t count = unwind_excursion(context);
     node **items = (node **)malloc(sizeof(node *) * count);
-    
+    if(NULL == items)
+    {
+        return false;
+    }
     for(size_t i = 0; i < count; i++)
     {
         items[(count - 1) - i] = pop_context(context);
@@ -375,9 +419,10 @@ static void unwind_sequence(document_context *context)
     sequence_add_all(sequence, items, count);
     free(items);
     push_context(context, sequence);
+    return true;
 }
 
-static void unwind_mapping(document_context *context)
+static bool unwind_mapping(document_context *context)
 {
     size_t count = unwind_excursion(context) / 2;
     node *mapping = make_mapping_node(count);
@@ -391,16 +436,18 @@ static void unwind_mapping(document_context *context)
     }
 
     push_context(context, mapping);
+    return true;
 }
 
-static void unwind_document(document_context *context)
+static bool unwind_document(document_context *context)
 {
     node *root = pop_context(context);
     node *document = make_document_node(root);
     push_context(context, document);
+    return true;
 }
 
-static void unwind_model(document_context *context, document_model *model)
+static bool unwind_model(document_context *context, document_model *model)
 {
     if(1 == context->depth)
     {
@@ -409,7 +456,11 @@ static void unwind_model(document_context *context, document_model *model)
     else
     {
         node **documents = (node **)malloc(sizeof(node *) * context->depth);
-    
+        if(NULL == documents)
+        {
+            return false;
+        }
+
         for(size_t i = 0; i < context->depth; i++)
         {
             documents[(context->depth - 1) - i] = pop_context(context);
@@ -421,6 +472,7 @@ static void unwind_model(document_context *context, document_model *model)
         }
         free(documents);    
     }
+    return true;
 }
 
 static inline enum kind context_kind(document_context *context)
