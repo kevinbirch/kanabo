@@ -170,6 +170,155 @@ START_TEST (relative_path_begins_with_dot)
 }
 END_TEST
 
+START_TEST (quoted_empty_step)
+{
+    jsonpath path;
+    char *expression = "$.foo.''.bar";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EXPECTED_NAME_CHAR, result->code);
+    ck_assert_int_eq(8, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (bogus_type_test_name)
+{
+    jsonpath path;
+    char *expression = "$.foo.monkey()";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
+    ck_assert_int_eq(7, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (bogus_type_test_name_oblong)
+{
+    jsonpath path;
+    char *expression = "$.foo.oblong()";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
+    ck_assert_int_eq(7, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (bogus_type_test_name_alloy)
+{
+    jsonpath path;
+    char *expression = "$.foo.alloy()";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
+    ck_assert_int_eq(7, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (bogus_type_test_name_strong)
+{
+    jsonpath path;
+    char *expression = "$.foo.strong()";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
+    ck_assert_int_eq(7, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (bogus_type_test_name_numred)
+{
+    jsonpath path;
+    char *expression = "$.foo.numred()";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
+    ck_assert_int_eq(7, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (bogus_type_test_name_booloud)
+{
+    jsonpath path;
+    char *expression = "$.foo.booloud()";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
+    ck_assert_int_eq(7, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (bogus_type_test_name_narl)
+{
+    jsonpath path;
+    char *expression = "$.foo.narl()";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
+    ck_assert_int_eq(7, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
+// xxx - type test with junk after parens: step, predicate
+// xxx - type test missing closing paren
+// xxx - type test with whitespace inside parens
+// xxx - bogus zero-length type test name
+
 static void assert_parser_result(parser_result *result, jsonpath *path, enum path_kind expected_kind, size_t expected_length)
 {
     ck_assert_not_null(result);
@@ -334,7 +483,15 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input, missing_recursive_step_test);
     tcase_add_test(bad_input, missing_dot);
     tcase_add_test(bad_input, relative_path_begins_with_dot);
-    
+    tcase_add_test(bad_input, quoted_empty_step);
+    tcase_add_test(bad_input, bogus_type_test_name);
+    tcase_add_test(bad_input, bogus_type_test_name_oblong);
+    tcase_add_test(bad_input, bogus_type_test_name_alloy);
+    tcase_add_test(bad_input, bogus_type_test_name_strong);
+    tcase_add_test(bad_input, bogus_type_test_name_numred);
+    tcase_add_test(bad_input, bogus_type_test_name_booloud);
+    tcase_add_test(bad_input, bogus_type_test_name_narl);
+
     TCase *basic = tcase_create("basic");
     tcase_add_test(basic, dollar_only);
     tcase_add_test(basic, absolute_single_step);
@@ -346,6 +503,6 @@ Suite *jsonpath_suite(void)
     Suite *jsonpath = suite_create("JSONPath");
     suite_add_tcase(jsonpath, bad_input);
     suite_add_tcase(jsonpath, basic);
-    
+
     return jsonpath;
 }

@@ -117,12 +117,12 @@ struct step
         
             enum type_test_kind
             {
-                JSON_OBJECT,
-                JSON_ARRAY,
-                JSON_STRING,
-                JSON_NUMBER,
-                JSON_BOOLEAN,
-                JSON_NULL
+                OBJECT_TEST,
+                ARRAY_TEST,
+                STRING_TEST,
+                NUMBER_TEST,
+                BOOLEAN_TEST,
+                NULL_TEST
             } type;
         };
     } test;    
@@ -156,6 +156,7 @@ enum jsonpath_status_code
     ERR_PREMATURE_END_OF_INPUT,
     ERR_UNEXPECTED_VALUE,
     ERR_EXPECTED_NAME_CHAR,
+    ERR_EXPECTED_NODE_TYPE_TEST,
     ERR_EXPECTED_INTEGER
 };
 

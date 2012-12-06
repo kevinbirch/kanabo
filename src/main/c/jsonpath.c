@@ -134,6 +134,7 @@ static const char * const MESSAGES[] =
     "Premature end of input after position %d",
     "At position %d: unexpected character '%c', was expecting '%c' instead",
     "At position %d: expected a name character, but found '%c' instead",
+    "At position %d: expected a node type test",
     "At position %d: expected an integer"
 };
 
@@ -152,6 +153,8 @@ static void name_test(parser_context *context);
 static void wildcard_name(parser_context *context, step *name_test);
 static void name(parser_context *context, step *name_test);
 static void node_type_test(parser_context *context);
+static enum type_test_kind node_type_test_value(parser_context *context, size_t length);
+static inline enum type_test_kind check_one_node_type_test_value(parser_context *context, size_t length, const char *target, enum type_test_kind result);
 
 // input stream handling
 static inline bool has_more_input(parser_context *context);
@@ -400,6 +403,11 @@ static void relative_path(parser_context *context)
     if(look_for(context, "()"))
     {
         node_type_test(context);
+        if(SUCCESS == context->code && has_more_input(context))
+        {
+            consume_char(context);
+            consume_char(context);
+        }
     }
     else
     {
@@ -509,6 +517,11 @@ static void name(parser_context *context, step *name_step)
         quoted = true;
     }
     name_step->test.name.length = offset - context->cursor;
+    if(0 == name_step->test.name.length)
+    {
+        context->code = ERR_EXPECTED_NAME_CHAR;
+        return;
+    }
     name_step->test.name.value = (uint8_t *)malloc(name_step->test.name.length);
     if(NULL == name_step->test.name.value)
     {
@@ -527,20 +540,90 @@ static void node_type_test(parser_context *context)
 {
     enter_state(context, ST_NODE_TYPE_TEST);
 
-    // xxx - parse type tests here
-    context->code = ERR_NOT_JSONPATH;
-    /*
-      scan ahead until '('
-      if test is 0 length, error
-      else create node and consume
-      if test length is < smallest test, error
-      else find matching test name
-      if not found, error
-      consume '('
-      consume whitespace
-      if current is not ')', error
-      else consume ')'
-     */
+    context->code = SUCCESS;
+    size_t offset = context->cursor;
+    
+    while(offset < context->length)
+    {
+        if('(' == context->input[offset])
+        {
+            break;
+        }
+        offset++;
+    }
+    size_t length = offset - context->cursor;
+    if(0 == length)
+    {
+        context->code = ERR_EXPECTED_NAME_CHAR;
+        return;
+    }
+
+    enum type_test_kind kind = node_type_test_value(context, length);
+    if(SUCCESS != context->code)
+    {
+        return;
+    }
+    step *current = make_step(context->current_step_kind, TYPE_TEST);
+    if(NULL == current)
+    {
+        context->code = ERR_OUT_OF_MEMORY;
+        return;
+    }
+    current->test.type = kind;
+    
+    push_step(context, current);
+    
+    consume_chars(context, length);
+}
+
+static enum type_test_kind node_type_test_value(parser_context *context, size_t length)
+{
+    enum type_test_kind result;
+    
+    switch(get_char(context))
+    {
+        case 'o':
+            result = check_one_node_type_test_value(context, length, "object", OBJECT_TEST);
+            break;
+        case 'a':
+            result = check_one_node_type_test_value(context, length, "array", ARRAY_TEST);
+            break;
+        case 's':
+            result = check_one_node_type_test_value(context, length, "string", STRING_TEST);
+            break;
+        case 'n':
+            result = check_one_node_type_test_value(context, length, "number", NUMBER_TEST);
+            if(-1 == result)
+            {
+                result = check_one_node_type_test_value(context, length, "null", NULL_TEST);
+            }
+            break;
+        case 'b':
+            result = check_one_node_type_test_value(context, length, "boolean", BOOLEAN_TEST);
+            break;
+        default:
+            result = (enum type_test_kind)-1;
+            break;
+    }
+
+    if(-1 == result)
+    {
+        context->code = ERR_EXPECTED_NODE_TYPE_TEST;
+    }
+    return result;
+}
+
+static inline enum type_test_kind check_one_node_type_test_value(parser_context *context, size_t length, const char *target, enum type_test_kind result)
+{
+    fprintf(stdout, "checking for node type test value: %s\n", target);
+    if(strlen(target) == length  && 0 == memcmp(target, context->input + context->cursor, length))
+    {
+        return result;
+    }
+    else
+    {
+        return (enum type_test_kind)-1;
+    }
 }
 
 static bool look_for(parser_context *context, char *target)
@@ -732,6 +815,9 @@ static char *prepare_message(parser_context *context)
             break;
         case ERR_EXPECTED_NAME_CHAR:
             asprintf(&message, MESSAGES[context->code], context->cursor + 1, context->input[context->cursor]);
+            break;
+        case ERR_EXPECTED_NODE_TYPE_TEST:
+            asprintf(&message, MESSAGES[context->code], context->cursor + 1);
             break;
         default:
             message = prepare_simple_message(context->code);
