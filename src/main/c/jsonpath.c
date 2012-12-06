@@ -554,7 +554,7 @@ static void node_type_test(parser_context *context)
     size_t length = offset - context->cursor;
     if(0 == length)
     {
-        context->code = ERR_EXPECTED_NAME_CHAR;
+        context->code = ERR_EXPECTED_NODE_TYPE_TEST;
         return;
     }
 
