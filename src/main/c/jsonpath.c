@@ -794,7 +794,7 @@ static inline void unexpected_value(parser_context *context, uint8_t expected)
 static inline void enter_state(parser_context *context, enum state state)
 {
     context->state = state;
-    fprintf(stdout, "entering state: '%s'\n", STATES[state]);
+    //fprintf(stdout, "entering state: '%s'\n", STATES[state]);
 }
 
 static char *prepare_message(parser_context *context)
