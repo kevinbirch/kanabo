@@ -38,8 +38,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 
 #include "jsonpath.h"
 
@@ -162,9 +163,11 @@ static inline size_t remaining(parser_context *context);
 static bool look_for(parser_context *context, char *target);
 static inline uint8_t get_char(parser_context *context);
 static inline uint8_t peek(parser_context *context, size_t offset);
+static inline void skip_ws(parser_context *context);
 static inline void consume_char(parser_context *context);
 static inline void consume_chars(parser_context *context, size_t count);
 static inline void push_back(parser_context *context);
+static inline void reset(parser_context *context, size_t mark);
 
 // step constructors
 static step *make_root_step(void);
@@ -321,6 +324,8 @@ static void unwind_context(parser_context *context)
 static void path(parser_context *context)
 {
     enter_state(context, ST_START);
+    skip_ws(context);
+    
     absolute_path(context);
 
     if(ERR_UNEXPECTED_VALUE == context->code && '$' == context->expected)
@@ -367,8 +372,10 @@ static void absolute_path(parser_context *context)
 static void qualified_path(parser_context *context)
 {
     enter_state(context, ST_QUALIFIED_PATH);
+    skip_ws(context);
 
     abbreviated_relative_path(context);
+    skip_ws(context);
     if(SUCCESS == context->code || !has_more_input(context))
     {
         return;
@@ -388,6 +395,7 @@ static void qualified_path(parser_context *context)
 static void relative_path(parser_context *context)
 {
     enter_state(context, ST_RELATIVE_PATH);
+    skip_ws(context);
 
     if('.' == get_char(context))
     {
@@ -422,16 +430,20 @@ static void relative_path(parser_context *context)
 static void abbreviated_relative_path(parser_context *context)
 {
     enter_state(context, ST_ABBREVIATED_RELATIVE_PATH);
+
+    size_t mark = context->cursor;
+    skip_ws(context);
     if('.' != get_char(context))
     {
         unexpected_value(context, '.');
         return;
     }
     consume_char(context);
+    skip_ws(context);
     if('.' != get_char(context))
     {
         unexpected_value(context, '.');
-        push_back(context);
+        reset(context, mark);
         return;
     }
     consume_char(context);
@@ -485,6 +497,7 @@ static void wildcard_name(parser_context *context, step *name_step)
 {
     enter_state(context, ST_WILDCARD_NAME_TEST);
     consume_char(context);
+    skip_ws(context);
     name_step->test.name.value = (uint8_t *)malloc(1);
     if(NULL == name_step->test.name.value)
     {
@@ -508,7 +521,10 @@ static void name(parser_context *context, step *name_step)
         }
         offset++;
     }
-
+    while(isspace(context->input[offset - 1]))
+    {
+        offset--;
+    }
     bool quoted = false;
     if('\'' == get_char(context) && '\'' == context->input[offset - 1])
     {
@@ -534,6 +550,10 @@ static void name(parser_context *context, step *name_step)
     {
         consume_char(context);
     }
+    fprintf(stdout, "'");
+    fwrite(name_step->test.name.value, name_step->test.name.length, 1, stdout);
+    fprintf(stdout, "'\n");
+    skip_ws(context);
 }
 
 static void node_type_test(parser_context *context)
@@ -615,7 +635,6 @@ static enum type_test_kind node_type_test_value(parser_context *context, size_t 
 
 static inline enum type_test_kind check_one_node_type_test_value(parser_context *context, size_t length, const char *target, enum type_test_kind result)
 {
-    fprintf(stdout, "checking for node type test value: %s\n", target);
     if(strlen(target) == length  && 0 == memcmp(target, context->input + context->cursor, length))
     {
         return result;
@@ -660,6 +679,13 @@ static inline uint8_t peek(parser_context *context, size_t offset)
     return context->input[context->cursor + offset];
 }
 
+static inline void skip_ws(parser_context *context)
+{
+    while(isspace(get_char(context)))
+    {
+        consume_char(context);
+    }
+}
 static inline void consume_char(parser_context *context)
 {
     context->cursor++;
@@ -673,6 +699,14 @@ static inline void consume_chars(parser_context *context, size_t count)
 static inline void push_back(parser_context *context)
 {
     context->cursor--;
+}
+
+static inline void reset(parser_context *context, size_t mark)
+{
+    if(mark < context->cursor)
+    {
+        context->cursor = mark;
+    }
 }
 
 static inline size_t remaining(parser_context *context)
@@ -794,7 +828,7 @@ static inline void unexpected_value(parser_context *context, uint8_t expected)
 static inline void enter_state(parser_context *context, enum state state)
 {
     context->state = state;
-    //fprintf(stdout, "entering state: '%s'\n", STATES[state]);
+    fprintf(stdout, "entering state: '%s'\n", STATES[state]);
 }
 
 static char *prepare_message(parser_context *context)

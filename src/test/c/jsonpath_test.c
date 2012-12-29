@@ -394,6 +394,7 @@ static void assert_step(jsonpath *path, size_t index, enum step_kind expected_st
 
 static void assert_name(step * step, uint8_t *name, size_t length)
 {
+    ck_assert_int_eq(length, step->test.name.length);
     ck_assert_buf_eq(name, length, step->test.name.value, step->test.name.length);
 }
 
@@ -498,6 +499,26 @@ START_TEST (quoted_multi_step)
     assert_single_name_step(&path, 1, "foo");
     assert_single_name_step(&path, 2, "happy fun ball");
     assert_single_name_step(&path, 3, "bar");
+    assert_no_predicates(&path, 1);
+    assert_no_predicates(&path, 2);
+    assert_no_predicates(&path, 3);
+
+    free_parser_result(result);
+    free_jsonpath(&path);    
+}
+END_TEST
+
+START_TEST (whitespace)
+{
+    jsonpath path;
+    char *expression = "  $ \r\n. foo \n.\n. \t'happy fun ball' . \t string()";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 4);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_recursive_name_step(&path, 2, "happy fun ball");
+    assert_single_type_step(&path, 3, STRING_TEST);
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
     assert_no_predicates(&path, 3);
@@ -696,6 +717,7 @@ Suite *jsonpath_suite(void)
     tcase_add_test(basic, absolute_multi_step);
     tcase_add_test(basic, quoted_multi_step);
     tcase_add_test(basic, relative_multi_step);
+    tcase_add_test(basic, whitespace);
 
     TCase *node_type = tcase_create("node type test");
     tcase_add_test(node_type, type_test_missing_closing_paren);

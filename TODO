@@ -17,14 +17,9 @@ LICENSE file for more details.
 
 ### loader
 
-* add api to free a model
-* add malloc failure checks
-* support returning error message string from main api
-* eliminate printf calls
 * handle anchors and aliases
   * https://en.wikipedia.org/wiki/Hashed_array_tree
 * handle tags
-* move lazy context init from push_context() to start document event handler
 
 ### model
 
@@ -40,7 +35,6 @@ LICENSE file for more details.
     }
     free(format);
 ```
-* add model mutation api
 
 ### makefile
 
@@ -53,7 +47,6 @@ LICENSE file for more details.
 
 ### Path languages
 
-* impl jsonpath lexer
 * finish jsonpath parser
 * extract as project, add as submodule
 * ypath support
