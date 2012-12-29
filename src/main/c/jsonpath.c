@@ -550,9 +550,6 @@ static void name(parser_context *context, step *name_step)
     {
         consume_char(context);
     }
-    fprintf(stdout, "'");
-    fwrite(name_step->test.name.value, name_step->test.name.length, 1, stdout);
-    fprintf(stdout, "'\n");
     skip_ws(context);
 }
 
