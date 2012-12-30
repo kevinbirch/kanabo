@@ -187,6 +187,7 @@ static void unwind_context(parser_context *context);
 static void abort_context(parser_context *context);
 static inline void prepare_context(parser_context *context, uint8_t *expression, size_t length, jsonpath *path);
 static inline bool validate(parser_result *result, uint8_t *expression, size_t length, jsonpath *model);
+static predicate *add_predicate(parser_context *context, enum predicate_kind kind);
 
 // error handlers
 static inline void unexpected_value(parser_context *context, uint8_t expected);
@@ -673,35 +674,16 @@ static void step_predicate(parser_context *context)
             context->code = ERR_UNBALANCED_PRED_DELIM;
             return;
         }
-        predicate *pred = (predicate *)malloc(sizeof(struct predicate));
-        if(NULL == pred)
-        {
-            context->code = ERR_OUT_OF_MEMORY;
-            return;
-        }
         wildcard_predicate(context);
         if(SUCCESS == context->code)
         {
-            pred->kind = WILDCARD;
-            step *current = context->steps->step;
-            predicate **new_predicates = (predicate **)malloc(sizeof(predicate *) * current->predicate_count + 1);
-            if(NULL == new_predicates)
-            {
-                context->code = ERR_OUT_OF_MEMORY;
-                return;
-            }
-            memcpy(new_predicates, current->predicates, sizeof(predicate *) * current->predicate_count);
-            new_predicates[current->predicate_count++] = pred;
-            free(current->predicates);
-            current->predicates = new_predicates;
+            skip_ws(context);
+            consume_char(context);
         }
         else
         {
             context->code = ERR_UNSUPPORTED_PRED_TYPE;
-            free(pred);
         }
-        skip_ws(context);
-        consume_char(context);
     }
     else
     {
@@ -718,12 +700,37 @@ static void wildcard_predicate(parser_context *context)
     {
         context->code = SUCCESS;
         consume_char(context);
-        skip_ws(context);
+        add_predicate(context, WILDCARD);
     }
     else
     {
         unexpected_value(context, '*');
     }
+}
+
+static predicate *add_predicate(parser_context *context, enum predicate_kind kind)
+{
+    predicate *pred = (predicate *)malloc(sizeof(struct predicate));
+    if(NULL == pred)
+    {
+        context->code = ERR_OUT_OF_MEMORY;
+        return NULL;
+    }
+
+    pred->kind = kind;
+    step *current = context->steps->step;
+    predicate **new_predicates = (predicate **)malloc(sizeof(predicate *) * current->predicate_count + 1);
+    if(NULL == new_predicates)
+    {
+        context->code = ERR_OUT_OF_MEMORY;
+        return NULL;
+    }
+    memcpy(new_predicates, current->predicates, sizeof(predicate *) * current->predicate_count);
+    new_predicates[current->predicate_count++] = pred;
+    free(current->predicates);
+    current->predicates = new_predicates;
+
+    return pred;
 }
 
 static bool look_for(parser_context *context, char *target)
