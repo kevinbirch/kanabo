@@ -134,6 +134,8 @@ static const char * const MESSAGES[] =
     "Not a JSONPath expression",
     "Premature end of input after position %d",
     "At position %d: unexpected character '%c', was expecting '%c' instead",
+    "At position %d: missing closing predicate delimiter `]' before end of step",
+    "At position %d: unsupported predicate",
     "At position %d: expected a name character, but found '%c' instead",
     "At position %d: expected a node type test",
     "At position %d: expected an integer"
@@ -152,6 +154,9 @@ static void abbreviated_relative_path(parser_context *context);
 static void path_step(parser_context *context);
 static void name_test(parser_context *context);
 static void wildcard_name(parser_context *context, step *name_test);
+static void step_predicate(parser_context *context);
+static void wildcard_predicate(parser_context *context);
+
 static void name(parser_context *context, step *name_test);
 static void node_type_test(parser_context *context);
 static enum type_test_kind node_type_test_value(parser_context *context, size_t length);
@@ -161,6 +166,7 @@ static inline enum type_test_kind check_one_node_type_test_value(parser_context 
 static inline bool has_more_input(parser_context *context);
 static inline size_t remaining(parser_context *context);
 static bool look_for(parser_context *context, char *target);
+static int_fast32_t offset_of(parser_context *context, char *target);
 static inline uint8_t get_char(parser_context *context);
 static inline uint8_t peek(parser_context *context, size_t offset);
 static inline void skip_ws(parser_context *context);
@@ -462,7 +468,16 @@ static void path_step(parser_context *context)
     }
     name_test(context);
 
-    // xxx - if success, parse predicates here
+    while(SUCCESS == context->code && has_more_input(context))
+    {
+        step_predicate(context);
+    }
+
+    if(ERR_UNEXPECTED_VALUE == context->code && '[' == context->expected)
+    {
+        enter_state(context, ST_STEP);
+        context->code = SUCCESS;
+    }
 }
 
 static void name_test(parser_context *context)
@@ -506,51 +521,6 @@ static void wildcard_name(parser_context *context, step *name_step)
     }
     memcpy(name_step->test.name.value, "*", 1);
     name_step->test.name.length = 1;
-}
-
-static void name(parser_context *context, step *name_step)
-{
-    enter_state(context, ST_NAME);
-    size_t offset = context->cursor;
-    
-    while(offset < context->length)
-    {
-        if('.' == context->input[offset] || '[' == context->input[offset])
-        {
-            break;
-        }
-        offset++;
-    }
-    while(isspace(context->input[offset - 1]))
-    {
-        offset--;
-    }
-    bool quoted = false;
-    if('\'' == get_char(context) && '\'' == context->input[offset - 1])
-    {
-        consume_char(context);
-        offset--;
-        quoted = true;
-    }
-    name_step->test.name.length = offset - context->cursor;
-    if(0 == name_step->test.name.length)
-    {
-        context->code = ERR_EXPECTED_NAME_CHAR;
-        return;
-    }
-    name_step->test.name.value = (uint8_t *)malloc(name_step->test.name.length);
-    if(NULL == name_step->test.name.value)
-    {
-        context->code = ERR_OUT_OF_MEMORY;
-        return;
-    }
-    memcpy(name_step->test.name.value, context->input + context->cursor, name_step->test.name.length);
-    consume_chars(context, name_step->test.name.length);
-    if(quoted)
-    {
-        consume_char(context);
-    }
-    skip_ws(context);
 }
 
 static void node_type_test(parser_context *context)
@@ -642,28 +612,149 @@ static inline enum type_test_kind check_one_node_type_test_value(parser_context 
     }
 }
 
+static void name(parser_context *context, step *name_step)
+{
+    enter_state(context, ST_NAME);
+    size_t offset = context->cursor;
+    
+    while(offset < context->length)
+    {
+        if('.' == context->input[offset] || '[' == context->input[offset])
+        {
+            break;
+        }
+        offset++;
+    }
+    while(isspace(context->input[offset - 1]))
+    {
+        offset--;
+    }
+    bool quoted = false;
+    if('\'' == get_char(context) && '\'' == context->input[offset - 1])
+    {
+        consume_char(context);
+        offset--;
+        quoted = true;
+    }
+    name_step->test.name.length = offset - context->cursor;
+    if(0 == name_step->test.name.length)
+    {
+        context->code = ERR_EXPECTED_NAME_CHAR;
+        return;
+    }
+    name_step->test.name.value = (uint8_t *)malloc(name_step->test.name.length);
+    if(NULL == name_step->test.name.value)
+    {
+        context->code = ERR_OUT_OF_MEMORY;
+        return;
+    }
+    memcpy(name_step->test.name.value, context->input + context->cursor, name_step->test.name.length);
+    consume_chars(context, name_step->test.name.length);
+    if(quoted)
+    {
+        consume_char(context);
+    }
+    skip_ws(context);
+}
+
+static void step_predicate(parser_context *context)
+{
+    enter_state(context, ST_PREDICATE);
+
+    skip_ws(context);
+    if('[' == get_char(context))
+    {
+        context->code = SUCCESS;
+        consume_char(context);
+
+        int_fast32_t extent = offset_of(context, "]");
+        if(-1 == extent)
+        {
+            context->code = ERR_UNBALANCED_PRED_DELIM;
+            return;
+        }
+        predicate *pred = (predicate *)malloc(sizeof(struct predicate));
+        if(NULL == pred)
+        {
+            context->code = ERR_OUT_OF_MEMORY;
+            return;
+        }
+        wildcard_predicate(context);
+        if(SUCCESS == context->code)
+        {
+            pred->kind = WILDCARD;
+            step *current = context->steps->step;
+            predicate **new_predicates = (predicate **)malloc(sizeof(predicate *) * current->predicate_count + 1);
+            if(NULL == new_predicates)
+            {
+                context->code = ERR_OUT_OF_MEMORY;
+                return;
+            }
+            memcpy(new_predicates, current->predicates, sizeof(predicate *) * current->predicate_count);
+            new_predicates[current->predicate_count++] = pred;
+            free(current->predicates);
+            current->predicates = new_predicates;
+        }
+        else
+        {
+            context->code = ERR_UNSUPPORTED_PRED_TYPE;
+            free(pred);
+        }
+        skip_ws(context);
+        consume_char(context);
+    }
+    else
+    {
+        unexpected_value(context, '[');
+    }
+}
+
+static void wildcard_predicate(parser_context *context)
+{
+    enter_state(context, ST_WILDCARD_PREDICATE);
+
+    skip_ws(context);
+    if('*' == get_char(context))
+    {
+        context->code = SUCCESS;
+        consume_char(context);
+        skip_ws(context);
+    }
+    else
+    {
+        unexpected_value(context, '*');
+    }
+}
+
 static bool look_for(parser_context *context, char *target)
+{
+    return -1 != offset_of(context, target);
+}
+
+static int_fast32_t offset_of(parser_context *context, char *target)
 {
     size_t offset = context->cursor;
     size_t index = 0;
     size_t length = strlen(target);
+
     while(offset < context->length)
     {
         if('.' == context->input[offset])
         {
-            return false;
+            return -1;
         }
         if(target[index] == context->input[offset])
         {
             index++;
             if(index == length)
             {
-                return true;
+                return (int_fast32_t)offset;
             }
         }
         offset++;
     }
-    return false;
+    
+    return offset == context->length ? -1 : (int_fast32_t)offset;
 }
 
 static inline uint8_t get_char(parser_context *context)
@@ -836,6 +927,10 @@ static char *prepare_message(parser_context *context)
     {
         case ERR_PREMATURE_END_OF_INPUT:
             asprintf(&message, MESSAGES[context->code], context->cursor);
+            break;
+        case ERR_UNSUPPORTED_PRED_TYPE:
+        case ERR_UNBALANCED_PRED_DELIM:
+            asprintf(&message, MESSAGES[context->code], context->cursor + 1);
             break;
         case ERR_EXPECTED_INTEGER:
             asprintf(&message, MESSAGES[context->code], context->cursor + 1);

@@ -45,7 +45,7 @@ typedef struct jsonpath jsonpath;
 
 struct predicate
 {
-    enum
+    enum predicate_kind
     {
         WILDCARD,
         SUBSCRIPT,
@@ -155,6 +155,8 @@ enum jsonpath_status_code
     ERR_NOT_JSONPATH,
     ERR_PREMATURE_END_OF_INPUT,
     ERR_UNEXPECTED_VALUE,
+    ERR_UNBALANCED_PRED_DELIM,
+    ERR_UNSUPPORTED_PRED_TYPE,
     ERR_EXPECTED_NAME_CHAR,
     ERR_EXPECTED_NODE_TYPE_TEST,
     ERR_EXPECTED_INTEGER

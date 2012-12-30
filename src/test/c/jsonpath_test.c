@@ -54,6 +54,7 @@ static void assert_type_step(jsonpath *path, size_t index, enum type_test_kind e
 static void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind);
 static void assert_name(step * step, uint8_t *value, size_t length);
 static void assert_no_predicates(jsonpath *path, size_t index);
+static void assert_predicate(jsonpath *path, size_t path_index, size_t predicate_index, enum predicate_kind expected_predicate_kind);
 
 START_TEST (null_expression)
 {
@@ -404,6 +405,14 @@ static void assert_no_predicates(jsonpath *path, size_t index)
     ck_assert_null(path->steps[index]->predicates);
 }
 
+static void assert_predicate(jsonpath *path, size_t path_index, size_t predicate_index, enum predicate_kind expected_predicate_kind)
+{
+    ck_assert_int_ne(0, path->steps[path_index]->predicate_count);
+    ck_assert_not_null(path->steps[path_index]->predicates);
+    ck_assert_not_null(path->steps[path_index]->predicates[predicate_index]);
+    ck_assert_int_eq(expected_predicate_kind, path->steps[path_index]->predicates[predicate_index]->kind);
+}
+
 START_TEST (dollar_only)
 {
     jsonpath path;
@@ -690,6 +699,44 @@ START_TEST (null_type_test)
 }
 END_TEST
 
+START_TEST (wildcard_predicate)
+{
+    jsonpath path;
+    char *expression = "$.store.book[*].author";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 4);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "store");
+    assert_no_predicates(&path, 1);
+    assert_single_name_step(&path, 2, "book");
+    assert_predicate(&path, 2, 0, WILDCARD);
+    assert_single_name_step(&path, 3, "author");
+    assert_no_predicates(&path, 3);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (wildcard_predicate_with_whitespace)
+{
+    jsonpath path;
+    char *expression = "$.foo  [\t*\n]  .bar";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_predicate(&path, 1, 0, WILDCARD);
+    assert_single_name_step(&path, 2, "bar");
+    assert_no_predicates(&path, 2);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
 Suite *jsonpath_suite(void)
 {
     TCase *bad_input = tcase_create("bad input");
@@ -730,10 +777,15 @@ Suite *jsonpath_suite(void)
     tcase_add_test(node_type, boolean_type_test);
     tcase_add_test(node_type, null_type_test);
 
+    TCase *predicate = tcase_create("predicate");
+    tcase_add_test(predicate, wildcard_predicate);
+    tcase_add_test(predicate, wildcard_predicate_with_whitespace);
+    
     Suite *jsonpath = suite_create("JSONPath");
     suite_add_tcase(jsonpath, bad_input);
     suite_add_tcase(jsonpath, basic);
     suite_add_tcase(jsonpath, node_type);
+    suite_add_tcase(jsonpath, predicate);
 
     return jsonpath;
 }
