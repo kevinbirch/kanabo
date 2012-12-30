@@ -42,7 +42,7 @@ node type test
 
 (* this production may be quoted with single quotes, which will be discarded *)
 name
-    = ? any sequence of unicode characters and/or escape sequences, except '.' and '[' ?
+    = ? any sequence of unicode characters except '.' and '[' ?
     ;
 
 predicate
@@ -67,28 +67,29 @@ slice
     ;
 
 union
-    = "[", path expression, ",", path expression, "]"
+    = "[", union expression, ",", union expression, "]"
     ;
 
-path expression
-    = path
-    (* xxx - more needs to be added here, eg @path expressions *)
+union expression
+    = relative path
+    (* ??? - allow an optional qualified path expression after the filter expression? *)
+    | filter expression
     ;
 
 filter
-    = "[", "?(", expression, ")", "]"
+    = "[", "?(", filter expression, ")", "]"
     ;
 
-expression
+filter expression
+    = ? TBD ?
+    ;
+
+script expression
     = ? TBD ?
     ;
 
 script
     = "[", "(", script expression, ")", "]"
-    ;
-
-script expression
-    = ? TBD ?
     ;
 
 integer
