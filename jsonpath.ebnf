@@ -85,7 +85,7 @@ filter expression
     ;
 
 script expression
-    = ? TBD ?
+    = ? a set of implementation defined characters, ouside the scope of this definition ?
     ;
 
 script
