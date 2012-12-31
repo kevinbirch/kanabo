@@ -270,7 +270,15 @@ jsonpath_status_code parse_jsonpath(uint8_t *expression, size_t length, jsonpath
     if(SUCCESS == context.code)
     {
         unwind_context(&context);
-        fprintf(stdout, "done. found %zd steps.\n", jsonpath->length);
+        if(SUCCESS == context.code)
+        {
+            fprintf(stdout, "done. found %zd steps.\n", jsonpath->length);
+        }
+        else
+        {
+            jsonpath->result.code = context.code;
+            fprintf(stdout, "aborted. unable to create json path model\n");
+        }
     }
     else
     {
