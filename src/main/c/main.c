@@ -41,6 +41,7 @@
 #include <string.h>
 
 #include "warranty.h"
+#include "help.h"
 #include "options.h"
 #include "loader.h"
 #include "shell.h"
@@ -73,7 +74,7 @@ static int dispatch(int command, struct settings *settings)
     switch(command)
     {
         case SHOW_HELP:
-            fprintf(stdout, "help\n");
+            fprintf(stdout, HELP);
             break;
         case SHOW_VERSION:
             fprintf(stdout, "version information\n");
