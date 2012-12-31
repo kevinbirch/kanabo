@@ -48,10 +48,12 @@ CFLAGS ?=
 ## Defaults for project source directories
 SOURCE_DIR  ?= src/main/c
 INCLUDE_DIR ?= $(SOURCE_DIR)/include
+RESOURCE_DIR ?= src/main/resources
 
 ## Defaults for project test source directories
 TEST_SOURCE_DIR  ?= src/test/c
 TEST_INCLUDE_DIR ?= $(TEST_SOURCE_DIR)/include
+TEST_RESOURCE_DIR ?= src/test/resources
 
 ## Defaults for project output directories
 TARGET_DIR  ?= target
@@ -213,6 +215,7 @@ process-sources: generate-sources
 generate-resources: process-sources
 
 process-resources: generate-resources
+	@if [ -d $(RESOURCE_DIR) ]; then echo ""; echo " -- Copying resources..."; echo "------------------------------------------------------------------------"; cp -r $(RESOURCE_DIR)/* $(TARGET_DIR); fi
 
 announce-compile-sources:
 	@echo ""
@@ -238,6 +241,7 @@ process-test-sources: generate-test-sources
 generate-test-resources: process-test-sources
 
 process-test-resources: generate-test-resources
+	@if [ -d $(TEST_RESOURCE_DIR) ]; then echo ""; echo " -- Copying test resources"; echo "------------------------------------------------------------------------"; cp -r $(TEST_RESOURCE_DIR)/* $(TARGET_DIR); fi
 
 announce-compile-test-sources:
 ifeq ($(strip $(SKIP_TESTS)),)
