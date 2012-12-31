@@ -664,6 +664,21 @@ static void name(parser_context *context, step *name_step)
     skip_ws(context);
 }
 
+#define try_predicate_parser(PARSER) PARSER(context);              \
+    if(SUCCESS == context->code)                                   \
+    {                                                              \
+        skip_ws(context);                                          \
+        if(']' == get_char(context))                               \
+        {                                                          \
+            consume_char(context);                                 \
+        }                                                          \
+        else                                                       \
+        {                                                          \
+            context->code = ERR_EXTRA_JUNK_AFTER_PREDICATE;        \
+        }                                                          \
+        return;                                                    \
+    }
+
 static void step_predicate(parser_context *context)
 {
     enter_state(context, ST_PREDICATE);
@@ -684,29 +699,10 @@ static void step_predicate(parser_context *context)
             return;
         }
 
-        wildcard_predicate(context);
-        if(SUCCESS == context->code)
-        {
-            skip_ws(context);
-            if(']' == get_char(context))
-            {
-            consume_char(context);
-            }
-            else
-            {
-                context->code = ERR_EXTRA_JUNK_AFTER_PREDICATE;
-            }
-            return;
-        }
+        try_predicate_parser(wildcard_predicate);
+        try_predicate_parser(subscript_predicate);
 
-        subscript_predicate(context);
-        if(SUCCESS == context->code)
-        {
-            skip_ws(context);
-            consume_char(context);
-            return;
-        }
-        else
+        if(SUCCESS != context->code && ERR_OUT_OF_MEMORY != context->code)
         {
             context->code = ERR_UNSUPPORTED_PRED_TYPE;
         }
