@@ -42,7 +42,7 @@
 #include "jsonpath.h"
 #include "test.h"
 
-static void assert_parser_result(parser_result *result, jsonpath *path, enum path_kind expected_kind, size_t expected_length);
+static void assert_parser_result(jsonpath_status_code result, jsonpath *path, enum path_kind expected_kind, size_t expected_length);
 
 static void assert_root_step(jsonpath *path);
 static void assert_single_name_step(jsonpath *path, size_t index, char *name);
@@ -59,66 +59,56 @@ static void assert_predicate(jsonpath *path, size_t path_index, size_t predicate
 START_TEST (null_expression)
 {
     jsonpath path;
-    parser_result *result = parse_jsonpath(NULL, 50, &path);
+    jsonpath_status_code result = parse_jsonpath(NULL, 50, &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_NULL_EXPRESSION, result->code);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_NULL_EXPRESSION, result);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    ck_assert_int_eq(0, result->position);
-
-    free_parser_result(result);
+    free(message);
+    ck_assert_int_eq(0, path.result.position);
 }
 END_TEST
 
 START_TEST (zero_length)
 {
     jsonpath path;
-    parser_result *result = parse_jsonpath((uint8_t *)"", 0, &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)"", 0, &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_ZERO_LENGTH, result->code);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_ZERO_LENGTH, result);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    ck_assert_int_eq(0, result->position);
-
-    free_parser_result(result);
+    free(message);
+    ck_assert_int_eq(0, path.result.position);
 }
 END_TEST
 
 START_TEST (null_path)
 {
-    parser_result *result = parse_jsonpath((uint8_t *)"", 5, NULL);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)"", 5, NULL);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_NULL_OUTPUT_PATH, result->code);
-    ck_assert_not_null(result->message);
-
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
-
-    ck_assert_int_eq(0, result->position);
-
-    free_parser_result(result);
+    ck_assert_int_eq(ERR_NULL_OUTPUT_PATH, result);
 }
 END_TEST
 
 START_TEST (missing_step_test)
 {
     jsonpath path;
-    parser_result *result = parse_jsonpath((uint8_t *)"$.", 2, &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)"$.", 2, &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_PREMATURE_END_OF_INPUT, result->code);
-    ck_assert_int_eq(3, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_PREMATURE_END_OF_INPUT, result);
+    ck_assert_int_eq(2, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -126,16 +116,16 @@ END_TEST
 START_TEST (missing_recursive_step_test)
 {
     jsonpath path;
-    parser_result *result = parse_jsonpath((uint8_t *)"$..", 3, &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)"$..", 3, &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_PREMATURE_END_OF_INPUT, result->code);
-    ck_assert_int_eq(4, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_PREMATURE_END_OF_INPUT, result);
+    ck_assert_int_eq(3, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -143,16 +133,16 @@ END_TEST
 START_TEST (missing_dot)
 {
     jsonpath path;
-    parser_result *result = parse_jsonpath((uint8_t *)"$x", 2, &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)"$x", 2, &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_UNEXPECTED_VALUE, result->code);
-    ck_assert_int_eq(2, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_UNEXPECTED_VALUE, result);
+    ck_assert_int_eq(1, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -160,16 +150,16 @@ END_TEST
 START_TEST (relative_path_begins_with_dot)
 {
     jsonpath path;
-    parser_result *result = parse_jsonpath((uint8_t *)".x", 2, &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)".x", 2, &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EXPECTED_NAME_CHAR, result->code);
-    ck_assert_int_eq(1, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EXPECTED_NAME_CHAR, result);
+    ck_assert_int_eq(0, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -178,16 +168,16 @@ START_TEST (quoted_empty_step)
 {
     jsonpath path;
     char *expression = "$.foo.''.bar";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EXPECTED_NAME_CHAR, result->code);
-    ck_assert_int_eq(8, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EXPECTED_NAME_CHAR, result);
+    ck_assert_int_eq(7, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -196,16 +186,16 @@ START_TEST (empty_predicate)
 {
     jsonpath path;
     char *expression = "$.foo[].bar";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EMPTY_PREDICATE, result->code);
-    ck_assert_int_eq(7, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EMPTY_PREDICATE, result);
+    ck_assert_int_eq(6, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -214,16 +204,16 @@ START_TEST (extra_junk_in_predicate)
 {
     jsonpath path;
     char *expression = "$.foo[ * quux].bar";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EXTRA_JUNK_AFTER_PREDICATE, result->code);
-    ck_assert_int_eq(10, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EXTRA_JUNK_AFTER_PREDICATE, result);
+    ck_assert_int_eq(9, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -232,16 +222,15 @@ START_TEST (whitespace_predicate)
 {
     jsonpath path;
     char *expression = "$.foo[ \t ].bar";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EMPTY_PREDICATE, result->code);
-    ck_assert_int_eq(10, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EMPTY_PREDICATE, result);
+    ck_assert_int_eq(9, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -250,16 +239,16 @@ START_TEST (bogus_predicate)
 {
     jsonpath path;
     char *expression = "$.foo[asdf].bar";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_UNSUPPORTED_PRED_TYPE, result->code);
-    ck_assert_int_eq(7, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_UNSUPPORTED_PRED_TYPE, result);
+    ck_assert_int_eq(6, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -268,16 +257,16 @@ START_TEST (bogus_type_test_name)
 {
     jsonpath path;
     char *expression = "$.foo.monkey()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
-    ck_assert_int_eq(7, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    ck_assert_int_eq(6, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -286,16 +275,16 @@ START_TEST (bogus_type_test_name_oblong)
 {
     jsonpath path;
     char *expression = "$.foo.oblong()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
-    ck_assert_int_eq(7, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    ck_assert_int_eq(6, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -304,16 +293,16 @@ START_TEST (bogus_type_test_name_alloy)
 {
     jsonpath path;
     char *expression = "$.foo.alloy()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
-    ck_assert_int_eq(7, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    ck_assert_int_eq(6, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -322,16 +311,16 @@ START_TEST (bogus_type_test_name_strong)
 {
     jsonpath path;
     char *expression = "$.foo.strong()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
-    ck_assert_int_eq(7, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    ck_assert_int_eq(6, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -340,16 +329,16 @@ START_TEST (bogus_type_test_name_numred)
 {
     jsonpath path;
     char *expression = "$.foo.numred()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
-    ck_assert_int_eq(7, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    ck_assert_int_eq(6, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -358,16 +347,16 @@ START_TEST (bogus_type_test_name_booloud)
 {
     jsonpath path;
     char *expression = "$.foo.booloud()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
-    ck_assert_int_eq(7, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    ck_assert_int_eq(6, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -376,16 +365,16 @@ START_TEST (bogus_type_test_name_narl)
 {
     jsonpath path;
     char *expression = "$.foo.narl()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
-    ck_assert_int_eq(7, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    ck_assert_int_eq(6, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
@@ -394,28 +383,27 @@ START_TEST (empty_type_test_name)
 {
     jsonpath path;
     char *expression = "$.foo.()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_not_null(result);
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result->code);
-    ck_assert_int_eq(7, result->position);
-    ck_assert_not_null(result->message);
+    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    ck_assert_int_eq(6, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_parser_result(result);
+    free(message);
     free_jsonpath(&path);
 }
 END_TEST
 
-// xxx - type test with whitespace inside parens
-
-static void assert_parser_result(parser_result *result, jsonpath *path, enum path_kind expected_kind, size_t expected_length)
+static void assert_parser_result(jsonpath_status_code result, jsonpath *path, enum path_kind expected_kind, size_t expected_length)
 {
-    ck_assert_not_null(result);
-    ck_assert_int_eq(SUCCESS, result->code);
-    ck_assert_not_null(result->message);
-    ck_assert_int_ne(0, result->position);
+    ck_assert_int_eq(SUCCESS, result);
+    char *message = make_status_message(path);
+    ck_assert_not_null(message);
+    free(message);
+    ck_assert_int_ne(0, path->result.position);
     ck_assert_int_eq(expected_kind, path->kind);
     ck_assert_not_null(path->steps);
     ck_assert_int_eq(expected_length, path->length);
@@ -499,12 +487,11 @@ static void assert_predicate(jsonpath *path, size_t path_index, size_t predicate
 START_TEST (dollar_only)
 {
     jsonpath path;
-    parser_result *result = parse_jsonpath((uint8_t *)"$", 1, &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)"$", 1, &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 1);
     assert_root_step(&path);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -512,14 +499,13 @@ END_TEST
 START_TEST (absolute_single_step)
 {
     jsonpath path;
-    parser_result *result = parse_jsonpath((uint8_t *)"$.foo", 5, &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)"$.foo", 5, &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 2);
     assert_root_step(&path);
     assert_single_name_step(&path, 1, "foo");
     assert_no_predicates(&path, 0);
 
-    free_parser_result(result);
     free_jsonpath(&path);    
 }
 END_TEST
@@ -527,14 +513,13 @@ END_TEST
 START_TEST (absolute_recursive_step)
 {
     jsonpath path;
-    parser_result *result = parse_jsonpath((uint8_t *)"$..foo", 6, &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)"$..foo", 6, &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 2);
     assert_root_step(&path);
     assert_recursive_name_step(&path, 1, "foo");
     assert_no_predicates(&path, 0);
 
-    free_parser_result(result);
     free_jsonpath(&path);    
 }
 END_TEST
@@ -543,7 +528,7 @@ START_TEST (absolute_multi_step)
 {
     jsonpath path;
     char *expression = "$.foo.baz..yobble.thingum";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 5);
     assert_root_step(&path);
@@ -556,7 +541,6 @@ START_TEST (absolute_multi_step)
     assert_no_predicates(&path, 3);
     assert_no_predicates(&path, 4);
 
-    free_parser_result(result);
     free_jsonpath(&path);    
 }
 END_TEST
@@ -565,7 +549,7 @@ START_TEST (relative_multi_step)
 {
     jsonpath path;
     char *expression = "foo.bar..baz";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, RELATIVE_PATH, 3);
     assert_single_name_step(&path, 0, "foo");
@@ -575,7 +559,6 @@ START_TEST (relative_multi_step)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);    
 }
 END_TEST
@@ -584,7 +567,7 @@ START_TEST (quoted_multi_step)
 {
     jsonpath path;
     char *expression = "$.foo.'happy fun ball'.bar";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 4);
     assert_root_step(&path);
@@ -595,7 +578,6 @@ START_TEST (quoted_multi_step)
     assert_no_predicates(&path, 2);
     assert_no_predicates(&path, 3);
 
-    free_parser_result(result);
     free_jsonpath(&path);    
 }
 END_TEST
@@ -604,7 +586,7 @@ START_TEST (whitespace)
 {
     jsonpath path;
     char *expression = "  $ \r\n. foo \n.\n. \t'happy fun ball' . \t string()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 4);
     assert_root_step(&path);
@@ -615,7 +597,6 @@ START_TEST (whitespace)
     assert_no_predicates(&path, 2);
     assert_no_predicates(&path, 3);
 
-    free_parser_result(result);
     free_jsonpath(&path);    
 }
 END_TEST
@@ -624,7 +605,7 @@ START_TEST (type_test_missing_closing_paren)
 {
     jsonpath path;
     char *expression = "$.foo.null(";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
@@ -633,7 +614,6 @@ START_TEST (type_test_missing_closing_paren)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -642,7 +622,7 @@ START_TEST (type_test_with_trailing_junk)
 {
     jsonpath path;
     char *expression = "$.foo.array()[0]";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
@@ -651,7 +631,6 @@ START_TEST (type_test_with_trailing_junk)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -660,7 +639,7 @@ START_TEST (recursive_type_test)
 {
     jsonpath path;
     char *expression = "$.foo..string()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
@@ -669,7 +648,6 @@ START_TEST (recursive_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -678,7 +656,7 @@ START_TEST (object_type_test)
 {
     jsonpath path;
     char *expression = "$.foo.object()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
@@ -687,7 +665,6 @@ START_TEST (object_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -696,7 +673,7 @@ START_TEST (array_type_test)
 {
     jsonpath path;
     char *expression = "$.foo.array()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
@@ -705,7 +682,6 @@ START_TEST (array_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -714,7 +690,7 @@ START_TEST (string_type_test)
 {
     jsonpath path;
     char *expression = "$.foo.string()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
@@ -723,7 +699,6 @@ START_TEST (string_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -732,7 +707,7 @@ START_TEST (number_type_test)
 {
     jsonpath path;
     char *expression = "$.foo.number()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
@@ -741,7 +716,6 @@ START_TEST (number_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -750,7 +724,7 @@ START_TEST (boolean_type_test)
 {
     jsonpath path;
     char *expression = "$.foo.boolean()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
@@ -759,7 +733,6 @@ START_TEST (boolean_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -768,7 +741,7 @@ START_TEST (null_type_test)
 {
     jsonpath path;
     char *expression = "$.foo.null()";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
@@ -777,7 +750,6 @@ START_TEST (null_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -786,7 +758,7 @@ START_TEST (wildcard_predicate)
 {
     jsonpath path;
     char *expression = "$.store.book[*].author";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 4);
     assert_root_step(&path);
@@ -797,7 +769,6 @@ START_TEST (wildcard_predicate)
     assert_single_name_step(&path, 3, "author");
     assert_no_predicates(&path, 3);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -806,7 +777,7 @@ START_TEST (wildcard_predicate_with_whitespace)
 {
     jsonpath path;
     char *expression = "$.foo  [\t*\n]  .bar";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
@@ -815,7 +786,6 @@ START_TEST (wildcard_predicate_with_whitespace)
     assert_single_name_step(&path, 2, "bar");
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST
@@ -824,7 +794,7 @@ START_TEST (subscript_predicate)
 {
     jsonpath path;
     char *expression = "$.foo[42].bar";
-    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
@@ -833,7 +803,6 @@ START_TEST (subscript_predicate)
     assert_single_name_step(&path, 2, "bar");
     assert_no_predicates(&path, 2);
 
-    free_parser_result(result);
     free_jsonpath(&path);
 }
 END_TEST

@@ -114,7 +114,7 @@ struct context
     size_t  length;
     size_t  cursor;
     
-    jsonpath *model;
+    jsonpath *path;
     node *steps;
 
     enum state state;
@@ -192,27 +192,26 @@ static inline void enter_state(parser_context *context, enum state state);
 static void unwind_context(parser_context *context);
 static void abort_context(parser_context *context);
 static inline void prepare_context(parser_context *context, uint8_t *expression, size_t length, jsonpath *path);
-static inline bool validate(parser_result *result, uint8_t *expression, size_t length, jsonpath *model);
+static inline bool validate(parser_context *context, uint8_t *expression, size_t length, jsonpath *path);
 static predicate *add_predicate(parser_context *context, enum predicate_kind kind);
 
 // error handlers
 static inline void unexpected_value(parser_context *context, uint8_t expected);
 
 // error message helpers
-static char *prepare_message(parser_context *context);
-static char *prepare_simple_message(jsonpath_status_code code);
+static char *make_simple_status_message(jsonpath_status_code code);
 
-void free_jsonpath(jsonpath *model)
+void free_jsonpath(jsonpath *path)
 {
-    if(NULL == model || NULL == model->steps || 0 == model->length)
+    if(NULL == path || NULL == path->steps || 0 == path->length)
     {
         return;
     }
-    for(size_t i = 0; i < model->length; i++)
+    for(size_t i = 0; i < path->length; i++)
     {
-        free_step(model->steps[i]);
+        free_step(path->steps[i]);
     }
-    free(model->steps);
+    free(path->steps);
 }
 
 static void free_step(step *step)
@@ -247,90 +246,74 @@ static void free_predicate(predicate *predicate)
     {
         return;
     }
-    // xxx - need to complete this!!!
     free(predicate);
 }
 
-void free_parser_result(parser_result *result)
+jsonpath_status_code parse_jsonpath(uint8_t *expression, size_t length, jsonpath *jsonpath)
 {
-    if(NULL != result)
+    parser_context context;
+    if(!validate(&context, expression, length, jsonpath))
     {
-        if(NULL != result->message)
-        {
-            free(result->message);
-        }
-        free(result);
-    }
-}
-
-parser_result *parse_jsonpath(uint8_t *expression, size_t length, jsonpath *model)
-{
-    parser_result *result = (parser_result *)malloc(sizeof(parser_result));
-    if(NULL == result)
-    {
-        return NULL;
-    }
-    result->position = 0;
-    if(!validate(result, expression, length, model))
-    {
-        return result;
+        return context.code;
     }
 
     fprintf(stdout, "starting expression: '");
     fwrite(expression, length, 1, stdout);
     fprintf(stdout, "'\n");
     
-    parser_context context;
-    prepare_context(&context, expression, length, model);
+    prepare_context(&context, expression, length, jsonpath);
     
     path(&context);
 
-    result->code = context.code;
-    result->message = prepare_message(&context);
-    result->position = context.cursor + 1;
-
-    if(SUCCESS != context.code)
+    jsonpath->result.code = context.code;
+    jsonpath->result.position = context.cursor;
+    if(SUCCESS == context.code)
     {
-        abort_context(&context);
-        fprintf(stdout, "aborted. %s\n", result->message);
+        unwind_context(&context);
+        fprintf(stdout, "done. found %zd steps.\n", jsonpath->length);
     }
     else
     {
-        unwind_context(&context);
-        fprintf(stdout, "done. found %zd steps.\n", model->length);
+        jsonpath->result.expected_char = context.expected;
+        jsonpath->result.actual_char = context.input[context.cursor];
+        
+        abort_context(&context);
+        char *message = make_status_message(context.path);
+        fprintf(stdout, "aborted. %s\n", message);
+        free(message);
     }
     
-    return result;
+    return context.code;
 }
 
 static void abort_context(parser_context *context)
 {
-    if(NULL == context->model->steps)
+    if(NULL == context->path->steps)
     {
         return;
     }
-    for(size_t i = 0; i < context->model->length; i++)
+    for(size_t i = 0; i < context->path->length; i++)
     {
         free_step(pop_step(context));
     }
     
-    context->model->steps = NULL;
-    context->model->length = 0;
+    context->path->steps = NULL;
+    context->path->length = 0;
 }
 
 static void unwind_context(parser_context *context)
 {
-    context->model->steps = (step **)malloc(sizeof(step *) * context->model->length);
-    if(NULL == context->model->steps)
+    context->path->steps = (step **)malloc(sizeof(step *) * context->path->length);
+    if(NULL == context->path->steps)
     {
         context->code = ERR_OUT_OF_MEMORY;
         abort_context(context);
         return;
     }
 
-    for(size_t i = 0; i < context->model->length; i++)
+    for(size_t i = 0; i < context->path->length; i++)
     {
-        context->model->steps[(context->model->length - 1) - i] = pop_step(context);
+        context->path->steps[(context->path->length - 1) - i] = pop_step(context);
     }
 }
 
@@ -356,7 +339,7 @@ static void absolute_path(parser_context *context)
     if('$' == get_char(context))
     {
         context->code = SUCCESS;
-        context->model->kind = ABSOLUTE_PATH;
+        context->path->kind = ABSOLUTE_PATH;
         context->current_step_kind = ROOT;
         consume_char(context);
 
@@ -735,7 +718,6 @@ static void subscript_predicate(parser_context *context)
     enter_state(context, ST_SUBSCRIPT_PREDICATE);
 
     skip_ws(context);
-
     size_t length = 0;
     while(1)
     {
@@ -901,7 +883,7 @@ static bool push_step(parser_context *context, step *step)
     }
     current->step = step;
     current->next = NULL;
-    context->model->length++;
+    context->path->length++;
 
     if(NULL == context->steps)
     {
@@ -928,28 +910,23 @@ static step *pop_step(parser_context *context)
     return result;
 }
 
-static inline bool validate(parser_result *result, uint8_t *expression, size_t length, jsonpath *model)
+static inline bool validate(parser_context *context, uint8_t *expression, size_t length, jsonpath *path)
 {
-    if(NULL == result)
+    if(NULL == path)
     {
+        context->code = ERR_NULL_OUTPUT_PATH;
         return false;
     }
     if(NULL == expression)
     {
-        result->code = ERR_NULL_EXPRESSION;
-        result->message = prepare_simple_message(result->code);
+        context->code = ERR_NULL_EXPRESSION;
+        path->result.code = context->code;
         return false;
     }
     if(0 == length)
     {
-        result->code = ERR_ZERO_LENGTH;
-        result->message = prepare_simple_message(result->code);
-        return false;
-    }
-    if(NULL == model)
-    {
-        result->code = ERR_NULL_OUTPUT_PATH;
-        result->message = prepare_simple_message(result->code);
+        context->code = ERR_ZERO_LENGTH;
+        path->result.code = context->code;
         return false;
     }
 
@@ -965,8 +942,11 @@ static inline void prepare_context(parser_context *context, uint8_t *expression,
     context->length = length;
     context->cursor = 0;
     context->state = ST_START;
-    context->model = path;    
-    context->model->kind = RELATIVE_PATH;
+    context->path = path;    
+    context->path->kind = RELATIVE_PATH;
+    context->path->result.position = 0;
+    context->path->result.expected_char = 0;
+    context->path->result.actual_char = 0;
 }
 
 static inline void unexpected_value(parser_context *context, uint8_t expected)
@@ -981,14 +961,14 @@ static inline void enter_state(parser_context *context, enum state state)
     fprintf(stdout, "entering state: '%s'\n", STATES[state]);
 }
 
-static char *prepare_message(parser_context *context)
+char *make_status_message(jsonpath *path)
 {
     char *message = NULL;
     
-    switch(context->code)
+    switch(path->result.code)
     {
         case ERR_PREMATURE_END_OF_INPUT:
-            asprintf(&message, MESSAGES[context->code], context->cursor);
+            asprintf(&message, MESSAGES[path->result.code], path->result.position);
             break;
         case ERR_EXPECTED_NODE_TYPE_TEST:
         case ERR_EMPTY_PREDICATE:
@@ -997,23 +977,23 @@ static char *prepare_message(parser_context *context)
         case ERR_UNSUPPORTED_PRED_TYPE:
         case ERR_EXPECTED_INTEGER:
         case ERR_INVALID_NUMBER:
-            asprintf(&message, MESSAGES[context->code], context->cursor + 1);
+            asprintf(&message, MESSAGES[path->result.code], path->result.position + 1);
             break;
         case ERR_UNEXPECTED_VALUE:
-            asprintf(&message, MESSAGES[context->code], context->cursor + 1, context->input[context->cursor], context->expected);
+            asprintf(&message, MESSAGES[path->result.code], path->result.position + 1, path->result.actual_char, path->result.expected_char);
             break;
         case ERR_EXPECTED_NAME_CHAR:
-            asprintf(&message, MESSAGES[context->code], context->cursor + 1, context->input[context->cursor]);
+            asprintf(&message, MESSAGES[path->result.code], path->result.position + 1, path->result.actual_char);
             break;
         default:
-            message = prepare_simple_message(context->code);
+            message = make_simple_status_message(path->result.code);
             break;
     }
 
     return message;
 }
 
-static char *prepare_simple_message(jsonpath_status_code code)
+static char *make_simple_status_message(jsonpath_status_code code)
 {
     char *message = NULL;
     

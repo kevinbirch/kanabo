@@ -133,18 +133,6 @@ struct step
 
 typedef struct step step;
 
-struct jsonpath
-{
-    enum path_kind
-    {
-        ABSOLUTE_PATH,
-        RELATIVE_PATH
-    } kind;
-  
-    size_t length;
-    step **steps;
-};
-
 enum jsonpath_status_code
 {
     SUCCESS = 0,
@@ -167,19 +155,30 @@ enum jsonpath_status_code
 
 typedef enum jsonpath_status_code jsonpath_status_code;
 
-struct parser_result
+struct jsonpath
 {
-    jsonpath_status_code code;
-    char *message;
-    size_t position;
+    enum path_kind
+    {
+        ABSOLUTE_PATH,
+        RELATIVE_PATH
+    } kind;
+  
+    size_t length;
+    step **steps;
+
+    struct
+    {
+        enum jsonpath_status_code code;
+        size_t position;
+        uint8_t expected_char;
+        uint8_t actual_char;
+    } result;
 };
 
-typedef struct parser_result parser_result;
+jsonpath_status_code parse_jsonpath(uint8_t *expression, size_t length, jsonpath *path);
 
-parser_result *parse_jsonpath(uint8_t *expression, size_t length, jsonpath *path);
+void free_jsonpath(jsonpath *path);
 
-void free_parser_result(parser_result *result);
-void free_jsonpath(jsonpath *model);
-
+char *make_status_message(jsonpath *path);
 
 #endif
