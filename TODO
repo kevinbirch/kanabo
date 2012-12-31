@@ -15,8 +15,17 @@ LICENSE file for more details.
 
 ## TODO
 
+### parser
+
+* make parser api return an enum instead of a struct
+  * expose methods to make error message
+* union support
+* filter support
+
 ### loader
 
+* make loader api return an enum instead of a struct
+  * expose methods to make error message
 * handle anchors and aliases
   * https://en.wikipedia.org/wiki/Hashed_array_tree
 * handle tags
