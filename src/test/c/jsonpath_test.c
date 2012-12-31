@@ -210,6 +210,24 @@ START_TEST (empty_predicate)
 }
 END_TEST
 
+START_TEST (extra_junk_in_predicate)
+{
+    jsonpath path;
+    char *expression = "$.foo[ * quux].bar";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EXTRA_JUNK_AFTER_PREDICATE, result->code);
+    ck_assert_int_eq(10, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
 START_TEST (whitespace_predicate)
 {
     jsonpath path;
@@ -794,6 +812,7 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input, empty_type_test_name);
     tcase_add_test(bad_input, empty_predicate);
     tcase_add_test(bad_input, whitespace_predicate);
+    tcase_add_test(bad_input, extra_junk_in_predicate);
 
     TCase *basic = tcase_create("basic");
     tcase_add_test(basic, dollar_only);

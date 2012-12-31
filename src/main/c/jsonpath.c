@@ -137,6 +137,7 @@ static const char * const MESSAGES[] =
     "At position %d: empty predicate",
     "At position %d: missing closing predicate delimiter `]' before end of step",
     "At position %d: unsupported predicate",
+    "At position %d: extra characters after valid predicate definition",
     "At position %d: expected a name character, but found '%c' instead",
     "At position %d: expected a node type test",
     "At position %d: expected an integer"
@@ -157,6 +158,7 @@ static void name_test(parser_context *context);
 static void wildcard_name(parser_context *context, step *name_test);
 static void step_predicate(parser_context *context);
 static void wildcard_predicate(parser_context *context);
+static void subscript_predicate(parser_context *context);
 
 static void name(parser_context *context, step *name_test);
 static void node_type_test(parser_context *context);
@@ -683,17 +685,24 @@ static void step_predicate(parser_context *context)
         if(SUCCESS == context->code)
         {
             skip_ws(context);
+            if(']' == get_char(context))
+            {
             consume_char(context);
+            }
+            else
+            {
+                context->code = ERR_EXTRA_JUNK_AFTER_PREDICATE;
+            }
             return;
         }
 
-        /* subscript_predicate(context); */
-        /* if(SUCCESS == context->code) */
-        /* { */
-        /*     skip_ws(context); */
-        /*     consume_char(context); */
-        /*     return; */
-        /* } */
+        subscript_predicate(context);
+        if(SUCCESS == context->code)
+        {
+            skip_ws(context);
+            consume_char(context);
+            return;
+        }
         else
         {
             context->code = ERR_UNSUPPORTED_PRED_TYPE;
@@ -721,14 +730,14 @@ static void wildcard_predicate(parser_context *context)
         unexpected_value(context, '*');
     }
 }
-/*
+
 static void subscript_predicate(parser_context *context)
 {
     enter_state(context, ST_SUBSCRIPT_PREDICATE);
 
     skip_ws(context);
 
-    size_t mark = context->cursor;
+    //size_t mark = context->cursor;
     size_t length = 0;
     for(uint8_t c = get_char(context); isdigit(c); consume_char(context), c = get_char(context))
     {
@@ -750,18 +759,8 @@ static void subscript_predicate(parser_context *context)
         consume_char(context);
         c = get_char(context);
     }
-    if('*' == get_char(context))
-    {
-        context->code = SUCCESS;
-        consume_char(context);
-        add_predicate(context, WILDCARD);
-    }
-    else
-    {
-        unexpected_value(context, '*');
-    }
 }
-*/
+
 static predicate *add_predicate(parser_context *context, enum predicate_kind kind)
 {
     predicate *pred = (predicate *)malloc(sizeof(struct predicate));
@@ -989,23 +988,19 @@ static char *prepare_message(parser_context *context)
         case ERR_PREMATURE_END_OF_INPUT:
             asprintf(&message, MESSAGES[context->code], context->cursor);
             break;
+        case ERR_EXTRA_JUNK_AFTER_PREDICATE:
         case ERR_EMPTY_PREDICATE:
         case ERR_UNSUPPORTED_PRED_TYPE:
         case ERR_UNBALANCED_PRED_DELIM:
-            asprintf(&message, MESSAGES[context->code], context->cursor + 1);
-            break;
         case ERR_EXPECTED_INTEGER:
+        case ERR_EXPECTED_NODE_TYPE_TEST:
             asprintf(&message, MESSAGES[context->code], context->cursor + 1);
             break;
         case ERR_UNEXPECTED_VALUE:
-            asprintf(&message, MESSAGES[context->code], context->cursor + 1,
-                     context->input[context->cursor], context->expected);
+            asprintf(&message, MESSAGES[context->code], context->cursor + 1, context->input[context->cursor], context->expected);
             break;
         case ERR_EXPECTED_NAME_CHAR:
             asprintf(&message, MESSAGES[context->code], context->cursor + 1, context->input[context->cursor]);
-            break;
-        case ERR_EXPECTED_NODE_TYPE_TEST:
-            asprintf(&message, MESSAGES[context->code], context->cursor + 1);
             break;
         default:
             message = prepare_simple_message(context->code);
