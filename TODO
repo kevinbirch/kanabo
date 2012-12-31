@@ -19,6 +19,7 @@ LICENSE file for more details.
 
 * make parser api return an enum instead of a struct
   * expose methods to make error message
+* complete free_predicate function
 * union support
 * filter support
 
