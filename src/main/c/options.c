@@ -61,6 +61,14 @@ static struct option options[] =
     {0, 0, 0, 0}
 };
 
+#define ENSURE_COMMAND_ORTHOGONALITY(test) \
+    if((test))                             \
+    {                                      \
+        command = SHOW_HELP;               \
+        done = true;                       \
+        break;                             \
+    }
+
 cmd process_options(const int argc, char * const *argv, struct settings * restrict settings)
 {
     int opt;
@@ -77,24 +85,17 @@ cmd process_options(const int argc, char * const *argv, struct settings * restri
         switch(opt)
         {
             case 'v':
-#define ENSURE_COMMAND_ORTHOGONALITY(test) \
-                if((test))                 \
-                {                          \
-                    command = SHOW_HELP;   \
-                    done = true;           \
-                    break;                 \
-                }
-                ENSURE_COMMAND_ORTHOGONALITY(1 < argc);
+                ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
                 command = SHOW_VERSION;
                 done = true;
                 break;
             case 'h':
-                ENSURE_COMMAND_ORTHOGONALITY(1 < argc);
+                ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
                 command = SHOW_HELP;
                 done = true;
                 break;
             case 'w':
-                ENSURE_COMMAND_ORTHOGONALITY(1 < argc);
+                ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
                 command = SHOW_WARRANTY;
                 done = true;
                 break;

@@ -40,6 +40,7 @@
 #include <sys/errno.h>
 #include <string.h>
 
+#include "warranty.h"
 #include "options.h"
 #include "loader.h"
 #include "shell.h"
@@ -78,7 +79,7 @@ static int dispatch(int command, struct settings *settings)
             fprintf(stdout, "version information\n");
             break;
         case SHOW_WARRANTY:
-            fprintf(stdout, "warranty information\n");
+            fprintf(stdout, NO_WARRANTY);
             break;
         case ENTER_INTERACTIVE:
             result = interactive_mode(settings);
