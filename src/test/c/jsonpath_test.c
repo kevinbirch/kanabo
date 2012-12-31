@@ -192,6 +192,42 @@ START_TEST (quoted_empty_step)
 }
 END_TEST
 
+START_TEST (empty_predicate)
+{
+    jsonpath path;
+    char *expression = "$.foo[].bar";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EMPTY_PREDICATE, result->code);
+    ck_assert_int_eq(7, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (whitespace_predicate)
+{
+    jsonpath path;
+    char *expression = "$.foo[ \t ].bar";
+    parser_result *result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_not_null(result);
+    ck_assert_int_eq(ERR_EMPTY_PREDICATE, result->code);
+    ck_assert_int_eq(10, result->position);
+    ck_assert_not_null(result->message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", result->message);
+
+    free_parser_result(result);
+    free_jsonpath(&path);
+}
+END_TEST
+
 START_TEST (bogus_type_test_name)
 {
     jsonpath path;
@@ -756,6 +792,8 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input, bogus_type_test_name_booloud);
     tcase_add_test(bad_input, bogus_type_test_name_narl);
     tcase_add_test(bad_input, empty_type_test_name);
+    tcase_add_test(bad_input, empty_predicate);
+    tcase_add_test(bad_input, whitespace_predicate);
 
     TCase *basic = tcase_create("basic");
     tcase_add_test(basic, dollar_only);

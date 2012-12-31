@@ -134,6 +134,7 @@ static const char * const MESSAGES[] =
     "Not a JSONPath expression",
     "Premature end of input after position %d",
     "At position %d: unexpected character '%c', was expecting '%c' instead",
+    "At position %d: empty predicate",
     "At position %d: missing closing predicate delimiter `]' before end of step",
     "At position %d: unsupported predicate",
     "At position %d: expected a name character, but found '%c' instead",
@@ -665,21 +666,34 @@ static void step_predicate(parser_context *context)
     skip_ws(context);
     if('[' == get_char(context))
     {
-        context->code = SUCCESS;
         consume_char(context);
-
-        int_fast32_t extent = offset_of(context, "]");
-        if(-1 == extent)
+        if(!look_for(context, "]"))
         {
             context->code = ERR_UNBALANCED_PRED_DELIM;
             return;
         }
+        skip_ws(context);
+        if(']' == get_char(context))
+        {
+            context->code = ERR_EMPTY_PREDICATE;
+            return;
+        }
+
         wildcard_predicate(context);
         if(SUCCESS == context->code)
         {
             skip_ws(context);
             consume_char(context);
+            return;
         }
+
+        /* subscript_predicate(context); */
+        /* if(SUCCESS == context->code) */
+        /* { */
+        /*     skip_ws(context); */
+        /*     consume_char(context); */
+        /*     return; */
+        /* } */
         else
         {
             context->code = ERR_UNSUPPORTED_PRED_TYPE;
@@ -707,7 +721,47 @@ static void wildcard_predicate(parser_context *context)
         unexpected_value(context, '*');
     }
 }
+/*
+static void subscript_predicate(parser_context *context)
+{
+    enter_state(context, ST_SUBSCRIPT_PREDICATE);
 
+    skip_ws(context);
+
+    size_t mark = context->cursor;
+    size_t length = 0;
+    for(uint8_t c = get_char(context); isdigit(c); consume_char(context), c = get_char(context))
+    {
+        
+    }
+    uint8_t c = get_char(context);
+    while(1)
+    {
+        if(']' == c)
+        {
+            break;
+        }
+        if(!isdigit(c))
+        {
+            context->code = ERR_EXPECTED_INTEGER;
+            return;
+        }
+        length++;
+        consume_char(context);
+        c = get_char(context);
+    }
+    if('*' == get_char(context))
+    {
+        context->code = SUCCESS;
+        consume_char(context);
+        add_predicate(context, WILDCARD);
+    }
+    else
+    {
+        unexpected_value(context, '*');
+    }
+}
+*/
 static predicate *add_predicate(parser_context *context, enum predicate_kind kind)
 {
     predicate *pred = (predicate *)malloc(sizeof(struct predicate));
@@ -935,6 +989,7 @@ static char *prepare_message(parser_context *context)
         case ERR_PREMATURE_END_OF_INPUT:
             asprintf(&message, MESSAGES[context->code], context->cursor);
             break;
+        case ERR_EMPTY_PREDICATE:
         case ERR_UNSUPPORTED_PRED_TYPE:
         case ERR_UNBALANCED_PRED_DELIM:
             asprintf(&message, MESSAGES[context->code], context->cursor + 1);
