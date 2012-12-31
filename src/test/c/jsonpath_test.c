@@ -54,6 +54,8 @@ static void assert_type_step(jsonpath *path, size_t index, enum type_test_kind e
 static void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind);
 static void assert_name(step * step, uint8_t *value, size_t length);
 static void assert_no_predicates(jsonpath *path, size_t index);
+static void assert_wildcard_predicate(jsonpath *path, size_t path_index, size_t predicate_index);
+static void assert_subscript_predicate(jsonpath *path, size_t path_index, size_t predicate_index, uint_fast32_t index_value);
 static void assert_predicate(jsonpath *path, size_t path_index, size_t predicate_index, enum predicate_kind expected_predicate_kind);
 
 START_TEST (null_expression)
