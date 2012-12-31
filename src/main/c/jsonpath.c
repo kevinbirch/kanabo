@@ -41,6 +41,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
+#include <inttypes.h>
 
 #include "jsonpath.h"
 
@@ -141,6 +143,7 @@ static const char * const MESSAGES[] =
     "At position %d: expected a name character, but found '%c' instead",
     "At position %d: expected a node type test",
     "At position %d: expected an integer"
+    "At position %d: invalid integer"
 };
 
 // freeeeeedom!!!
@@ -737,28 +740,31 @@ static void subscript_predicate(parser_context *context)
 
     skip_ws(context);
 
-    //size_t mark = context->cursor;
     size_t length = 0;
-    for(uint8_t c = get_char(context); isdigit(c); consume_char(context), c = get_char(context))
-    {
-        
-    }
-    uint8_t c = get_char(context);
     while(1)
     {
-        if(']' == c)
+        if(']' == peek(context, length) || isspace(peek(context, length)))
         {
             break;
         }
-        if(!isdigit(c))
+        if(!isdigit(peek(context, length)))
         {
             context->code = ERR_EXPECTED_INTEGER;
             return;
         }
         length++;
-        consume_char(context);
-        c = get_char(context);
     }
+    errno = 0;
+    long subscript = strtol((char *)context->input + context->cursor, (char **)NULL, 10);
+    if(0 != errno)
+    {
+        context->code = ERR_INVALID_NUMBER;
+        return;
+    }
+    context->code = SUCCESS;
+    consume_chars(context, length);
+    predicate *pred = add_predicate(context, SUBSCRIPT);
+    pred->subscript.index = (uint_fast32_t)subscript;
 }
 
 static predicate *add_predicate(parser_context *context, enum predicate_kind kind)
@@ -988,12 +994,13 @@ static char *prepare_message(parser_context *context)
         case ERR_PREMATURE_END_OF_INPUT:
             asprintf(&message, MESSAGES[context->code], context->cursor);
             break;
-        case ERR_EXTRA_JUNK_AFTER_PREDICATE:
-        case ERR_EMPTY_PREDICATE:
-        case ERR_UNSUPPORTED_PRED_TYPE:
-        case ERR_UNBALANCED_PRED_DELIM:
-        case ERR_EXPECTED_INTEGER:
         case ERR_EXPECTED_NODE_TYPE_TEST:
+        case ERR_EMPTY_PREDICATE:
+        case ERR_UNBALANCED_PRED_DELIM:
+        case ERR_EXTRA_JUNK_AFTER_PREDICATE:
+        case ERR_UNSUPPORTED_PRED_TYPE:
+        case ERR_EXPECTED_INTEGER:
+        case ERR_INVALID_NUMBER:
             asprintf(&message, MESSAGES[context->code], context->cursor + 1);
             break;
         case ERR_UNEXPECTED_VALUE:

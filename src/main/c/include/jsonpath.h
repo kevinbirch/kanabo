@@ -161,7 +161,8 @@ enum jsonpath_status_code
     ERR_EXTRA_JUNK_AFTER_PREDICATE,
     ERR_EXPECTED_NAME_CHAR,
     ERR_EXPECTED_NODE_TYPE_TEST,
-    ERR_EXPECTED_INTEGER
+    ERR_EXPECTED_INTEGER,
+    ERR_INVALID_NUMBER
 };
 
 typedef enum jsonpath_status_code jsonpath_status_code;
