@@ -809,6 +809,76 @@ START_TEST (subscript_predicate)
 }
 END_TEST
 
+START_TEST (bad_path_input)
+{
+    ck_assert_int_eq(-1, path_get_kind(NULL));
+    ck_assert_int_eq(0, path_get_length(NULL));
+    ck_assert_null(path_get_step(NULL, 0));
+    
+    jsonpath path;
+    char *expression = "$";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 1);
+
+    ck_assert_null(path_get_step(&path, 1));
+
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (bad_step_input)
+{
+    ck_assert_int_eq(-1, step_get_kind(NULL));
+    ck_assert_int_eq(-1, step_get_test_kind(NULL));
+    ck_assert_int_eq(-1, type_test_step_get_type(NULL));
+    
+    ck_assert_int_eq(0, step_get_predicate_count(NULL));
+    ck_assert_null(step_get_predicate(NULL, 0));
+    
+    jsonpath path;
+    char *expression = "$.foo.array()";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
+
+    ck_assert_int_eq(-1, type_test_step_get_type(path_get_step(&path, 1)));
+    step *step2 = path_get_step(&path, 2);
+    ck_assert_int_eq(0, name_test_step_get_length(step2));
+    ck_assert_null(name_test_step_get_name(step2));
+    ck_assert_null(step_get_predicate(step2, 0));
+
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (bad_predicate_input)
+{
+    ck_assert_int_eq(-1, predicate_get_kind(NULL));
+    ck_assert_int_eq(0, subscript_predicate_get_index(NULL));
+    ck_assert_int_eq(0, slice_predicate_get_from(NULL));
+    ck_assert_int_eq(0, slice_predicate_get_to(NULL));
+    ck_assert_int_eq(0, slice_predicate_get_step(NULL));
+    ck_assert_null(join_predicate_get_left(NULL));
+    ck_assert_null(join_predicate_get_right(NULL));
+
+    jsonpath path;
+    char *expression = "$.foo[42].bar[*]";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);    
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
+
+    predicate *subscript = step_get_predicate(path_get_step(&path, 1), 0);
+    ck_assert_int_eq(0, slice_predicate_get_to(subscript));
+    ck_assert_int_eq(0, slice_predicate_get_from(subscript));
+    ck_assert_int_eq(0, slice_predicate_get_step(subscript));
+
+    predicate *wildcard = step_get_predicate(path_get_step(&path, 2), 0);
+    ck_assert_int_eq(0, subscript_predicate_get_index(wildcard));
+    ck_assert_null(join_predicate_get_left(wildcard));
+    ck_assert_null(join_predicate_get_right(wildcard));
+
+    free_jsonpath(&path);
+}
+END_TEST
+
 Suite *jsonpath_suite(void)
 {
     TCase *bad_input = tcase_create("bad input");
@@ -857,12 +927,18 @@ Suite *jsonpath_suite(void)
     tcase_add_test(predicate, wildcard_predicate);
     tcase_add_test(predicate, wildcard_predicate_with_whitespace);
     tcase_add_test(predicate, subscript_predicate);
-    
+
+    TCase *api = tcase_create("api");
+    tcase_add_test(api, bad_path_input);
+    tcase_add_test(api, bad_step_input);
+    tcase_add_test(api, bad_predicate_input);
+
     Suite *jsonpath = suite_create("JSONPath");
     suite_add_tcase(jsonpath, bad_input);
     suite_add_tcase(jsonpath, basic);
     suite_add_tcase(jsonpath, node_type);
     suite_add_tcase(jsonpath, predicate);
+    suite_add_tcase(jsonpath, api);
 
     return jsonpath;
 }
