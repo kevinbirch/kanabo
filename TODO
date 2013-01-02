@@ -17,9 +17,12 @@ LICENSE file for more details.
 
 ### parser
 
+* refactor direct status code setters into function calls
+* wrap output in debug conditionals
 * complete free_predicate function
 * union support
 * filter support
+* should we allow an optional qualified path expression after the filter expression in the union expression production?
 
 ### loader
 
@@ -31,6 +34,7 @@ LICENSE file for more details.
 
 ### model
 
+* rename subtype methods more like jsonpath api subtype method names
 * add tree walker api
 * add printing visitor
   * for printing scalar node values:
