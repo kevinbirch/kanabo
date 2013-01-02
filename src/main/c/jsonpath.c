@@ -201,6 +201,159 @@ static inline void unexpected_value(parser_context *context, uint8_t expected);
 // error message helpers
 static char *make_simple_status_message(jsonpath_status_code code);
 
+enum path_kind path_get_kind(jsonpath *path)
+{
+    if(NULL == path)
+    {
+        return (enum path_kind)-1;
+    }
+    return path->kind;
+}
+
+size_t path_get_length(jsonpath *path)
+{
+    if(NULL == path)
+    {
+        return 0;
+    }
+    return path->length;
+}
+
+step *path_get_step(jsonpath *path, size_t index)
+{
+    if(NULL == path || 0 == path->length || NULL == path->steps || index >= path->length)
+    {
+        return NULL;
+    }
+    return path->steps[index];
+}
+
+enum step_kind step_get_kind(step *step)
+{
+    if(NULL == step)
+    {
+        return (enum step_kind)-1;
+    }
+    return step->kind;
+}
+
+enum test_kind step_get_test_kind(step *step)
+{
+    if(NULL == step)
+    {
+        return (enum test_kind)-1;
+    }
+    return step->test.kind;
+}
+
+enum type_test_kind type_test_step_get_type(step *step)
+{
+    if(NULL == step || NAME_TEST == step->test.kind)
+    {
+        return (enum type_test_kind)-1;
+    }
+    return step->test.type;
+}
+
+uint8_t *name_test_step_get_name(step *step)
+{
+    if(NULL == step || TYPE_TEST == step->test.kind)
+    {
+        return NULL;
+    }
+    return step->test.name.value;
+}
+
+size_t name_test_step_get_length(step *step)
+{
+    if(NULL == step || TYPE_TEST == step->test.kind)
+    {
+        return 0;
+    }
+    return step->test.name.length;
+}
+
+size_t step_get_predicate_count(step *step)
+{
+    if(NULL == step)
+    {
+        return 0;
+    }
+    return step->predicate_count;
+}
+
+predicate *step_get_predicate(step *step, size_t index)
+{
+    if(NULL == step || 0 == step->predicate_count || NULL == step->predicates || index >= step->predicate_count)
+    {
+        return NULL;
+    }
+    return step->predicates[index];
+}
+
+enum predicate_kind predicate_get_kind(predicate *predicate)
+{
+    if(NULL == predicate)
+    {
+        return (enum predicate_kind)-1;
+    }
+    return predicate->kind;
+}
+
+uint_fast32_t subscript_predicate_get_index(predicate *predicate)
+{
+    if(NULL == predicate || SUBSCRIPT != predicate->kind)
+    {
+        return 0;
+    }
+    return predicate->subscript.index;
+}
+
+uint_fast32_t slice_predicate_get_to(predicate *predicate)
+{
+    if(NULL == predicate || SLICE != predicate->kind)
+    {
+        return 0;
+    }
+    return predicate->slice.to;
+}
+
+uint_fast32_t slice_predicate_get_from(predicate *predicate)
+{
+    if(NULL == predicate || SLICE != predicate->kind)
+    {
+        return 0;
+    }
+    return predicate->slice.from;
+}
+
+uint_fast32_t slice_predicate_get_step(predicate *predicate)
+{
+    if(NULL == predicate || SLICE != predicate->kind)
+    {
+        return 0;
+    }
+    return predicate->slice.step;
+}
+
+jsonpath *join_predicate_get_left(predicate *predicate)
+{
+    if(NULL == predicate || JOIN != predicate->kind)
+    {
+        return NULL;
+    }
+    return predicate->join.left;
+}
+
+jsonpath *join_predicate_get_right(predicate *predicate)
+{
+    if(NULL == predicate || JOIN != predicate->kind)
+    {
+        return NULL;
+    }
+    return predicate->join.right;
+}
+
 void free_jsonpath(jsonpath *path)
 {
     if(NULL == path || NULL == path->steps || 0 == path->length)

@@ -406,9 +406,9 @@ static void assert_parser_result(jsonpath_status_code result, jsonpath *path, en
     ck_assert_not_null(message);
     free(message);
     ck_assert_int_ne(0, path->result.position);
-    ck_assert_int_eq(expected_kind, path->kind);
+    ck_assert_int_eq(expected_kind, path_get_kind(path));
     ck_assert_not_null(path->steps);
-    ck_assert_int_eq(expected_length, path->length);
+    ck_assert_int_eq(expected_length, path_get_length(path));
 }
 
 static void assert_root_step(jsonpath *path)
@@ -430,7 +430,7 @@ static void assert_recursive_name_step(jsonpath *path, size_t index, char *name)
 static void assert_name_step(jsonpath *path, size_t index, char *name, enum step_kind expected_step_kind)
 {
     assert_step(path, index, expected_step_kind, NAME_TEST);
-    assert_name(path->steps[index], (uint8_t *)name, strlen(name));
+    assert_name(path_get_step(path, index), (uint8_t *)name, strlen(name));
 }
 
 static void assert_single_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind)
@@ -446,24 +446,24 @@ static void assert_recursive_type_step(jsonpath *path, size_t index, enum type_t
 static void assert_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind, enum step_kind expected_step_kind)
 {
     assert_step(path, index, expected_step_kind, TYPE_TEST);
-    ck_assert_int_eq(expected_type_kind, path->steps[index]->test.type);
+    ck_assert_int_eq(expected_type_kind, type_test_step_get_type(path_get_step(path, index)));
 }
 
 static void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind)
 {
-    ck_assert_int_eq(expected_step_kind, path->steps[index]->kind);
-    ck_assert_int_eq(expected_test_kind, path->steps[index]->test.kind);
+    ck_assert_int_eq(expected_step_kind, step_get_kind(path_get_step(path, index)));
+    ck_assert_int_eq(expected_test_kind, step_get_test_kind(path_get_step(path, index)));
 }
 
-static void assert_name(step * step, uint8_t *name, size_t length)
+static void assert_name(step *step, uint8_t *name, size_t length)
 {
-    ck_assert_int_eq(length, step->test.name.length);
-    ck_assert_buf_eq(name, length, step->test.name.value, step->test.name.length);
+    ck_assert_int_eq(length, name_test_step_get_length(step));
+    ck_assert_buf_eq(name, length, name_test_step_get_name(step), name_test_step_get_length(step));
 }
 
 static void assert_no_predicates(jsonpath *path, size_t index)
 {
-    ck_assert_int_eq(0, path->steps[index]->predicate_count);
+    ck_assert_int_eq(0, step_get_predicate_count(path_get_step(path, index)));
     ck_assert_null(path->steps[index]->predicates);
 }
 
@@ -475,15 +475,15 @@ static void assert_wildcard_predicate(jsonpath *path, size_t path_index, size_t 
 static void assert_subscript_predicate(jsonpath *path, size_t path_index, size_t predicate_index, uint_fast32_t index_value)
 {
     assert_predicate(path, path_index, predicate_index, SUBSCRIPT);
-    ck_assert_int_eq(index_value, path->steps[path_index]->predicates[predicate_index]->subscript.index);    
+    ck_assert_int_eq(index_value, subscript_predicate_get_index(step_get_predicate(path_get_step(path, path_index), predicate_index)));
 }
 
 static void assert_predicate(jsonpath *path, size_t path_index, size_t predicate_index, enum predicate_kind expected_predicate_kind)
 {
-    ck_assert_int_ne(0, path->steps[path_index]->predicate_count);
+    ck_assert_int_ne(0, step_get_predicate_count(path_get_step(path, path_index)));
     ck_assert_not_null(path->steps[path_index]->predicates);
-    ck_assert_not_null(path->steps[path_index]->predicates[predicate_index]);
-    ck_assert_int_eq(expected_predicate_kind, path->steps[path_index]->predicates[predicate_index]->kind);
+    ck_assert_not_null(step_get_predicate(path_get_step(path, path_index), predicate_index));
+    ck_assert_int_eq(expected_predicate_kind, predicate_get_kind(step_get_predicate(path_get_step(path, path_index), predicate_index)));
 }
 
 START_TEST (dollar_only)

@@ -50,9 +50,7 @@ struct predicate
         WILDCARD,
         SUBSCRIPT,
         SLICE,
-        JOIN,
-        FILTER,
-        SCRIPT
+        JOIN
     } kind;
     
     union
@@ -66,6 +64,7 @@ struct predicate
         {
             uint_fast32_t from;
             uint_fast32_t to;
+            uint_fast32_t step;
         } slice;
         
         struct
@@ -73,18 +72,6 @@ struct predicate
             jsonpath *left;
             jsonpath *right;
         } join;
-
-        struct
-        {
-            uint8_t *expression;
-            size_t length;
-        } filter;
-
-        struct
-        {
-            uint8_t *expression;
-            size_t length;
-        } script;
     };
 };
 
@@ -168,7 +155,7 @@ struct jsonpath
 
     struct
     {
-        enum jsonpath_status_code code;
+        jsonpath_status_code code;
         size_t position;
         uint8_t expected_char;
         uint8_t actual_char;
@@ -176,8 +163,29 @@ struct jsonpath
 };
 
 jsonpath_status_code parse_jsonpath(uint8_t *expression, size_t length, jsonpath *path);
-
 void free_jsonpath(jsonpath *path);
+
+enum path_kind path_get_kind(jsonpath *path);
+size_t         path_get_length(jsonpath *path);
+step *         path_get_step(jsonpath *path, size_t index);
+
+enum step_kind step_get_kind(step *step);
+enum test_kind step_get_test_kind(step *step);
+
+enum type_test_kind type_test_step_get_type(step *step);
+uint8_t            *name_test_step_get_name(step *step);
+size_t              name_test_step_get_length(step *step);
+
+size_t     step_get_predicate_count(step *step);
+predicate *step_get_predicate(step *step, size_t index);
+
+enum predicate_kind predicate_get_kind(predicate *predicate);
+uint_fast32_t       subscript_predicate_get_index(predicate *predicate);
+uint_fast32_t       slice_predicate_get_to(predicate *predicate);
+uint_fast32_t       slice_predicate_get_from(predicate *predicate);
+uint_fast32_t       slice_predicate_get_step(predicate *predicate);
+jsonpath           *join_predicate_get_left(predicate *predicate);
+jsonpath           *join_predicate_get_right(predicate *predicate);
 
 char *make_status_message(jsonpath *path);
 
