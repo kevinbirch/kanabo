@@ -20,7 +20,6 @@ LICENSE file for more details.
 * refactor direct status code setters into function calls
 * wrap output in debug conditionals
   * add exit state function with output
-* complete free_predicate function
 * union support
 * filter support
 * should we allow an optional qualified path expression after the filter expression in the union expression production?
@@ -28,7 +27,7 @@ LICENSE file for more details.
 ### loader
 
 * make loader api return an enum instead of a struct
-  * make input struct, add c'tor/d'tor
+  * expose input struct, add c'tor/d'tor
   * fold current load functions into single loader from input struct
   * expose methods to make error message from input struct
 * handle anchors and aliases
