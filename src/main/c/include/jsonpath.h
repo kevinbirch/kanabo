@@ -162,31 +162,31 @@ struct jsonpath
     } result;
 };
 
-jsonpath_status_code parse_jsonpath(uint8_t *expression, size_t length, jsonpath *path);
+jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, jsonpath *path);
 void free_jsonpath(jsonpath *path);
 
-enum path_kind path_get_kind(jsonpath *path);
-size_t         path_get_length(jsonpath *path);
-step *         path_get_step(jsonpath *path, size_t index);
+enum path_kind path_get_kind(const jsonpath * restrict path);
+size_t         path_get_length(const jsonpath * restrict path);
+step *         path_get_step(const jsonpath * restrict path, size_t index);
 
-enum step_kind step_get_kind(step *step);
-enum test_kind step_get_test_kind(step *step);
+enum step_kind step_get_kind(const step * restrict step);
+enum test_kind step_get_test_kind(const step * restrict step);
 
-enum type_test_kind type_test_step_get_type(step *step);
-uint8_t            *name_test_step_get_name(step *step);
-size_t              name_test_step_get_length(step *step);
+enum type_test_kind type_test_step_get_type(const step * restrict step);
+uint8_t            *name_test_step_get_name(const step * restrict step);
+size_t              name_test_step_get_length(const step * restrict step);
 
-size_t     step_get_predicate_count(step *step);
-predicate *step_get_predicate(step *step, size_t index);
+size_t     step_get_predicate_count(const step * restrict step);
+predicate *step_get_predicate(const step * restrict step, size_t index);
 
-enum predicate_kind predicate_get_kind(predicate *predicate);
-uint_fast32_t       subscript_predicate_get_index(predicate *predicate);
-uint_fast32_t       slice_predicate_get_to(predicate *predicate);
-uint_fast32_t       slice_predicate_get_from(predicate *predicate);
-uint_fast32_t       slice_predicate_get_step(predicate *predicate);
-jsonpath           *join_predicate_get_left(predicate *predicate);
-jsonpath           *join_predicate_get_right(predicate *predicate);
+enum predicate_kind predicate_get_kind(const predicate * restrict predicate);
+uint_fast32_t       subscript_predicate_get_index(const predicate * restrict predicate);
+uint_fast32_t       slice_predicate_get_to(const predicate * restrict predicate);
+uint_fast32_t       slice_predicate_get_from(const predicate * restrict predicate);
+uint_fast32_t       slice_predicate_get_step(const predicate * restrict predicate);
+jsonpath           *join_predicate_get_left(const predicate * restrict predicate);
+jsonpath           *join_predicate_get_right(const predicate * restrict predicate);
 
-char *make_status_message(jsonpath *path);
+char *make_status_message(const jsonpath * restrict path);
 
 #endif
