@@ -162,9 +162,13 @@ struct jsonpath
     } result;
 };
 
+// parser entry point
 jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, jsonpath *path);
 void free_jsonpath(jsonpath *path);
 
+char *make_status_message(const jsonpath * restrict path);
+
+// jsonpath model api
 enum path_kind path_get_kind(const jsonpath * restrict path);
 size_t         path_get_length(const jsonpath * restrict path);
 step *         path_get_step(const jsonpath * restrict path, size_t index);
@@ -186,7 +190,5 @@ uint_fast32_t       slice_predicate_get_from(const predicate * restrict predicat
 uint_fast32_t       slice_predicate_get_step(const predicate * restrict predicate);
 jsonpath           *join_predicate_get_left(const predicate * restrict predicate);
 jsonpath           *join_predicate_get_right(const predicate * restrict predicate);
-
-char *make_status_message(const jsonpath * restrict path);
 
 #endif
