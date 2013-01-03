@@ -37,6 +37,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 #include <yaml.h>
 
 #include "loader.h"
@@ -405,19 +406,26 @@ static size_t unwind_excursion(document_context *context)
 static bool unwind_sequence(document_context *context)
 {
     size_t count = unwind_excursion(context);
-    node **items = (node **)malloc(sizeof(node *) * count);
-    if(NULL == items)
+    node *sequence = make_sequence_node(count);
+    if(NULL == sequence)
     {
         return false;
     }
     for(size_t i = 0; i < count; i++)
     {
-        items[(count - 1) - i] = pop_context(context);
+        if(!sequence_add(sequence, pop_context(context)))
+        {
+            free_node(sequence);
+            return false;
+        }
     }
-
-    node *sequence = make_sequence_node(count);
-    sequence_add_all(sequence, items, count);
-    free(items);
+    node *temp;
+    for(size_t i = 0; i < floor(count / 2); i++)
+    {
+        temp = sequence_get_item(sequence, i);
+        sequence_set(sequence, sequence_get_item(sequence, count - 1 - i), i);
+        sequence_set(sequence, temp, count - 1 - i);
+    }
     push_context(context, sequence);
     return true;
 }

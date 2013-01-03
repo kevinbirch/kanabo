@@ -151,7 +151,7 @@ void free_node(node *value);
 bool model_add(document_model * restrict model, node *document);
 bool document_set_root(node * restrict document, node *root);
 bool sequence_add(node * restrict sequence, node *item);
-bool sequence_add_all(node * restrict sequence, node **items, size_t count);
+bool sequence_set(node * restrict sequence, node *item, size_t index);
 bool mapping_put(node * restrict mapping, node *key, node *value);
 
 #endif

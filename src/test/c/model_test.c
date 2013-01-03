@@ -303,13 +303,14 @@ START_TEST (sequence)
     ck_assert_not_null(y);
     node *z = make_scalar_node((unsigned char *)"z", 1);
     ck_assert_not_null(z);
-    node *items[] = {x, y, z};
     node *xyz = make_sequence_node(2);
     ck_assert_not_null(xyz);
     ck_assert_int_eq(0, xyz->content.size);
     ck_assert_int_eq(2, xyz->content.sequence.capacity);
 
-    sequence_add_all(xyz, items, 3);
+    sequence_add(xyz, x);
+    sequence_add(xyz, y);
+    sequence_add(xyz, z);
     ck_assert_int_eq(3, xyz->content.size);
     ck_assert_int_eq(5, xyz->content.sequence.capacity);
     ck_assert_int_eq(x, sequence_get_item(xyz, 0));

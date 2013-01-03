@@ -39,21 +39,7 @@
 #include <errno.h>
 
 #include "model.h"
-
-#define ensure_capacity(T, A, S, C)                                     \
-    if((S) > (C))                                                       \
-    {                                                                   \
-        size_t size_plus_50_percent = ((S) * 3) / 2 + 1;                \
-        T **old = (A);                                                  \
-        (A) = (T **)malloc(sizeof(T *) * size_plus_50_percent);         \
-        if(NULL == (A))                                                 \
-        {                                                               \
-            return false;                                               \
-        }                                                               \
-        memcpy((A), old, sizeof(T *) * (S));                            \
-        free(old);                                                      \
-        (C) = size_plus_50_percent;                                     \
-    }
+#include "array.h"
 
 bool model_add(document_model * restrict model, node *document)
 {
@@ -92,29 +78,24 @@ bool sequence_add(node * restrict sequence, node *item)
     }
 
     errno = 0;
-    bool result = true;
     ensure_capacity(node, sequence->content.sequence.value, sequence->content.size + 1, sequence->content.sequence.capacity);
     sequence->content.sequence.value[sequence->content.size++] = item;
 
-    return result;
+    return true;
 }
 
-bool sequence_add_all(node * restrict sequence, node **items, size_t count)
+bool sequence_set(node * restrict sequence, node *item, size_t index)
 {
-    if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || NULL == items || 0 == count)
+    if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || NULL == item || index >= sequence->content.size)
     {
         errno = EINVAL;
         return false;
     }
 
     errno = 0;
-    bool result = true;
-    ensure_capacity(node, sequence->content.sequence.value, count, sequence->content.sequence.capacity);
-    for(size_t i = 0; i < count; i++)
-    {
-        sequence->content.sequence.value[sequence->content.size++] = items[i];
-    }
-    return result;
+    sequence->content.sequence.value[index] = item;
+
+    return true;
 }
 
 bool mapping_put(node * restrict mapping, node *key, node *value)
