@@ -146,7 +146,7 @@ static loader_result *load_model_from_source(const source * restrict input, docu
     loader_result *result = (loader_result *)malloc(sizeof(loader_result));
     if(NULL == result)
     {
-        return NULL; // N.B. - memory is exhausted, abort early
+        return NULL;
     }
 
     yaml_parser_t parser;    
