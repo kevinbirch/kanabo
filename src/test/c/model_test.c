@@ -60,76 +60,54 @@ void teardown(void);
 
 START_TEST (null_model)
 {
-    node *d = model_get_document(NULL, 0);
-    ck_assert_null(d);
+    ck_assert_null(model_get_document(NULL, 0));
 
-    node *r = model_get_document_root(NULL, 0);
-    ck_assert_null(r);
+    ck_assert_null(model_get_document_root(NULL, 0));
 
-    size_t c = model_get_document_count(NULL);
-    ck_assert_int_eq(0, c);
+    ck_assert_int_eq(0, model_get_document_count(NULL));
 }
 END_TEST
 
 START_TEST (null_node)
 {
-    enum kind k = node_get_kind(NULL);
-    ck_assert_int_eq(-1, k);
+    ck_assert_int_eq(-1, node_get_kind(NULL));
 
-    unsigned char *n = node_get_name(NULL);
-    ck_assert_null(n);
+    ck_assert_null(node_get_name(NULL));
 
-    size_t l = node_get_name_length(NULL);
-    ck_assert_int_eq(0, l);
+    ck_assert_int_eq(0, node_get_name_length(NULL));
 
-    size_t s = node_get_size(NULL);
-    ck_assert_int_eq(0, s);
+    ck_assert_int_eq(0, node_get_size(NULL));
 }
 END_TEST
 
 START_TEST (null_document)
 {
-    node *r = document_get_root(NULL);
-    ck_assert_null(r);
+    ck_assert_null(document_get_root(NULL));
 }
 END_TEST
 
 START_TEST (null_scalar)
 {
-    unsigned char *s = scalar_get_value(NULL);
-    ck_assert_null(s);
+    ck_assert_null(scalar_get_value(NULL));
 }
 END_TEST
 
 START_TEST (null_sequence)
 {
-    node *i = sequence_get_item(NULL, 0);
-    ck_assert_null(i);
+    ck_assert_null(sequence_get_item(NULL, 0));
 
-    node **a = sequence_get_all(NULL);
-    ck_assert_null(a);
+    ck_assert_null(sequence_get_all(NULL));
 }
 END_TEST
 
 START_TEST (null_mapping)
 {
-    node *x = mapping_get_value(NULL, NULL);
-    ck_assert_null(x);
-    
-    node *y = mapping_get_value_scalar_key(NULL, NULL, 0);
-    ck_assert_null(y);
-    
-    node *z = mapping_get_value_node_key(NULL, NULL);
-    ck_assert_null(z);
-    
-    bool b1 = mapping_contains_key(NULL, NULL);
-    ck_assert_false(b1);
-
-    bool b2 = mapping_contains_node_key(NULL, NULL);
-    ck_assert_false(b2);
-
-    key_value_pair **p = mapping_get_all(NULL);
-    ck_assert_null(p);
+    ck_assert_null(mapping_get_value(NULL, NULL));
+    ck_assert_null(mapping_get_value_scalar_key(NULL, NULL, 0));
+    ck_assert_null(mapping_get_value_node_key(NULL, NULL));
+    ck_assert_false(mapping_contains_key(NULL, NULL));
+    ck_assert_false(mapping_contains_node_key(NULL, NULL));
+    ck_assert_null(mapping_get_all(NULL));
 }
 END_TEST
 

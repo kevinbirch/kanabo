@@ -42,17 +42,17 @@
 
 #include "model.h"
 
-static bool node_equals(node *one, node *two);
-static bool string_equals(unsigned char *one, size_t n1, unsigned char *two, size_t n2);
-static bool sequence_equals(node *one, node *two);
-static bool mapping_equals(node *one, node *two);
+static bool node_equals(const node *one, const node *two);
+static bool string_equals(const uint8_t * restrict one, size_t n1, const uint8_t * restrict two, size_t n2);
+static bool sequence_equals(const node * restrict one, const node * restrict two);
+static bool mapping_equals(const node * restrict one, const node * restrict two);
 
-static inline node *make_node(enum kind kind);
+static inline node *make_node(enum node_kind kind);
 
 static inline void free_sequence(node *sequence);
 static inline void free_mapping(node *mapping);
 
-node *model_get_document(document_model *model, size_t index)
+node *model_get_document(const document_model * restrict model, size_t index)
 {
     if(NULL == model || index > (model_get_document_count(model) - 1))
     {
@@ -63,7 +63,7 @@ node *model_get_document(document_model *model, size_t index)
     return model->documents[index];
 }
 
-node *model_get_document_root(document_model *model, size_t index)
+node *model_get_document_root(const document_model * restrict model, size_t index)
 {
     node *document = model_get_document(model, index);
     node *result = NULL;
@@ -75,7 +75,7 @@ node *model_get_document_root(document_model *model, size_t index)
     return result;
 }
 
-size_t model_get_document_count(document_model *model)
+size_t model_get_document_count(const document_model * restrict model)
 {
     if(NULL == model)
     {
@@ -85,17 +85,17 @@ size_t model_get_document_count(document_model *model)
     return model->size;
 }
 
-enum kind node_get_kind(node *node)
+enum node_kind node_get_kind(const node * restrict node)
 {
     if(NULL == node)
     {
         errno = EINVAL;
-        return (enum kind)-1;
+        return (enum node_kind)-1;
     }
     return node->tag.kind;
 }
 
-unsigned char *node_get_name(node *node)
+uint8_t *node_get_name(const node * restrict node)
 {
     if(NULL == node)
     {
@@ -105,7 +105,7 @@ unsigned char *node_get_name(node *node)
     return node->tag.name;
 }
 
-size_t node_get_name_length(node *node)
+size_t node_get_name_length(const node * restrict node)
 {
     if(NULL == node)
     {
@@ -115,7 +115,7 @@ size_t node_get_name_length(node *node)
     return node->tag.name_length;
 }
 
-size_t node_get_size(node *node)
+size_t node_get_size(const node * restrict node)
 {
     if(NULL == node)
     {
@@ -125,7 +125,7 @@ size_t node_get_size(node *node)
     return node->content.size;
 }
 
-node *document_get_root(node *document)
+node *document_get_root(const node * restrict document)
 {
     if(NULL == document || DOCUMENT != node_get_kind(document))
     {
@@ -135,7 +135,7 @@ node *document_get_root(node *document)
     return document->content.document.root;
 }
 
-unsigned char *scalar_get_value(node *scalar)
+uint8_t *scalar_get_value(const node * restrict scalar)
 {
     if(NULL == scalar || SCALAR != node_get_kind(scalar))
     {
@@ -145,7 +145,7 @@ unsigned char *scalar_get_value(node *scalar)
     return scalar->content.scalar.value;
 }
 
-node *sequence_get_item(node *sequence, size_t index)
+node *sequence_get_item(const node * restrict sequence, size_t index)
 {
     if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || index > (node_get_size(sequence) - 1))
     {
@@ -155,7 +155,7 @@ node *sequence_get_item(node *sequence, size_t index)
     return sequence->content.sequence.value[index];
 }
 
-node **sequence_get_all(node *sequence)
+node **sequence_get_all(const node * restrict sequence)
 {
     if(NULL == sequence || SEQUENCE != node_get_kind(sequence))
     {
@@ -165,7 +165,7 @@ node **sequence_get_all(node *sequence)
     return sequence->content.sequence.value;
 }
 
-void iterate_sequence(node *sequence, sequence_iterator iterator, void *context)
+void iterate_sequence(const node * restrict sequence, sequence_iterator iterator, void *context)
 {
     if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || NULL == iterator)
     {
@@ -178,17 +178,17 @@ void iterate_sequence(node *sequence, sequence_iterator iterator, void *context)
     }
 }
 
-node *mapping_get_value(node *mapping, char *key)
+node *mapping_get_value(const node * restrict mapping, const char *key)
 {
     if(NULL == mapping || MAPPING != node_get_kind(mapping) || NULL == key)
     {
         errno = EINVAL;
         return NULL;
     }
-    return mapping_get_value_scalar_key(mapping, (unsigned char *)key, strlen(key));
+    return mapping_get_value_scalar_key(mapping, (uint8_t *)key, strlen(key));
 }
 
-node *mapping_get_value_scalar_key(node *mapping, unsigned char *key, size_t key_length)
+node *mapping_get_value_scalar_key(const node * restrict mapping, uint8_t *key, size_t key_length)
 {
     if(NULL == mapping || MAPPING != node_get_kind(mapping) || NULL == key || 0 == key_length)
     {
@@ -199,7 +199,7 @@ node *mapping_get_value_scalar_key(node *mapping, unsigned char *key, size_t key
     return mapping_get_value_node_key(mapping, scalar);
 }
 
-node *mapping_get_value_node_key(node *mapping, node *key)
+node *mapping_get_value_node_key(const node * restrict mapping, const node *key)
 {
     if(NULL == mapping || MAPPING != node_get_kind(mapping) || NULL == key)
     {
@@ -218,17 +218,17 @@ node *mapping_get_value_node_key(node *mapping, node *key)
     return result;
 }
 
-bool mapping_contains_key(node *mapping, char *key)
+bool mapping_contains_key(const node * restrict mapping, const char *key)
 {
     return NULL != mapping_get_value(mapping, key);
 }
 
-bool mapping_contains_node_key(node *mapping, node *key)
+bool mapping_contains_node_key(const node * restrict mapping, const node *key)
 {
     return NULL != mapping_get_value_node_key(mapping, key);
 }
 
-key_value_pair **mapping_get_all(node *mapping)
+key_value_pair **mapping_get_all(const node * restrict mapping)
 {
     if(NULL == mapping || MAPPING != node_get_kind(mapping))
     {
@@ -238,7 +238,7 @@ key_value_pair **mapping_get_all(node *mapping)
     return mapping->content.mapping.value;
 }
 
-void iterate_mapping(node *mapping, mapping_iterator iterator, void *context)
+void iterate_mapping(const node * restrict mapping, mapping_iterator iterator, void *context)
 {
     if(NULL == mapping || MAPPING != node_get_kind(mapping) || NULL == iterator)
     {
@@ -251,7 +251,7 @@ void iterate_mapping(node *mapping, mapping_iterator iterator, void *context)
     }
 }
 
-static bool node_equals(node *one, node *two)
+static bool node_equals(const node * restrict one, const node * restrict two)
 {
     if(one == two)
     {
@@ -287,12 +287,12 @@ static bool node_equals(node *one, node *two)
     return result;
 }
 
-static bool string_equals(unsigned char *one, size_t n1, unsigned char *two, size_t n2)
+static bool string_equals(const uint8_t * restrict one, size_t n1, const uint8_t * restrict two, size_t n2)
 {
     return memcmp(one, two, n1 > n2 ? n2 : n1) == 0;
 }
 
-static bool sequence_equals(node *one, node *two)
+static bool sequence_equals(const node * restrict one, const node * restrict two)
 {
     for(size_t i = node_get_size(one); i < node_get_size(one); i++)
     {
@@ -304,7 +304,7 @@ static bool sequence_equals(node *one, node *two)
     return true;
 }
 
-static bool mapping_equals(node *one, node *two)
+static bool mapping_equals(const node * restrict one, const node * restrict two)
 {
     for(size_t i = node_get_size(one); i < node_get_size(one); i++)
     {
@@ -387,7 +387,7 @@ node *make_mapping_node(size_t capacity)
     return result;
 }    
 
-node *make_scalar_node(unsigned char *value, size_t length)
+node *make_scalar_node(const uint8_t *value, size_t length)
 {
     if(NULL == value || 0 == length)
     {
@@ -400,7 +400,7 @@ node *make_scalar_node(unsigned char *value, size_t length)
     if(NULL != result)
     {
         result->content.size = length;
-        result->content.scalar.value = (unsigned char *)malloc(length);
+        result->content.scalar.value = (uint8_t *)malloc(length);
         if(NULL == result->content.scalar.value)
         {
             free(result);
@@ -412,7 +412,7 @@ node *make_scalar_node(unsigned char *value, size_t length)
     return result;
 }
 
-static inline node *make_node(enum kind kind)
+static inline node *make_node(enum node_kind kind)
 {
     errno = 0;
     node *result = (node *)malloc(sizeof(struct node));
@@ -497,15 +497,16 @@ static inline void free_mapping(node *mapping)
 document_model *make_model(size_t capacity)
 {
     document_model *result = (document_model *)malloc(sizeof(document_model));
+    bool initialized = false;
     if(NULL != result)
     {
-        init_model(result, capacity);
+        initialized = init_model(result, capacity);
     }
 
-    return result;
+    return NULL != result && initialized ? result : NULL;
 }
 
-bool init_model(document_model *model, size_t capacity)
+bool init_model(document_model * restrict model, size_t capacity)
 {
     if(NULL == model || 0 == capacity)
     {
@@ -530,7 +531,8 @@ bool init_model(document_model *model, size_t capacity)
     return result;
 }
 
-#define ensure_capacity(T, A, S, C) if((S) > (C))                       \
+#define ensure_capacity(T, A, S, C)                                     \
+    if((S) > (C))                                                       \
     {                                                                   \
         size_t size_plus_50_percent = ((S) * 3) / 2 + 1;                \
         T **old = (A);                                                  \
@@ -544,7 +546,7 @@ bool init_model(document_model *model, size_t capacity)
         (C) = size_plus_50_percent;                                     \
     }
 
-bool model_add(document_model *model, node *document)
+bool model_add(document_model * restrict model, node *document)
 {
     if(NULL == model || NULL == document || DOCUMENT != node_get_kind(document))
     {
@@ -559,7 +561,7 @@ bool model_add(document_model *model, node *document)
     return result;
 }
 
-bool document_set_root(node *document, node *root)
+bool document_set_root(node * restrict document, node *root)
 {
     if(NULL == document || DOCUMENT != node_get_kind(document) || NULL == root)
     {
@@ -572,7 +574,7 @@ bool document_set_root(node *document, node *root)
     return true;
 }
 
-bool sequence_add(node *sequence, node *item)
+bool sequence_add(node * restrict sequence, node *item)
 {
     if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || NULL == item)
     {
@@ -588,7 +590,7 @@ bool sequence_add(node *sequence, node *item)
     return result;
 }
 
-bool sequence_add_all(node *sequence, node **items, size_t count)
+bool sequence_add_all(node * restrict sequence, node **items, size_t count)
 {
     if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || NULL == items || 0 == count)
     {
@@ -606,7 +608,7 @@ bool sequence_add_all(node *sequence, node **items, size_t count)
     return result;
 }
 
-bool mapping_put(node *mapping, node *key, node *value)
+bool mapping_put(node * restrict mapping, node *key, node *value)
 {
     if(NULL == mapping || MAPPING != node_get_kind(mapping) || NULL == key || NULL == value)
     {

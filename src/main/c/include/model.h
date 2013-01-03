@@ -40,8 +40,9 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-enum kind 
+enum node_kind 
 {
     DOCUMENT,
     SCALAR,
@@ -53,9 +54,9 @@ struct node
 {
     struct 
     {
-        enum kind     kind;
-        unsigned char *name;
-        size_t        name_length;
+        enum node_kind  kind;
+        uint8_t        *name;
+        size_t          name_length;
     } tag;
 
     struct
@@ -65,7 +66,7 @@ struct node
         {
             struct
             {
-                unsigned char *value;
+                uint8_t *value;
             } scalar;
         
             struct
@@ -107,52 +108,50 @@ struct model
 
 typedef struct model document_model;
 
-node  *model_get_document(document_model *model, size_t index);
-node  *model_get_document_root(document_model *model, size_t index);
-size_t model_get_document_count(document_model *model);
+node   *model_get_document(const document_model * restrict model, size_t index);
+node   *model_get_document_root(const document_model * restrict model, size_t index);
+size_t  model_get_document_count(const document_model * restrict model);
 
-enum kind      node_get_kind(node *node);
-unsigned char *node_get_name(node *node);
-size_t         node_get_name_length(node *node);
-size_t         node_get_size(node *node);
+enum node_kind  node_get_kind(const node * restrict node);
+uint8_t        *node_get_name(const node * restrict node);
+size_t          node_get_name_length(const node * restrict node);
+size_t          node_get_size(const node * restrict node);
 
-node *document_get_root(node *document);
+node *document_get_root(const node * restrict document);
 
-unsigned char *scalar_get_value(node *scalar);
+uint8_t *scalar_get_value(const node * restrict scalar);
 
-node  *sequence_get_item(node *sequence, size_t index);
-node **sequence_get_all(node *sequence);
+node  *sequence_get_item(const node * restrict sequence, size_t index);
+node **sequence_get_all(const node * restrict sequence);
 
 typedef void (*sequence_iterator)(node *each, void *context);
-void iterate_sequence(node *sequence, sequence_iterator iterator, void *context);
+void iterate_sequence(const node * restrict sequence, sequence_iterator iterator, void *context);
 
-node            *mapping_get_value(node *mapping, char *key);
-node            *mapping_get_value_scalar_key(node *mapping, unsigned char *key, size_t key_length);
-node            *mapping_get_value_node_key(node *mapping, node *key);
-bool             mapping_contains_key(node *mapping, char *key);
-bool             mapping_contains_node_key(node *mapping, node *key);
-key_value_pair **mapping_get_all(node *mapping);
+node            *mapping_get_value(const node * restrict mapping, const char * key);
+node            *mapping_get_value_scalar_key(const node * restrict mapping, uint8_t *key, size_t key_length);
+node            *mapping_get_value_node_key(const node * restrict mapping, const node *key);
+bool             mapping_contains_key(const node * restrict mapping, const char *key);
+bool             mapping_contains_node_key(const node * restrict mapping, const node *key);
+key_value_pair **mapping_get_all(const node * restrict mapping);
 
 typedef void (*mapping_iterator)(node *key, node *value, void *context);
-void iterate_mapping(node *mapping, mapping_iterator iterator, void *context);
+void iterate_mapping(const node * restrict mapping, mapping_iterator iterator, void *context);
 
 document_model *make_model(size_t capacity);
-bool init_model(document_model *model, size_t capacity);
+bool init_model(document_model * restrict model, size_t capacity);
 
-node *make_document_node(node *root);
+node *make_document_node(node * root);
 node *make_sequence_node(size_t capacity);
 node *make_mapping_node(size_t capacity);
-node *make_scalar_node(unsigned char *value, size_t length);
+node *make_scalar_node(const uint8_t *value, size_t length);
 
 void free_model(document_model *model);
 void free_node(node *value);
 
-bool model_add(document_model *model, node *document);
-bool document_set_root(node *document, node *root);
-bool sequence_add(node *sequence, node *item);
-bool sequence_add_all(node *sequence, node **items, size_t count);
-bool mapping_put(node *mapping, node *key, node *value);
-
-
+bool model_add(document_model * restrict model, node *document);
+bool document_set_root(node * restrict document, node *root);
+bool sequence_add(node * restrict sequence, node *item);
+bool sequence_add_all(node * restrict sequence, node **items, size_t count);
+bool mapping_put(node * restrict mapping, node *key, node *value);
 
 #endif
