@@ -17,6 +17,7 @@ LICENSE file for more details.
 
 ### parser
 
+* use errorno ala model
 * refactor direct status code setters into function calls
 * wrap output in debug conditionals
 * complete free_predicate function
@@ -34,7 +35,7 @@ LICENSE file for more details.
 
 ### model
 
-* rename subtype methods more like jsonpath api subtype method names
+* expand scalar nodes to include json subtypes
 * add tree walker api
 * add printing visitor
   * for printing scalar node values:
