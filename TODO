@@ -20,6 +20,7 @@ LICENSE file for more details.
 * use errorno ala model
 * refactor direct status code setters into function calls
 * wrap output in debug conditionals
+  * add exit state function with output
 * complete free_predicate function
 * union support
 * filter support
