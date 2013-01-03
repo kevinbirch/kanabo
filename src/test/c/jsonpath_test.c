@@ -36,6 +36,7 @@
  */
 
 #include <stdio.h>
+#include <errno.h>
 
 #include <check.h>
 
@@ -811,16 +812,24 @@ END_TEST
 
 START_TEST (bad_path_input)
 {
+    errno = 0;
     ck_assert_int_eq(-1, path_get_kind(NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_int_eq(0, path_get_length(NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_null(path_get_step(NULL, 0));
+    ck_assert_int_eq(EINVAL, errno);
     
     jsonpath path;
     char *expression = "$";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     assert_parser_result(result, &path, ABSOLUTE_PATH, 1);
 
+    errno = 0;
     ck_assert_null(path_get_step(&path, 1));
+    ck_assert_int_eq(EINVAL, errno);
 
     free_jsonpath(&path);
 }
@@ -828,23 +837,42 @@ END_TEST
 
 START_TEST (bad_step_input)
 {
+    errno = 0;
     ck_assert_int_eq(-1, step_get_kind(NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_int_eq(-1, step_get_test_kind(NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_int_eq(-1, type_test_step_get_type(NULL));
+    ck_assert_int_eq(EINVAL, errno);
     
+    errno = 0;
     ck_assert_int_eq(0, step_get_predicate_count(NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_null(step_get_predicate(NULL, 0));
+    ck_assert_int_eq(EINVAL, errno);
     
     jsonpath path;
     char *expression = "$.foo.array()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
 
+    errno = 0;
     ck_assert_int_eq(-1, type_test_step_get_type(path_get_step(&path, 1)));
+    ck_assert_int_eq(EINVAL, errno);
+
     step *step2 = path_get_step(&path, 2);
+    errno = 0;
     ck_assert_int_eq(0, name_test_step_get_length(step2));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_null(name_test_step_get_name(step2));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_null(step_get_predicate(step2, 0));
+    ck_assert_int_eq(EINVAL, errno);
 
     free_jsonpath(&path);
 }
@@ -852,13 +880,27 @@ END_TEST
 
 START_TEST (bad_predicate_input)
 {
+    errno = 0;
     ck_assert_int_eq(-1, predicate_get_kind(NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_int_eq(0, subscript_predicate_get_index(NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_int_eq(0, slice_predicate_get_from(NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_int_eq(0, slice_predicate_get_to(NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_int_eq(0, slice_predicate_get_step(NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_null(join_predicate_get_left(NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_null(join_predicate_get_right(NULL));
+    ck_assert_int_eq(EINVAL, errno);
 
     jsonpath path;
     char *expression = "$.foo[42].bar[*]";
@@ -866,14 +908,26 @@ START_TEST (bad_predicate_input)
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
 
     predicate *subscript = step_get_predicate(path_get_step(&path, 1), 0);
+    errno = 0;
     ck_assert_int_eq(0, slice_predicate_get_to(subscript));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_int_eq(0, slice_predicate_get_from(subscript));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_int_eq(0, slice_predicate_get_step(subscript));
+    ck_assert_int_eq(EINVAL, errno);
 
     predicate *wildcard = step_get_predicate(path_get_step(&path, 2), 0);
+    errno = 0;
     ck_assert_int_eq(0, subscript_predicate_get_index(wildcard));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_null(join_predicate_get_left(wildcard));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_null(join_predicate_get_right(wildcard));
+    ck_assert_int_eq(EINVAL, errno);
 
     free_jsonpath(&path);
 }

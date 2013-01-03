@@ -43,8 +43,10 @@ enum path_kind path_get_kind(const jsonpath * restrict path)
 {
     if(NULL == path)
     {
+        errno = EINVAL;
         return (enum path_kind)-1;
     }
+    errno = 0;
     return path->kind;
 }
 
@@ -52,8 +54,10 @@ size_t path_get_length(const jsonpath * restrict path)
 {
     if(NULL == path)
     {
+        errno = EINVAL;
         return 0;
     }
+    errno = 0;
     return path->length;
 }
 
@@ -61,8 +65,10 @@ step *path_get_step(const jsonpath * restrict path, size_t index)
 {
     if(NULL == path || 0 == path->length || NULL == path->steps || index >= path->length)
     {
+        errno = EINVAL;
         return NULL;
     }
+    errno = 0;
     return path->steps[index];
 }
 
@@ -70,8 +76,10 @@ enum step_kind step_get_kind(const step * restrict step)
 {
     if(NULL == step)
     {
+        errno = EINVAL;
         return (enum step_kind)-1;
     }
+    errno = 0;
     return step->kind;
 }
 
@@ -79,8 +87,10 @@ enum test_kind step_get_test_kind(const step * restrict step)
 {
     if(NULL == step)
     {
+        errno = EINVAL;
         return (enum test_kind)-1;
     }
+    errno = 0;
     return step->test.kind;
 }
 
@@ -88,8 +98,10 @@ enum type_test_kind type_test_step_get_type(const step * restrict step)
 {
     if(NULL == step || NAME_TEST == step->test.kind)
     {
+        errno = EINVAL;
         return (enum type_test_kind)-1;
     }
+    errno = 0;
     return step->test.type;
 }
 
@@ -97,8 +109,10 @@ uint8_t *name_test_step_get_name(const step * restrict step)
 {
     if(NULL == step || TYPE_TEST == step->test.kind)
     {
+        errno = EINVAL;
         return NULL;
     }
+    errno = 0;
     return step->test.name.value;
 }
 
@@ -106,8 +120,10 @@ size_t name_test_step_get_length(const step * restrict step)
 {
     if(NULL == step || TYPE_TEST == step->test.kind)
     {
+        errno = EINVAL;
         return 0;
     }
+    errno = 0;
     return step->test.name.length;
 }
 
@@ -115,8 +131,10 @@ size_t step_get_predicate_count(const step * restrict step)
 {
     if(NULL == step)
     {
+        errno = EINVAL;
         return 0;
     }
+    errno = 0;
     return step->predicate_count;
 }
 
@@ -124,8 +142,10 @@ predicate *step_get_predicate(const step * restrict step, size_t index)
 {
     if(NULL == step || 0 == step->predicate_count || NULL == step->predicates || index >= step->predicate_count)
     {
+        errno = EINVAL;
         return NULL;
     }
+    errno = 0;
     return step->predicates[index];
 }
 
@@ -133,8 +153,10 @@ enum predicate_kind predicate_get_kind(const predicate * restrict predicate)
 {
     if(NULL == predicate)
     {
+        errno = EINVAL;
         return (enum predicate_kind)-1;
     }
+    errno = 0;
     return predicate->kind;
 }
 
@@ -142,8 +164,10 @@ uint_fast32_t subscript_predicate_get_index(const predicate * restrict predicate
 {
     if(NULL == predicate || SUBSCRIPT != predicate->kind)
     {
+        errno = EINVAL;
         return 0;
     }
+    errno = 0;
     return predicate->subscript.index;
 }
 
@@ -151,8 +175,10 @@ uint_fast32_t slice_predicate_get_to(const predicate * restrict predicate)
 {
     if(NULL == predicate || SLICE != predicate->kind)
     {
+        errno = EINVAL;
         return 0;
     }
+    errno = 0;
     return predicate->slice.to;
 }
 
@@ -160,8 +186,10 @@ uint_fast32_t slice_predicate_get_from(const predicate * restrict predicate)
 {
     if(NULL == predicate || SLICE != predicate->kind)
     {
+        errno = EINVAL;
         return 0;
     }
+    errno = 0;
     return predicate->slice.from;
 }
 
@@ -169,8 +197,10 @@ uint_fast32_t slice_predicate_get_step(const predicate * restrict predicate)
 {
     if(NULL == predicate || SLICE != predicate->kind)
     {
+        errno = EINVAL;
         return 0;
     }
+    errno = 0;
     return predicate->slice.step;
 }
 
@@ -178,8 +208,10 @@ jsonpath *join_predicate_get_left(const predicate * restrict predicate)
 {
     if(NULL == predicate || JOIN != predicate->kind)
     {
+        errno = EINVAL;
         return NULL;
     }
+    errno = 0;
     return predicate->join.left;
 }
 
@@ -187,7 +219,9 @@ jsonpath *join_predicate_get_right(const predicate * restrict predicate)
 {
     if(NULL == predicate || JOIN != predicate->kind)
     {
+        errno = EINVAL;
         return NULL;
     }
+    errno = 0;
     return predicate->join.right;
 }

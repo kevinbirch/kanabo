@@ -17,7 +17,6 @@ LICENSE file for more details.
 
 ### parser
 
-* use errorno ala model
 * refactor direct status code setters into function calls
 * wrap output in debug conditionals
   * add exit state function with output

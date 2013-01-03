@@ -36,6 +36,7 @@
  */
 
 #include <stdio.h>
+#include <errno.h>
 
 #include <check.h>
 
@@ -60,54 +61,88 @@ void teardown(void);
 
 START_TEST (null_model)
 {
+    errno = 0;
     ck_assert_null(model_get_document(NULL, 0));
+    ck_assert_int_eq(EINVAL, errno);
 
+    errno = 0;
     ck_assert_null(model_get_document_root(NULL, 0));
+    ck_assert_int_eq(EINVAL, errno);
 
+    errno = 0;
     ck_assert_int_eq(0, model_get_document_count(NULL));
+    ck_assert_int_eq(EINVAL, errno);
 }
 END_TEST
 
 START_TEST (null_node)
 {
+    errno = 0;
     ck_assert_int_eq(-1, node_get_kind(NULL));
+    ck_assert_int_eq(EINVAL, errno);
 
+    errno = 0;
     ck_assert_null(node_get_name(NULL));
+    ck_assert_int_eq(EINVAL, errno);
 
+    errno = 0;
     ck_assert_int_eq(0, node_get_name_length(NULL));
+    ck_assert_int_eq(EINVAL, errno);
 
+    errno = 0;
     ck_assert_int_eq(0, node_get_size(NULL));
+    ck_assert_int_eq(EINVAL, errno);
 }
 END_TEST
 
 START_TEST (null_document)
 {
+    errno = 0;
     ck_assert_null(document_get_root(NULL));
+    ck_assert_int_eq(EINVAL, errno);
 }
 END_TEST
 
 START_TEST (null_scalar)
 {
+    errno = 0;
     ck_assert_null(scalar_get_value(NULL));
+    ck_assert_int_eq(EINVAL, errno);
 }
 END_TEST
 
 START_TEST (null_sequence)
 {
+    errno = 0;
     ck_assert_null(sequence_get_item(NULL, 0));
+    ck_assert_int_eq(EINVAL, errno);
 
+    errno = 0;
     ck_assert_null(sequence_get_all(NULL));
+    ck_assert_int_eq(EINVAL, errno);
 }
 END_TEST
 
 START_TEST (null_mapping)
 {
+    errno = 0;
     ck_assert_null(mapping_get_value(NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_null(mapping_get_value_scalar_key(NULL, NULL, 0));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_null(mapping_get_value_node_key(NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_false(mapping_contains_key(NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_false(mapping_contains_node_key(NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
     ck_assert_null(mapping_get_all(NULL));
+    ck_assert_int_eq(EINVAL, errno);
 }
 END_TEST
 
