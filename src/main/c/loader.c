@@ -103,7 +103,7 @@ static bool unwind_mapping(document_context *context);
 static bool unwind_document(document_context *context);
 static bool unwind_model(document_context *context, document_model *model);
 
-static inline enum kind context_kind(document_context *context);
+static inline enum node_kind context_kind(document_context *context);
 static inline node *context_top(document_context *context);
 
 static inline loader_result *invalid_input(void);
@@ -475,7 +475,7 @@ static bool unwind_model(document_context *context, document_model *model)
     return true;
 }
 
-static inline enum kind context_kind(document_context *context)
+static inline enum node_kind context_kind(document_context *context)
 {
     return node_get_kind(context_top(context));
 }
