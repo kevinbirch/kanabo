@@ -28,7 +28,9 @@ LICENSE file for more details.
 ### loader
 
 * make loader api return an enum instead of a struct
-  * expose methods to make error message
+  * make input struct, add c'tor/d'tor
+  * fold current load functions into single loader from input struct
+  * expose methods to make error message from input struct
 * handle anchors and aliases
   * https://en.wikipedia.org/wiki/Hashed_array_tree
 * handle tags
