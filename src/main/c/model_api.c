@@ -42,7 +42,6 @@
 
 #include "model.h"
 
-static bool node_equals(const node *one, const node *two);
 static bool string_equals(const uint8_t * restrict one, size_t n1, const uint8_t * restrict two, size_t n2);
 static bool sequence_equals(const node * restrict one, const node * restrict two);
 static bool mapping_equals(const node * restrict one, const node * restrict two);
@@ -273,7 +272,7 @@ void iterate_mapping(const node * restrict mapping, mapping_iterator iterator, v
     }
 }
 
-static bool node_equals(const node * restrict one, const node * restrict two)
+bool node_equals(const node * restrict one, const node * restrict two)
 {
     if(one == two)
     {

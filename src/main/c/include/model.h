@@ -148,6 +148,8 @@ node *make_scalar_node(const uint8_t *value, size_t length);
 void free_model(document_model *model);
 void free_node(node *value);
 
+bool node_equals(const node *one, const node *two);
+
 bool model_add(document_model * restrict model, node *document);
 bool document_set_root(node * restrict document, node *root);
 bool sequence_add(node * restrict sequence, node *item);
