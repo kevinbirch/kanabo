@@ -71,7 +71,8 @@ LIBRARY_NAME_BASE ?= $(ARTIFACT_ID)
 LIBRARY_NAME ?= lib$(LIBRARY_NAME_BASE).a
 LIBRARY_TARGET = $(TARGET_DIR)/$(LIBRARY_NAME)
 ifeq ($(strip $(SKIP_TESTS)),)
-TEST_PROGRAM_TARGET = $(TARGET_DIR)/$(ARTIFACT_ID)_test
+TEST_PROGRAM = $(ARTIFACT_ID)_test
+TEST_PROGRAM_TARGET = $(TARGET_DIR)/$(TEST_PROGRAM)
 endif
 
 ## Project source compiler settings
@@ -259,7 +260,7 @@ ifeq ($(strip $(SKIP_TESTS)),)
 	@echo ""
 	@echo " -- Executing test harness"
 	@echo "------------------------------------------------------------------------"
-	@$(TEST_PROGRAM_TARGET)
+	@cd $(TARGET_DIR); ./$(TEST_PROGRAM)
 else
 	@echo ""
 	@echo " -- Skipping tests"
