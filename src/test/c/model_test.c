@@ -56,8 +56,8 @@
 
 static document_model model;
 
-void setup(void);
-void teardown(void);
+void model_setup(void);
+void model_teardown(void);
 
 START_TEST (null_model)
 {
@@ -146,7 +146,7 @@ START_TEST (null_mapping)
 }
 END_TEST
 
-void setup(void)
+void model_setup(void)
 {
     ck_assert_true(model_init(&model, 1));
 
@@ -182,7 +182,7 @@ void setup(void)
     model_add(&model, document);
 }
 
-void teardown(void)
+void model_teardown(void)
 {
     model_free(&model);
     ck_assert_null(model.documents);
@@ -421,7 +421,7 @@ Suite *model_suite(void)
     tcase_add_test(bad_input, null_mapping);
 
     TCase *basic = tcase_create("basic");
-    tcase_add_checked_fixture(basic, setup, teardown);
+    tcase_add_checked_fixture(basic, model_setup, model_teardown);
     tcase_add_test(basic, constructors);
     tcase_add_test(basic, document);
     tcase_add_test(basic, nodes);
@@ -430,11 +430,11 @@ Suite *model_suite(void)
     tcase_add_test(basic, mapping);
 
     TCase *iteration = tcase_create("iteration");
-    tcase_add_checked_fixture(iteration, setup, teardown);
+    tcase_add_checked_fixture(iteration, model_setup, model_teardown);
     tcase_add_test(iteration, sequence_iteration);
     tcase_add_test(iteration, mapping_iteration);
 
-    Suite *model_suite = suite_create("Model_Suite");
+    Suite *model_suite = suite_create("Model");
     suite_add_tcase(model_suite, bad_input);
     suite_add_tcase(model_suite, basic);
     suite_add_tcase(model_suite, iteration);

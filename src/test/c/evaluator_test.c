@@ -35,24 +35,79 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef TEST_H
-#define TEST_H
-
 #include <stdio.h>
+#include <errno.h>
+#include <check.h>
 
-#define ck_assert_null(X) ck_assert_msg((X) == NULL, "Assertion '"#X"==NULL' failed")
-#define ck_assert_not_null(X) ck_assert_msg((X) != NULL, "Assertion '"#X"!=NULL' failed")
-#define ck_assert_buf_eq(X, N1, Y, N2) ck_assert_msg(memcmp((X), (Y), (N1) > (N2) ? (N2) : (N1)) == 0, "Assertion 'memcmp("#X", "#Y", %zd)' failed", (N1) > (N2) ? (N2) : (N1))
-#define ck_assert_true(X) ck_assert_msg((X) == true, "Assertion '"#X"==true' failed")
-#define ck_assert_false(X) ck_assert_msg((X) == false, "Assertion '"#X"==false' failed")
+#include "evaluator.h"
+#include "loader.h"
+#include "test.h"
 
-Suite *master_suite(void);
-Suite *loader_suite(void);
-Suite *jsonpath_suite(void);
-Suite *model_suite(void);
-Suite *nodelist_suite(void);
-Suite *evaluator_suite(void);
+static document_model *model = NULL;
 
+void evaluator_setup(void);
+void evaluator_teardown(void);
 
+void evaluator_setup(void)
+{
+    model = make_model(1);
+    ck_assert_not_null(model);
+    
+    FILE *input = fopen("inventory.json", "r");
+    ck_assert_not_null(input);
+    
+    loader_result *result = load_model_from_file(input, model);
+    ck_assert_not_null(result);
+    ck_assert_int_eq(LOADER_SUCCESS, result->code);
 
-#endif
+    ck_assert_int_eq(0, fclose(input));
+    free_loader_result(result);
+}
+
+void evaluator_teardown(void)
+{
+    model_free(model);
+    model = NULL;
+}
+
+START_TEST (dollar_only)
+{
+    jsonpath path;
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)"$", 1, &path);
+    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+
+    nodelist *list = evaluate(model, &path);
+    ck_assert_not_null(list);
+    ck_assert_int_eq(1, nodelist_length(list));
+    ck_assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 0)));
+    ck_assert_int_eq(1, node_get_size(nodelist_get(list, 0)));
+    ck_assert_true(mapping_contains_key(nodelist_get(list, 0), "store"));
+
+    nodelist_free(list);
+    free_jsonpath(&path);
+}
+END_TEST
+
+START_TEST (single_name_step)
+{
+    jsonpath path;
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)"$.foo", 5, &path);
+    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+
+    free_jsonpath(&path);
+}
+END_TEST
+
+Suite *evaluator_suite(void)
+{
+    TCase *basic = tcase_create("basic");
+    tcase_add_checked_fixture(basic, evaluator_setup, evaluator_teardown);
+    tcase_add_test(basic, dollar_only);
+    tcase_add_test(basic, single_name_step);
+
+    Suite *evaluator = suite_create("Evaluator");
+    suite_add_tcase(evaluator, basic);
+
+    return evaluator;
+}
+

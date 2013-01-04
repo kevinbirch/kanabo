@@ -402,7 +402,7 @@ END_TEST
 
 static void assert_parser_result(jsonpath_status_code result, jsonpath *path, enum path_kind expected_kind, size_t expected_length)
 {
-    ck_assert_int_eq(SUCCESS, result);
+    ck_assert_int_eq(JSONPATH_SUCCESS, result);
     char *message = make_status_message(path);
     ck_assert_not_null(message);
     free(message);

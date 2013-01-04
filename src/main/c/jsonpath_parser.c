@@ -195,10 +195,10 @@ jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, js
 
     jsonpath->result.code = context.code;
     jsonpath->result.position = context.cursor;
-    if(SUCCESS == context.code)
+    if(JSONPATH_SUCCESS == context.code)
     {
         unwind_context(&context);
-        if(SUCCESS == context.code)
+        if(JSONPATH_SUCCESS == context.code)
         {
             fprintf(stdout, "done. found %zd steps.\n", jsonpath->length);
         }
@@ -274,7 +274,7 @@ static void absolute_path(parser_context *context)
 
     if('$' == get_char(context))
     {
-        context->code = SUCCESS;
+        context->code = JSONPATH_SUCCESS;
         context->path->kind = ABSOLUTE_PATH;
         context->current_step_kind = ROOT;
         consume_char(context);
@@ -308,7 +308,7 @@ static void qualified_path(parser_context *context)
 
     abbreviated_relative_path(context);
     skip_ws(context);
-    if(SUCCESS == context->code || !has_more_input(context))
+    if(JSONPATH_SUCCESS == context->code || !has_more_input(context))
     {
         return;
     }
@@ -343,7 +343,7 @@ static void relative_path(parser_context *context)
     if(look_for(context, "()"))
     {
         node_type_test(context);
-        if(SUCCESS == context->code && has_more_input(context))
+        if(JSONPATH_SUCCESS == context->code && has_more_input(context))
         {
             consume_char(context);
             consume_char(context);
@@ -352,7 +352,7 @@ static void relative_path(parser_context *context)
     else
     {
         path_step(context);
-        if(SUCCESS == context->code && has_more_input(context))
+        if(JSONPATH_SUCCESS == context->code && has_more_input(context))
         {
             qualified_path(context);
         }
@@ -394,7 +394,7 @@ static void path_step(parser_context *context)
     }
     name_test(context);
 
-    while(SUCCESS == context->code && has_more_input(context))
+    while(JSONPATH_SUCCESS == context->code && has_more_input(context))
     {
         step_predicate(context);
     }
@@ -402,7 +402,7 @@ static void path_step(parser_context *context)
     if(ERR_UNEXPECTED_VALUE == context->code && '[' == context->expected)
     {
         enter_state(context, ST_STEP);
-        context->code = SUCCESS;
+        context->code = JSONPATH_SUCCESS;
     }
 }
 
@@ -415,7 +415,7 @@ static void name_test(parser_context *context)
         return;
     }
 
-    context->code = SUCCESS;
+    context->code = JSONPATH_SUCCESS;
     step *current = make_step(context->current_step_kind, NAME_TEST);
     if(NULL == current)
     {
@@ -453,7 +453,7 @@ static void node_type_test(parser_context *context)
 {
     enter_state(context, ST_NODE_TYPE_TEST);
 
-    context->code = SUCCESS;
+    context->code = JSONPATH_SUCCESS;
     size_t offset = context->cursor;
     
     while(offset < context->length)
@@ -472,7 +472,7 @@ static void node_type_test(parser_context *context)
     }
 
     enum type_test_kind kind = node_type_test_value(context, length);
-    if(SUCCESS != context->code)
+    if(JSONPATH_SUCCESS != context->code)
     {
         return;
     }
@@ -584,7 +584,7 @@ static void name(parser_context *context, step *name_step)
 }
 
 #define try_predicate_parser(PARSER) PARSER(context);              \
-    if(SUCCESS == context->code)                                   \
+    if(JSONPATH_SUCCESS == context->code)                                   \
     {                                                              \
         skip_ws(context);                                          \
         if(']' == get_char(context))                               \
@@ -621,7 +621,7 @@ static void step_predicate(parser_context *context)
         try_predicate_parser(wildcard_predicate);
         try_predicate_parser(subscript_predicate);
 
-        if(SUCCESS != context->code && ERR_OUT_OF_MEMORY != context->code)
+        if(JSONPATH_SUCCESS != context->code && ERR_OUT_OF_MEMORY != context->code)
         {
             context->code = ERR_UNSUPPORTED_PRED_TYPE;
         }
@@ -639,7 +639,7 @@ static void wildcard_predicate(parser_context *context)
     skip_ws(context);
     if('*' == get_char(context))
     {
-        context->code = SUCCESS;
+        context->code = JSONPATH_SUCCESS;
         consume_char(context);
         add_predicate(context, WILDCARD);
     }
@@ -675,7 +675,7 @@ static void subscript_predicate(parser_context *context)
         context->code = ERR_INVALID_NUMBER;
         return;
     }
-    context->code = SUCCESS;
+    context->code = JSONPATH_SUCCESS;
     consume_chars(context, length);
     predicate *pred = add_predicate(context, SUBSCRIPT);
     pred->subscript.index = (uint_fast32_t)subscript;

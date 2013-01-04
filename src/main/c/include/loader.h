@@ -44,7 +44,7 @@
 
 enum loader_status_code
 {
-    SUCCESS = 0,
+    LOADER_SUCCESS = 0,
     ERR_INVALID_ARGUMENTS,
     ERR_NO_MEMORY,
     ERR_READER_FAILED,

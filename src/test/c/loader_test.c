@@ -97,7 +97,7 @@ END_TEST
 
 static void assert_model_state(loader_result *result, document_model *model)
 {
-    ck_assert_int_eq(SUCCESS, result->code);
+    ck_assert_int_eq(LOADER_SUCCESS, result->code);
     ck_assert_not_null(model);
     ck_assert_int_eq(1, model_get_document_count(model));
 

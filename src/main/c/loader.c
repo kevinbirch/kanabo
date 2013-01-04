@@ -210,7 +210,7 @@ static loader_result *build_model(yaml_parser_t *parser, document_model * restri
         done = dispatch_event(&event, &context, result);
     }
 
-    if(SUCCESS == result->code)
+    if(LOADER_SUCCESS == result->code)
     {
         unwind_model(&context, model);
     }
@@ -522,7 +522,7 @@ static inline loader_result *memory_exhausted(loader_result *result)
 
 static inline loader_result *success(loader_result *result)
 {
-    result->code = SUCCESS;
+    result->code = LOADER_SUCCESS;
     result->dynamic_message = false;
     result->message = "Success";
     result->position = 0;

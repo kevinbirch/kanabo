@@ -122,7 +122,7 @@ typedef struct step step;
 
 enum jsonpath_status_code
 {
-    SUCCESS = 0,
+    JSONPATH_SUCCESS = 0,
     ERR_NULL_EXPRESSION,
     ERR_ZERO_LENGTH,
     ERR_NULL_OUTPUT_PATH,
