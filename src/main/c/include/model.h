@@ -145,8 +145,8 @@ node *make_sequence_node(size_t capacity);
 node *make_mapping_node(size_t capacity);
 node *make_scalar_node(const uint8_t *value, size_t length);
 
-void free_model(document_model *model);
-void free_node(node *value);
+void model_free(document_model *model);
+void node_free(node *value);
 
 bool node_equals(const node *one, const node *two);
 

@@ -184,7 +184,7 @@ void setup(void)
 
 void teardown(void)
 {
-    free_model(&model);
+    model_free(&model);
     ck_assert_null(model.documents);
     ck_assert_int_eq(0, model.size);
 }
@@ -200,7 +200,7 @@ START_TEST (constructors)
     ck_assert_null(d);
     d = make_document_node(s);
     ck_assert_not_null(d);
-    free_node(d); // N.B. - this will also free `s'
+    node_free(d); // N.B. - this will also free `s'
 
     node *v = make_sequence_node(0);
     ck_assert_null(v);
@@ -209,7 +209,7 @@ START_TEST (constructors)
     ck_assert_not_null(v->content.sequence.value);
     ck_assert_int_eq(1, v->content.sequence.capacity);
     ck_assert_int_eq(0, v->content.size);
-    free_node(v);
+    node_free(v);
     
     node *m = make_mapping_node(0);
     ck_assert_null(m);
@@ -218,7 +218,7 @@ START_TEST (constructors)
     ck_assert_not_null(m->content.mapping.value);
     ck_assert_int_eq(1, m->content.mapping.capacity);
     ck_assert_int_eq(0, m->content.size);
-    free_node(m);
+    node_free(m);
 }
 END_TEST
 
@@ -316,7 +316,7 @@ START_TEST (sequence)
     ck_assert_int_eq(x, sequence_get(xyz, 0));
     ck_assert_int_eq(y, sequence_get(xyz, 1));
     ck_assert_int_eq(z, sequence_get(xyz, 2));
-    free_node(xyz);
+    node_free(xyz);
 }
 END_TEST
 

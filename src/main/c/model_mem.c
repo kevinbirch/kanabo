@@ -42,8 +42,8 @@
 
 static inline node *make_node(enum node_kind kind);
 
-static inline void free_sequence(node *sequence);
-static inline void free_mapping(node *mapping);
+static inline void sequence_free(node *sequence);
+static inline void mapping_free(node *mapping);
 
 node *make_document_node(node *root)
 {
@@ -155,7 +155,7 @@ static inline node *make_node(enum node_kind kind)
     return result;
 }
 
-void free_model(document_model *model)
+void model_free(document_model *model)
 {
     if(NULL == model)
     {
@@ -163,13 +163,13 @@ void free_model(document_model *model)
     }
     for(size_t i = 0; i < model->size; i++)
     {
-        free_node(model_get_document(model, i));
+        node_free(model_get_document(model, i));
     }
     model->size = 0;
     model->documents = NULL;
 }
 
-void free_node(node *value)
+void node_free(node *value)
 {
     if(NULL == value)
     {
@@ -178,22 +178,22 @@ void free_node(node *value)
     switch(node_get_kind(value))
     {
         case DOCUMENT:
-            free_node(document_get_root(value));
+            node_free(document_get_root(value));
             break;
         case SCALAR:
             free(scalar_get_value(value));
             break;
         case SEQUENCE:
-            free_sequence(value);
+            sequence_free(value);
             break;
         case MAPPING:
-            free_mapping(value);
+            mapping_free(value);
             break;
     }
     free(value);
 }
 
-static inline void free_sequence(node *sequence)
+static inline void sequence_free(node *sequence)
 {
     if(NULL == sequence_get_all(sequence))
     {
@@ -201,12 +201,12 @@ static inline void free_sequence(node *sequence)
     }
     for(size_t i = 0; i < node_get_size(sequence); i++)
     {
-        free_node(sequence_get(sequence, i));
+        node_free(sequence_get(sequence, i));
     }
     free(sequence_get_all(sequence));
 }
 
-static inline void free_mapping(node *mapping)
+static inline void mapping_free(node *mapping)
 {
     key_value_pair **pairs = mapping_get_all(mapping);
     if(NULL == pairs)
@@ -215,8 +215,8 @@ static inline void free_mapping(node *mapping)
     }
     for(size_t i = 0; i < node_get_size(mapping); i++)
     {
-        free_node(pairs[i]->key);
-        free_node(pairs[i]->value);
+        node_free(pairs[i]->key);
+        node_free(pairs[i]->value);
         free(pairs[i]);
     }
     free(pairs);

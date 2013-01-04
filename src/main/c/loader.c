@@ -163,7 +163,7 @@ static loader_result *load_model_from_source(const source * restrict input, docu
     if(!model_init(model, 1))
     {
         yaml_parser_delete(&parser);
-        free_model(model);
+        model_free(model);
         return memory_exhausted(result);
     }
 
@@ -216,7 +216,7 @@ static loader_result *build_model(yaml_parser_t *parser, document_model * restri
     }
     else
     {
-        free_model(model);
+        model_free(model);
         abort_context(&context);
     }
 
@@ -376,7 +376,7 @@ static void abort_context(document_context *context)
     node *top = pop_context(context);
     while(NULL != top)
     {
-        free_node(top);
+        node_free(top);
         top = pop_context(context);
     }
 
@@ -415,7 +415,7 @@ static bool unwind_sequence(document_context *context)
     {
         if(!sequence_add(sequence, pop_context(context)))
         {
-            free_node(sequence);
+            node_free(sequence);
             return false;
         }
     }

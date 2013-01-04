@@ -84,7 +84,7 @@ START_TEST (bad_input)
     ck_assert_false(nodelist_set(list, scalar, 0));
     ck_assert_int_eq(EINVAL, errno);
 
-    free_node(scalar);
+    node_free(scalar);
     nodelist_free(list);
 }
 END_TEST
@@ -117,8 +117,8 @@ START_TEST (mutate)
     ck_assert_true(node_equals(bar, nodelist_get(list, 0)));
 
     nodelist_free(list);
-    free_node(foo);
-    free_node(bar);
+    node_free(foo);
+    node_free(bar);
 }
 END_TEST
 
