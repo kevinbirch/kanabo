@@ -112,10 +112,10 @@ static void assert_model_state(loader_result *result, document_model *model)
     ck_assert_not_null(one);
     ck_assert_int_eq(SEQUENCE, node_get_kind(one));
     ck_assert_int_eq(2, node_get_size(one));
-    node *one_0 = sequence_get_item(one, 0);
+    node *one_0 = sequence_get(one, 0);
     ck_assert_int_eq(SCALAR, node_get_kind(one_0));
     ck_assert_buf_eq("foo1", 4, scalar_get_value(one_0), node_get_size(one_0));
-    node *one_1 = sequence_get_item(one, 1);
+    node *one_1 = sequence_get(one, 1);
     ck_assert_int_eq(SCALAR, node_get_kind(one_1));
     ck_assert_buf_eq("bar1", 4, scalar_get_value(one_1), node_get_size(one_1));
 
@@ -132,10 +132,10 @@ static void assert_model_state(loader_result *result, document_model *model)
     node *four = mapping_get_value(root, "four");
     ck_assert_not_null(four);
     ck_assert_int_eq(SEQUENCE, node_get_kind(four));
-    node *four_0 = sequence_get_item(four, 0);
+    node *four_0 = sequence_get(four, 0);
     ck_assert_int_eq(SCALAR, node_get_kind(four_0));
     ck_assert_buf_eq("foo4", 4, scalar_get_value(four_0), node_get_size(four_0));
-    node *four_1 = sequence_get_item(four, 1);
+    node *four_1 = sequence_get(four, 1);
     ck_assert_int_eq(SCALAR, node_get_kind(four_0));
     ck_assert_buf_eq("bar4", 4, scalar_get_value(four_1), node_get_size(four_1));
 

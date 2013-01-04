@@ -121,7 +121,7 @@ node *document_get_root(const node * restrict document);
 
 uint8_t *scalar_get_value(const node * restrict scalar);
 
-node  *sequence_get_item(const node * restrict sequence, size_t index);
+node  *sequence_get(const node * restrict sequence, size_t index);
 node **sequence_get_all(const node * restrict sequence);
 
 typedef void (*sequence_iterator)(node *each, void *context);

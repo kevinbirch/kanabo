@@ -156,7 +156,7 @@ uint8_t *scalar_get_value(const node * restrict scalar)
     return scalar->content.scalar.value;
 }
 
-node *sequence_get_item(const node * restrict sequence, size_t index)
+node *sequence_get(const node * restrict sequence, size_t index)
 {
     if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || index > (node_get_size(sequence) - 1))
     {

@@ -422,8 +422,8 @@ static bool unwind_sequence(document_context *context)
     node *temp;
     for(size_t i = 0; i < floor(count / 2); i++)
     {
-        temp = sequence_get_item(sequence, i);
-        sequence_set(sequence, sequence_get_item(sequence, count - 1 - i), i);
+        temp = sequence_get(sequence, i);
+        sequence_set(sequence, sequence_get(sequence, count - 1 - i), i);
         sequence_set(sequence, temp, count - 1 - i);
     }
     push_context(context, sequence);

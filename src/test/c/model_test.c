@@ -114,7 +114,7 @@ END_TEST
 START_TEST (null_sequence)
 {
     errno = 0;
-    ck_assert_null(sequence_get_item(NULL, 0));
+    ck_assert_null(sequence_get(NULL, 0));
     ck_assert_int_eq(EINVAL, errno);
 
     errno = 0;
@@ -284,11 +284,11 @@ START_TEST (sequence)
     ck_assert_int_eq(SEQUENCE, node_get_kind(s));
     ck_assert_int_eq(2, node_get_size(s));
     
-    node *zero = sequence_get_item(s, 0);
+    node *zero = sequence_get(s, 0);
     ck_assert_not_null(zero);
     ck_assert_int_eq(SCALAR, node_get_kind(zero));
     
-    node *one = sequence_get_item(s, 1);
+    node *one = sequence_get(s, 1);
     ck_assert_not_null(one);
     ck_assert_int_eq(SCALAR, node_get_kind(one));
 
@@ -313,9 +313,9 @@ START_TEST (sequence)
     sequence_add(xyz, z);
     ck_assert_int_eq(3, xyz->content.size);
     ck_assert_int_eq(5, xyz->content.sequence.capacity);
-    ck_assert_int_eq(x, sequence_get_item(xyz, 0));
-    ck_assert_int_eq(y, sequence_get_item(xyz, 1));
-    ck_assert_int_eq(z, sequence_get_item(xyz, 2));
+    ck_assert_int_eq(x, sequence_get(xyz, 0));
+    ck_assert_int_eq(y, sequence_get(xyz, 1));
+    ck_assert_int_eq(z, sequence_get(xyz, 2));
     free_node(xyz);
 }
 END_TEST

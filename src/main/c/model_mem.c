@@ -201,7 +201,7 @@ static inline void free_sequence(node *sequence)
     }
     for(size_t i = 0; i < node_get_size(sequence); i++)
     {
-        free_node(sequence_get_item(sequence, i));
+        free_node(sequence_get(sequence, i));
     }
     free(sequence_get_all(sequence));
 }
