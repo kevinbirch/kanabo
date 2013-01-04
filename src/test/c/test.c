@@ -46,6 +46,7 @@ int main()
     srunner_add_suite(runner, loader_suite());
     srunner_add_suite(runner, jsonpath_suite());
     srunner_add_suite(runner, model_suite());
+    srunner_add_suite(runner, nodelist_suite());
     
     srunner_run_all(runner, CK_VERBOSE);
     

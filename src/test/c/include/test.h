@@ -50,6 +50,8 @@ Suite *master_suite(void);
 Suite *loader_suite(void);
 Suite *jsonpath_suite(void);
 Suite *model_suite(void);
+Suite *nodelist_suite(void);
+
 
 
 #endif
