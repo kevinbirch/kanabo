@@ -17,26 +17,41 @@ LICENSE file for more details.
 
 ### parser
 
+Enhancements:
+
 * refactor direct status code setters into function calls
 * wrap output in debug conditionals
   * add exit state function with output
-* union support
-* filter support
 * should we allow an optional qualified path expression after the filter expression in the union expression production?
 
+Features:
+
+* union support
+* filter support
+
 ### loader
+
+Enhancements:
 
 * make loader api return an enum instead of a struct
   * expose input struct, add c'tor/d'tor
   * fold current load functions into single loader from input struct
   * expose methods to make error message from input struct
+
+Features:
+
 * handle anchors and aliases
   * https://en.wikipedia.org/wiki/Hashed_array_tree
 * handle tags
 
 ### model
 
+Enhancements:
+
 * expand scalar nodes to include json subtypes
+
+Features:
+
 * add tree walker api
 * add printing visitor
   * for printing scalar node values:
@@ -52,14 +67,19 @@ LICENSE file for more details.
 
 ### makefile
 
-* add submodule build support
+Enhancements:
+
 * add version header generation support
+* can the warnings from include be supressed somehow? they show up when the depend files don't exist yet
+
+Features:
+
+* add submodule build support
 * add package phase impl
 * add install phase impl
 * extract as its own project
-* can the warnings from include be supressed somehow? they show up when the depend files don't exist yet
 
-### Path languages
+### path languages
 
 * finish jsonpath parser
 * extract as project, add as submodule
