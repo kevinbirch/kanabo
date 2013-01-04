@@ -91,9 +91,63 @@ END_TEST
 START_TEST (single_name_step)
 {
     jsonpath path;
-    jsonpath_status_code code = parse_jsonpath((uint8_t *)"$.foo", 5, &path);
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)"$.store", 7, &path);
     ck_assert_int_eq(JSONPATH_SUCCESS, code);
 
+    nodelist *list = evaluate(model, &path);
+    ck_assert_not_null(list);
+    ck_assert_int_eq(1, nodelist_length(list));
+    node *store = nodelist_get(list, 0);
+    ck_assert_not_null(store);
+
+    ck_assert_int_eq(MAPPING, node_get_kind(store));
+    ck_assert_int_eq(2, node_get_size(store));
+    ck_assert_true(mapping_contains_key(store, "book"));
+    ck_assert_true(mapping_contains_key(store, "bicycle"));
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (object_test)
+{
+    jsonpath path;
+    char *expr = "$.store.object()";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+
+    nodelist *list = evaluate(model, &path);
+    ck_assert_not_null(list);
+    ck_assert_int_eq(1, nodelist_length(list));
+    node *boolean = nodelist_get(list, 0);
+    ck_assert_not_null(boolean);
+
+    ck_assert_int_eq(SCALAR, node_get_kind(boolean));
+    ck_assert_buf_eq("true", 4, scalar_get_value(boolean), node_get_size(boolean));
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (array_test)
+{
+    jsonpath path;
+    char * expr = "$.store.book.array()";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+
+    nodelist *list = evaluate(model, &path);
+    ck_assert_not_null(list);
+    ck_assert_int_eq(1, nodelist_length(list));
+    node *boolean = nodelist_get(list, 0);
+    ck_assert_not_null(boolean);
+
+    ck_assert_int_eq(SCALAR, node_get_kind(boolean));
+    ck_assert_buf_eq("true", 4, scalar_get_value(boolean), node_get_size(boolean));
+
+    nodelist_free(list);
     jsonpath_free(&path);
 }
 END_TEST
@@ -104,6 +158,8 @@ Suite *evaluator_suite(void)
     tcase_add_checked_fixture(basic, evaluator_setup, evaluator_teardown);
     tcase_add_test(basic, dollar_only);
     tcase_add_test(basic, single_name_step);
+    tcase_add_test(basic, object_test);
+    tcase_add_test(basic, array_test);
 
     Suite *evaluator = suite_create("Evaluator");
     suite_add_tcase(evaluator, basic);

@@ -81,6 +81,8 @@ nodelist *evaluate(document_model *model, jsonpath *path)
                     nodelist_free(result);
                     return NULL;
                 }
+                // xxx - fix me
+                current = nodelist_get(result, 0);
                 break;
             case RECURSIVE:
                 break;
@@ -92,7 +94,7 @@ nodelist *evaluate(document_model *model, jsonpath *path)
 
 bool evaluate_one_step(step *step, node *context, nodelist *list)
 {
-    if(NAME_TEST == step_get_kind(step))
+    if(NAME_TEST == step_get_test_kind(step))
     {
         if(MAPPING != node_get_kind(context))
         {
