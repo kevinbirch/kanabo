@@ -148,7 +148,7 @@ END_TEST
 
 void setup(void)
 {
-    ck_assert_true(init_model(&model, 1));
+    ck_assert_true(model_init(&model, 1));
 
     node *root = make_mapping_node(3);
     ck_assert_not_null(root);

@@ -160,7 +160,7 @@ static loader_result *load_model_from_source(const source * restrict input, docu
         return result;
     }
 
-    if(!init_model(model, 1))
+    if(!model_init(model, 1))
     {
         yaml_parser_delete(&parser);
         free_model(model);

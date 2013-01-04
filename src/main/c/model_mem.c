@@ -228,13 +228,13 @@ document_model *make_model(size_t capacity)
     bool initialized = false;
     if(NULL != result)
     {
-        initialized = init_model(result, capacity);
+        initialized = model_init(result, capacity);
     }
 
     return NULL != result && initialized ? result : NULL;
 }
 
-bool init_model(document_model * restrict model, size_t capacity)
+bool model_init(document_model * restrict model, size_t capacity)
 {
     if(NULL == model || 0 == capacity)
     {
