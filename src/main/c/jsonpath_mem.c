@@ -37,10 +37,10 @@
 
 #include "jsonpath.h"
 
-void free_step(step *step);
-static void free_predicate(predicate *predicate);
+void step_free(step *step);
+static void predicate_free(predicate *predicate);
 
-void free_jsonpath(jsonpath *path)
+void jsonpath_free(jsonpath *path)
 {
     if(NULL == path || NULL == path->steps || 0 == path->length)
     {
@@ -48,12 +48,12 @@ void free_jsonpath(jsonpath *path)
     }
     for(size_t i = 0; i < path->length; i++)
     {
-        free_step(path->steps[i]);
+        step_free(path->steps[i]);
     }
     free(path->steps);
 }
 
-void free_step(step *step)
+void step_free(step *step)
 {
     if(NULL == step)
     {
@@ -72,14 +72,14 @@ void free_step(step *step)
     {
         for(size_t i = 0; i < step->predicate_count; i++)
         {
-            free_predicate(step->predicates[i]);
+            predicate_free(step->predicates[i]);
         }
         free(step->predicates);
     }
     free(step);
 }
 
-static void free_predicate(predicate *predicate)
+static void predicate_free(predicate *predicate)
 {
     if(NULL == predicate)
     {
@@ -87,8 +87,8 @@ static void free_predicate(predicate *predicate)
     }
     if(JOIN == predicate_get_kind(predicate))
     {
-        free_jsonpath(predicate->join.left);
-        free_jsonpath(predicate->join.right);
+        jsonpath_free(predicate->join.left);
+        jsonpath_free(predicate->join.right);
     }
 
     free(predicate);

@@ -112,7 +112,7 @@ START_TEST (missing_step_test)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -129,7 +129,7 @@ START_TEST (missing_recursive_step_test)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -146,7 +146,7 @@ START_TEST (missing_dot)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -163,7 +163,7 @@ START_TEST (relative_path_begins_with_dot)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -181,7 +181,7 @@ START_TEST (quoted_empty_step)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -199,7 +199,7 @@ START_TEST (empty_predicate)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -217,7 +217,7 @@ START_TEST (extra_junk_in_predicate)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -234,7 +234,7 @@ START_TEST (whitespace_predicate)
 
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -252,7 +252,7 @@ START_TEST (bogus_predicate)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -270,7 +270,7 @@ START_TEST (bogus_type_test_name)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -288,7 +288,7 @@ START_TEST (bogus_type_test_name_oblong)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -306,7 +306,7 @@ START_TEST (bogus_type_test_name_alloy)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -324,7 +324,7 @@ START_TEST (bogus_type_test_name_strong)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -342,7 +342,7 @@ START_TEST (bogus_type_test_name_numred)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -360,7 +360,7 @@ START_TEST (bogus_type_test_name_booloud)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -378,7 +378,7 @@ START_TEST (bogus_type_test_name_narl)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -396,7 +396,7 @@ START_TEST (empty_type_test_name)
     fprintf(stdout, "received expected failure message: '%s'\n", message);
 
     free(message);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -495,7 +495,7 @@ START_TEST (dollar_only)
     assert_parser_result(result, &path, ABSOLUTE_PATH, 1);
     assert_root_step(&path);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -509,7 +509,7 @@ START_TEST (absolute_single_step)
     assert_single_name_step(&path, 1, "foo");
     assert_no_predicates(&path, 0);
 
-    free_jsonpath(&path);    
+    jsonpath_free(&path);    
 }
 END_TEST
 
@@ -523,7 +523,7 @@ START_TEST (absolute_recursive_step)
     assert_recursive_name_step(&path, 1, "foo");
     assert_no_predicates(&path, 0);
 
-    free_jsonpath(&path);    
+    jsonpath_free(&path);    
 }
 END_TEST
 
@@ -544,7 +544,7 @@ START_TEST (absolute_multi_step)
     assert_no_predicates(&path, 3);
     assert_no_predicates(&path, 4);
 
-    free_jsonpath(&path);    
+    jsonpath_free(&path);    
 }
 END_TEST
 
@@ -562,7 +562,7 @@ START_TEST (relative_multi_step)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);    
+    jsonpath_free(&path);    
 }
 END_TEST
 
@@ -581,7 +581,7 @@ START_TEST (quoted_multi_step)
     assert_no_predicates(&path, 2);
     assert_no_predicates(&path, 3);
 
-    free_jsonpath(&path);    
+    jsonpath_free(&path);    
 }
 END_TEST
 
@@ -600,7 +600,7 @@ START_TEST (whitespace)
     assert_no_predicates(&path, 2);
     assert_no_predicates(&path, 3);
 
-    free_jsonpath(&path);    
+    jsonpath_free(&path);    
 }
 END_TEST
 
@@ -617,7 +617,7 @@ START_TEST (type_test_missing_closing_paren)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -634,7 +634,7 @@ START_TEST (type_test_with_trailing_junk)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -651,7 +651,7 @@ START_TEST (recursive_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -668,7 +668,7 @@ START_TEST (object_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -685,7 +685,7 @@ START_TEST (array_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -702,7 +702,7 @@ START_TEST (string_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -719,7 +719,7 @@ START_TEST (number_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -736,7 +736,7 @@ START_TEST (boolean_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -753,7 +753,7 @@ START_TEST (null_type_test)
     assert_no_predicates(&path, 1);
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -772,7 +772,7 @@ START_TEST (wildcard_predicate)
     assert_single_name_step(&path, 3, "author");
     assert_no_predicates(&path, 3);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -789,7 +789,7 @@ START_TEST (wildcard_predicate_with_whitespace)
     assert_single_name_step(&path, 2, "bar");
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -806,7 +806,7 @@ START_TEST (subscript_predicate)
     assert_single_name_step(&path, 2, "bar");
     assert_no_predicates(&path, 2);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -831,7 +831,7 @@ START_TEST (bad_path_input)
     ck_assert_null(path_get_step(&path, 1));
     ck_assert_int_eq(EINVAL, errno);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -874,7 +874,7 @@ START_TEST (bad_step_input)
     ck_assert_null(step_get_predicate(step2, 0));
     ck_assert_int_eq(EINVAL, errno);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -929,7 +929,7 @@ START_TEST (bad_predicate_input)
     ck_assert_null(join_predicate_get_right(wildcard));
     ck_assert_int_eq(EINVAL, errno);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 

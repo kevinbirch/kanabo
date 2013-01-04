@@ -164,9 +164,9 @@ struct jsonpath
 
 // parser entry point
 jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, jsonpath *path);
-void free_jsonpath(jsonpath *path);
-
 char *make_status_message(const jsonpath * restrict path);
+
+void jsonpath_free(jsonpath *path);
 
 // jsonpath model api
 enum path_kind path_get_kind(const jsonpath * restrict path);

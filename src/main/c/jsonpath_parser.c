@@ -175,7 +175,7 @@ static predicate *add_predicate(parser_context *context, enum predicate_kind kin
 // error handlers
 static inline void unexpected_value(parser_context *context, uint8_t expected);
 
-extern void free_step(step *step);
+extern void step_free(step *step);
 
 jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, jsonpath *jsonpath)
 {
@@ -230,7 +230,7 @@ static void abort_context(parser_context *context)
     }
     for(size_t i = 0; i < context->path->length; i++)
     {
-        free_step(pop_step(context));
+        step_free(pop_step(context));
     }
     
     context->path->steps = NULL;

@@ -84,7 +84,7 @@ START_TEST (dollar_only)
     ck_assert_true(mapping_contains_key(nodelist_get(list, 0), "store"));
 
     nodelist_free(list);
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
@@ -94,7 +94,7 @@ START_TEST (single_name_step)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)"$.foo", 5, &path);
     ck_assert_int_eq(JSONPATH_SUCCESS, code);
 
-    free_jsonpath(&path);
+    jsonpath_free(&path);
 }
 END_TEST
 
