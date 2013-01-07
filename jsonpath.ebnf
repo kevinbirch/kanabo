@@ -49,22 +49,14 @@ qualified path
     | ".", relative path
     ;
 
-relative path
-    = node type test, "()"
-    | step, [ qualified path ]
-    ;
-
 abbreviated relative path
     = "..", relative path
     ;
 
-step
-    = name test, { predicate }
-    ;
-
-name test
+relative path
     = "*"
-    | name
+    | node type test, "()"
+    | name test, [ qualified path ]
     ;
 
 node type test
@@ -74,6 +66,10 @@ node type test
     | "number"
     | "boolean"
     | "null"
+    ;
+
+name test
+    = name, { predicate }
     ;
 
 name

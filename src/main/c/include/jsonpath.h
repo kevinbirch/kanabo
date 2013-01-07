@@ -90,6 +90,7 @@ struct step
     {
         enum test_kind
         {
+            WILDCARD_TEST,
             NAME_TEST,
             TYPE_TEST
         } kind;
@@ -134,6 +135,8 @@ enum jsonpath_status_code
     ERR_UNBALANCED_PRED_DELIM,
     ERR_UNSUPPORTED_PRED_TYPE,
     ERR_EXTRA_JUNK_AFTER_PREDICATE,
+    ERR_EXTRA_JUNK_AFTER_WILDCARD,
+    ERR_EXTRA_JUNK_AFTER_TYPE_TEST,
     ERR_EXPECTED_NAME_CHAR,
     ERR_EXPECTED_NODE_TYPE_TEST,
     ERR_EXPECTED_INTEGER,

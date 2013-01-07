@@ -47,6 +47,9 @@ static void assert_parser_result(jsonpath_status_code result, jsonpath *path, en
 
 static void assert_root_step(jsonpath *path);
 static void assert_single_name_step(jsonpath *path, size_t index, char *name);
+static void assert_single_wildcard_step(jsonpath *path, size_t index);
+static void assert_recursive_wildcard_step(jsonpath *path, size_t index);
+static void assert_wildcard_step(jsonpath *path, size_t index, enum step_kind expected_step_kind);
 static void assert_recursive_name_step(jsonpath *path, size_t index, char *name);
 static void assert_name_step(jsonpath *path, size_t index, char *name, enum step_kind expected_step_kind);
 static void assert_single_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind);
@@ -423,6 +426,22 @@ static void assert_single_name_step(jsonpath *path, size_t index, char *name)
     assert_name_step(path, index, name, SINGLE);
 }
 
+static void assert_single_wildcard_step(jsonpath *path, size_t index)
+{
+    assert_wildcard_step(path, index, SINGLE);
+}
+
+static void assert_recursive_wildcard_step(jsonpath *path, size_t index)
+{
+    assert_wildcard_step(path, index, RECURSIVE);
+}
+
+static void assert_wildcard_step(jsonpath *path, size_t index, enum step_kind expected_step_kind)
+{
+    assert_step(path, index, expected_step_kind, WILDCARD_TEST);
+    assert_name(path_get_step(path, index), (uint8_t *)"*", 1);
+}
+
 static void assert_recursive_name_step(jsonpath *path, size_t index, char *name)
 {
     assert_name_step(path, index, name, RECURSIVE);
@@ -585,6 +604,58 @@ START_TEST (quoted_multi_step)
 }
 END_TEST
 
+START_TEST (wildcard)
+{
+    jsonpath path;
+    char *expression = "$.foo.*";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_single_wildcard_step(&path, 2);
+    assert_no_predicates(&path, 1);
+    assert_no_predicates(&path, 2);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (recursive_wildcard)
+{
+    jsonpath path;
+    char *expression = "$.foo..*";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_recursive_wildcard_step(&path, 2);
+    assert_no_predicates(&path, 1);
+    assert_no_predicates(&path, 2);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (wildcard_with_trailing_junk)
+{
+    jsonpath path;
+    char *expression = "$.foo.* [0]";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    ck_assert_int_eq(ERR_EXTRA_JUNK_AFTER_WILDCARD, result);
+    ck_assert_int_eq(7, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
+
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
+
+    free(message);
+    jsonpath_free(&path);
+}
+END_TEST
+
 START_TEST (whitespace)
 {
     jsonpath path;
@@ -627,13 +698,14 @@ START_TEST (type_test_with_trailing_junk)
     char *expression = "$.foo.array()[0]";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_single_type_step(&path, 2, ARRAY_TEST);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    ck_assert_int_eq(ERR_EXTRA_JUNK_AFTER_TYPE_TEST, result);
+    ck_assert_int_eq(13, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
 
+    fprintf(stdout, "received expected failure message: '%s'\n", message);
+
+    free(message);
     jsonpath_free(&path);
 }
 END_TEST
@@ -956,6 +1028,8 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input, whitespace_predicate);
     tcase_add_test(bad_input, extra_junk_in_predicate);
     tcase_add_test(bad_input, bogus_predicate);
+    tcase_add_test(bad_input, wildcard_with_trailing_junk);
+    tcase_add_test(bad_input, type_test_with_trailing_junk);
 
     TCase *basic = tcase_create("basic");
     tcase_add_test(basic, dollar_only);
@@ -965,10 +1039,11 @@ Suite *jsonpath_suite(void)
     tcase_add_test(basic, quoted_multi_step);
     tcase_add_test(basic, relative_multi_step);
     tcase_add_test(basic, whitespace);
+    tcase_add_test(basic, wildcard);
+    tcase_add_test(basic, recursive_wildcard);
 
     TCase *node_type = tcase_create("node type test");
     tcase_add_test(node_type, type_test_missing_closing_paren);
-    tcase_add_test(node_type, type_test_with_trailing_junk);
     tcase_add_test(node_type, recursive_type_test);
     tcase_add_test(node_type, object_type_test);
     tcase_add_test(node_type, array_type_test);

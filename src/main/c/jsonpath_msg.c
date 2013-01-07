@@ -42,22 +42,24 @@
 
 static const char * const MESSAGES[] = 
 {
-    "Success",
-    "Expression is NULL",
-    "Expression length is 0",
-    "Output path is NULL",
-    "Unable to allocate memory",
-    "Not a JSONPath expression",
-    "Premature end of input after position %d",
-    "At position %d: unexpected character '%c', was expecting '%c' instead",
-    "At position %d: empty predicate",
-    "At position %d: missing closing predicate delimiter `]' before end of step",
-    "At position %d: unsupported predicate",
-    "At position %d: extra characters after valid predicate definition",
-    "At position %d: expected a name character, but found '%c' instead",
-    "At position %d: expected a node type test",
-    "At position %d: expected an integer"
-    "At position %d: invalid integer"
+    "Success.",
+    "Expression is NULL.",
+    "Expression length is 0.",
+    "Output path is NULL.",
+    "Unable to allocate memory.",
+    "Not a JSONPath expression.",
+    "Premature end of input after position %d.",
+    "At position %d: unexpected character '%c', was expecting '%c' instead.",
+    "At position %d: empty predicate.",
+    "At position %d: missing closing predicate delimiter `]' before end of step.",
+    "At position %d: unsupported predicate.",
+    "At position %d: extra characters after valid predicate definition.",
+    "At position %d: extra characters after valid wildcard step definition.",
+    "At position %d: extra characters after valid type test step definition.",
+    "At position %d: expected a name character, but found '%c' instead.",
+    "At position %d: expected a node type test.",
+    "At position %d: expected an integer."
+    "At position %d: invalid integer."
 };
 
 static char *make_simple_status_message(jsonpath_status_code code);
@@ -75,6 +77,8 @@ char *make_status_message(const jsonpath * restrict path)
         case ERR_EMPTY_PREDICATE:
         case ERR_UNBALANCED_PRED_DELIM:
         case ERR_EXTRA_JUNK_AFTER_PREDICATE:
+        case ERR_EXTRA_JUNK_AFTER_WILDCARD:
+        case ERR_EXTRA_JUNK_AFTER_TYPE_TEST:
         case ERR_UNSUPPORTED_PRED_TYPE:
         case ERR_EXPECTED_INTEGER:
         case ERR_INVALID_NUMBER:

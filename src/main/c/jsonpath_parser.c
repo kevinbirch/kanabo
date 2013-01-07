@@ -132,9 +132,8 @@ static void absolute_path(parser_context *context);
 static void qualified_path(parser_context *context);
 static void relative_path(parser_context *context);
 static void abbreviated_relative_path(parser_context *context);
-static void path_step(parser_context *context);
 static void name_test(parser_context *context);
-static void wildcard_name(parser_context *context, step *name_test);
+static void wildcard_name(parser_context *context);
 static void step_predicate(parser_context *context);
 static void wildcard_predicate(parser_context *context);
 static void subscript_predicate(parser_context *context);
@@ -324,41 +323,6 @@ static void qualified_path(parser_context *context)
     }
 }
 
-static void relative_path(parser_context *context)
-{
-    enter_state(context, ST_RELATIVE_PATH);
-    skip_ws(context);
-
-    if('.' == get_char(context))
-    {
-        context->code = ERR_EXPECTED_NAME_CHAR;
-        return;
-    }
-    if(!has_more_input(context))
-    {
-        context->code = ERR_PREMATURE_END_OF_INPUT;
-        return;
-    }
-
-    if(look_for(context, "()"))
-    {
-        node_type_test(context);
-        if(JSONPATH_SUCCESS == context->code && has_more_input(context))
-        {
-            consume_char(context);
-            consume_char(context);
-        }
-    }
-    else
-    {
-        path_step(context);
-        if(JSONPATH_SUCCESS == context->code && has_more_input(context))
-        {
-            qualified_path(context);
-        }
-    }
-}
-
 static void abbreviated_relative_path(parser_context *context)
 {
     enter_state(context, ST_ABBREVIATED_RELATIVE_PATH);
@@ -384,39 +348,58 @@ static void abbreviated_relative_path(parser_context *context)
     relative_path(context);
 }
 
-static void path_step(parser_context *context)
+static void relative_path(parser_context *context)
 {
-    enter_state(context, ST_STEP);
-    if(1 > remaining(context))
+    enter_state(context, ST_RELATIVE_PATH);
+    skip_ws(context);
+
+    if(!has_more_input(context))
     {
         context->code = ERR_PREMATURE_END_OF_INPUT;
         return;
     }
-    name_test(context);
-
-    while(JSONPATH_SUCCESS == context->code && has_more_input(context))
+    if('.' == get_char(context))
     {
-        step_predicate(context);
+        context->code = ERR_EXPECTED_NAME_CHAR;
+        return;
     }
 
-    if(ERR_UNEXPECTED_VALUE == context->code && '[' == context->expected)
+    if('*' == get_char(context))
     {
-        enter_state(context, ST_STEP);
-        context->code = JSONPATH_SUCCESS;
+        wildcard_name(context);
+        if(JSONPATH_SUCCESS == context->code && has_more_input(context))
+        {
+            context->code = ERR_EXTRA_JUNK_AFTER_WILDCARD;
+        }
+    }
+    else if(look_for(context, "()"))
+    {
+        node_type_test(context);
+        if(JSONPATH_SUCCESS == context->code && has_more_input(context))
+        {
+            consume_char(context);
+            consume_char(context);
+            if(has_more_input(context))
+            {
+                context->code = ERR_EXTRA_JUNK_AFTER_TYPE_TEST;
+            }
+        }
+    }
+    else
+    {
+        name_test(context);
+        if(JSONPATH_SUCCESS == context->code && has_more_input(context))
+        {
+            qualified_path(context);
+        }
     }
 }
 
-static void name_test(parser_context *context)
+static void wildcard_name(parser_context *context)
 {
-    enter_state(context, ST_NAME_TEST);
-    if(1 > remaining(context))
-    {
-        context->code = ERR_PREMATURE_END_OF_INPUT;
-        return;
-    }
+    enter_state(context, ST_WILDCARD_NAME_TEST);
 
-    context->code = JSONPATH_SUCCESS;
-    step *current = make_step(context->current_step_kind, NAME_TEST);
+    step *current = make_step(context->current_step_kind, WILDCARD_TEST);
     if(NULL == current)
     {
         context->code = ERR_OUT_OF_MEMORY;
@@ -424,38 +407,31 @@ static void name_test(parser_context *context)
     }
     push_step(context, current);
 
-    if('*' == get_char(context))
-    {
-        wildcard_name(context, current);
-    }
-    else
-    {
-        name(context, current);
-    }
-}
-
-static void wildcard_name(parser_context *context, step *name_step)
-{
-    enter_state(context, ST_WILDCARD_NAME_TEST);
     consume_char(context);
-    skip_ws(context);
-    name_step->test.name.value = (uint8_t *)malloc(1);
-    if(NULL == name_step->test.name.value)
+    current->test.name.value = (uint8_t *)malloc(1);
+    if(NULL == current->test.name.value)
     {
         context->code = ERR_OUT_OF_MEMORY;
         return;
     }
-    memcpy(name_step->test.name.value, "*", 1);
-    name_step->test.name.length = 1;
+    memcpy(current->test.name.value, "*", 1);
+    current->test.name.length = 1;
+    context->code = JSONPATH_SUCCESS;
 }
 
 static void node_type_test(parser_context *context)
 {
     enter_state(context, ST_NODE_TYPE_TEST);
 
-    context->code = JSONPATH_SUCCESS;
+    step *current = make_step(context->current_step_kind, TYPE_TEST);
+    if(NULL == current)
+    {
+        context->code = ERR_OUT_OF_MEMORY;
+        return;
+    }
+    push_step(context, current);
+
     size_t offset = context->cursor;
-    
     while(offset < context->length)
     {
         if('(' == context->input[offset])
@@ -472,21 +448,15 @@ static void node_type_test(parser_context *context)
     }
 
     enum type_test_kind kind = node_type_test_value(context, length);
-    if(JSONPATH_SUCCESS != context->code)
+    if(-1 == kind)
     {
-        return;
-    }
-    step *current = make_step(context->current_step_kind, TYPE_TEST);
-    if(NULL == current)
-    {
-        context->code = ERR_OUT_OF_MEMORY;
+        context->code = ERR_EXPECTED_NODE_TYPE_TEST;
         return;
     }
     current->test.type = kind;
     
-    push_step(context, current);
-    
     consume_chars(context, length);
+    context->code = JSONPATH_SUCCESS;
 }
 
 static enum type_test_kind node_type_test_value(parser_context *context, size_t length)
@@ -519,10 +489,6 @@ static enum type_test_kind node_type_test_value(parser_context *context, size_t 
             break;
     }
 
-    if(-1 == result)
-    {
-        context->code = ERR_EXPECTED_NODE_TYPE_TEST;
-    }
     return result;
 }
 
@@ -535,6 +501,37 @@ static inline enum type_test_kind check_one_node_type_test_value(parser_context 
     else
     {
         return (enum type_test_kind)-1;
+    }
+}
+
+static void name_test(parser_context *context)
+{
+    enter_state(context, ST_NAME_TEST);
+    if(1 > remaining(context))
+    {
+        context->code = ERR_PREMATURE_END_OF_INPUT;
+        return;
+    }
+
+    step *current = make_step(context->current_step_kind, NAME_TEST);
+    if(NULL == current)
+    {
+        context->code = ERR_OUT_OF_MEMORY;
+        return;
+    }
+    push_step(context, current);
+
+    context->code = JSONPATH_SUCCESS;
+    name(context, current);
+    while(JSONPATH_SUCCESS == context->code && has_more_input(context))
+    {
+        step_predicate(context);
+    }
+
+    if(ERR_UNEXPECTED_VALUE == context->code && '[' == context->expected)
+    {
+        enter_state(context, ST_STEP);
+        context->code = JSONPATH_SUCCESS;
     }
 }
 
