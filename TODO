@@ -19,7 +19,11 @@ LICENSE file for more details.
 
 Enhancements:
 
+* check for extra junk after wildcard and node type test terminals
+* ensure memory is freed on secondary failure modes in parser functions
 * refactor direct status code setters into function calls
+* clean up and extract common patterns
+* add more checks for end of input
 * wrap output in debug conditionals
   * add exit state function with output
 * should we allow an optional qualified path expression after the filter expression in the union expression production?
