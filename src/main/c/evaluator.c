@@ -40,8 +40,12 @@
 
 #include "evaluator.h"
 
-bool evaluate_one_step(step *step, node *context, nodelist *list);
-bool evaluate_type_test(step *step, node *context);
+bool evaluate_single_step(step *step, nodelist *list);
+bool evaluate_name_test(step *step, nodelist *list);
+bool evaluate_simple_name_test(step *step, nodelist *list);
+bool evaluate_type_test(step *step, nodelist *list);
+bool evaluate_type_test_kind(step *step, nodelist *list);
+
 node *make_boolean_node(bool value);
 void set_result(nodelist *list, node *value);
 
@@ -50,21 +54,24 @@ nodelist *evaluate(document_model *model, jsonpath *path)
 {
     if(NULL == model || NULL == path || RELATIVE_PATH == path->kind || 0 == model_get_document_count(model) || NULL == model_get_document_root(model, 0))
     {
+        // xxx - add error states
         errno = EINVAL;
         return NULL;
     }
 
-    node *current = model_get_document(model, 0);
-    if(NULL == current)
+    node *document = model_get_document(model, 0);
+    if(NULL == document)
     {
+        // xxx - add error states
         errno = EINVAL;
         return NULL;
     }
-    nodelist *result = make_nodelist();
-    if(NULL == result)
+    nodelist *list = make_nodelist();
+    if(NULL == list)
     {
         return NULL;
     }
+    nodelist_add(list, document);
 
     for(size_t i = 0; i < path_get_length(path); i++)
     {
@@ -72,75 +79,101 @@ nodelist *evaluate(document_model *model, jsonpath *path)
         switch(step_get_kind(step))
         {
             case ROOT:
-                current = document_get_root(current);
-                nodelist_add(result, current);
+                nodelist_set(list, document_get_root(nodelist_get(list, 0)), 0);
                 break;
             case SINGLE:
-                if(!evaluate_one_step(step, current, result))
+                if(!evaluate_single_step(step, list))
                 {
-                    nodelist_free(result);
+                    nodelist_free(list);
                     return NULL;
                 }
-                // xxx - fix me
-                current = nodelist_get(result, 0);
                 break;
             case RECURSIVE:
                 break;
         }
     }
 
+    return list;
+}
+
+bool evaluate_single_step(step *step, nodelist *list)
+{
+    bool result = false;
+    switch(step_get_test_kind(step))
+    {
+        case NAME_TEST:
+            result = evaluate_name_test(step, list);
+            break;
+        case WILDCARD_TEST:
+            break;
+        case TYPE_TEST:
+            result = evaluate_type_test(step, list);
+            break;
+    }
+
     return result;
 }
 
-bool evaluate_one_step(step *step, node *context, nodelist *list)
+bool evaluate_name_test(step *step, nodelist *list)
 {
-    if(NAME_TEST == step_get_test_kind(step))
+    if(0 == step_get_predicate_count(step))
     {
-        if(MAPPING != node_get_kind(context))
+        return evaluate_simple_name_test(step, list);
+    }
+    else
+    {
+        return false;
+        //evaluate_predicated_name_test(step, target, list);
+    }
+}
+
+bool evaluate_simple_name_test(step *step, nodelist *list)
+{
+    for(size_t i = 0; i < nodelist_length(list); i++)
+    {
+        node *each = nodelist_get(list, i);
+        if(MAPPING != node_get_kind(each))
+        {
+            // xxx - add error states
+            errno = EINVAL;
+            return false;
+        }
+        node *child = mapping_get_value_scalar_key(each, name_test_step_get_name(step), name_test_step_get_length(step));
+        if(NULL == child)
         {
             errno = EINVAL;
             return false;
         }
-        if(0 == step_get_predicate_count(step))
-        {
-            node *result = mapping_get_value_scalar_key(context, name_test_step_get_name(step), name_test_step_get_length(step));
-            if(NULL == result)
-            {
-                errno = EINVAL;
-                return false;
-            }
-            set_result(list, result);
-        }
-        /* else */
-        /* { */
-        /*     evaluate_predicates(step, target, list); */
-        /* } */
-    }
-    else
-    {
-        bool match = evaluate_type_test(step, context);
-        node *result = make_boolean_node(match);
-        if(NULL == result)
-        {
-            return false;
-        }
-        set_result(list, result);
+        nodelist_set(list, child, i);
     }
 
     return true;
 }
 
-bool evaluate_type_test(step *step, node *context)
+bool evaluate_type_test(step *step, nodelist *list)
 {
-    bool result = false;
-    
+    bool match = evaluate_type_test_kind(step, list);
+    node *result = make_boolean_node(match);
+    if(NULL == result)
+    {
+        return false;
+    }
+    set_result(list, result);
+    return true;
+}
+
+bool evaluate_type_test_kind(step *step, nodelist *list)
+{
+    bool result = true;
+    enum node_kind expected_kind;
+
     switch(type_test_step_get_type(step))
     {
         case OBJECT_TEST:
-            result = MAPPING == node_get_kind(context);
+            expected_kind = MAPPING;
             break;
         case ARRAY_TEST:
-            result = SEQUENCE == node_get_kind(context);
+            expected_kind = SEQUENCE;
             break;
         case STRING_TEST:
             break;
@@ -150,6 +183,10 @@ bool evaluate_type_test(step *step, node *context)
             break;
         case NULL_TEST:
             break;
+    }
+    for(size_t i = 0; i < nodelist_length(list); i++)
+    {
+        result &= expected_kind == node_get_kind(nodelist_get(list, i));
     }
 
     return result;
