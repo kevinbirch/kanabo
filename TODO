@@ -19,6 +19,7 @@ LICENSE file for more details.
 
 Enhancements:
 
+* materialize scalar nodes into json types
 * ensure memory is freed on secondary failure modes in parser functions
 * refactor direct status code setters into function calls
 * clean up and extract common patterns
