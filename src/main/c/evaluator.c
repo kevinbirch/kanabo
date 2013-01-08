@@ -40,15 +40,22 @@
 
 #include "evaluator.h"
 
+nodelist *evaluate_steps(document_model *model, jsonpath *path);
+bool evaluate_one_step(step *step, nodelist *list);
 bool evaluate_single_step(step *step, nodelist *list);
+bool evaluate_wildcard_test(nodelist *list);
+bool evaluate_wildcard_test_once(node *context, nodelist *list);
+void add_values_to_nodelist(node *key, node *value, void *context);
+void add_elements_to_nodelist(node *each, void *context);
 bool evaluate_name_test(step *step, nodelist *list);
 bool evaluate_simple_name_test(step *step, nodelist *list);
 bool evaluate_type_test(step *step, nodelist *list);
 bool evaluate_type_test_kind(step *step, nodelist *list);
 
+nodelist *make_result_nodelist(document_model *model);
 node *make_boolean_node(bool value);
 void set_result(nodelist *list, node *value);
-
+nodelist *nodelist_clone(nodelist *list);
 
 nodelist *evaluate(document_model *model, jsonpath *path)
 {
@@ -59,59 +66,125 @@ nodelist *evaluate(document_model *model, jsonpath *path)
         return NULL;
     }
 
-    node *document = model_get_document(model, 0);
-    if(NULL == document)
-    {
-        // xxx - add error states
-        errno = EINVAL;
-        return NULL;
-    }
-    nodelist *list = make_nodelist();
+    return evaluate_steps(model, path);
+}
+
+nodelist *evaluate_steps(document_model *model, jsonpath *path)
+{
+    nodelist *list = make_result_nodelist(model);
     if(NULL == list)
     {
         return NULL;
     }
-    nodelist_add(list, document);
 
     for(size_t i = 0; i < path_get_length(path); i++)
     {
         step *step = path_get_step(path, i);
-        switch(step_get_kind(step))
+        if(!evaluate_one_step(step, list))
         {
-            case ROOT:
-                nodelist_set(list, document_get_root(nodelist_get(list, 0)), 0);
-                break;
-            case SINGLE:
-                if(!evaluate_single_step(step, list))
-                {
-                    nodelist_free(list);
-                    return NULL;
-                }
-                break;
-            case RECURSIVE:
-                break;
+            nodelist_free(list);
+            return NULL;
         }
     }
 
     return list;
 }
 
+bool evaluate_one_step(step *step, nodelist *list)
+{
+    switch(step_get_kind(step))
+    {
+        case ROOT:
+            return nodelist_set(list, document_get_root(nodelist_get(list, 0)), 0);
+        case SINGLE:
+            return evaluate_single_step(step, list);
+        case RECURSIVE:
+            return false;
+    }
+}
+
 bool evaluate_single_step(step *step, nodelist *list)
 {
-    bool result = false;
     switch(step_get_test_kind(step))
     {
-        case NAME_TEST:
-            result = evaluate_name_test(step, list);
-            break;
         case WILDCARD_TEST:
-            break;
+            return evaluate_wildcard_test(list);
+        case NAME_TEST:
+            return evaluate_name_test(step, list);
         case TYPE_TEST:
-            result = evaluate_type_test(step, list);
-            break;
+            return evaluate_type_test(step, list);
     }
+}
 
-    return result;
+bool evaluate_wildcard_test(nodelist *list)
+{
+    if(1 == nodelist_length(list))
+    {
+        node *context = nodelist_get(list, 0);
+        nodelist_clear(list);
+
+        return evaluate_wildcard_test_once(context, list);
+    }
+    else
+    {
+        nodelist *clone = nodelist_clone(list);
+        if(NULL == clone)
+        {
+            return false;
+        }
+        nodelist_clear(list);
+        bool result = true;
+        for(size_t i = 0; i < nodelist_length(clone); i++)
+        {
+            result &= evaluate_wildcard_test_once(nodelist_get(clone, i), list);
+        }
+        nodelist_free(clone);
+        return result;
+    }
+}
+
+bool evaluate_wildcard_test_once(node *context, nodelist *list)
+{
+    switch(node_get_kind(context))
+    {
+        case MAPPING:
+            iterate_mapping(context, add_values_to_nodelist, list);
+            return true;
+        case SEQUENCE:
+            iterate_sequence(context, add_elements_to_nodelist, list);
+            return true;
+        case SCALAR:
+        case DOCUMENT:
+            // xxx - signal error
+            errno = EINVAL;
+            return false;
+    }
+}
+
+// xxx - switch the iterator return type to bool to propigate the evaluation status
+void add_values_to_nodelist(node *key, node *value, void *context)
+{
+#pragma unused(key)
+    nodelist *list = (nodelist *)context;
+    switch(node_get_kind(value))
+    {
+        case SCALAR:
+        case MAPPING:
+            nodelist_add(list, value);
+            break;
+        case SEQUENCE:
+            iterate_sequence(value, add_elements_to_nodelist, context);
+            break;
+        case DOCUMENT:
+            // xxx - signal error
+            errno = EINVAL;
+    }
+}
+
+void add_elements_to_nodelist(node *each, void *context)
+{
+    nodelist *list = (nodelist *)context;
+    nodelist_add(list, each);
 }
 
 bool evaluate_name_test(step *step, nodelist *list)
@@ -129,6 +202,7 @@ bool evaluate_name_test(step *step, nodelist *list)
 
 bool evaluate_simple_name_test(step *step, nodelist *list)
 {
+    bool result = true;
     for(size_t i = 0; i < nodelist_length(list); i++)
     {
         node *each = nodelist_get(list, i);
@@ -144,10 +218,10 @@ bool evaluate_simple_name_test(step *step, nodelist *list)
             errno = EINVAL;
             return false;
         }
-        nodelist_set(list, child, i);
+        result &= nodelist_set(list, child, i);
     }
 
-    return true;
+    return result;
 }
 
 bool evaluate_type_test(step *step, nodelist *list)
@@ -194,9 +268,9 @@ bool evaluate_type_test_kind(step *step, nodelist *list)
 
 node *make_boolean_node(bool value)
 {
-    char *string = value ? strdup("true") : strdup("false");
+    char *scalar = value ? strdup("true") : strdup("false");
     
-    node *result = make_scalar_node((unsigned char *)string, strlen(string));
+    node *result = make_scalar_node((unsigned char *)scalar, strlen(scalar));
     if(NULL == result)
     {
         return NULL;
@@ -212,6 +286,40 @@ void set_result(nodelist *list, node *value)
         nodelist_clear(list);
     }
     nodelist_add(list, value);
+}
+
+nodelist *make_result_nodelist(document_model *model)
+{
+    node *document = model_get_document(model, 0);
+    if(NULL == document)
+    {
+        // xxx - add error states
+        errno = EINVAL;
+        return NULL;
+    }
+    nodelist *list = make_nodelist();
+    if(NULL == list)
+    {
+        return NULL;
+    }
+    nodelist_add(list, document);
+
+    return list;
+}
+
+nodelist *nodelist_clone(nodelist *list)
+{
+    nodelist *clone = make_nodelist_with_capacity(nodelist_length(list));
+    if(NULL == clone)
+    {
+        return NULL;
+    }
+    for(size_t i = 0; i < nodelist_length(list); i++)
+    {
+        nodelist_add(clone, nodelist_get(list, i));
+    }
+
+    return clone;
 }
 
 

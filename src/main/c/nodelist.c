@@ -84,7 +84,6 @@ void nodelist_free(nodelist *list)
 {
     if(NULL == list)
     {
-        errno = EINVAL;
         return;
     }
     errno = 0;
