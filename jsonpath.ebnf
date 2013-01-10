@@ -105,7 +105,8 @@ slice
     ;
 
 union
-    = "[", union expression, ",", union expression, "]"
+    = "[", integer, ",", integer, "]"
+    | "[", union expression, ",", union expression, "]"
     ;
 
 union expression
