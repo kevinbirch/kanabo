@@ -15,11 +15,21 @@ LICENSE file for more details.
 
 ## TODO
 
+### evaluator
+
+Enhancements:
+
+* add error codes
+* add error message generator
+* propagate errors everywhere
+
+
 ### parser
 
 Enhancements:
 
 * materialize scalar nodes into json types
+* allow negative indices in slices
 * ensure memory is freed on secondary failure modes in parser functions
 * refactor direct status code setters into function calls
 * clean up and extract common patterns
@@ -31,6 +41,8 @@ Enhancements:
 Features:
 
 * union support
+  * allow array indices
+  * allow more than two items
 * filter support
 
 ### loader
