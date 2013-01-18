@@ -40,6 +40,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct jsonpath jsonpath;
 
@@ -115,8 +116,7 @@ struct step
         };
     } test;    
 
-    size_t    predicate_count;
-    predicate **predicates;
+    predicate *predicate;
 };
 
 typedef struct step step;
@@ -183,8 +183,8 @@ enum type_test_kind type_test_step_get_type(const step * restrict step);
 uint8_t            *name_test_step_get_name(const step * restrict step);
 size_t              name_test_step_get_length(const step * restrict step);
 
-size_t     step_get_predicate_count(const step * restrict step);
-predicate *step_get_predicate(const step * restrict step, size_t index);
+bool       step_has_predicate(const step * restrict step);
+predicate *step_get_predicate(const step * restrict step);
 
 enum predicate_kind predicate_get_kind(const predicate * restrict predicate);
 uint_fast32_t       subscript_predicate_get_index(const predicate * restrict predicate);

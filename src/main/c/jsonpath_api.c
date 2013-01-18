@@ -127,26 +127,26 @@ size_t name_test_step_get_length(const step * restrict step)
     return step->test.name.length;
 }
 
-size_t step_get_predicate_count(const step * restrict step)
+bool step_has_predicate(const step * restrict step)
 {
     if(NULL == step)
     {
         errno = EINVAL;
-        return 0;
+        return false;
     }
     errno = 0;
-    return step->predicate_count;
+    return NULL != step->predicate;
 }
 
-predicate *step_get_predicate(const step * restrict step, size_t index)
+predicate *step_get_predicate(const step * restrict step)
 {
-    if(NULL == step || 0 == step->predicate_count || NULL == step->predicates || index >= step->predicate_count)
+    if(NULL == step || NULL == step->predicate)
     {
         errno = EINVAL;
         return NULL;
     }
     errno = 0;
-    return step->predicates[index];
+    return step->predicate;
 }
 
 enum predicate_kind predicate_get_kind(const predicate * restrict predicate)

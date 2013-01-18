@@ -131,7 +131,7 @@ START_TEST (long_path)
 
     ck_assert_int_eq(SCALAR, node_get_kind(color));
     ck_assert_buf_eq("red", 3, scalar_get_value(color), node_get_size(color));
-    
+
     nodelist_free(list);
     jsonpath_free(&path);
 }

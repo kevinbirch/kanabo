@@ -58,9 +58,9 @@ static void assert_type_step(jsonpath *path, size_t index, enum type_test_kind e
 static void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind);
 static void assert_name(step * step, uint8_t *value, size_t length);
 static void assert_no_predicates(jsonpath *path, size_t index);
-static void assert_wildcard_predicate(jsonpath *path, size_t path_index, size_t predicate_index);
-static void assert_subscript_predicate(jsonpath *path, size_t path_index, size_t predicate_index, uint_fast32_t index_value);
-static void assert_predicate(jsonpath *path, size_t path_index, size_t predicate_index, enum predicate_kind expected_predicate_kind);
+static void assert_wildcard_predicate(jsonpath *path, size_t path_index);
+static void assert_subscript_predicate(jsonpath *path, size_t path_index, uint_fast32_t index_value);
+static void assert_predicate(jsonpath *path, size_t path_index, enum predicate_kind expected_predicate_kind);
 
 START_TEST (null_expression)
 {
@@ -483,27 +483,27 @@ static void assert_name(step *step, uint8_t *name, size_t length)
 
 static void assert_no_predicates(jsonpath *path, size_t index)
 {
-    ck_assert_int_eq(0, step_get_predicate_count(path_get_step(path, index)));
-    ck_assert_null(path->steps[index]->predicates);
+    ck_assert_false(step_has_predicate(path_get_step(path, index)));
+    ck_assert_null(path->steps[index]->predicate);
 }
 
-static void assert_wildcard_predicate(jsonpath *path, size_t path_index, size_t predicate_index)
+static void assert_wildcard_predicate(jsonpath *path, size_t path_index)
 {
-    assert_predicate(path, path_index, predicate_index, WILDCARD);
+    assert_predicate(path, path_index, WILDCARD);
 }
 
-static void assert_subscript_predicate(jsonpath *path, size_t path_index, size_t predicate_index, uint_fast32_t index_value)
+static void assert_subscript_predicate(jsonpath *path, size_t path_index, uint_fast32_t index_value)
 {
-    assert_predicate(path, path_index, predicate_index, SUBSCRIPT);
-    ck_assert_int_eq(index_value, subscript_predicate_get_index(step_get_predicate(path_get_step(path, path_index), predicate_index)));
+    assert_predicate(path, path_index, SUBSCRIPT);
+    ck_assert_int_eq(index_value, subscript_predicate_get_index(step_get_predicate(path_get_step(path, path_index))));
 }
 
-static void assert_predicate(jsonpath *path, size_t path_index, size_t predicate_index, enum predicate_kind expected_predicate_kind)
+static void assert_predicate(jsonpath *path, size_t path_index, enum predicate_kind expected_predicate_kind)
 {
-    ck_assert_int_ne(0, step_get_predicate_count(path_get_step(path, path_index)));
-    ck_assert_not_null(path->steps[path_index]->predicates);
-    ck_assert_not_null(step_get_predicate(path_get_step(path, path_index), predicate_index));
-    ck_assert_int_eq(expected_predicate_kind, predicate_get_kind(step_get_predicate(path_get_step(path, path_index), predicate_index)));
+    ck_assert_true(step_has_predicate(path_get_step(path, path_index)));
+    ck_assert_not_null(path->steps[path_index]->predicate);
+    ck_assert_not_null(step_get_predicate(path_get_step(path, path_index)));
+    ck_assert_int_eq(expected_predicate_kind, predicate_get_kind(step_get_predicate(path_get_step(path, path_index))));
 }
 
 START_TEST (dollar_only)
@@ -840,7 +840,7 @@ START_TEST (wildcard_predicate)
     assert_single_name_step(&path, 1, "store");
     assert_no_predicates(&path, 1);
     assert_single_name_step(&path, 2, "book");
-    assert_wildcard_predicate(&path, 2, 0);
+    assert_wildcard_predicate(&path, 2);
     assert_single_name_step(&path, 3, "author");
     assert_no_predicates(&path, 3);
 
@@ -857,7 +857,7 @@ START_TEST (wildcard_predicate_with_whitespace)
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
     assert_single_name_step(&path, 1, "foo");
-    assert_wildcard_predicate(&path, 1, 0);
+    assert_wildcard_predicate(&path, 1);
     assert_single_name_step(&path, 2, "bar");
     assert_no_predicates(&path, 2);
 
@@ -874,7 +874,7 @@ START_TEST (subscript_predicate)
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
     assert_root_step(&path);
     assert_single_name_step(&path, 1, "foo");
-    assert_subscript_predicate(&path, 1, 0, 42);
+    assert_subscript_predicate(&path, 1, 42);
     assert_single_name_step(&path, 2, "bar");
     assert_no_predicates(&path, 2);
 
@@ -920,10 +920,10 @@ START_TEST (bad_step_input)
     ck_assert_int_eq(EINVAL, errno);
     
     errno = 0;
-    ck_assert_int_eq(0, step_get_predicate_count(NULL));
+    ck_assert_false(step_has_predicate(NULL));
     ck_assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_null(step_get_predicate(NULL, 0));
+    ck_assert_null(step_get_predicate(NULL));
     ck_assert_int_eq(EINVAL, errno);
     
     jsonpath path;
@@ -943,7 +943,7 @@ START_TEST (bad_step_input)
     ck_assert_null(name_test_step_get_name(step2));
     ck_assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_null(step_get_predicate(step2, 0));
+    ck_assert_null(step_get_predicate(step2));
     ck_assert_int_eq(EINVAL, errno);
 
     jsonpath_free(&path);
@@ -979,7 +979,7 @@ START_TEST (bad_predicate_input)
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);    
     assert_parser_result(result, &path, ABSOLUTE_PATH, 3);
 
-    predicate *subscript = step_get_predicate(path_get_step(&path, 1), 0);
+    predicate *subscript = step_get_predicate(path_get_step(&path, 1));
     errno = 0;
     ck_assert_int_eq(0, slice_predicate_get_to(subscript));
     ck_assert_int_eq(EINVAL, errno);
@@ -990,7 +990,7 @@ START_TEST (bad_predicate_input)
     ck_assert_int_eq(0, slice_predicate_get_step(subscript));
     ck_assert_int_eq(EINVAL, errno);
 
-    predicate *wildcard = step_get_predicate(path_get_step(&path, 2), 0);
+    predicate *wildcard = step_get_predicate(path_get_step(&path, 2));
     errno = 0;
     ck_assert_int_eq(0, subscript_predicate_get_index(wildcard));
     ck_assert_int_eq(EINVAL, errno);

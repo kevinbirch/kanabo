@@ -523,7 +523,7 @@ static void name_test(parser_context *context)
 
     context->code = JSONPATH_SUCCESS;
     name(context, current);
-    while(JSONPATH_SUCCESS == context->code && has_more_input(context))
+    if(JSONPATH_SUCCESS == context->code && has_more_input(context))
     {
         step_predicate(context);
     }
@@ -689,16 +689,7 @@ static predicate *add_predicate(parser_context *context, enum predicate_kind kin
 
     pred->kind = kind;
     step *current = context->steps->step;
-    predicate **new_predicates = (predicate **)malloc(sizeof(predicate *) * current->predicate_count + 1);
-    if(NULL == new_predicates)
-    {
-        context->code = ERR_OUT_OF_MEMORY;
-        return NULL;
-    }
-    memcpy(new_predicates, current->predicates, sizeof(predicate *) * current->predicate_count);
-    new_predicates[current->predicate_count++] = pred;
-    free(current->predicates);
-    current->predicates = new_predicates;
+    current->predicate = pred;
 
     return pred;
 }
@@ -800,8 +791,7 @@ static inline step *make_step(enum step_kind step_kind, enum test_kind test_kind
     result->test.kind = test_kind;
     result->test.name.value = NULL;
     result->test.name.length = 0;
-    result->predicate_count = 0;
-    result->predicates = NULL;
+    result->predicate = NULL;
 
     return result;
 }

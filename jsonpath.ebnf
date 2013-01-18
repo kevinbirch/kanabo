@@ -69,7 +69,7 @@ node type test
     ;
 
 name test
-    = name, { predicate }
+    = name, [ predicate ]
     ;
 
 name

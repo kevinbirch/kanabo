@@ -68,13 +68,9 @@ void step_free(step *step)
             step->test.name.length = 0;
         }
     }
-    if(NULL != step->predicates && 0 != step->predicate_count)
+    if(NULL != step->predicate)
     {
-        for(size_t i = 0; i < step->predicate_count; i++)
-        {
-            predicate_free(step->predicates[i]);
-        }
-        free(step->predicates);
+        predicate_free(step->predicate);
     }
     free(step);
 }

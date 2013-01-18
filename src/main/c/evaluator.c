@@ -49,6 +49,7 @@ bool add_values_to_nodelist(node *key, node *value, void *context);
 bool add_elements_to_nodelist(node *each, void *context);
 bool evaluate_name_test(step *step, nodelist *list);
 bool evaluate_simple_name_test(step *step, nodelist *list);
+bool evaluate_predicated_name_test(step *step, nodelist *list);
 bool evaluate_type_test(step *step, nodelist *list);
 bool evaluate_type_test_kind(step *step, nodelist *list);
 
@@ -185,14 +186,13 @@ bool add_elements_to_nodelist(node *each, void *context)
 
 bool evaluate_name_test(step *step, nodelist *list)
 {
-    if(0 == step_get_predicate_count(step))
+    if(step_has_predicate(step))
     {
-        return evaluate_simple_name_test(step, list);
+        return evaluate_predicated_name_test(step, list);
     }
     else
     {
-        return false;
-        //evaluate_predicated_name_test(step, target, list);
+        return evaluate_simple_name_test(step, list);
     }
 }
 
@@ -218,6 +218,24 @@ bool evaluate_simple_name_test(step *step, nodelist *list)
     }
 
     return result;
+}
+
+bool evaluate_predicated_name_test(step *step, nodelist *list)
+{
+#pragma unused(list)
+    predicate *predicate = step_get_predicate(step);
+    switch(predicate_get_kind(predicate))
+    {
+        case WILDCARD:
+            break;
+        case SUBSCRIPT:
+            break;
+        case SLICE:
+            break;
+        case JOIN:
+            break;
+    }
+    return false;
 }
 
 bool evaluate_type_test(step *step, nodelist *list)
