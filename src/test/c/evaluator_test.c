@@ -114,6 +114,29 @@ START_TEST (single_name_step)
 }
 END_TEST
 
+START_TEST (long_path)
+{
+    jsonpath path;
+    char *expr = "$.store.bicycle.color";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+
+    errno = 0;
+    nodelist *list = evaluate(model, &path);
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(list);
+    ck_assert_int_eq(1, nodelist_length(list));
+    node *color = nodelist_get(list, 0);
+    ck_assert_not_null(color);
+
+    ck_assert_int_eq(SCALAR, node_get_kind(color));
+    ck_assert_buf_eq("red", 3, scalar_get_value(color), node_get_size(color));
+    
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
 START_TEST (wildcard)
 {
     jsonpath path;
@@ -192,6 +215,7 @@ Suite *evaluator_suite(void)
     tcase_add_checked_fixture(basic, evaluator_setup, evaluator_teardown);
     tcase_add_test(basic, dollar_only);
     tcase_add_test(basic, single_name_step);
+    tcase_add_test(basic, long_path);
     tcase_add_test(basic, wildcard);
     tcase_add_test(basic, object_test);
     tcase_add_test(basic, array_test);
