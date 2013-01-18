@@ -180,17 +180,21 @@ node **sequence_get_all(const node * restrict sequence)
     return sequence->content.sequence.value;
 }
 
-void iterate_sequence(const node * restrict sequence, sequence_iterator iterator, void *context)
+bool iterate_sequence(const node * restrict sequence, sequence_iterator iterator, void *context)
 {
     if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || NULL == iterator)
     {
         errno = EINVAL;
-        return;
+        return false;
     }
     for(size_t i = 0; i < node_get_size(sequence); i++)
     {
-        iterator(sequence->content.sequence.value[i], context);
+        if(!iterator(sequence->content.sequence.value[i], context))
+        {
+            return false;
+        }
     }
+    return true;
 }
 
 node *mapping_get_value(const node * restrict mapping, const char *key)
@@ -259,17 +263,21 @@ key_value_pair **mapping_get_all(const node * restrict mapping)
     return mapping->content.mapping.value;
 }
 
-void iterate_mapping(const node * restrict mapping, mapping_iterator iterator, void *context)
+bool iterate_mapping(const node * restrict mapping, mapping_iterator iterator, void *context)
 {
     if(NULL == mapping || MAPPING != node_get_kind(mapping) || NULL == iterator)
     {
         errno = EINVAL;
-        return;
+        return false;
     }
     for(size_t i = 0; i < node_get_size(mapping); i++)
     {
-        iterator(mapping->content.mapping.value[i]->key, mapping->content.mapping.value[i]->value, context);
+        if(!iterator(mapping->content.mapping.value[i]->key, mapping->content.mapping.value[i]->value, context))
+        {
+            return false;
+        }
     }
+    return true;
 }
 
 bool node_equals(const node * restrict one, const node * restrict two)

@@ -45,8 +45,8 @@ bool evaluate_one_step(step *step, nodelist *list);
 bool evaluate_single_step(step *step, nodelist *list);
 bool evaluate_wildcard_test(nodelist *list);
 bool evaluate_wildcard_test_once(node *context, nodelist *list);
-void add_values_to_nodelist(node *key, node *value, void *context);
-void add_elements_to_nodelist(node *each, void *context);
+bool add_values_to_nodelist(node *key, node *value, void *context);
+bool add_elements_to_nodelist(node *each, void *context);
 bool evaluate_name_test(step *step, nodelist *list);
 bool evaluate_simple_name_test(step *step, nodelist *list);
 bool evaluate_type_test(step *step, nodelist *list);
@@ -148,11 +148,9 @@ bool evaluate_wildcard_test_once(node *context, nodelist *list)
     switch(node_get_kind(context))
     {
         case MAPPING:
-            iterate_mapping(context, add_values_to_nodelist, list);
-            return true;
+            return iterate_mapping(context, add_values_to_nodelist, list);
         case SEQUENCE:
-            iterate_sequence(context, add_elements_to_nodelist, list);
-            return true;
+            return iterate_sequence(context, add_elements_to_nodelist, list);
         case SCALAR:
         case DOCUMENT:
             // xxx - signal error
@@ -161,8 +159,7 @@ bool evaluate_wildcard_test_once(node *context, nodelist *list)
     }
 }
 
-// xxx - switch the iterator return type to bool to propigate the evaluation status
-void add_values_to_nodelist(node *key, node *value, void *context)
+bool add_values_to_nodelist(node *key, node *value, void *context)
 {
 #pragma unused(key)
     nodelist *list = (nodelist *)context;
@@ -170,21 +167,20 @@ void add_values_to_nodelist(node *key, node *value, void *context)
     {
         case SCALAR:
         case MAPPING:
-            nodelist_add(list, value);
-            break;
+            return nodelist_add(list, value);
         case SEQUENCE:
-            iterate_sequence(value, add_elements_to_nodelist, context);
-            break;
+            return iterate_sequence(value, add_elements_to_nodelist, context);
         case DOCUMENT:
             // xxx - signal error
             errno = EINVAL;
+            return false;
     }
 }
 
-void add_elements_to_nodelist(node *each, void *context)
+bool add_elements_to_nodelist(node *each, void *context)
 {
     nodelist *list = (nodelist *)context;
-    nodelist_add(list, each);
+    return nodelist_add(list, each);
 }
 
 bool evaluate_name_test(step *step, nodelist *list)

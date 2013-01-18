@@ -362,8 +362,7 @@ START_TEST (mapping)
 }
 END_TEST
 
-void check_sequence(node *each, void *context);
-void check_mapping(node *key, node *value, void *context);
+bool check_sequence(node *each, void *context);
 
 START_TEST (sequence_iteration)
 {
@@ -377,17 +376,55 @@ START_TEST (sequence_iteration)
     ck_assert_int_eq(2, node_get_size(s));
     
     size_t count = 0;
-    iterate_sequence(s, check_sequence, &count);
+    ck_assert_true(iterate_sequence(s, check_sequence, &count));
     ck_assert_int_eq(2, count);
 }
 END_TEST
 
-void check_sequence(node *each, void *context)
+bool check_sequence(node *each, void *context)
 {
     ck_assert_not_null(each);
     size_t *count = (size_t *)context;
     (*count)++;
+    return true;
 }
+
+bool fail_sequence(node *each, void *context);
+
+START_TEST (fail_sequence_iteration)
+{
+    node *r = model_get_document_root(&model, 0);
+    ck_assert_not_null(r);
+    ck_assert_int_eq(MAPPING, node_get_kind(r));
+    
+    node *s = mapping_get_value(r, "one");
+    ck_assert_not_null(s);
+    ck_assert_int_eq(SEQUENCE, node_get_kind(s));
+    ck_assert_int_eq(2, node_get_size(s));
+    
+    size_t count = 0;
+    ck_assert_false(iterate_sequence(s, fail_sequence, &count));
+    ck_assert_int_eq(1, count);
+}
+END_TEST
+
+bool fail_sequence(node *each, void *context)
+{
+#pragma unused(each)
+
+    size_t *count = (size_t *)context;
+    if(0 < *count)
+    {
+        return false;
+    }
+    else
+    {
+        (*count)++;
+        return true;
+    }
+}
+
+bool check_mapping(node *key, node *value, void *context);
 
 START_TEST (mapping_iteration)
 {
@@ -397,17 +434,49 @@ START_TEST (mapping_iteration)
     ck_assert_int_eq(3, node_get_size(r));
     
     size_t count = 0;
-    iterate_mapping(r, check_mapping, &count);
+    ck_assert_true(iterate_mapping(r, check_mapping, &count));
     ck_assert_int_eq(3, count);
 }
 END_TEST
 
-void check_mapping(node *key, node *value, void *context)
+bool check_mapping(node *key, node *value, void *context)
 {
     ck_assert_not_null(key);
     ck_assert_not_null(value);
     size_t *count = (size_t *)context;
     (*count)++;
+    return true;
+}
+
+bool fail_mapping(node *key, node *value, void *context);
+
+START_TEST (fail_mapping_iteration)
+{
+    node *r = model_get_document_root(&model, 0);
+    ck_assert_not_null(r);
+    ck_assert_int_eq(MAPPING, node_get_kind(r));
+    ck_assert_int_eq(3, node_get_size(r));
+    
+    size_t count = 0;
+    ck_assert_false(iterate_mapping(r, fail_mapping, &count));
+    ck_assert_int_eq(2, count);
+}
+END_TEST
+
+bool fail_mapping(node *key, node *value, void *context)
+{
+    ck_assert_not_null(key);
+    ck_assert_not_null(value);
+    size_t *count = (size_t *)context;
+    if(1 < *count)
+    {
+        return false;
+    }
+    else
+    {
+        (*count)++;
+        return true;
+    }
 }
 
 Suite *model_suite(void)
@@ -433,6 +502,8 @@ Suite *model_suite(void)
     tcase_add_checked_fixture(iteration, model_setup, model_teardown);
     tcase_add_test(iteration, sequence_iteration);
     tcase_add_test(iteration, mapping_iteration);
+    tcase_add_test(iteration, fail_sequence_iteration);
+    tcase_add_test(iteration, fail_mapping_iteration);
 
     Suite *model_suite = suite_create("Model");
     suite_add_tcase(model_suite, bad_input);

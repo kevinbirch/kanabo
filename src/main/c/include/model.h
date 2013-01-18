@@ -124,8 +124,8 @@ uint8_t *scalar_get_value(const node * restrict scalar);
 node  *sequence_get(const node * restrict sequence, size_t index);
 node **sequence_get_all(const node * restrict sequence);
 
-typedef void (*sequence_iterator)(node *each, void *context);
-void iterate_sequence(const node * restrict sequence, sequence_iterator iterator, void *context);
+typedef bool (*sequence_iterator)(node *each, void *context);
+bool iterate_sequence(const node * restrict sequence, sequence_iterator iterator, void *context);
 
 node            *mapping_get_value(const node * restrict mapping, const char * key);
 node            *mapping_get_value_scalar_key(const node * restrict mapping, uint8_t *key, size_t key_length);
@@ -134,8 +134,8 @@ bool             mapping_contains_key(const node * restrict mapping, const char 
 bool             mapping_contains_node_key(const node * restrict mapping, const node *key);
 key_value_pair **mapping_get_all(const node * restrict mapping);
 
-typedef void (*mapping_iterator)(node *key, node *value, void *context);
-void iterate_mapping(const node * restrict mapping, mapping_iterator iterator, void *context);
+typedef bool (*mapping_iterator)(node *key, node *value, void *context);
+bool iterate_mapping(const node * restrict mapping, mapping_iterator iterator, void *context);
 
 document_model *make_model(size_t capacity);
 bool            model_init(document_model * restrict model, size_t capacity);
