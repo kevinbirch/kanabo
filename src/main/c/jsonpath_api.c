@@ -160,7 +160,7 @@ enum predicate_kind predicate_get_kind(const predicate * restrict predicate)
     return predicate->kind;
 }
 
-uint_fast32_t subscript_predicate_get_index(const predicate * restrict predicate)
+size_t subscript_predicate_get_index(const predicate * restrict predicate)
 {
     if(NULL == predicate || SUBSCRIPT != predicate->kind)
     {

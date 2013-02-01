@@ -667,7 +667,7 @@ static void subscript_predicate(parser_context *context)
     }
     errno = 0;
     long subscript = strtol((char *)context->input + context->cursor, (char **)NULL, 10);
-    if(0 != errno)
+    if(0 != errno || 0 > subscript)
     {
         context->code = ERR_INVALID_NUMBER;
         return;
@@ -675,7 +675,7 @@ static void subscript_predicate(parser_context *context)
     context->code = JSONPATH_SUCCESS;
     consume_chars(context, length);
     predicate *pred = add_predicate(context, SUBSCRIPT);
-    pred->subscript.index = (uint_fast32_t)subscript;
+    pred->subscript.index = (size_t)subscript;
 }
 
 static predicate *add_predicate(parser_context *context, enum predicate_kind kind)
