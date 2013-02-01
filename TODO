@@ -107,6 +107,9 @@ Features:
 * upgrade to latest version of check
 * try CTest
 
+* CT https://github.com/kr/ct
+  * pros: forks test, autogenerates test driver code
+  * cons: not a library
 * Check http://check.sourceforge.net
   * pro: forks tests, still alive
   * con: installed as a library, macro based test setup
