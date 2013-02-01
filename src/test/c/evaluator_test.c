@@ -276,6 +276,35 @@ START_TEST (wildcard_predicate_on_scalar)
 }
 END_TEST
 
+START_TEST (subscript_predicate)
+{
+    jsonpath path;
+    char *expr = "$.store.book[2]";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+
+    errno = 0;
+    nodelist *list = evaluate(model, &path);
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(list);
+    ck_assert_int_eq(1, nodelist_length(list));
+
+    errno = 0;
+    node *mapping = nodelist_get(list, 0);
+    ck_assert_int_eq(MAPPING, node_get_kind(mapping));
+    ck_assert_int_eq(0, errno);
+    errno = 0;
+    node *author = mapping_get_value(mapping, "author");
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(author);
+    char *melville = "Herman Melville";
+    ck_assert_buf_eq(melville, strlen(melville), scalar_get_value(author), node_get_size(author));
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
 Suite *evaluator_suite(void)
 {
     TCase *basic = tcase_create("basic");
@@ -292,6 +321,7 @@ Suite *evaluator_suite(void)
     tcase_add_test(predicate, wildcard_predicate);
     tcase_add_test(predicate, wildcard_predicate_on_mapping);
     tcase_add_test(predicate, wildcard_predicate_on_scalar);
+    tcase_add_test(predicate, subscript_predicate);
     
     Suite *evaluator = suite_create("Evaluator");
     suite_add_tcase(evaluator, basic);

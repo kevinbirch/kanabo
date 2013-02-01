@@ -52,6 +52,7 @@ bool evaluate_simple_name_test(step *step, nodelist *list);
 bool evaluate_predicated_name_test(step *step, nodelist *list);
 bool evaluate_wildcard_predicate(step *step, nodelist *list);
 bool apply_wildcard_predicate(node *each, void *context);
+bool evaluate_subscript_predicate(step *step, nodelist *list);
 bool evaluate_type_test(step *step, nodelist *list);
 bool evaluate_type_test_kind(step *step, nodelist *list);
 
@@ -227,7 +228,7 @@ bool evaluate_predicated_name_test(step *step, nodelist *list)
         case WILDCARD:
             return evaluate_wildcard_predicate(step, list);
         case SUBSCRIPT:
-            //return evaluate_subscript_predicate(step, list);
+            return evaluate_subscript_predicate(step, list);
             return false;
         case SLICE:
             //return evaluate_slice_predicate(step, list);
@@ -283,6 +284,32 @@ bool apply_wildcard_predicate(node *each, void *context)
             errno = EINVAL;
             return false;
     }
+}
+
+bool evaluate_subscript_predicate(step *step, nodelist *list)
+{
+    bool result = true;
+    for(size_t i = 0; i < nodelist_length(list) && true == result; i++)
+    {
+        node *each = nodelist_get(list, i);
+        if(MAPPING != node_get_kind(each))
+        {
+            // xxx - add error states
+            errno = EINVAL;
+            return false;
+        }
+        node *sequence = mapping_get_value_scalar_key(each, name_test_step_get_name(step), name_test_step_get_length(step));
+        if(NULL == sequence || SEQUENCE != node_get_kind(sequence))
+        {
+            errno = EINVAL;
+            return false;
+        }
+        size_t index = subscript_predicate_get_index(step_get_predicate(step));
+        node *value = sequence_get(sequence, index);
+        result &= nodelist_set(list, value, i);
+    }
+
+    return result;
 }
 
 bool evaluate_type_test(step *step, nodelist *list)
