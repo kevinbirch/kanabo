@@ -173,3 +173,20 @@ bool nodelist_set(nodelist * restrict list, node *value, size_t index)
     errno = 0;
     return true;
 }
+
+bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator, void *context)
+{
+    if(NULL == list || NULL == iterator)
+    {
+        errno = EINVAL;
+        return false;
+    }
+    for(size_t i = 0; i < nodelist_length(list); i++)
+    {
+        if(!iterator(list->nodes[i], context))
+        {
+            return false;
+        }
+    }
+    return true;
+}

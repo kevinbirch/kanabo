@@ -209,6 +209,73 @@ START_TEST (array_test)
 }
 END_TEST
 
+START_TEST (wildcard_predicate)
+{
+    jsonpath path;
+    char *expr = "$.store.book[*].author";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+
+    errno = 0;
+    nodelist *list = evaluate(model, &path);
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(list);
+    ck_assert_int_eq(4, nodelist_length(list));
+
+    ck_assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 0)));
+    ck_assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 1)));
+    ck_assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 2)));
+    ck_assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 3)));
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (wildcard_predicate_on_mapping)
+{
+    jsonpath path;
+    char *expr = "$.store.bicycle[*].color";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+
+    errno = 0;
+    nodelist *list = evaluate(model, &path);
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(list);
+    ck_assert_int_eq(1, nodelist_length(list));
+
+    node *scalar = nodelist_get(list, 0);
+    ck_assert_int_eq(SCALAR, node_get_kind(scalar));
+    ck_assert_buf_eq("red", 3, scalar_get_value(scalar), node_get_size(scalar));
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (wildcard_predicate_on_scalar)
+{
+    jsonpath path;
+    char *expr = "$.store.bicycle.color[*]";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+
+    errno = 0;
+    nodelist *list = evaluate(model, &path);
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(list);
+    ck_assert_int_eq(1, nodelist_length(list));
+
+    node *scalar = nodelist_get(list, 0);
+    ck_assert_int_eq(SCALAR, node_get_kind(scalar));
+    ck_assert_buf_eq("red", 3, scalar_get_value(scalar), node_get_size(scalar));
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
 Suite *evaluator_suite(void)
 {
     TCase *basic = tcase_create("basic");
@@ -220,8 +287,15 @@ Suite *evaluator_suite(void)
     tcase_add_test(basic, object_test);
     tcase_add_test(basic, array_test);
 
+    TCase *predicate = tcase_create("predicate");
+    tcase_add_checked_fixture(predicate, evaluator_setup, evaluator_teardown);
+    tcase_add_test(predicate, wildcard_predicate);
+    tcase_add_test(predicate, wildcard_predicate_on_mapping);
+    tcase_add_test(predicate, wildcard_predicate_on_scalar);
+    
     Suite *evaluator = suite_create("Evaluator");
     suite_add_tcase(evaluator, basic);
+    suite_add_tcase(evaluator, predicate);
 
     return evaluator;
 }
