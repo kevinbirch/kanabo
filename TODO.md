@@ -19,10 +19,10 @@ LICENSE file for more details.
 
 Enhancements:
 
-* bad input tests
-* add error codes
-* add error message generator
-* propagate errors everywhere
+* [ ] bad input tests
+* [ ] add error codes
+* [ ] add error message generator
+* [ ] propagate errors everywhere
 
 
 ### parser
