@@ -29,6 +29,9 @@ Enhancements:
 Enhancements:
 
 * materialize scalar nodes into json types
+* use strtoul for predicate integers
+* is there a security issue with strtod et al?  could a segv be thrown if reading past the end of byte string?
+  * loader.c:push_scalar()
 * allow negative indices in slices
 * ensure memory is freed on secondary failure modes in parser functions
 * refactor direct status code setters into function calls
