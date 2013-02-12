@@ -63,9 +63,9 @@ struct predicate
         
         struct
         {
-            uint_fast32_t from;
-            uint_fast32_t to;
-            uint_fast32_t step;
+            int_fast32_t from;
+            int_fast32_t to;
+            size_t step;
         } slice;
         
         struct
@@ -188,9 +188,9 @@ predicate *step_get_predicate(const step * restrict step);
 
 enum predicate_kind predicate_get_kind(const predicate * restrict predicate);
 size_t              subscript_predicate_get_index(const predicate * restrict predicate);
-uint_fast32_t       slice_predicate_get_to(const predicate * restrict predicate);
-uint_fast32_t       slice_predicate_get_from(const predicate * restrict predicate);
-uint_fast32_t       slice_predicate_get_step(const predicate * restrict predicate);
+int_fast32_t        slice_predicate_get_to(const predicate * restrict predicate);
+int_fast32_t        slice_predicate_get_from(const predicate * restrict predicate);
+size_t              slice_predicate_get_step(const predicate * restrict predicate);
 jsonpath           *join_predicate_get_left(const predicate * restrict predicate);
 jsonpath           *join_predicate_get_right(const predicate * restrict predicate);
 
