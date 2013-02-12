@@ -171,7 +171,7 @@ size_t subscript_predicate_get_index(const predicate * restrict predicate)
     return predicate->subscript.index;
 }
 
-uint_fast32_t slice_predicate_get_to(const predicate * restrict predicate)
+int_fast32_t slice_predicate_get_to(const predicate * restrict predicate)
 {
     if(NULL == predicate || SLICE != predicate->kind)
     {
@@ -182,7 +182,7 @@ uint_fast32_t slice_predicate_get_to(const predicate * restrict predicate)
     return predicate->slice.to;
 }
 
-uint_fast32_t slice_predicate_get_from(const predicate * restrict predicate)
+int_fast32_t slice_predicate_get_from(const predicate * restrict predicate)
 {
     if(NULL == predicate || SLICE != predicate->kind)
     {
@@ -193,7 +193,7 @@ uint_fast32_t slice_predicate_get_from(const predicate * restrict predicate)
     return predicate->slice.from;
 }
 
-uint_fast32_t slice_predicate_get_step(const predicate * restrict predicate)
+size_t slice_predicate_get_step(const predicate * restrict predicate)
 {
     if(NULL == predicate || SLICE != predicate->kind)
     {
