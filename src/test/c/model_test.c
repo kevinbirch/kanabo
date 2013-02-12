@@ -47,11 +47,11 @@
   The document that will be used for testing this module is as follows:
 
   one:
-    - foo1
-    - bar1
-  two: foo2
-  three: foo3
-
+    - "foo1"
+    - 1.5
+  two: "foo2"
+  three: false
+  four: true
  */
 
 static document_model model;
@@ -150,32 +150,38 @@ void model_setup(void)
 {
     ck_assert_true(model_init(&model, 1));
 
-    node *root = make_mapping_node(3);
+    node *root = make_mapping_node(4);
     ck_assert_not_null(root);
 
-    node *foo1 = make_scalar_node((unsigned char *)"foo1", 4);
+    node *foo1 = make_scalar_node((uint8_t *)"foo1", 4, SCALAR_STRING);
     ck_assert_not_null(foo1);
-    node *bar1 = make_scalar_node((unsigned char *)"bar1", 4);
-    ck_assert_not_null(bar1);
+    node *one_point_five = make_scalar_node((uint8_t *)"1.5", 4, SCALAR_NUMBER);
+    ck_assert_not_null(one_point_five);
     node *one_value = make_sequence_node(2);
     ck_assert_not_null(one_value);
     sequence_add(one_value, foo1);
-    sequence_add(one_value, bar1);
-    node *one = make_scalar_node((unsigned char *)"one", 3);
+    sequence_add(one_value, one_point_five);
+    node *one = make_scalar_node((uint8_t *)"one", 3, SCALAR_STRING);
     ck_assert_not_null(one);
     mapping_put(root, one, one_value);
     
-    node *two = make_scalar_node((unsigned char *)"two", 3);
+    node *two = make_scalar_node((uint8_t *)"two", 3, SCALAR_STRING);
     ck_assert_not_null(two);
-    node *two_value = make_scalar_node((unsigned char *)"foo2", 4);
+    node *two_value = make_scalar_node((uint8_t *)"foo2", 4, SCALAR_STRING);
     ck_assert_not_null(two_value);
     mapping_put(root, two, two_value);
     
-    node *three = make_scalar_node((unsigned char *)"three", 4);
+    node *three = make_scalar_node((uint8_t *)"three", 5, SCALAR_STRING);
     ck_assert_not_null(three);
-    node *three_value = make_scalar_node((unsigned char *)"foo3", 4);
+    node *three_value = make_scalar_node((uint8_t *)"false", 5, SCALAR_BOOLEAN);
     ck_assert_not_null(three_value);
     mapping_put(root, three, three_value);
+
+    node *four = make_scalar_node((uint8_t *)"four", 4, SCALAR_STRING);
+    ck_assert_not_null(four);
+    node *four_value = make_scalar_node((uint8_t *)"true", 4, SCALAR_BOOLEAN);
+    ck_assert_not_null(four_value);
+    mapping_put(root, four, four_value);
 
     node *document = make_document_node(root);
     ck_assert_not_null(document);
@@ -191,9 +197,9 @@ void model_teardown(void)
 
 START_TEST (constructors)
 {
-    node *s = make_scalar_node(NULL, 0);
+    node *s = make_scalar_node(NULL, 0, SCALAR_STRING);
     ck_assert_null(s);
-    s = make_scalar_node((unsigned char *)"foo", 3);
+    s = make_scalar_node((uint8_t *)"foo", 3, SCALAR_STRING);
     ck_assert_not_null(s);
     
     node *d = make_document_node(NULL);
@@ -256,7 +262,7 @@ START_TEST (nodes)
     ck_assert_int_eq(0, l);
 
     size_t s = node_get_size(r);
-    ck_assert_int_eq(3, s);
+    ck_assert_int_eq(4, s);
 }
 END_TEST
 
@@ -270,6 +276,26 @@ START_TEST (scalar)
     ck_assert_not_null(s);
     ck_assert_int_eq(SCALAR, node_get_kind(s));
     ck_assert_buf_eq("foo2", 4, scalar_get_value(s), node_get_size(s));
+}
+END_TEST
+
+START_TEST (scalar_boolean)
+{
+    node *r = model_get_document_root(&model, 0);
+    ck_assert_not_null(r);
+    ck_assert_int_eq(MAPPING, node_get_kind(r));
+
+    node *three = mapping_get_value(r, "three");
+    ck_assert_not_null(three);
+    ck_assert_int_eq(SCALAR, node_get_kind(three));
+    ck_assert_true(scalar_boolean_is_false(three));
+    ck_assert_false(scalar_boolean_is_true(three));
+
+    node *four = mapping_get_value(r, "four");
+    ck_assert_not_null(four);
+    ck_assert_int_eq(SCALAR, node_get_kind(four));
+    ck_assert_true(scalar_boolean_is_true(four));
+    ck_assert_false(scalar_boolean_is_false(four));
 }
 END_TEST
 
@@ -297,11 +323,11 @@ START_TEST (sequence)
     ck_assert_int_eq(zero, all[0]);
     ck_assert_int_eq(one, all[1]);
 
-    node *x = make_scalar_node((unsigned char *)"x", 1);
+    node *x = make_scalar_node((uint8_t *)"x", 1, SCALAR_STRING);
     ck_assert_not_null(x);
-    node *y = make_scalar_node((unsigned char *)"y", 1);
+    node *y = make_scalar_node((uint8_t *)"y", 1, SCALAR_STRING);
     ck_assert_not_null(y);
-    node *z = make_scalar_node((unsigned char *)"z", 1);
+    node *z = make_scalar_node((uint8_t *)"z", 1, SCALAR_STRING);
     ck_assert_not_null(z);
     node *xyz = make_sequence_node(2);
     ck_assert_not_null(xyz);
@@ -325,25 +351,25 @@ START_TEST (mapping)
     node *r = model_get_document_root(&model, 0);
     ck_assert_not_null(r);
     ck_assert_int_eq(MAPPING, node_get_kind(r));
-    ck_assert_int_eq(3, node_get_size(r));
+    ck_assert_int_eq(4, node_get_size(r));
 
     ck_assert_true(mapping_contains_key(r, "two"));
     ck_assert_false(mapping_contains_key(r, "bogus"));
 
-    node *key = make_scalar_node((unsigned char *)"two", 3);
+    node *key = make_scalar_node((uint8_t *)"two", 3, SCALAR_STRING);
     ck_assert_true(mapping_contains_node_key(r, key));
 
-    node *bogus_key = make_scalar_node((unsigned char *)"bogus", 5);
+    node *bogus_key = make_scalar_node((uint8_t *)"bogus", 5, SCALAR_STRING);
     ck_assert_false(mapping_contains_node_key(r, bogus_key));
     ck_assert_null(mapping_get_value(r, "bogus"));
-    ck_assert_null(mapping_get_value_scalar_key(r, (unsigned char *)"bogus", 5));
+    ck_assert_null(mapping_get_value_scalar_key(r, (uint8_t *)"bogus", 5));
     ck_assert_null(mapping_get_value_node_key(r, bogus_key));
 
     node *string_value = mapping_get_value(r, "two");
     ck_assert_not_null(string_value);
     ck_assert_int_eq(SCALAR, node_get_kind(string_value));
 
-    node *scalar_value = mapping_get_value_scalar_key(r, (unsigned char *)"two", 3);
+    node *scalar_value = mapping_get_value_scalar_key(r, (uint8_t *)"two", 3);
     ck_assert_not_null(scalar_value);
     ck_assert_int_eq(SCALAR, node_get_kind(scalar_value));
 
@@ -431,11 +457,11 @@ START_TEST (mapping_iteration)
     node *r = model_get_document_root(&model, 0);
     ck_assert_not_null(r);
     ck_assert_int_eq(MAPPING, node_get_kind(r));
-    ck_assert_int_eq(3, node_get_size(r));
+    ck_assert_int_eq(4, node_get_size(r));
     
     size_t count = 0;
     ck_assert_true(iterate_mapping(r, check_mapping, &count));
-    ck_assert_int_eq(3, count);
+    ck_assert_int_eq(4, count);
 }
 END_TEST
 
@@ -455,7 +481,7 @@ START_TEST (fail_mapping_iteration)
     node *r = model_get_document_root(&model, 0);
     ck_assert_not_null(r);
     ck_assert_int_eq(MAPPING, node_get_kind(r));
-    ck_assert_int_eq(3, node_get_size(r));
+    ck_assert_int_eq(4, node_get_size(r));
     
     size_t count = 0;
     ck_assert_false(iterate_mapping(r, fail_mapping, &count));
@@ -495,6 +521,7 @@ Suite *model_suite(void)
     tcase_add_test(basic, document);
     tcase_add_test(basic, nodes);
     tcase_add_test(basic, scalar);
+    tcase_add_test(basic, scalar_boolean);
     tcase_add_test(basic, sequence);
     tcase_add_test(basic, mapping);
 

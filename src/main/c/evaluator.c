@@ -358,7 +358,7 @@ node *make_boolean_node(bool value)
 {
     char *scalar = value ? strdup("true") : strdup("false");
     
-    node *result = make_scalar_node((unsigned char *)scalar, strlen(scalar));
+    node *result = make_scalar_node((unsigned char *)scalar, strlen(scalar), SCALAR_BOOLEAN);
     if(NULL == result)
     {
         return NULL;

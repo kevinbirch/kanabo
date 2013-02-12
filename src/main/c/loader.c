@@ -38,6 +38,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
+#include <errno.h>
+
 #include <yaml.h>
 
 #include "loader.h"
@@ -92,6 +94,7 @@ static loader_result *build_model(yaml_parser_t *parser, document_model * restri
 
 static bool dispatch_event(yaml_event_t *event, document_context *context, loader_result * restrict result);
 
+static bool push_scalar(document_context *context, yaml_event_t *event);
 static bool push_context(document_context *context, node *value);
 static node *pop_context(document_context *context);
 static void abort_context(document_context *context);
@@ -254,7 +257,7 @@ static bool dispatch_event(yaml_event_t *event, document_context *context, loade
             break;
                 
         case YAML_SCALAR_EVENT:
-            if(!push_context(context, make_scalar_node(event->data.scalar.value, event->data.scalar.length)))
+            if(!push_scalar(context, event))
             {
                 result = memory_exhausted(result);
                 done = true;
@@ -317,6 +320,41 @@ static bool save_excursion(document_context *context)
         context->excursions = excursion;
     }
     return true;
+}
+
+static bool push_scalar(document_context *context, yaml_event_t *event)
+{
+    node *scalar = NULL;
+    if(YAML_SINGLE_QUOTED_SCALAR_STYLE == event->data.scalar.style ||
+       YAML_DOUBLE_QUOTED_SCALAR_STYLE == event->data.scalar.style)
+    {
+        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_STRING);
+    }
+    else if(0 == memcmp("null", event->data.scalar.value, 4))
+    {
+        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_NULL);
+    }
+    else if(0 == memcmp("true", event->data.scalar.value, 4) ||
+            0 == memcmp("false", event->data.scalar.value, 5))
+    {
+        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_BOOLEAN);
+    }
+    else
+    {
+        errno = 0;
+        char *endptr;
+        double value = strtod((char *)event->data.scalar.value, &endptr);
+        if(0 != errno || (0.0 == value && endptr == (char *)event->data.scalar.value))
+        {
+            scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_STRING);
+        }
+        else
+        {
+            scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_NUMBER);
+        }
+    }
+
+    return push_context(context, scalar);
 }
 
 static bool push_context(document_context *context, node *value)
@@ -498,7 +536,7 @@ static inline loader_result *invalid_input(void)
     loader_result *result = (loader_result *)malloc(sizeof(loader_result));
     if(NULL == result)
     {
-        return NULL; // N.B. - memory is exhausted, abort early
+        return NULL;
     }
     result->code = ERR_INVALID_ARGUMENTS;
     result->dynamic_message = false;

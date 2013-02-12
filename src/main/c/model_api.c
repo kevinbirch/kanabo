@@ -156,6 +156,30 @@ uint8_t *scalar_get_value(const node * restrict scalar)
     return scalar->content.scalar.value;
 }
 
+enum scalar_kind scalar_get_kind(const node * restrict scalar)
+{
+    if(NULL == scalar || SCALAR != node_get_kind(scalar))
+    {
+        errno = EINVAL;
+        return (enum scalar_kind)-1;
+    }    
+
+    errno = 0;
+    return scalar->content.scalar.kind;
+}
+
+bool scalar_boolean_is_true(const node * restrict scalar)
+{
+    errno = 0;
+    return 0 == memcmp("true", scalar_get_value(scalar), 4);
+}
+
+bool scalar_boolean_is_false(const node * restrict scalar)
+{
+    errno = 0;
+    return 0 == memcmp("false", scalar_get_value(scalar), 5);
+}
+
 node *sequence_get(const node * restrict sequence, size_t index)
 {
     if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || index > (node_get_size(sequence) - 1))
@@ -216,7 +240,7 @@ node *mapping_get_value_scalar_key(const node * restrict mapping, uint8_t *key, 
         return NULL;
     }
 
-    node *scalar = make_scalar_node(key, key_length);
+    node *scalar = make_scalar_node(key, key_length, SCALAR_STRING);
     return mapping_get_value_node_key(mapping, scalar);
 }
 

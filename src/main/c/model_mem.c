@@ -115,7 +115,7 @@ node *make_mapping_node(size_t capacity)
     return result;
 }    
 
-node *make_scalar_node(const uint8_t *value, size_t length)
+node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kind)
 {
     if(NULL == value || 0 == length)
     {
@@ -128,6 +128,7 @@ node *make_scalar_node(const uint8_t *value, size_t length)
     if(NULL != result)
     {
         result->content.size = length;
+        result->content.scalar.kind = kind;
         result->content.scalar.value = (uint8_t *)malloc(length);
         if(NULL == result->content.scalar.value)
         {

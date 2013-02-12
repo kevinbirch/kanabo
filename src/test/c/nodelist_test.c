@@ -78,7 +78,7 @@ START_TEST (bad_input)
     ck_assert_false(nodelist_add(list, NULL));
     ck_assert_int_eq(EINVAL, errno);
 
-    node *scalar = make_scalar_node((uint8_t *)"foo", 3);
+    node *scalar = make_scalar_node((uint8_t *)"foo", 3, SCALAR_STRING);
 
     errno = 0;
     ck_assert_false(nodelist_set(list, scalar, 0));
@@ -105,8 +105,8 @@ START_TEST (mutate)
 {
     nodelist *list = make_nodelist();
 
-    node *foo = make_scalar_node((uint8_t *)"foo", 3);
-    node *bar = make_scalar_node((uint8_t *)"bar", 3);
+    node *foo = make_scalar_node((uint8_t *)"foo", 3, SCALAR_STRING);
+    node *bar = make_scalar_node((uint8_t *)"bar", 3, SCALAR_STRING);
 
     nodelist_add(list, foo);
     ck_assert_int_eq(1, nodelist_length(list));

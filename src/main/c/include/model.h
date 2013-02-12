@@ -50,6 +50,14 @@ enum node_kind
     MAPPING
 };
 
+enum scalar_kind
+{
+    SCALAR_STRING,
+    SCALAR_NUMBER,
+    SCALAR_BOOLEAN,
+    SCALAR_NULL
+};
+
 struct node
 {
     struct 
@@ -66,7 +74,8 @@ struct node
         {
             struct
             {
-                uint8_t *value;
+                enum scalar_kind kind;
+                uint8_t         *value;
             } scalar;
         
             struct
@@ -120,6 +129,9 @@ size_t          node_get_size(const node * restrict node);
 node *document_get_root(const node * restrict document);
 
 uint8_t *scalar_get_value(const node * restrict scalar);
+enum scalar_kind scalar_get_kind(const node * restrict scalar);
+bool scalar_boolean_is_true(const node * restrict scalar);
+bool scalar_boolean_is_false(const node * restrict scalar);
 
 node  *sequence_get(const node * restrict sequence, size_t index);
 node **sequence_get_all(const node * restrict sequence);
@@ -143,7 +155,7 @@ bool            model_init(document_model * restrict model, size_t capacity);
 node *make_document_node(node * root);
 node *make_sequence_node(size_t capacity);
 node *make_mapping_node(size_t capacity);
-node *make_scalar_node(const uint8_t *value, size_t length);
+node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kind);
 
 void model_free(document_model *model);
 void node_free(node *value);
