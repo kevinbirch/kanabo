@@ -51,7 +51,7 @@ static const unsigned char * const YAML = (unsigned char *)
     "\n"
     "two: \"foo2\"\n"
     "\n"
-    "three: foo3\n"
+    "three: null\n"
     "\n"
     "four:\n"
     "  - true\n"
@@ -137,8 +137,8 @@ static void assert_model_state(loader_result *result, document_model *model)
     ck_assert_int_eq(0, errno);
     ck_assert_not_null(three);
     ck_assert_int_eq(SCALAR, node_get_kind(three));
-    ck_assert_buf_eq("foo3", 4, scalar_get_value(three), node_get_size(three));
-    ck_assert_int_eq(SCALAR_STRING, scalar_get_kind(three));
+    ck_assert_buf_eq("null", 4, scalar_get_value(three), node_get_size(three));
+    ck_assert_int_eq(SCALAR_NULL, scalar_get_kind(three));
 
     node *four = mapping_get_value(root, "four");
     ck_assert_int_eq(0, errno);
