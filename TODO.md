@@ -66,6 +66,7 @@ Features:
 
 Enhancements:
 
+* iterate_sequence -> sequence_iterate
 * switch the iterator return types to bool to propigate the evaluation status
 * expand scalar nodes to include json subtypes
 
