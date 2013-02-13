@@ -69,4 +69,7 @@ bool   nodelist_set(nodelist * restrict list, node *value, size_t index);
 typedef bool (*nodelist_iterator)(node *each, void *context);
 bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator, void *context);
 
+typedef node *(*nodelist_function)(node *each, void *context);
+nodelist *nodelist_map(const nodelist * restrict list, nodelist_function function, void *context);
+
 #endif

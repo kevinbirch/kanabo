@@ -190,3 +190,30 @@ bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator
     }
     return true;
 }
+
+#include <stdio.h>
+nodelist *nodelist_map(const nodelist * restrict list, nodelist_function function, void *context)
+{
+    if(NULL == list || NULL == function)
+    {
+        errno = EINVAL;
+        return false;
+    }
+    nodelist *result = make_nodelist_with_capacity(nodelist_length(list));
+    for(size_t i = 0; i < nodelist_length(list); i++)
+    {
+        node *each = function(list->nodes[i], context);
+        if(NULL == each)
+        {
+            for(size_t j = 0; j < nodelist_length(result); j++)
+            {
+                printf("cleaning up %zd", j);
+                node_free(nodelist_get(result, j));
+            }
+            nodelist_free(result);
+            return NULL;
+        }
+        nodelist_add(result, each);
+    }
+    return result;
+}
