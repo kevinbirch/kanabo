@@ -41,6 +41,9 @@
 #include "nodelist.h"
 #include "test.h"
 
+bool fail_nodelist(node *each, void *context);
+bool check_nodelist(node *each, void *context);
+
 START_TEST (bad_input)
 {
     errno = 0;
@@ -122,12 +125,86 @@ START_TEST (mutate)
 }
 END_TEST
 
+START_TEST (iteration)
+{
+    nodelist *list = make_nodelist_with_capacity(2);
+
+    errno = 0;
+    node *foo = make_scalar_node((uint8_t *)"foo", 3, SCALAR_STRING);
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(foo);
+    errno = 0;
+    node *bar = make_scalar_node((uint8_t *)"bar", 3, SCALAR_STRING);
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(bar);
+
+    nodelist_add(list, foo);
+    nodelist_add(list, bar);
+
+    size_t count = 0;
+    errno = 0;
+    ck_assert_true(nodelist_iterate(list, check_nodelist, &count));
+    ck_assert_int_eq(0, errno);
+    ck_assert_int_eq(2, count);
+}
+END_TEST
+
+bool check_nodelist(node *each, void *context)
+{
+    ck_assert_not_null(each);
+    size_t *count = (size_t *)context;
+    (*count)++;
+    return true;
+}
+
+START_TEST (fail_iteration)
+{
+    nodelist *list = make_nodelist_with_capacity(2);
+
+    errno = 0;
+    node *foo = make_scalar_node((uint8_t *)"foo", 3, SCALAR_STRING);
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(foo);
+    errno = 0;
+    node *bar = make_scalar_node((uint8_t *)"bar", 3, SCALAR_STRING);
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(bar);
+
+    nodelist_add(list, foo);
+    nodelist_add(list, bar);
+
+    size_t count = 0;
+    errno = 0;
+    ck_assert_false(nodelist_iterate(list, fail_nodelist, &count));
+    ck_assert_int_eq(0, errno);
+    ck_assert_int_eq(1, count);
+}
+END_TEST
+
+bool fail_nodelist(node *each, void *context)
+{
+#pragma unused(each)
+
+    size_t *count = (size_t *)context;
+    if(0 < *count)
+    {
+        return false;
+    }
+    else
+    {
+        (*count)++;
+        return true;
+    }
+}
+
 Suite *nodelist_suite(void)
 {
     TCase *basic = tcase_create("basic");
     tcase_add_test(basic, bad_input);
     tcase_add_test(basic, ctor_dtor);
     tcase_add_test(basic, mutate);
+    tcase_add_test(basic, iteration);
+    tcase_add_test(basic, fail_iteration);
 
     Suite *nodelist = suite_create("Nodelist");
     suite_add_tcase(nodelist, basic);
