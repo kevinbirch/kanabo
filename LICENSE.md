@@ -1,5 +1,9 @@
 -*- markdown -*-
 
+# Informational files for [金棒][home] (kanabō)
+
+## License
+
 Copyright (c) 2012 [Kevin Birch](mailto:kmb@pobox.com).  All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -25,3 +29,4 @@ OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.**
 
+[home]: https://github.com/kevinbirch/kanabo "project home"
