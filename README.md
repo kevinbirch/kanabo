@@ -1,4 +1,4 @@
-m# [金棒][home] (kanabō)
+# [金棒][home] (kanabō)
 
 [金棒][wiki] is a tool to bludgeon YAML and JSON files from the shell: the strong made stronger.
 
