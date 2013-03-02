@@ -1,8 +1,7 @@
 # [金棒][home] (kanabō)
 
+<img src="http://upload.wikimedia.org/wikipedia/commons/4/4f/Samurai_Tokugawa_Era.jpg" align="right" scale="25" alt="Tokugawa Samurai with kanabo"/>
 [金棒][wiki] is a tool to bludgeon YAML and JSON files from the shell: the strong made stronger.
-
-![Tokugawa Samurai with kanabo](http://upload.wikimedia.org/wikipedia/commons/4/4f/Samurai_Tokugawa_Era.jpg)
 
 This is a work in progress.
 
