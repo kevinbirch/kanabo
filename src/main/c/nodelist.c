@@ -207,7 +207,6 @@ nodelist *nodelist_map(const nodelist * restrict list, nodelist_function functio
         {
             for(size_t j = 0; j < nodelist_length(result); j++)
             {
-                printf("cleaning up %zd", j);
                 node_free(nodelist_get(result, j));
             }
             nodelist_free(result);
