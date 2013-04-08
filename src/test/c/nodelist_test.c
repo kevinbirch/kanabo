@@ -94,6 +94,40 @@ START_TEST (bad_input)
     ck_assert_false(nodelist_set(empty_list, scalar, 0));
     ck_assert_int_eq(EINVAL, errno);
 
+    errno = 0;
+    ck_assert_false(nodelist_iterate(NULL, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
+    ck_assert_false(nodelist_iterate(empty_list, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    
+    errno = 0;
+    ck_assert_null(nodelist_map(NULL, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
+    ck_assert_null(nodelist_map(empty_list, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    
+    errno = 0;
+    ck_assert_null(nodelist_map_into(NULL, NULL, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
+    ck_assert_null(nodelist_map_into(empty_list, NULL, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
+    ck_assert_null(nodelist_map_into(empty_list, (nodelist_function)1, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    
+    errno = 0;
+    ck_assert_null(nodelist_map_overwrite(NULL, NULL, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
+    ck_assert_null(nodelist_map_overwrite(empty_list, NULL, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    errno = 0;
+    ck_assert_null(nodelist_map_overwrite(empty_list, (nodelist_function)1, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    
     node_free(scalar);
     nodelist_free(empty_list);
 }

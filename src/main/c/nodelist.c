@@ -253,7 +253,7 @@ nodelist *nodelist_map(const nodelist * restrict list, nodelist_function functio
 
 nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target)
 {
-    if(NULL == list || NULL == function)
+    if(NULL == list || NULL == function || NULL == target)
     {
         errno = EINVAL;
         return false;
@@ -276,7 +276,7 @@ nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_function fu
 
 nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target)
 {
-    if(NULL == list || NULL == function || nodelist_length(target) < nodelist_length(list))
+    if(NULL == list || NULL == function || NULL == target || nodelist_length(target) < nodelist_length(list))
     {
         errno = EINVAL;
         return false;
