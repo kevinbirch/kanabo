@@ -31,6 +31,7 @@ Enhancements:
 
 Enhancements:
 
+* use precondition helpers
 * use strtoul for predicate integers
 * is there a security issue with strtod et al?  could a segv be thrown if reading past the end of byte string?
   * loader.c:push_scalar()
@@ -54,6 +55,7 @@ Features:
 
 Enhancements:
 
+* use precondition helpers
 * make loader api return an enum instead of a struct
   * expose input struct, add c'tor/d'tor
   * fold current load functions into single loader from input struct
@@ -69,7 +71,8 @@ Features:
 
 Enhancements:
 
-* iterate_sequence -> sequence_iterate
+* use precondition helpers
+* iterate\_sequence -> sequence\_iterate
 * switch the iterator return types to bool to propigate the evaluation status
 * expand scalar nodes to include json subtypes
 
