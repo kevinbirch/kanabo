@@ -71,5 +71,8 @@ bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator
 
 typedef node *(*nodelist_function)(node *each, void *context);
 nodelist *nodelist_map(const nodelist * restrict list, nodelist_function function, void *context);
+nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target);
+nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target);
+
 
 #endif

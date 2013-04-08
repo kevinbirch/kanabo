@@ -54,11 +54,10 @@ bool evaluate_wildcard_predicate(step *step, nodelist *list);
 bool apply_wildcard_predicate(node *each, void *context);
 bool evaluate_subscript_predicate(step *step, nodelist *list);
 bool evaluate_type_test(step *step, nodelist *list);
-bool evaluate_type_test_kind(step *step, nodelist *list);
+node *apply_type_test(node *each, void *context);
 
 nodelist *make_result_nodelist(document_model *model);
 node *make_boolean_node(bool value);
-void set_result(nodelist *list, node *value);
 nodelist *nodelist_clone(nodelist *list);
 
 nodelist *evaluate(document_model *model, jsonpath *path)
@@ -314,44 +313,40 @@ bool evaluate_subscript_predicate(step *step, nodelist *list)
 
 bool evaluate_type_test(step *step, nodelist *list)
 {
-    bool match = evaluate_type_test_kind(step, list);
-    node *result = make_boolean_node(match);
+    nodelist *result = nodelist_map_overwrite(list, apply_type_test, step, list);    
     if(NULL == result)
     {
         return false;
     }
-    set_result(list, result);
     return true;
 }
 
-bool evaluate_type_test_kind(step *step, nodelist *list)
+node *apply_type_test(node *each, void *context)
 {
-    bool result = true;
-    enum node_kind expected_kind;
-
-    switch(type_test_step_get_type(step))
+    step *step_context = (step *)context;
+    bool result;
+    switch(type_test_step_get_type(step_context))
     {
         case OBJECT_TEST:
-            expected_kind = MAPPING;
+            result = MAPPING == node_get_kind(each);
             break;
         case ARRAY_TEST:
-            expected_kind = SEQUENCE;
+            result = SEQUENCE == node_get_kind(each);
             break;
         case STRING_TEST:
+            result = SCALAR_STRING == scalar_get_kind(each);
             break;
         case NUMBER_TEST:
+            result = SCALAR_NUMBER == scalar_get_kind(each);
             break;
         case BOOLEAN_TEST:
+            result = SCALAR_BOOLEAN == scalar_get_kind(each);
             break;
         case NULL_TEST:
+            result = SCALAR_NULL == scalar_get_kind(each);
             break;
     }
-    for(size_t i = 0; i < nodelist_length(list); i++)
-    {
-        result &= expected_kind == node_get_kind(nodelist_get(list, i));
-    }
-
-    return result;
+    return make_boolean_node(result);
 }
 
 node *make_boolean_node(bool value)
@@ -365,15 +360,6 @@ node *make_boolean_node(bool value)
     }
     
     return result;
-}
-
-void set_result(nodelist *list, node *value)
-{
-    if(!nodelist_is_empty(list))
-    {
-        nodelist_clear(list);
-    }
-    nodelist_add(list, value);
 }
 
 nodelist *make_result_nodelist(document_model *model)

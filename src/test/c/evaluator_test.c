@@ -48,6 +48,8 @@ static document_model *model = NULL;
 void evaluator_setup(void);
 void evaluator_teardown(void);
 
+bool scalar_true(node *each, void *context);
+
 void evaluator_setup(void)
 {
     model = make_model(1);
@@ -209,6 +211,35 @@ START_TEST (array_test)
 }
 END_TEST
 
+START_TEST (number_test)
+{
+    jsonpath path;
+    char * expr = "$.store.book[*].price.number()";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+
+    errno = 0;
+    nodelist *list = evaluate(model, &path);
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(list);
+    ck_assert_int_eq(4, nodelist_length(list));
+
+    ck_assert_true(nodelist_iterate(list, scalar_true, NULL));
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
+bool scalar_true(node *each, void *context)
+{
+#pragma unused(context)
+
+    return SCALAR == node_get_kind(each) &&
+        SCALAR_BOOLEAN == scalar_get_kind(each) &&
+        scalar_boolean_is_true(each);
+}
+
 START_TEST (wildcard_predicate)
 {
     jsonpath path;
@@ -315,6 +346,7 @@ Suite *evaluator_suite(void)
     tcase_add_test(basic, wildcard);
     tcase_add_test(basic, object_test);
     tcase_add_test(basic, array_test);
+    tcase_add_test(basic, number_test);
 
     TCase *predicate = tcase_create("predicate");
     tcase_add_checked_fixture(predicate, evaluator_setup, evaluator_teardown);
