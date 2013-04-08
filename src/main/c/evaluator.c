@@ -39,6 +39,7 @@
 #include <string.h>
 
 #include "evaluator.h"
+#include "preconditions.h"
 
 nodelist *evaluate_steps(document_model *model, jsonpath *path);
 bool evaluate_one_step(step *step, nodelist *list);
@@ -62,12 +63,8 @@ nodelist *nodelist_clone(nodelist *list);
 
 nodelist *evaluate(document_model *model, jsonpath *path)
 {
-    if(NULL == model || NULL == path || RELATIVE_PATH == path->kind || 0 == model_get_document_count(model) || NULL == model_get_document_root(model, 0))
-    {
-        // xxx - add error states
-        errno = EINVAL;
-        return NULL;
-    }
+    ENSURE_NONNULL_ELSE_NULL(model, path, model_get_document_root(model, 0));
+    ENSURE_COND_ELSE_NULL(ABSOLUTE_PATH == path->kind, 0 < model_get_document_count(model))
 
     return evaluate_steps(model, path);
 }
@@ -85,6 +82,7 @@ nodelist *evaluate_steps(document_model *model, jsonpath *path)
         step *step = path_get_step(path, i);
         if(!evaluate_one_step(step, list))
         {
+            nodelist_free_nodes(list);
             nodelist_free(list);
             return NULL;
         }

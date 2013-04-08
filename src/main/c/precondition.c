@@ -35,45 +35,44 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef NODELIST_H
-#define NODELIST_H
+#include "preconditions.h"
 
-#include <stdlib.h>
-#include <stdbool.h>
+const void * SENTINEL = (void *)"SENTINEL";
 
-#include "model.h"
-
-static const size_t DEFAULT_CAPACITY = 5;
-
-struct nodelist
+bool is_null(void * first, ...)
 {
-    size_t   length;
-    size_t   capacity;
-    node   **nodes;
-};
+    va_list args;
+    bool result = false;
+    
+    va_start(args, first);
+    for(void *arg = first; arg != SENTINEL; arg = va_arg(args, void *))
+    {
+        if(NULL == arg)
+        {
+            result = true;
+            break;
+        }
+    }
+    va_end(args);
+    
+    return result;
+}
 
-typedef struct nodelist nodelist;
-
-nodelist *make_nodelist(void);
-nodelist *make_nodelist_with_capacity(size_t capacity);
-
-void nodelist_free(nodelist *value);
-void nodelist_free_nodes(nodelist *list);
-
-bool   nodelist_clear(nodelist *list);
-size_t nodelist_length(const nodelist * restrict list);
-bool   nodelist_is_empty(const nodelist * restrict list);
-node  *nodelist_get(const nodelist * restrict list, size_t index);
-bool   nodelist_add(nodelist * restrict list,  node *value);
-bool   nodelist_set(nodelist * restrict list, node *value, size_t index);
-
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator, void *context);
-
-typedef node *(*nodelist_function)(node *each, void *context);
-nodelist *nodelist_map(const nodelist * restrict list, nodelist_function function, void *context);
-nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target);
-nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target);
-
-
-#endif
+bool is_false(int_fast8_t first, ...)
+{
+    va_list args;
+    bool result = false;
+    
+    va_start(args, first);
+    for(int arg = first; arg != -1; arg = va_arg(args, int))
+    {
+        if(0 == arg)
+        {
+            result = true;
+            break;
+        }
+    }
+    va_end(args);
+    
+    return result;    
+}

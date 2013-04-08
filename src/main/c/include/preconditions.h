@@ -35,45 +35,50 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef NODELIST_H
-#define NODELIST_H
+#ifndef PRECONDITIONS_H
+#define PRECONDITIONS_H
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
-#include "model.h"
+extern const void * SENTINEL;
 
-static const size_t DEFAULT_CAPACITY = 5;
+#define VOID_RETURN
 
-struct nodelist
-{
-    size_t   length;
-    size_t   capacity;
-    node   **nodes;
-};
+#define STRINGIFY(x) #x
 
-typedef struct nodelist nodelist;
+#define ENSURE_NONNULL(ERR_RESULT, ...)                                 \
+    _Pragma(STRINGIFY(GCC diagnostic push))                             \
+    _Pragma(STRINGIFY(GCC diagnostic ignored "-Wincompatible-pointer-types")) \
+    if(is_null(__VA_ARGS__, SENTINEL))                                  \
+    {                                                                   \
+        errno = EINVAL;                                                 \
+        return ERR_RESULT;                                              \
+    }                                                                   \
+    _Pragma(STRINGIFY(GCC diagnostic pop))
 
-nodelist *make_nodelist(void);
-nodelist *make_nodelist_with_capacity(size_t capacity);
+#define ENSURE_THAT(ERR_RESULT, ...)                                    \
+    if(is_false(__VA_ARGS__, -1))                                       \
+    {                                                                   \
+        errno = EINVAL;                                                 \
+        return ERR_RESULT;                                              \
+    }
 
-void nodelist_free(nodelist *value);
-void nodelist_free_nodes(nodelist *list);
+#define ENSURE_NONNULL_ELSE_NULL(...) ENSURE_NONNULL(NULL, __VA_ARGS__)
+#define ENSURE_NONNULL_ELSE_FALSE(...) ENSURE_NONNULL(false, __VA_ARGS__)
+#define ENSURE_NONNULL_ELSE_TRUE(...) ENSURE_NONNULL(true, __VA_ARGS__)
+#define ENSURE_NONNULL_ELSE_VOID(...) ENSURE_NONNULL(VOID_RETURN, __VA_ARGS__)
+#define ENSURE_NONNULL_ELSE_ZERO(...) ENSURE_NONNULL(0, __VA_ARGS__)
 
-bool   nodelist_clear(nodelist *list);
-size_t nodelist_length(const nodelist * restrict list);
-bool   nodelist_is_empty(const nodelist * restrict list);
-node  *nodelist_get(const nodelist * restrict list, size_t index);
-bool   nodelist_add(nodelist * restrict list,  node *value);
-bool   nodelist_set(nodelist * restrict list, node *value, size_t index);
+#define ENSURE_COND_ELSE_NULL(...) ENSURE_THAT(NULL, __VA_ARGS__)
+#define ENSURE_COND_ELSE_FALSE(...) ENSURE_THAT(false, __VA_ARGS__)
 
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator, void *context);
 
-typedef node *(*nodelist_function)(node *each, void *context);
-nodelist *nodelist_map(const nodelist * restrict list, nodelist_function function, void *context);
-nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target);
-nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target);
+bool is_null(void * first, ...);
+bool is_false(int_fast8_t first, ...);
+
 
 
 #endif

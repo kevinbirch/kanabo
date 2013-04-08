@@ -39,10 +39,11 @@
 
 #include "nodelist.h"
 #include "array.h"
+#include "preconditions.h"
 
 #define nodelist_ensure_capacity(NODELIST) ensure_capacity(node, (NODELIST)->nodes, (NODELIST)->length, (NODELIST)->capacity)
 
-bool allocate(nodelist * restrict list, size_t capacity);
+static bool allocate(nodelist * restrict list, size_t capacity);
 
 nodelist *make_nodelist(void)
 {
@@ -69,7 +70,7 @@ nodelist *make_nodelist_with_capacity(size_t capacity)
     }
 }
 
-bool allocate(nodelist * restrict list, size_t capacity)
+static bool allocate(nodelist * restrict list, size_t capacity)
 {
     list->length = 0;
     errno = 0;
@@ -84,10 +85,8 @@ bool allocate(nodelist * restrict list, size_t capacity)
 
 void nodelist_free(nodelist *list)
 {
-    if(NULL == list)
-    {
-        return;
-    }
+    ENSURE_NONNULL_ELSE_VOID(list);
+
     errno = 0;
     if(0 < list->length)
     {
@@ -97,13 +96,21 @@ void nodelist_free(nodelist *list)
     free(list);
 }
 
+void nodelist_free_nodes(nodelist *list)
+{
+    ENSURE_NONNULL_ELSE_VOID(list);
+
+    errno = 0;
+    for(int32_t i = (int32_t)list->length - 1; i >= 0; i--)
+    {
+        node_free(list->nodes[i]);
+        list->length--;
+    }
+}
+
 bool nodelist_clear(nodelist *list)
 {
-    if(NULL == list)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    ENSURE_NONNULL_ELSE_FALSE(list);
 
     errno = 0;
     if(NULL != list->nodes)
@@ -116,11 +123,7 @@ bool nodelist_clear(nodelist *list)
 
 size_t nodelist_length(const nodelist * restrict list)
 {
-    if(NULL == list)
-    {
-        errno = EINVAL;
-        return 0;
-    }
+    ENSURE_NONNULL_ELSE_ZERO(list);
 
     errno = 0;
     return list->length;
@@ -128,11 +131,7 @@ size_t nodelist_length(const nodelist * restrict list)
 
 bool nodelist_is_empty(const nodelist * restrict list)
 {
-    if(NULL == list)
-    {
-        errno = EINVAL;
-        return true;
-    }
+    ENSURE_NONNULL_ELSE_TRUE(list);
 
     errno = 0;
     return 0 == list->length;
@@ -140,22 +139,16 @@ bool nodelist_is_empty(const nodelist * restrict list)
 
 node *nodelist_get(const nodelist * restrict list, size_t index)
 {
-    if(NULL == list || index >= list->length)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    ENSURE_NONNULL_ELSE_NULL(list);
+    ENSURE_COND_ELSE_NULL(index < list->length);
+
     errno = 0;
     return list->nodes[index];
 }
 
 bool nodelist_add(nodelist * restrict list,  node *value)
 {
-    if(NULL == list || NULL == value)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    ENSURE_NONNULL_ELSE_FALSE(list, value);
     nodelist_ensure_capacity(list);
 
     list->nodes[list->length++] = value;
@@ -165,11 +158,8 @@ bool nodelist_add(nodelist * restrict list,  node *value)
 
 bool nodelist_set(nodelist * restrict list, node *value, size_t index)
 {                                                                        
-    if(NULL == list || NULL == value || index >= list->length)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    ENSURE_NONNULL_ELSE_FALSE(list, value);
+    ENSURE_COND_ELSE_FALSE(index < list->length);
 
     list->nodes[index] = value;
     errno = 0;
@@ -178,11 +168,8 @@ bool nodelist_set(nodelist * restrict list, node *value, size_t index)
 
 bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator, void *context)
 {
-    if(NULL == list || NULL == iterator)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    ENSURE_NONNULL_ELSE_FALSE(list, iterator);
+
     for(size_t i = 0; i < nodelist_length(list); i++)
     {
         if(!iterator(list->nodes[i], context))
@@ -193,45 +180,10 @@ bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator
     return true;
 }
 
-#include <stdarg.h>
-
-static const void * SENTINEL = (void *)"SENTINEL";
-
-#define ENSURE_NONNULL(ERR_RESULT, ...)                                 \
-    if(is_null(__VA_ARGS__, SENTINEL))                                  \
-    {                                                                   \
-        errno = EINVAL;                                                 \
-        return (ERR_RESULT);                                            \
-    }
-
-bool is_null(void * first, ...);
-
-bool is_null(void * first, ...)
-{
-    va_list args;
-    bool result = false;
-    
-    va_start(args, first);
-    for(void *arg = first; arg != SENTINEL; arg = va_arg(args, void *))
-    {
-        if(NULL == arg)
-        {
-            result = true;
-            break;
-        }
-    }
-    va_end(args);
-    
-    return result;
-}
-
 nodelist *nodelist_map(const nodelist * restrict list, nodelist_function function, void *context)
 {
-    if(NULL == list || NULL == function)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+    ENSURE_NONNULL_ELSE_NULL(list, function);
+
     nodelist *target = make_nodelist_with_capacity(nodelist_length(list));
     if(NULL == target)
     {
@@ -253,11 +205,8 @@ nodelist *nodelist_map(const nodelist * restrict list, nodelist_function functio
 
 nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target)
 {
-    if(NULL == list || NULL == function || NULL == target)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    ENSURE_NONNULL_ELSE_NULL(list, function, target);
+
     for(size_t i = 0; i < nodelist_length(list); i++)
     {
         node *each = function(list->nodes[i], context);
@@ -276,11 +225,9 @@ nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_function fu
 
 nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target)
 {
-    if(NULL == list || NULL == function || NULL == target || nodelist_length(target) < nodelist_length(list))
-    {
-        errno = EINVAL;
-        return false;
-    }
+    ENSURE_NONNULL_ELSE_NULL(list, function, target);
+    ENSURE_COND_ELSE_NULL(nodelist_length(target) >= nodelist_length(list));
+
     for(size_t i = 0; i < nodelist_length(list); i++)
     {
         node *each = function(list->nodes[i], context);

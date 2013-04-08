@@ -127,9 +127,21 @@ START_TEST (bad_input)
     errno = 0;
     ck_assert_null(nodelist_map_overwrite(empty_list, (nodelist_function)1, NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
+
+    errno = 0;
+    nodelist *one_item_list = make_nodelist_with_capacity(1);
+    ck_assert_int_eq(0, errno);
+    ck_assert_not_null(empty_list);
+
+    nodelist_add(one_item_list, scalar);
+
+    errno = 0;
+    ck_assert_null(nodelist_map_overwrite(one_item_list, (nodelist_function)1, NULL, empty_list));
+    ck_assert_int_eq(EINVAL, errno);
     
     node_free(scalar);
     nodelist_free(empty_list);
+    nodelist_free(one_item_list);
 }
 END_TEST
 
@@ -164,6 +176,7 @@ void nodelist_setup(void)
 
 void nodelist_teardown(void)
 {
+    nodelist_free_nodes(list);
     nodelist_free(list);
 }
 
@@ -182,9 +195,9 @@ START_TEST (mutate)
     ck_assert_int_eq(1, nodelist_length(mutable_list));
     ck_assert_true(node_equals(bar, nodelist_get(mutable_list, 0)));
 
-    nodelist_free(mutable_list);
     node_free(foo);
     node_free(bar);
+    nodelist_free(mutable_list);
 }
 END_TEST
 
@@ -250,10 +263,7 @@ START_TEST (map)
     ck_assert_int_eq(SCALAR_NUMBER, scalar_get_kind(one));
     ck_assert_buf_eq("2", 1, scalar_get_value(one), node_get_size(one));
 
-    for(size_t i = 0; i < nodelist_length(result); i++)
-    {
-        node_free(nodelist_get(result, i));
-    }
+    nodelist_free_nodes(result);
     nodelist_free(result);
 }
 END_TEST
