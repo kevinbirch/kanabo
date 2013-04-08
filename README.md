@@ -27,4 +27,4 @@ LICENSE file for more details.
 [home]: https://github.com/kevinbirch/kanabo "project home"
 [wiki]: http://en.wikipedia.org/wiki/Kanabō "Wikipedia entry for kanabō"
 [mit]: http://www.opensource.org/licenses/ncsa
-[license]: https://github.com/kevinbirch/kanabo/blob/master/LICENSE "license file"
+[license]: https://github.com/kevinbirch/kanabo/blob/master/LICENSE.md "license file"
