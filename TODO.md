@@ -23,6 +23,8 @@ Enhancements:
 * add error codes
 * add error message generator
 * propagate errors everywhere
+* tag created boolean nodes as synthetic so they can be freed
+* nodes owned by a document tree must be preserved unless destroying the tree
 
 ### parser
 
