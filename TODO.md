@@ -25,6 +25,7 @@ Enhancements:
 * propagate errors everywhere
 * tag created boolean nodes as synthetic so they can be freed anytime
 * nodes owned by a document tree must be preserved unless destroying the tree
+* eliminate nodelist\_map\_overwrite?
 
 ### parser
 
