@@ -240,6 +240,7 @@ START_TEST (fail_map)
     errno = 0;
     nodelist *result = nodelist_map(list, fail_transform, &count);
     ck_assert_null(result);
+    ck_assert_not_null(list);
     ck_assert_int_eq(0, errno);
     ck_assert_int_eq(1, count);
 }
@@ -261,6 +262,46 @@ node *fail_transform(node *each, void *context)
     }
 }
 
+START_TEST (map_overwrite)
+{
+    size_t count = 0;
+    errno = 0;
+    nodelist *result = nodelist_map_overwrite(list, transform, &count, list);
+    ck_assert_not_null(result);
+    ck_assert_int_eq(0, errno);
+    ck_assert_int_eq(2, count);
+    ck_assert_int_eq(2, nodelist_length(result));
+    node *zero = nodelist_get(list, 0);
+    ck_assert_not_null(zero);
+    ck_assert_int_eq(SCALAR_NUMBER, scalar_get_kind(zero));
+    ck_assert_buf_eq("1", 1, scalar_get_value(zero), node_get_size(zero));
+    node *one = nodelist_get(list, 1);
+    ck_assert_not_null(one);
+    ck_assert_int_eq(SCALAR_NUMBER, scalar_get_kind(one));
+    ck_assert_buf_eq("2", 1, scalar_get_value(one), node_get_size(one));
+}
+END_TEST
+
+START_TEST (fail_map_overwrite)
+{
+    size_t count = 0;
+    errno = 0;
+    nodelist *result = nodelist_map_overwrite(list, fail_transform, &count, list);
+    ck_assert_null(result);
+    ck_assert_int_eq(0, errno);
+    ck_assert_int_eq(1, count);
+    ck_assert_int_eq(2, nodelist_length(list));
+    node *zero = nodelist_get(list, 0);
+    ck_assert_not_null(zero);
+    ck_assert_int_eq(SCALAR_STRING, scalar_get_kind(zero));
+    ck_assert_buf_eq("munky", 5, scalar_get_value(zero), node_get_size(zero));
+    node *one = nodelist_get(list, 1);
+    ck_assert_not_null(one);
+    ck_assert_int_eq(SCALAR_STRING, scalar_get_kind(one));
+    ck_assert_buf_eq("bar", 3, scalar_get_value(one), node_get_size(one));
+}
+END_TEST
+
 Suite *nodelist_suite(void)
 {
     TCase *basic = tcase_create("basic");
@@ -274,6 +315,8 @@ Suite *nodelist_suite(void)
     tcase_add_test(iterate, fail_iteration);
     tcase_add_test(iterate, map);
     tcase_add_test(iterate, fail_map);
+    tcase_add_test(iterate, map_overwrite);
+    tcase_add_test(iterate, fail_map_overwrite);
 
     Suite *nodelist = suite_create("Nodelist");
     suite_add_tcase(nodelist, basic);
