@@ -54,7 +54,7 @@ extern const void * SENTINEL;
     _Pragma(STRINGIFY(GCC diagnostic ignored "-Wincompatible-pointer-types")) \
     if(is_null(__VA_ARGS__, SENTINEL))                                  \
     {                                                                   \
-        errno = EINVAL;                                                 \
+        errno = 0 == errno ? EINVAL : errno;                            \
         return ERR_RESULT;                                              \
     }                                                                   \
     _Pragma(STRINGIFY(GCC diagnostic pop))
@@ -62,7 +62,7 @@ extern const void * SENTINEL;
 #define ENSURE_THAT(ERR_RESULT, ...)                                    \
     if(is_false(__VA_ARGS__, -1))                                       \
     {                                                                   \
-        errno = EINVAL;                                                 \
+        errno = 0 == errno ? EINVAL : errno;                            \
         return ERR_RESULT;                                              \
     }
 
