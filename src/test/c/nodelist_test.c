@@ -48,6 +48,8 @@ bool fail_nodelist(node *each, void *context);
 bool check_nodelist(node *each, void *context);
 node *transform(node *each, void *context);
 node *fail_transform(node *each, void *context);
+nodelist *flat_transform(node *each, void *context);
+nodelist *fail_flat_transform(node *each, void *context);
 
 static nodelist *list;
 
@@ -368,6 +370,74 @@ node *fail_transform(node *each, void *context)
     }
 }
 
+START_TEST (flatmap)
+{
+    size_t count = 0;
+    reset_errno();
+    nodelist *result = nodelist_flatmap(list, flat_transform, &count);
+    ck_assert_not_null(result);
+    ck_assert_noerr();
+    ck_assert_int_eq(2, count);
+    ck_assert_int_eq(2, nodelist_length(result));
+    node *zero = nodelist_get(result, 0);
+    ck_assert_not_null(zero);
+    ck_assert_int_eq(SCALAR_NUMBER, scalar_get_kind(zero));
+    ck_assert_buf_eq("1", 1, scalar_get_value(zero), node_get_size(zero));
+    node *one = nodelist_get(result, 1);
+    ck_assert_not_null(one);
+    ck_assert_int_eq(SCALAR_NUMBER, scalar_get_kind(one));
+    ck_assert_buf_eq("2", 1, scalar_get_value(one), node_get_size(one));
+
+    nodelist_free_nodes(result);
+    nodelist_free(result);
+}
+END_TEST
+
+nodelist *flat_transform(node *each, void *context)
+{
+    ck_assert_not_null(each);
+    size_t *count = (size_t *)context;
+    (*count)++;
+    char *value;
+    asprintf(&value, "%zd", *count);
+    node *scalar = make_scalar_node((uint8_t *)value, strlen(value), SCALAR_NUMBER);
+    nodelist *result = make_nodelist_with_capacity(1);
+    nodelist_add(result, scalar);
+    
+    return result;
+}
+
+START_TEST (fail_flatmap)
+{
+    size_t count = 0;
+    reset_errno();
+    nodelist *result = nodelist_flatmap(list, fail_flat_transform, &count);
+    ck_assert_null(result);
+    ck_assert_not_null(list);
+    ck_assert_noerr();
+    ck_assert_int_eq(1, count);
+}
+END_TEST
+
+nodelist *fail_flat_transform(node *each, void *context)
+{
+#pragma unused(each)
+
+    size_t *count = (size_t *)context;
+    if(0 < *count)
+    {
+        return NULL;
+    }
+    else
+    {
+        (*count)++;
+        node *scalar = make_scalar_node((uint8_t *)"munky", 5, SCALAR_STRING);
+        nodelist *result = make_nodelist_with_capacity(1);
+        nodelist_add(result, scalar);
+        return result;
+    }
+}
+
 START_TEST (map_overwrite)
 {
     size_t count = 0;
@@ -428,6 +498,8 @@ Suite *nodelist_suite(void)
     tcase_add_test(iterate, fail_map);
     tcase_add_test(iterate, map_overwrite);
     tcase_add_test(iterate, fail_map_overwrite);
+    tcase_add_test(iterate, flatmap);
+    tcase_add_test(iterate, fail_flatmap);
 
     Suite *nodelist = suite_create("Nodelist");
     suite_add_tcase(nodelist, basic);
