@@ -41,7 +41,7 @@
 #include "array.h"
 #include "preconditions.h"
 
-#define nodelist_ensure_capacity(NODELIST) ensure_capacity(node, (NODELIST)->nodes, (NODELIST)->length, (NODELIST)->capacity)
+#define nodelist_ensure_capacity(NODELIST, LENGTH) ensure_capacity(node, (NODELIST)->nodes, (LENGTH), (NODELIST)->capacity)
 
 static bool allocate(nodelist * restrict list, size_t capacity);
 
@@ -146,14 +146,22 @@ node *nodelist_get(const nodelist * restrict list, size_t index)
     return list->nodes[index];
 }
 
-bool nodelist_add(nodelist * restrict list,  node *value)
+bool nodelist_add(nodelist * restrict list, node  * restrict value)
 {
     ENSURE_NONNULL_ELSE_FALSE(list, value);
-    nodelist_ensure_capacity(list);
+    nodelist_ensure_capacity(list, list->length);
 
     list->nodes[list->length++] = value;
     errno = 0;
     return true;
+}
+
+bool nodelist_add_all(nodelist * restrict list, nodelist * restrict value)
+{
+    ENSURE_NONNULL_ELSE_FALSE(list, value);
+    nodelist_ensure_capacity(list, list->length + nodelist_length(value));
+        
+    return nodelist_iterate(value, add_to_nodelist_iterator, list);
 }
 
 bool nodelist_set(nodelist * restrict list, node *value, size_t index)
@@ -180,7 +188,13 @@ bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator
     return true;
 }
 
-nodelist *nodelist_map(const nodelist * restrict list, nodelist_function function, void *context)
+bool add_to_nodelist_iterator(node *each, void *context)
+{
+    nodelist *list = (nodelist *)context;
+    return nodelist_add(list, each);
+}
+
+nodelist *nodelist_map(const nodelist * restrict list, nodelist_to_one_function function, void *context)
 {
     ENSURE_NONNULL_ELSE_NULL(list, function);
 
@@ -192,18 +206,14 @@ nodelist *nodelist_map(const nodelist * restrict list, nodelist_function functio
     nodelist *result = nodelist_map_into(list, function, context, target);
     if(NULL == result)
     {
-        for(size_t i = 0; i < nodelist_length(target); i++)
-        {
-            node_free(nodelist_get(target, i));
-        }
+        nodelist_free_nodes(target);
         nodelist_free(target);
         return result;
     }
-    return target;
-            
+    return target;            
 }
 
-nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target)
+nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_to_one_function function, void *context, nodelist * restrict target)
 {
     ENSURE_NONNULL_ELSE_NULL(list, function, target);
 
@@ -223,7 +233,7 @@ nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_function fu
     return target;
 }
 
-nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_function function, void *context, nodelist * restrict target)
+nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_to_one_function function, void *context, nodelist * restrict target)
 {
     ENSURE_NONNULL_ELSE_NULL(list, function, target);
     ENSURE_COND_ELSE_NULL(nodelist_length(target) >= nodelist_length(list));
@@ -236,6 +246,44 @@ nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_functi
             return NULL;
         }
         if(!nodelist_set(target, each, i))
+        {
+            return NULL;
+        }
+    }
+
+    return target;
+}
+
+nodelist *nodelist_flatmap(const nodelist * restrict list, nodelist_to_many_function function, void *context)
+{
+    ENSURE_NONNULL_ELSE_NULL(list, function);
+
+    nodelist *target = make_nodelist_with_capacity(nodelist_length(list));
+    if(NULL == target)
+    {
+        return NULL;
+    }
+    nodelist *result = nodelist_flatmap_into(list, function, context, target);
+    if(NULL == result)
+    {
+        nodelist_free_nodes(target);
+        return result;
+    }
+    return target;
+}
+
+nodelist *nodelist_flatmap_into(const nodelist * restrict list, nodelist_to_many_function function, void *context, nodelist * restrict target)
+{
+    ENSURE_NONNULL_ELSE_NULL(list, function, target);
+
+    for(size_t i = 0; i < nodelist_length(list); i++)
+    {
+        nodelist *each = function(list->nodes[i], context);
+        if(NULL == each)
+        {
+            return NULL;
+        }
+        if(!nodelist_add_all(target, each))
         {
             return NULL;
         }
