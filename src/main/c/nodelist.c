@@ -39,7 +39,7 @@
 
 #include "nodelist.h"
 #include "array.h"
-#include "preconditions.h"
+#include "conditions.h"
 
 #define nodelist_ensure_capacity(NODELIST, LENGTH) ensure_capacity(node, (NODELIST)->nodes, (LENGTH), (NODELIST)->capacity)
 

@@ -35,7 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include "preconditions.h"
+#include "conditions.h"
 
 const void * SENTINEL = (void *)"SENTINEL";
 

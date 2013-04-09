@@ -39,7 +39,7 @@
 #include <string.h>
 
 #include "evaluator.h"
-#include "preconditions.h"
+#include "conditions.h"
 
 struct predicate_parameter_block
 {
