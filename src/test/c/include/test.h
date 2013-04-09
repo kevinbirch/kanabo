@@ -46,6 +46,13 @@
 #define ck_assert_true(X) ck_assert_msg((X) == true, "Assertion '"#X"==true' failed")
 #define ck_assert_false(X) ck_assert_msg((X) == false, "Assertion '"#X"==false' failed")
 
+#define ck_assert_errno(X) ck_assert_int_eq((X), errno) 
+#define ck_assert_noerr() ck_assert_errno(0)
+
+#define reset_errno() errno = 0
+
+#define mark() fprintf(stderr, "mark mark mark: %s:%s\n", __FILE__, __LINE__)
+
 Suite *master_suite(void);
 Suite *loader_suite(void);
 Suite *jsonpath_suite(void);
