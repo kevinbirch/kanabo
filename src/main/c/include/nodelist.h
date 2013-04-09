@@ -78,7 +78,7 @@ nodelist *nodelist_map(const nodelist * restrict list, nodelist_to_one_function 
 nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_to_one_function function, void *context, nodelist * restrict target);
 nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_to_one_function function, void *context, nodelist * restrict target);
 
-typedef nodelist *(*nodelist_to_many_function)(node *each, void *context);
+typedef bool (*nodelist_to_many_function)(node *each, void *context, nodelist *target);
 nodelist *nodelist_flatmap(const nodelist * restrict list, nodelist_to_many_function function, void *context);
 nodelist *nodelist_flatmap_into(const nodelist * restrict list, nodelist_to_many_function function, void *context, nodelist * restrict target);
 

@@ -48,8 +48,8 @@ bool fail_nodelist(node *each, void *context);
 bool check_nodelist(node *each, void *context);
 node *transform(node *each, void *context);
 node *fail_transform(node *each, void *context);
-nodelist *flat_transform(node *each, void *context);
-nodelist *fail_flat_transform(node *each, void *context);
+bool flat_transform(node *each, void *context, nodelist *target);
+bool fail_flat_transform(node *each, void *context, nodelist *target);
 
 static nodelist *list;
 
@@ -524,7 +524,7 @@ START_TEST (flatmap)
 }
 END_TEST
 
-nodelist *flat_transform(node *each, void *context)
+bool flat_transform(node *each, void *context, nodelist *target)
 {
     ck_assert_not_null(each);
     size_t *count = (size_t *)context;
@@ -532,10 +532,9 @@ nodelist *flat_transform(node *each, void *context)
     char *value;
     asprintf(&value, "%zd", *count);
     node *scalar = make_scalar_node((uint8_t *)value, strlen(value), SCALAR_NUMBER);
-    nodelist *result = make_nodelist_with_capacity(1);
-    nodelist_add(result, scalar);
+    nodelist_add(target, scalar);
     
-    return result;
+    return true;
 }
 
 START_TEST (fail_flatmap)
@@ -550,22 +549,21 @@ START_TEST (fail_flatmap)
 }
 END_TEST
 
-nodelist *fail_flat_transform(node *each, void *context)
+bool fail_flat_transform(node *each, void *context, nodelist *target)
 {
 #pragma unused(each)
 
     size_t *count = (size_t *)context;
     if(0 < *count)
     {
-        return NULL;
+        return false;
     }
     else
     {
         (*count)++;
         node *scalar = make_scalar_node((uint8_t *)"munky", 5, SCALAR_STRING);
-        nodelist *result = make_nodelist_with_capacity(1);
-        nodelist_add(result, scalar);
-        return result;
+        nodelist_add(target, scalar);
+        return true;
     }
 }
 

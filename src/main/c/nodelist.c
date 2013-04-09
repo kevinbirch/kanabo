@@ -278,12 +278,7 @@ nodelist *nodelist_flatmap_into(const nodelist * restrict list, nodelist_to_many
 
     for(size_t i = 0; i < nodelist_length(list); i++)
     {
-        nodelist *each = function(list->nodes[i], context);
-        if(NULL == each)
-        {
-            return NULL;
-        }
-        if(!nodelist_add_all(target, each))
+        if(!function(list->nodes[i], context, target))
         {
             return NULL;
         }
