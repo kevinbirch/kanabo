@@ -53,90 +53,90 @@ static nodelist *list;
 
 START_TEST (bad_input)
 {
-    errno = 0;
+    reset_errno();
     ck_assert_false(nodelist_clear(NULL));
     ck_assert_int_eq(EINVAL, errno);
 
-    errno = 0;
+    reset_errno();
     ck_assert_int_eq(0, nodelist_length(NULL));
     ck_assert_int_eq(EINVAL, errno);
 
-    errno = 0;
+    reset_errno();
     ck_assert_true(nodelist_is_empty(NULL));
     ck_assert_int_eq(EINVAL, errno);
 
-    errno = 0;
+    reset_errno();
     ck_assert_null(nodelist_get(NULL, 0));
     ck_assert_int_eq(EINVAL, errno);
 
-    errno = 0;
+    reset_errno();
     ck_assert_false(nodelist_add(NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
 
-    errno = 0;
+    reset_errno();
     ck_assert_false(nodelist_set(NULL, NULL, 0));
     ck_assert_int_eq(EINVAL, errno);
 
     nodelist *empty_list = make_nodelist();
     ck_assert_not_null(empty_list);
 
-    errno = 0;
+    reset_errno();
     ck_assert_null(nodelist_get(empty_list, 0));
     ck_assert_int_eq(EINVAL, errno);
 
-    errno = 0;
+    reset_errno();
     ck_assert_false(nodelist_add(empty_list, NULL));
     ck_assert_int_eq(EINVAL, errno);
 
     node *scalar = make_scalar_node((uint8_t *)"foo", 3, SCALAR_STRING);
 
-    errno = 0;
+    reset_errno();
     ck_assert_false(nodelist_set(empty_list, scalar, 0));
     ck_assert_int_eq(EINVAL, errno);
 
-    errno = 0;
+    reset_errno();
     ck_assert_false(nodelist_iterate(NULL, NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
-    errno = 0;
+    reset_errno();
     ck_assert_false(nodelist_iterate(empty_list, NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
     
-    errno = 0;
+    reset_errno();
     ck_assert_null(nodelist_map(NULL, NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
-    errno = 0;
+    reset_errno();
     ck_assert_null(nodelist_map(empty_list, NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
     
-    errno = 0;
+    reset_errno();
     ck_assert_null(nodelist_map_into(NULL, NULL, NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
-    errno = 0;
+    reset_errno();
     ck_assert_null(nodelist_map_into(empty_list, NULL, NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
-    errno = 0;
-    ck_assert_null(nodelist_map_into(empty_list, (nodelist_function)1, NULL, NULL));
+    reset_errno();
+    ck_assert_null(nodelist_map_into(empty_list, (nodelist_to_one_function)1, NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
     
-    errno = 0;
+    reset_errno();
     ck_assert_null(nodelist_map_overwrite(NULL, NULL, NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
-    errno = 0;
+    reset_errno();
     ck_assert_null(nodelist_map_overwrite(empty_list, NULL, NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
-    errno = 0;
-    ck_assert_null(nodelist_map_overwrite(empty_list, (nodelist_function)1, NULL, NULL));
+    reset_errno();
+    ck_assert_null(nodelist_map_overwrite(empty_list, (nodelist_to_one_function)1, NULL, NULL));
     ck_assert_int_eq(EINVAL, errno);
 
-    errno = 0;
+    reset_errno();
     nodelist *one_item_list = make_nodelist_with_capacity(1);
-    ck_assert_int_eq(0, errno);
+    ck_assert_noerr();
     ck_assert_not_null(empty_list);
 
     nodelist_add(one_item_list, scalar);
 
-    errno = 0;
-    ck_assert_null(nodelist_map_overwrite(one_item_list, (nodelist_function)1, NULL, empty_list));
+    reset_errno();
+    ck_assert_null(nodelist_map_overwrite(one_item_list, (nodelist_to_one_function)1, NULL, empty_list));
     ck_assert_int_eq(EINVAL, errno);
     
     node_free(scalar);
@@ -147,13 +147,16 @@ END_TEST
 
 START_TEST (ctor_dtor)
 {
+    reset_errno();
     nodelist *empty_list = make_nodelist();
     ck_assert_not_null(empty_list);
+    ck_assert_noerr();
     ck_assert_int_eq(0, nodelist_length(empty_list));
     ck_assert_true(nodelist_is_empty(empty_list));
 
+    reset_errno();
     nodelist_free(empty_list);
-    ck_assert_int_eq(0, errno);
+    ck_assert_noerr();
 }
 END_TEST
 
@@ -161,17 +164,22 @@ void nodelist_setup(void)
 {
     list = make_nodelist_with_capacity(2);
 
-    errno = 0;
+    reset_errno();
     node *foo = make_scalar_node((uint8_t *)"foo", 3, SCALAR_STRING);
-    ck_assert_int_eq(0, errno);
+    ck_assert_noerr();
     ck_assert_not_null(foo);
-    errno = 0;
+    reset_errno();
     node *bar = make_scalar_node((uint8_t *)"bar", 3, SCALAR_STRING);
-    ck_assert_int_eq(0, errno);
+    ck_assert_noerr();
     ck_assert_not_null(bar);
 
-    nodelist_add(list, foo);
-    nodelist_add(list, bar);
+    reset_errno();
+    ck_assert_true(nodelist_add(list, foo));
+    ck_assert_noerr();
+    ck_assert_int_eq(1, nodelist_length(list));
+    ck_assert_true(nodelist_add(list, bar));
+    ck_assert_noerr();
+    ck_assert_int_eq(2, nodelist_length(list));
 }
 
 void nodelist_teardown(void)
@@ -180,33 +188,87 @@ void nodelist_teardown(void)
     nodelist_free(list);
 }
 
-START_TEST (mutate)
+START_TEST (add)
 {
-    nodelist *mutable_list = make_nodelist();
+    reset_errno();
+    node *baz = make_scalar_node((uint8_t *)"baz", 3, SCALAR_STRING);
+    ck_assert_not_null(baz);
+    ck_assert_noerr();
 
-    node *foo = make_scalar_node((uint8_t *)"foo", 3, SCALAR_STRING);
-    node *bar = make_scalar_node((uint8_t *)"bar", 3, SCALAR_STRING);
+    reset_errno();
+    nodelist_add(list, baz);
+    ck_assert_noerr();
+    ck_assert_int_eq(3, nodelist_length(list));
+    ck_assert_true(node_equals(baz, nodelist_get(list, 2)));
 
-    nodelist_add(mutable_list, foo);
-    ck_assert_int_eq(1, nodelist_length(mutable_list));
-    ck_assert_true(node_equals(foo, nodelist_get(mutable_list, 0)));
+    // N.B. not freeing baz here as it is added to `list` and will be freed by teardown
+}
+END_TEST
 
-    nodelist_set(mutable_list, bar, 0);
-    ck_assert_int_eq(1, nodelist_length(mutable_list));
-    ck_assert_true(node_equals(bar, nodelist_get(mutable_list, 0)));
+START_TEST (set)
+{
+    reset_errno();
+    node *baz = make_scalar_node((uint8_t *)"baz", 3, SCALAR_STRING);
+    ck_assert_not_null(baz);
+    ck_assert_noerr();
 
-    node_free(foo);
-    node_free(bar);
-    nodelist_free(mutable_list);
+    reset_errno();
+    ck_assert_true(nodelist_set(list, baz, 0));
+    ck_assert_noerr();
+    ck_assert_int_eq(2, nodelist_length(list));
+    ck_assert_true(node_equals(baz, nodelist_get(list, 0)));
+
+    // N.B. not freeing baz here as it is added to `list` and will be freed by teardown
+}
+END_TEST
+
+START_TEST (add_all)
+{
+    reset_errno();
+    node *baz = make_scalar_node((uint8_t *)"baz", 3, SCALAR_STRING);
+    ck_assert_not_null(baz);
+    ck_assert_noerr();
+
+    reset_errno();
+    node *quaz = make_scalar_node((uint8_t *)"quaz", 4, SCALAR_STRING);
+    ck_assert_not_null(baz);
+    ck_assert_noerr();
+
+    reset_errno();
+    nodelist *other_list = make_nodelist_with_capacity(2);
+    ck_assert_noerr();
+    ck_assert_not_null(other_list);
+
+    reset_errno();
+    ck_assert_true(nodelist_add(other_list, baz));
+    ck_assert_noerr();
+    ck_assert_int_eq(1, nodelist_length(other_list));
+
+    reset_errno();
+    ck_assert_true(nodelist_add(other_list, quaz));
+    ck_assert_noerr();
+    ck_assert_int_eq(2, nodelist_length(other_list));
+
+    reset_errno();
+    ck_assert_not_null(list);
+    ck_assert_not_null(other_list);
+    
+    ck_assert_true(nodelist_add_all(list, other_list));
+    ck_assert_noerr();
+    ck_assert_int_eq(4, nodelist_length(list));
+    ck_assert_int_eq(2, nodelist_length(other_list));
+    
+    // N.B. not freeing baz and quaz here as they are added to `list` and will be freed by teardown
+    nodelist_free(other_list);
 }
 END_TEST
 
 START_TEST (iteration)
 {
     size_t count = 0;
-    errno = 0;
+    reset_errno();
     ck_assert_true(nodelist_iterate(list, check_nodelist, &count));
-    ck_assert_int_eq(0, errno);
+    ck_assert_noerr();
     ck_assert_int_eq(2, count);
 }
 END_TEST
@@ -222,9 +284,9 @@ bool check_nodelist(node *each, void *context)
 START_TEST (fail_iteration)
 {
     size_t count = 0;
-    errno = 0;
+    reset_errno();
     ck_assert_false(nodelist_iterate(list, fail_nodelist, &count));
-    ck_assert_int_eq(0, errno);
+    ck_assert_noerr();
     ck_assert_int_eq(1, count);
 }
 END_TEST
@@ -248,10 +310,10 @@ bool fail_nodelist(node *each, void *context)
 START_TEST (map)
 {
     size_t count = 0;
-    errno = 0;
+    reset_errno();
     nodelist *result = nodelist_map(list, transform, &count);
     ck_assert_not_null(result);
-    ck_assert_int_eq(0, errno);
+    ck_assert_noerr();
     ck_assert_int_eq(2, count);
     ck_assert_int_eq(2, nodelist_length(result));
     node *zero = nodelist_get(result, 0);
@@ -281,11 +343,11 @@ node *transform(node *each, void *context)
 START_TEST (fail_map)
 {
     size_t count = 0;
-    errno = 0;
+    reset_errno();
     nodelist *result = nodelist_map(list, fail_transform, &count);
     ck_assert_null(result);
     ck_assert_not_null(list);
-    ck_assert_int_eq(0, errno);
+    ck_assert_noerr();
     ck_assert_int_eq(1, count);
 }
 END_TEST
@@ -309,10 +371,10 @@ node *fail_transform(node *each, void *context)
 START_TEST (map_overwrite)
 {
     size_t count = 0;
-    errno = 0;
+    reset_errno();
     nodelist *result = nodelist_map_overwrite(list, transform, &count, list);
     ck_assert_not_null(result);
-    ck_assert_int_eq(0, errno);
+    ck_assert_noerr();
     ck_assert_int_eq(2, count);
     ck_assert_int_eq(2, nodelist_length(result));
     node *zero = nodelist_get(list, 0);
@@ -329,10 +391,10 @@ END_TEST
 START_TEST (fail_map_overwrite)
 {
     size_t count = 0;
-    errno = 0;
+    reset_errno();
     nodelist *result = nodelist_map_overwrite(list, fail_transform, &count, list);
     ck_assert_null(result);
-    ck_assert_int_eq(0, errno);
+    ck_assert_noerr();
     ck_assert_int_eq(1, count);
     ck_assert_int_eq(2, nodelist_length(list));
     node *zero = nodelist_get(list, 0);
@@ -351,7 +413,12 @@ Suite *nodelist_suite(void)
     TCase *basic = tcase_create("basic");
     tcase_add_test(basic, bad_input);
     tcase_add_test(basic, ctor_dtor);
-    tcase_add_test(basic, mutate);
+
+    TCase *mutate = tcase_create("mutate");
+    tcase_add_checked_fixture(mutate, nodelist_setup, nodelist_teardown);
+    tcase_add_test(mutate, add);
+    tcase_add_test(mutate, set);
+    tcase_add_test(mutate, add_all);
 
     TCase *iterate = tcase_create("iterate");
     tcase_add_checked_fixture(iterate, nodelist_setup, nodelist_teardown);
@@ -364,6 +431,7 @@ Suite *nodelist_suite(void)
 
     Suite *nodelist = suite_create("Nodelist");
     suite_add_tcase(nodelist, basic);
+    suite_add_tcase(nodelist, mutate);
     suite_add_tcase(nodelist, iterate);
 
     return nodelist;
