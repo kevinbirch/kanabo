@@ -60,7 +60,7 @@ static bool evaluate_single_step(step *step, nodelist **list);
 static inline bool evaluate_wildcard_test(nodelist **list);
 static bool apply_wildcard_test(node *each, void *context);
 
-static inline bool evaluate_type_test(step *step, nodelist **list);
+static inline bool evaluate_type_test(step *step, nodelist *list);
 static node *apply_type_test(node *each, void *context);
 
 static inline bool evaluate_name_test(step *step, nodelist **list);
@@ -79,8 +79,8 @@ static nodelist *nodelist_clone(nodelist *list);
 
 nodelist *evaluate(document_model *model, jsonpath *path)
 {
-    ENSURE_NONNULL_ELSE_NULL(model, path, model_get_document_root(model, 0));
-    ENSURE_COND_ELSE_NULL(ABSOLUTE_PATH == path->kind, 0 < model_get_document_count(model))
+    PRECOND_NONNULL_ELSE_NULL(model, path, model_get_document_root(model, 0));
+    PRECOND_ELSE_NULL(ABSOLUTE_PATH == path->kind, 0 < model_get_document_count(model))
 
     return evaluate_steps(model, path);
 }
@@ -88,7 +88,7 @@ nodelist *evaluate(document_model *model, jsonpath *path)
 static nodelist *evaluate_steps(document_model *model, jsonpath *path)
 {
     nodelist *list = make_result_nodelist(model);
-    ENSURE_NONNULL_ELSE_NULL(list);
+    ENSURE_NONNULL_ELSE_NULL(errno, list);
 
     for(size_t i = 0; i < path_get_length(path); i++)
     {
@@ -125,7 +125,7 @@ static bool evaluate_single_step(step *step, nodelist **list)
         case WILDCARD_TEST:
             return evaluate_wildcard_test(list);
         case TYPE_TEST:
-            return evaluate_type_test(step, list);
+            return evaluate_type_test(step, *list);
         case NAME_TEST:
             return evaluate_name_test(step, list);
     }
@@ -143,7 +143,7 @@ static inline bool evaluate_wildcard_test(nodelist **list)
     else
     {
         nodelist *clone = nodelist_clone(*list);
-        ENSURE_NONNULL_ELSE_FALSE(clone);
+        ENSURE_NONNULL_ELSE_FALSE(errno, clone);
         nodelist_clear(*list);
         bool result = nodelist_iterate(clone, apply_wildcard_test, *list);
         nodelist_free(clone);
@@ -168,9 +168,9 @@ static bool apply_wildcard_test(node *each, void *context)
     }
 }
 
-static inline bool evaluate_type_test(step *step, nodelist **list)
+static inline bool evaluate_type_test(step *step, nodelist *list)
 {
-    return NULL != nodelist_map_overwrite(*list, apply_type_test, step, *list);
+    return NULL != nodelist_map_overwrite(list, apply_type_test, step, list);
 }
 
 static node *apply_type_test(node *each, void *context)
@@ -241,7 +241,7 @@ static node *apply_to_one_predicate(node *each, void *context)
 {
     predicate_parameter_block *block = (predicate_parameter_block *)context;
     node *value = apply_name_test(each, block->current_step);
-    ENSURE_NONNULL_ELSE_NULL(value);
+    ENSURE_NONNULL_ELSE_NULL(errno, value);
     return block->to_one_predicate(value, block->current_step);
 }
 
@@ -249,7 +249,7 @@ static bool apply_to_many_predicate(node *each, void *context, nodelist *target)
 {
     predicate_parameter_block *block = (predicate_parameter_block *)context;
     node *value = apply_name_test(each, block->current_step);
-    ENSURE_NONNULL_ELSE_NULL(value);
+    ENSURE_NONNULL_ELSE_NULL(errno, value);
     return block->to_many_predicate(value, block->current_step, target);
 }
 
@@ -273,12 +273,8 @@ static bool apply_wildcard_predicate(node *each, void *context, nodelist *target
 static node *apply_subscript_predicate(node *each, void *context)
 {
     step *step_context = (step *)context;
-    if(SEQUENCE != node_get_kind(each))
-    {
-        // xxx - add error - name is not a sequence
-        errno = EINVAL;
-        return NULL;
-    }
+    // xxx - add error - name is not a sequence
+    ENSURE_ELSE_NULL(EINVAL, SEQUENCE == node_get_kind(each));
     size_t index = subscript_predicate_get_index(step_get_predicate(step_context));
     return sequence_get(each, index);
 }
@@ -286,19 +282,11 @@ static node *apply_subscript_predicate(node *each, void *context)
 static node *apply_name_test(node *object, void *context)
 {
     step *step_context = (step *)context;
-    if(MAPPING != node_get_kind(object))
-    {
-        // xxx - add error - name is not mapping
-        errno = EINVAL;
-        return NULL;
-    }
+    // xxx - add error - name is not mapping
+    ENSURE_ELSE_NULL(EINVAL, MAPPING == node_get_kind(object));
     node *value = mapping_get_value_scalar_key(object, name_test_step_get_name(step_context), name_test_step_get_length(step_context));
-    if(NULL == value)
-    {
-        // xxx - add error - key not in mapping
-        errno = EINVAL;
-        return NULL;
-    }
+    // xxx - add error - key not in mapping
+    ENSURE_NONNULL_ELSE_NULL(EINVAL, value);
     return value;
 }
 
@@ -325,10 +313,7 @@ static node *make_boolean_node(bool value)
     char *scalar = value ? strdup("true") : strdup("false");
     
     node *result = make_scalar_node((unsigned char *)scalar, strlen(scalar), SCALAR_BOOLEAN);
-    if(NULL == result)
-    {
-        return NULL;
-    }
+    ENSURE_NONNULL_ELSE_NULL(errno, result);
     
     return result;
 }
@@ -336,17 +321,10 @@ static node *make_boolean_node(bool value)
 static nodelist *make_result_nodelist(document_model *model)
 {
     node *document = model_get_document(model, 0);
-    if(NULL == document)
-    {
-        // xxx - add error - no document node in model
-        errno = EINVAL;
-        return NULL;
-    }
+    // xxx - add error - no document node in model
+    ENSURE_NONNULL_ELSE_NULL(EINVAL, document);
     nodelist *list = make_nodelist();
-    if(NULL == list)
-    {
-        return NULL;
-    }
+    ENSURE_NONNULL_ELSE_NULL(errno, list);
     nodelist_add(list, document);
 
     return list;
@@ -355,10 +333,7 @@ static nodelist *make_result_nodelist(document_model *model)
 static nodelist *nodelist_clone(nodelist *list)
 {
     nodelist *clone = make_nodelist_with_capacity(nodelist_length(list));
-    if(NULL == clone)
-    {
-        return NULL;
-    }
+    ENSURE_NONNULL_ELSE_NULL(errno, clone);
     for(size_t i = 0; i < nodelist_length(list); i++)
     {
         nodelist_add(clone, nodelist_get(list, i));

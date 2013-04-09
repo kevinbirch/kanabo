@@ -85,7 +85,7 @@ static bool allocate(nodelist * restrict list, size_t capacity)
 
 void nodelist_free(nodelist *list)
 {
-    ENSURE_NONNULL_ELSE_VOID(list);
+    PRECOND_NONNULL_ELSE_VOID(list);
 
     errno = 0;
     if(0 < list->length)
@@ -98,7 +98,7 @@ void nodelist_free(nodelist *list)
 
 void nodelist_free_nodes(nodelist *list)
 {
-    ENSURE_NONNULL_ELSE_VOID(list);
+    PRECOND_NONNULL_ELSE_VOID(list);
 
     errno = 0;
     for(int32_t i = (int32_t)list->length - 1; i >= 0; i--)
@@ -110,7 +110,7 @@ void nodelist_free_nodes(nodelist *list)
 
 bool nodelist_clear(nodelist *list)
 {
-    ENSURE_NONNULL_ELSE_FALSE(list);
+    PRECOND_NONNULL_ELSE_FALSE(list);
 
     errno = 0;
     if(NULL != list->nodes)
@@ -123,7 +123,7 @@ bool nodelist_clear(nodelist *list)
 
 size_t nodelist_length(const nodelist * restrict list)
 {
-    ENSURE_NONNULL_ELSE_ZERO(list);
+    PRECOND_NONNULL_ELSE_ZERO(list);
 
     errno = 0;
     return list->length;
@@ -131,7 +131,7 @@ size_t nodelist_length(const nodelist * restrict list)
 
 bool nodelist_is_empty(const nodelist * restrict list)
 {
-    ENSURE_NONNULL_ELSE_TRUE(list);
+    PRECOND_NONNULL_ELSE_TRUE(list);
 
     errno = 0;
     return 0 == list->length;
@@ -139,8 +139,8 @@ bool nodelist_is_empty(const nodelist * restrict list)
 
 node *nodelist_get(const nodelist * restrict list, size_t index)
 {
-    ENSURE_NONNULL_ELSE_NULL(list);
-    ENSURE_COND_ELSE_NULL(index < list->length);
+    PRECOND_NONNULL_ELSE_NULL(list);
+    PRECOND_ELSE_NULL(index < list->length);
 
     errno = 0;
     return list->nodes[index];
@@ -148,7 +148,7 @@ node *nodelist_get(const nodelist * restrict list, size_t index)
 
 bool nodelist_add(nodelist * restrict list, node  * restrict value)
 {
-    ENSURE_NONNULL_ELSE_FALSE(list, value);
+    PRECOND_NONNULL_ELSE_FALSE(list, value);
     nodelist_ensure_capacity(list, list->length);
 
     list->nodes[list->length++] = value;
@@ -158,7 +158,7 @@ bool nodelist_add(nodelist * restrict list, node  * restrict value)
 
 bool nodelist_add_all(nodelist * restrict list, nodelist * restrict value)
 {
-    ENSURE_NONNULL_ELSE_FALSE(list, value);
+    PRECOND_NONNULL_ELSE_FALSE(list, value);
     nodelist_ensure_capacity(list, list->length + nodelist_length(value));
         
     return nodelist_iterate(value, add_to_nodelist_iterator, list);
@@ -166,8 +166,8 @@ bool nodelist_add_all(nodelist * restrict list, nodelist * restrict value)
 
 bool nodelist_set(nodelist * restrict list, node *value, size_t index)
 {                                                                        
-    ENSURE_NONNULL_ELSE_FALSE(list, value);
-    ENSURE_COND_ELSE_FALSE(index < list->length);
+    PRECOND_NONNULL_ELSE_FALSE(list, value);
+    PRECOND_ELSE_FALSE(index < list->length);
 
     list->nodes[index] = value;
     errno = 0;
@@ -176,7 +176,7 @@ bool nodelist_set(nodelist * restrict list, node *value, size_t index)
 
 bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator, void *context)
 {
-    ENSURE_NONNULL_ELSE_FALSE(list, iterator);
+    PRECOND_NONNULL_ELSE_FALSE(list, iterator);
 
     for(size_t i = 0; i < nodelist_length(list); i++)
     {
@@ -196,7 +196,7 @@ bool add_to_nodelist_iterator(node *each, void *context)
 
 nodelist *nodelist_map(const nodelist * restrict list, nodelist_to_one_function function, void *context)
 {
-    ENSURE_NONNULL_ELSE_NULL(list, function);
+    PRECOND_NONNULL_ELSE_NULL(list, function);
 
     nodelist *target = make_nodelist_with_capacity(nodelist_length(list));
     if(NULL == target)
@@ -215,7 +215,7 @@ nodelist *nodelist_map(const nodelist * restrict list, nodelist_to_one_function 
 
 nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_to_one_function function, void *context, nodelist * restrict target)
 {
-    ENSURE_NONNULL_ELSE_NULL(list, function, target);
+    PRECOND_NONNULL_ELSE_NULL(list, function, target);
 
     for(size_t i = 0; i < nodelist_length(list); i++)
     {
@@ -235,8 +235,8 @@ nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_to_one_func
 
 nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_to_one_function function, void *context, nodelist * restrict target)
 {
-    ENSURE_NONNULL_ELSE_NULL(list, function, target);
-    ENSURE_COND_ELSE_NULL(nodelist_length(target) >= nodelist_length(list));
+    PRECOND_NONNULL_ELSE_NULL(list, function, target);
+    PRECOND_ELSE_NULL(nodelist_length(target) >= nodelist_length(list));
 
     for(size_t i = 0; i < nodelist_length(list); i++)
     {
@@ -256,7 +256,7 @@ nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_to_one
 
 nodelist *nodelist_flatmap(const nodelist * restrict list, nodelist_to_many_function function, void *context)
 {
-    ENSURE_NONNULL_ELSE_NULL(list, function);
+    PRECOND_NONNULL_ELSE_NULL(list, function);
 
     nodelist *target = make_nodelist_with_capacity(nodelist_length(list));
     if(NULL == target)
@@ -274,7 +274,7 @@ nodelist *nodelist_flatmap(const nodelist * restrict list, nodelist_to_many_func
 
 nodelist *nodelist_flatmap_into(const nodelist * restrict list, nodelist_to_many_function function, void *context, nodelist * restrict target)
 {
-    ENSURE_NONNULL_ELSE_NULL(list, function, target);
+    PRECOND_NONNULL_ELSE_NULL(list, function, target);
 
     for(size_t i = 0; i < nodelist_length(list); i++)
     {
