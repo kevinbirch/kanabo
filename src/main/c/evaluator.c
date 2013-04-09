@@ -41,16 +41,22 @@
 #include "evaluator.h"
 #include "preconditions.h"
 
+struct predicate_parameter_block
+{
+    step *current_step;
+    nodelist_function delegate;
+};
+
+typedef struct predicate_parameter_block predicate_parameter_block;
+
 nodelist *evaluate_steps(document_model *model, jsonpath *path);
-bool evaluate_one_step(step *step, nodelist *list);
+bool evaluate_step(step *step, nodelist *list);
 bool evaluate_single_step(step *step, nodelist *list);
 bool evaluate_wildcard_test(nodelist *list);
 bool apply_wildcard_test(node *each, void *context);
-bool add_values_to_nodelist(node *key, node *value, void *context);
-bool add_elements_to_nodelist(node *each, void *context);
 bool evaluate_name_test(step *step, nodelist *list);
 node *apply_name_test(node *object, void *context);
-bool evaluate_simple_name_test(step *step, nodelist *list);
+node *apply_to_one_predicdate(node *each, void *context);
 bool evaluate_predicated_name_test(step *step, nodelist *list);
 bool evaluate_wildcard_predicate(step *step, nodelist *list);
 bool apply_wildcard_predicate(node *each, void *context);
@@ -59,6 +65,8 @@ node *apply_subscript_predicate(node *object, void *context);
 bool evaluate_type_test(step *step, nodelist *list);
 node *apply_type_test(node *each, void *context);
 
+bool add_values_to_nodelist(node *key, node *value, void *context);
+bool add_elements_to_nodelist(node *each, void *context);
 nodelist *make_result_nodelist(document_model *model);
 node *make_boolean_node(bool value);
 nodelist *nodelist_clone(nodelist *list);
@@ -82,7 +90,7 @@ nodelist *evaluate_steps(document_model *model, jsonpath *path)
     for(size_t i = 0; i < path_get_length(path); i++)
     {
         step *step = path_get_step(path, i);
-        if(!evaluate_one_step(step, list))
+        if(!evaluate_step(step, list))
         {
             nodelist_free_nodes(list);
             nodelist_free(list);
@@ -93,7 +101,7 @@ nodelist *evaluate_steps(document_model *model, jsonpath *path)
     return list;
 }
 
-bool evaluate_one_step(step *step, nodelist *list)
+bool evaluate_step(step *step, nodelist *list)
 {
     switch(step_get_kind(step))
     {
@@ -201,18 +209,22 @@ bool evaluate_name_test(step *step, nodelist *list)
     }
     else
     {
-        return evaluate_simple_name_test(step, list);
+        return NULL != nodelist_map_overwrite(list, apply_name_test, step, list);
     }
 }
 
 bool evaluate_predicated_name_test(step *step, nodelist *list)
 {
+    predicate_parameter_block block;
+    block.current_step = step;
+
     switch(predicate_get_kind(step_get_predicate(step)))
     {
         case WILDCARD:
             return evaluate_wildcard_predicate(step, list);
         case SUBSCRIPT:
-            return evaluate_subscript_predicate(step, list);
+            block.delegate = apply_subscript_predicate;
+            return NULL != nodelist_map_overwrite(list, apply_to_one_predicdate, &block, list);
         case SLICE:
             //return evaluate_slice_predicate(step, list);
             return false;
@@ -262,32 +274,28 @@ bool apply_wildcard_predicate(node *each, void *context)
     }
 }
 
-bool evaluate_subscript_predicate(step *step, nodelist *list)
+node *apply_to_one_predicdate(node *each, void *context)
 {
-    return NULL != nodelist_map_overwrite(list, apply_subscript_predicate, step, list);
+    predicate_parameter_block *block = (predicate_parameter_block *)context;
+    node *value = apply_name_test(each, block->current_step);
+    if(NULL == value)
+    {
+        return NULL;
+    }
+    return block->delegate(value, block->current_step);
 }
 
 node *apply_subscript_predicate(node *each, void *context)
 {
     step *step_context = (step *)context;
-    node *sequence = apply_name_test(each, context);
-    if(NULL == sequence)
-    {
-        return NULL;
-    }
-    if(SEQUENCE != node_get_kind(sequence))
+    if(SEQUENCE != node_get_kind(each))
     {
         // xxx - add error - name is not a sequence
         errno = EINVAL;
         return NULL;
     }
     size_t index = subscript_predicate_get_index(step_get_predicate(step_context));
-    return sequence_get(sequence, index);
-}
-
-bool evaluate_simple_name_test(step *step, nodelist *list)
-{
-    return NULL != nodelist_map_overwrite(list, apply_name_test, step, list);
+    return sequence_get(each, index);
 }
 
 node *apply_name_test(node *object, void *context)
