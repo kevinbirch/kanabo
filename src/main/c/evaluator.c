@@ -46,27 +46,31 @@ struct predicate_parameter_block
     step *current_step;
     union
     {
-        nodelist_to_one_function to_one_delegate;
-        nodelist_to_many_function to_many_delegate;
+        nodelist_to_one_function to_one_predicate;
+        nodelist_to_many_function to_many_predicate;
     };
 };
 
 typedef struct predicate_parameter_block predicate_parameter_block;
 
 static nodelist *evaluate_steps(document_model *model, jsonpath *path);
-static bool evaluate_step(step *step, nodelist *list);
-static bool evaluate_single_step(step *step, nodelist *list);
-static bool evaluate_wildcard_test(nodelist *list);
+static bool evaluate_step(step *step, nodelist **list);
+static bool evaluate_single_step(step *step, nodelist **list);
+
+static inline bool evaluate_wildcard_test(nodelist **list);
 static bool apply_wildcard_test(node *each, void *context);
-static bool evaluate_name_test(step *step, nodelist *list);
-static node *apply_name_test(node *object, void *context);
-static node *apply_to_one_predicdate(node *each, void *context);
-static bool evaluate_predicated_name_test(step *step, nodelist *list);
-static bool evaluate_wildcard_predicate(step *step, nodelist *list);
-static bool apply_wildcard_predicate(node *each, void *context);
-static node *apply_subscript_predicate(node *object, void *context);
-static bool evaluate_type_test(step *step, nodelist *list);
+
+static inline bool evaluate_type_test(step *step, nodelist **list);
 static node *apply_type_test(node *each, void *context);
+
+static inline bool evaluate_name_test(step *step, nodelist **list);
+static bool evaluate_predicated_name_test(step *step, nodelist **list);
+static node *apply_to_one_predicate(node *each, void *context);
+static bool apply_to_many_predicate(node *each, void *context, nodelist *target);
+static bool apply_wildcard_predicate(node *each, void *context, nodelist *target);
+static node *apply_subscript_predicate(node *object, void *context);
+
+static node *apply_name_test(node *object, void *context);
 
 static bool add_to_nodelist_map_value_iterator(node *key, node *value, void *context);
 static nodelist *make_result_nodelist(document_model *model);
@@ -84,15 +88,12 @@ nodelist *evaluate(document_model *model, jsonpath *path)
 static nodelist *evaluate_steps(document_model *model, jsonpath *path)
 {
     nodelist *list = make_result_nodelist(model);
-    if(NULL == list)
-    {
-        return NULL;
-    }
+    ENSURE_NONNULL_ELSE_NULL(list);
 
     for(size_t i = 0; i < path_get_length(path); i++)
     {
         step *step = path_get_step(path, i);
-        if(!evaluate_step(step, list))
+        if(!evaluate_step(step, &list))
         {
             nodelist_free_nodes(list);
             nodelist_free(list);
@@ -103,12 +104,12 @@ static nodelist *evaluate_steps(document_model *model, jsonpath *path)
     return list;
 }
 
-static bool evaluate_step(step *step, nodelist *list)
+static bool evaluate_step(step *step, nodelist **list)
 {
     switch(step_get_kind(step))
     {
         case ROOT:
-            return nodelist_set(list, document_get_root(nodelist_get(list, 0)), 0);
+            return nodelist_set(*list, document_get_root(nodelist_get(*list, 0)), 0);
         case SINGLE:
             return evaluate_single_step(step, list);
         case RECURSIVE:
@@ -117,7 +118,7 @@ static bool evaluate_step(step *step, nodelist *list)
     }
 }
 
-static bool evaluate_single_step(step *step, nodelist *list)
+static bool evaluate_single_step(step *step, nodelist **list)
 {
     switch(step_get_test_kind(step))
     {
@@ -130,24 +131,21 @@ static bool evaluate_single_step(step *step, nodelist *list)
     }
 }
 
-static bool evaluate_wildcard_test(nodelist *list)
+static inline bool evaluate_wildcard_test(nodelist **list)
 {
-    if(1 == nodelist_length(list))
+    if(1 == nodelist_length(*list))
     {
-        node *context = nodelist_get(list, 0);
-        nodelist_clear(list);
+        node *each = nodelist_get(*list, 0);
+        nodelist_clear(*list);
 
-        return apply_wildcard_test(context, list);
+        return apply_wildcard_test(each, *list);
     }
     else
     {
-        nodelist *clone = nodelist_clone(list);
-        if(NULL == clone)
-        {
-            return false;
-        }
-        nodelist_clear(list);
-        bool result = nodelist_iterate(clone, apply_wildcard_test, list);
+        nodelist *clone = nodelist_clone(*list);
+        ENSURE_NONNULL_ELSE_FALSE(clone);
+        nodelist_clear(*list);
+        bool result = nodelist_iterate(clone, apply_wildcard_test, *list);
         nodelist_free(clone);
         return result;
     }
@@ -170,9 +168,9 @@ static bool apply_wildcard_test(node *each, void *context)
     }
 }
 
-static bool evaluate_type_test(step *step, nodelist *list)
+static inline bool evaluate_type_test(step *step, nodelist **list)
 {
-    return NULL != nodelist_map_overwrite(list, apply_type_test, step, list);
+    return NULL != nodelist_map_overwrite(*list, apply_type_test, step, *list);
 }
 
 static node *apply_type_test(node *each, void *context)
@@ -203,7 +201,7 @@ static node *apply_type_test(node *each, void *context)
     return make_boolean_node(result);
 }
 
-static bool evaluate_name_test(step *step, nodelist *list)
+static inline bool evaluate_name_test(step *step, nodelist **list)
 {
     if(step_has_predicate(step))
     {
@@ -211,22 +209,25 @@ static bool evaluate_name_test(step *step, nodelist *list)
     }
     else
     {
-        return NULL != nodelist_map_overwrite(list, apply_name_test, step, list);
+        return NULL != nodelist_map_overwrite(*list, apply_name_test, step, *list);
     }
 }
 
-static bool evaluate_predicated_name_test(step *step, nodelist *list)
+static bool evaluate_predicated_name_test(step *step, nodelist **list)
 {
     predicate_parameter_block block;
     block.current_step = step;
-
+    nodelist *result;
+    
     switch(predicate_get_kind(step_get_predicate(step)))
     {
         case WILDCARD:
-            return evaluate_wildcard_predicate(step, list);
+            block.to_many_predicate = apply_wildcard_predicate;
+            result = nodelist_flatmap(*list, apply_to_many_predicate, &block);
+            return NULL == result ? false : (*list = result, true);
         case SUBSCRIPT:
-            block.to_one_delegate = apply_subscript_predicate;
-            return NULL != nodelist_map_overwrite(list, apply_to_one_predicdate, &block, list);
+            block.to_one_predicate = apply_subscript_predicate;
+            return NULL != nodelist_map_overwrite(*list, apply_to_one_predicate, &block, *list);
         case SLICE:
             //return evaluate_slice_predicate(step, list);
             return false;
@@ -236,55 +237,37 @@ static bool evaluate_predicated_name_test(step *step, nodelist *list)
     }
 }
 
-static bool evaluate_wildcard_predicate(step *step, nodelist *list)
+static node *apply_to_one_predicate(node *each, void *context)
 {
-    nodelist *clone = nodelist_clone(list);
-    if(NULL == clone)
-    {
-        return false;
-    }
-    nodelist_clear(list);
-    bool result = true;
-    for(size_t i = 0; i < nodelist_length(clone) && true == result; i++)
-    {
-        node *each = nodelist_get(clone, i);
-        node *value = apply_name_test(each, (void *)step);
-        if(NULL == value)
-        {
-            return false;
-        }
-        result &= apply_wildcard_predicate(value, list);
-    }
-    nodelist_free(clone);
-    return result;
+    predicate_parameter_block *block = (predicate_parameter_block *)context;
+    node *value = apply_name_test(each, block->current_step);
+    ENSURE_NONNULL_ELSE_NULL(value);
+    return block->to_one_predicate(value, block->current_step);
 }
 
-static bool apply_wildcard_predicate(node *each, void *context)
+static bool apply_to_many_predicate(node *each, void *context, nodelist *target)
 {
-    nodelist *list = (nodelist *)context;
+    predicate_parameter_block *block = (predicate_parameter_block *)context;
+    node *value = apply_name_test(each, block->current_step);
+    ENSURE_NONNULL_ELSE_NULL(value);
+    return block->to_many_predicate(value, block->current_step, target);
+}
+
+static bool apply_wildcard_predicate(node *each, void *context, nodelist *target)
+{
+#pragma unused(context)
     switch(node_get_kind(each))
     {
         case SCALAR:
         case MAPPING:
-            return nodelist_add(list, each);
+            return nodelist_add(target, each);
         case SEQUENCE:
-            return iterate_sequence(each, add_to_nodelist_iterator, list);
+            return iterate_sequence(each, add_to_nodelist_iterator, target);
         case DOCUMENT:
-            // xxx - signal error
+            // xxx - add error - document node found nested in document tree
             errno = EINVAL;
             return false;
     }
-}
-
-static node *apply_to_one_predicdate(node *each, void *context)
-{
-    predicate_parameter_block *block = (predicate_parameter_block *)context;
-    node *value = apply_name_test(each, block->current_step);
-    if(NULL == value)
-    {
-        return NULL;
-    }
-    return block->to_one_delegate(value, block->current_step);
 }
 
 static node *apply_subscript_predicate(node *each, void *context)
