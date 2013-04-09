@@ -239,6 +239,45 @@ START_TEST (bad_map_overwrite)
 }
 END_TEST
 
+START_TEST (bad_flatmap)
+{
+    reset_errno();
+    nodelist *empty_list = make_nodelist();
+    ck_assert_not_null(empty_list);
+    ck_assert_noerr();
+
+    reset_errno();
+    ck_assert_null(nodelist_flatmap(NULL, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    reset_errno();
+    ck_assert_null(nodelist_flatmap(empty_list, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+
+    nodelist_free(empty_list);
+}
+END_TEST
+    
+START_TEST (bad_flatmap_into)
+{
+    reset_errno();
+    nodelist *empty_list = make_nodelist();
+    ck_assert_not_null(empty_list);
+    ck_assert_noerr();
+
+    reset_errno();
+    ck_assert_null(nodelist_flatmap_into(NULL, NULL, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    reset_errno();
+    ck_assert_null(nodelist_flatmap_into(empty_list, NULL, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+    reset_errno();
+    ck_assert_null(nodelist_flatmap_into(empty_list, (nodelist_to_many_function)1, NULL, NULL));
+    ck_assert_int_eq(EINVAL, errno);
+
+    nodelist_free(empty_list);
+}
+END_TEST
+    
 START_TEST (ctor_dtor)
 {
     reset_errno();
@@ -583,6 +622,8 @@ Suite *nodelist_suite(void)
     tcase_add_test(bad_input, bad_map);
     tcase_add_test(bad_input, bad_map_into);
     tcase_add_test(bad_input, bad_map_overwrite);
+    tcase_add_test(bad_input, bad_flatmap);
+    tcase_add_test(bad_input, bad_flatmap_into);
     
     TCase *basic = tcase_create("basic");
     tcase_add_test(basic, ctor_dtor);
