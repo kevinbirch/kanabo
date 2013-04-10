@@ -57,7 +57,7 @@ int main(const int argc, char * const *argv)
     if(NULL == argv || NULL == argv[0])
     {
         fprintf(stderr, "error: whoa! something is wrong, there are no program arguments.\n");
-        return -1;
+        return EXIT_FAILURE;
     }
 
     struct settings settings;
