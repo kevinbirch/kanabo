@@ -39,6 +39,7 @@
 #include <errno.h>
 
 #include "model.h"
+#include "conditions.h"
 
 #define ensure_capacity(TYPE, ARRAY, SIZE, CAPACITY)                    \
     if((SIZE) > (CAPACITY))                                             \
@@ -56,11 +57,8 @@
 
 bool model_add(document_model * restrict model, node *document)
 {
-    if(NULL == model || NULL == document || DOCUMENT != node_get_kind(document))
-    {
-        errno = EINVAL;
-        return false;
-    }
+    PRECOND_NONNULL_ELSE_FALSE(model, document);
+    PRECOND_ELSE_FALSE(DOCUMENT == node_get_kind(document));
 
     ensure_capacity(node, model->documents, model->size + 1, model->capacity);
     model->documents[model->size++] = document;
@@ -70,11 +68,8 @@ bool model_add(document_model * restrict model, node *document)
 
 bool document_set_root(node * restrict document, node *root)
 {
-    if(NULL == document || DOCUMENT != node_get_kind(document) || NULL == root)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    PRECOND_NONNULL_ELSE_FALSE(document, root);
+    PRECOND_ELSE_FALSE(DOCUMENT == node_get_kind(document));
 
     errno = 0;
     document->content.document.root = root;
@@ -83,11 +78,8 @@ bool document_set_root(node * restrict document, node *root)
 
 bool sequence_add(node * restrict sequence, node *item)
 {
-    if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || NULL == item)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    PRECOND_NONNULL_ELSE_FALSE(sequence, item);
+    PRECOND_ELSE_FALSE(SEQUENCE == node_get_kind(sequence));
 
     ensure_capacity(node, sequence->content.sequence.value, sequence->content.size + 1, sequence->content.sequence.capacity);
     sequence->content.sequence.value[sequence->content.size++] = item;
@@ -98,11 +90,8 @@ bool sequence_add(node * restrict sequence, node *item)
 
 bool sequence_set(node * restrict sequence, node *item, size_t index)
 {
-    if(NULL == sequence || SEQUENCE != node_get_kind(sequence) || NULL == item || index >= sequence->content.size)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    PRECOND_NONNULL_ELSE_FALSE(sequence, item);
+    PRECOND_ELSE_FALSE(SEQUENCE == node_get_kind(sequence), index < sequence->content.size);
 
     errno = 0;
     sequence->content.sequence.value[index] = item;
@@ -112,19 +101,13 @@ bool sequence_set(node * restrict sequence, node *item, size_t index)
 
 bool mapping_put(node * restrict mapping, node *key, node *value)
 {
-    if(NULL == mapping || MAPPING != node_get_kind(mapping) || NULL == key || NULL == value)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    PRECOND_NONNULL_ELSE_FALSE(mapping, key, value);
+    PRECOND_ELSE_FALSE(MAPPING == node_get_kind(mapping));
 
     errno = 0;
     bool result = true;
     key_value_pair *pair = (key_value_pair *)malloc(sizeof(key_value_pair));
-    if(NULL == pair)
-    {
-        return false;
-    }
+    ENSURE_NONNULL_ELSE_FALSE(errno, pair);
 
     ensure_capacity(key_value_pair, mapping->content.mapping.value, mapping->content.size + 1, mapping->content.mapping.capacity);
 
