@@ -147,6 +147,10 @@ $(GENERATED_TEST_DEPEND_DIR):
 $(GENERATED_TEST_DEPEND_DIR)/%.d: %.c | $(GENERATED_TEST_DEPEND_DIR)
 	@$(CC) -MM -MG -MT '$(TEST_OBJECT_DIR)/$(*F).o $@' $(TEST_CFLAGS) $(CDEFS) $< > $@
 
+# This taget can be used for ad-hoc builds of single objects
+%.o: %.c create-build-directories
+	$(CC) $(CFLAGS) $(CDEFS) -c $< -o $(OBJECT_DIR)/$@
+
 $(OBJECT_DIR)/%.o: %.c
 	$(CC) $(CFLAGS) $(CDEFS) -c $< -o $@
 
@@ -193,13 +197,17 @@ else
 $(error "Unsupported value of PACKAGING: $(PACKAGING)")
 endif
 
-initialize: validate
+announce-build:
 	@echo ""
 	@echo " Buidling $(GROUP_ID):$(ARTIFACT_ID):$(VERSION)"
+
+create-build-directories:
 	@mkdir -p $(OBJECT_DIR)
 	@mkdir -p $(TEST_OBJECT_DIR)
 	@mkdir -p $(GENERATED_DEPEND_DIR)
 	@mkdir -p $(GENERATED_TEST_DEPEND_DIR)
+
+initialize: validate announce-build create-build-directories
 
 announce-compile-phase:
 	@echo ""
