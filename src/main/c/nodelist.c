@@ -38,12 +38,10 @@
 #include <errno.h>
 
 #include "nodelist.h"
-#include "array.h"
 #include "conditions.h"
 
-#define nodelist_ensure_capacity(NODELIST, LENGTH) ensure_capacity(node, (NODELIST)->nodes, (LENGTH), (NODELIST)->capacity)
-
 static bool allocate(nodelist * restrict list, size_t capacity);
+static inline bool ensure_capacity(nodelist *list, size_t min_capacity);
 
 nodelist *make_nodelist(void)
 {
@@ -68,19 +66,6 @@ nodelist *make_nodelist_with_capacity(size_t capacity)
         free(result);
         return NULL;
     }
-}
-
-static bool allocate(nodelist * restrict list, size_t capacity)
-{
-    list->length = 0;
-    errno = 0;
-    list->nodes = (node **)malloc(sizeof(node) * capacity);
-    if(NULL == list->nodes)
-    {
-        return false;
-    }
-    list->capacity = capacity;
-    return true;
 }
 
 void nodelist_free(nodelist *list)
@@ -149,8 +134,10 @@ node *nodelist_get(const nodelist * restrict list, size_t index)
 bool nodelist_add(nodelist * restrict list, node  * restrict value)
 {
     PRECOND_NONNULL_ELSE_FALSE(list, value);
-    nodelist_ensure_capacity(list, list->length);
-
+    if(!ensure_capacity(list, list->length + 1))
+    {
+        return false;
+    }
     list->nodes[list->length++] = value;
     errno = 0;
     return true;
@@ -159,9 +146,12 @@ bool nodelist_add(nodelist * restrict list, node  * restrict value)
 bool nodelist_add_all(nodelist * restrict list, nodelist * restrict value)
 {
     PRECOND_NONNULL_ELSE_FALSE(list, value);
-    nodelist_ensure_capacity(list, list->length + nodelist_length(value));
-        
-    return nodelist_iterate(value, add_to_nodelist_iterator, list);
+    if(!ensure_capacity(list, list->length + value->length))
+    {
+        return false;
+    }
+    bool result = nodelist_iterate(value, add_to_nodelist_sequence_iterator, list);
+    return result;
 }
 
 bool nodelist_set(nodelist * restrict list, node *value, size_t index)
@@ -188,7 +178,7 @@ bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator
     return true;
 }
 
-bool add_to_nodelist_iterator(node *each, void *context)
+bool add_to_nodelist_sequence_iterator(node *each, void *context)
 {
     nodelist *list = (nodelist *)context;
     return nodelist_add(list, each);
@@ -286,4 +276,35 @@ nodelist *nodelist_flatmap_into(const nodelist * restrict list, nodelist_to_many
 
     return target;
 }
+
+static bool allocate(nodelist * restrict list, size_t capacity)
+{
+    list->length = 0;
+    list->capacity = capacity;
+    errno = 0;
+    list->nodes = (node **)malloc(sizeof(node *) * capacity);
+    if(NULL == list->nodes)
+    {
+        return false;
+    }
+    return true;
+}
+
+static inline bool ensure_capacity(nodelist *list, size_t min_capacity)
+{
+    if(list->capacity < min_capacity)
+    {
+        size_t new_capacity = (min_capacity * 3) / 2 + 1;
+        node **array_cache = list->nodes;
+        list->nodes = realloc(list->nodes, sizeof(node *) * new_capacity);
+        if(NULL == list->nodes)
+        {
+            list->nodes = array_cache;
+            return false;
+        }
+        list->capacity = new_capacity;
+    }
+    return true;
+}
+
 

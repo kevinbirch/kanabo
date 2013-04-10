@@ -39,7 +39,20 @@
 #include <errno.h>
 
 #include "model.h"
-#include "array.h"
+
+#define ensure_capacity(TYPE, ARRAY, SIZE, CAPACITY)                    \
+    if((SIZE) > (CAPACITY))                                             \
+    {                                                                   \
+        size_t new_capacity = ((SIZE) * 3) / 2 + 1;                     \
+        TYPE **array_cache = (ARRAY);                                   \
+        (ARRAY) = realloc((ARRAY), sizeof(TYPE *) * new_capacity);      \
+        if(NULL == (ARRAY))                                             \
+        {                                                               \
+            (ARRAY) = array_cache;                                      \
+            return false;                                               \
+        }                                                               \
+        (CAPACITY) = new_capacity;                                      \
+    }
 
 bool model_add(document_model * restrict model, node *document)
 {
@@ -49,11 +62,10 @@ bool model_add(document_model * restrict model, node *document)
         return false;
     }
 
-    errno = 0;
-    bool result = true;
     ensure_capacity(node, model->documents, model->size + 1, model->capacity);
     model->documents[model->size++] = document;
-    return result;
+    errno = 0;
+    return true;
 }
 
 bool document_set_root(node * restrict document, node *root)
@@ -77,10 +89,10 @@ bool sequence_add(node * restrict sequence, node *item)
         return false;
     }
 
-    errno = 0;
     ensure_capacity(node, sequence->content.sequence.value, sequence->content.size + 1, sequence->content.sequence.capacity);
     sequence->content.sequence.value[sequence->content.size++] = item;
 
+    errno = 0;
     return true;
 }
 
@@ -113,9 +125,11 @@ bool mapping_put(node * restrict mapping, node *key, node *value)
     {
         return false;
     }
+
+    ensure_capacity(key_value_pair, mapping->content.mapping.value, mapping->content.size + 1, mapping->content.mapping.capacity);
+
     pair->key = key;
     pair->value = value;
-    ensure_capacity(key_value_pair, mapping->content.mapping.value, mapping->content.size + 1, mapping->content.mapping.capacity);
     mapping->content.mapping.value[mapping->content.size++] = pair;
 
     return result;

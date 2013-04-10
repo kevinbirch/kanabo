@@ -383,9 +383,6 @@ START_TEST (add_all)
     ck_assert_int_eq(2, nodelist_length(other_list));
 
     reset_errno();
-    ck_assert_not_null(list);
-    ck_assert_not_null(other_list);
-    
     ck_assert_true(nodelist_add_all(list, other_list));
     ck_assert_noerr();
     ck_assert_int_eq(4, nodelist_length(list));

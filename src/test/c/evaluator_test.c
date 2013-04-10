@@ -151,8 +151,6 @@ START_TEST (wildcard)
     ck_assert_int_eq(0, errno);
     ck_assert_not_null(list);
     ck_assert_int_eq(5, nodelist_length(list));
-    node *store = nodelist_get(list, 0);
-    ck_assert_not_null(store);
 
     ck_assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 0)));
     ck_assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 1)));

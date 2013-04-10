@@ -58,7 +58,7 @@ static bool evaluate_step(step *step, nodelist **list);
 static bool evaluate_single_step(step *step, nodelist **list);
 
 static inline bool evaluate_wildcard_test(nodelist **list);
-static bool apply_wildcard_test(node *each, void *context);
+static bool apply_wildcard_test(node *each, void *context, nodelist *target);
 
 static inline bool evaluate_type_test(step *step, nodelist *list);
 static node *apply_type_test(node *each, void *context);
@@ -72,10 +72,9 @@ static node *apply_subscript_predicate(node *object, void *context);
 
 static node *apply_name_test(node *object, void *context);
 
-static bool add_to_nodelist_map_value_iterator(node *key, node *value, void *context);
+static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context);
 static nodelist *make_result_nodelist(document_model *model);
 static node *make_boolean_node(bool value);
-static nodelist *nodelist_clone(nodelist *list);
 
 nodelist *evaluate(document_model *model, jsonpath *path)
 {
@@ -133,36 +132,23 @@ static bool evaluate_single_step(step *step, nodelist **list)
 
 static inline bool evaluate_wildcard_test(nodelist **list)
 {
-    if(1 == nodelist_length(*list))
-    {
-        node *each = nodelist_get(*list, 0);
-        nodelist_clear(*list);
-
-        return apply_wildcard_test(each, *list);
-    }
-    else
-    {
-        nodelist *clone = nodelist_clone(*list);
-        ENSURE_NONNULL_ELSE_FALSE(errno, clone);
-        nodelist_clear(*list);
-        bool result = nodelist_iterate(clone, apply_wildcard_test, *list);
-        nodelist_free(clone);
-        return result;
-    }
+    nodelist *result = nodelist_flatmap(*list, apply_wildcard_test, NULL);
+    return NULL == result ? false : (nodelist_free(*list), *list = result, true);
 }
 
-static bool apply_wildcard_test(node *each, void *context)
+static bool apply_wildcard_test(node *each, void *context, nodelist *target)
 {
-    nodelist *list = (nodelist *)context;
+#pragma unused(context)
     switch(node_get_kind(each))
     {
         case MAPPING:
-            return iterate_mapping(each, add_to_nodelist_map_value_iterator, list);
+            return iterate_mapping(each, add_values_to_nodelist_map_iterator, target);
         case SEQUENCE:
-            return iterate_sequence(each, add_to_nodelist_iterator, list);
+            return iterate_sequence(each, add_to_nodelist_sequence_iterator, target);
         case SCALAR:
+            return nodelist_add(target, each);
         case DOCUMENT:
-            // xxx - signal error
+            // xxx - add error - document node found nested in document tree
             errno = EINVAL;
             return false;
     }
@@ -224,7 +210,7 @@ static bool evaluate_predicated_name_test(step *step, nodelist **list)
         case WILDCARD:
             block.to_many_predicate = apply_wildcard_predicate;
             result = nodelist_flatmap(*list, apply_to_many_predicate, &block);
-            return NULL == result ? false : (*list = result, true);
+            return NULL == result ? false : (nodelist_free(*list), *list = result, true);
         case SUBSCRIPT:
             block.to_one_predicate = apply_subscript_predicate;
             return NULL != nodelist_map_overwrite(*list, apply_to_one_predicate, &block, *list);
@@ -262,7 +248,7 @@ static bool apply_wildcard_predicate(node *each, void *context, nodelist *target
         case MAPPING:
             return nodelist_add(target, each);
         case SEQUENCE:
-            return iterate_sequence(each, add_to_nodelist_iterator, target);
+            return iterate_sequence(each, add_to_nodelist_sequence_iterator, target);
         case DOCUMENT:
             // xxx - add error - document node found nested in document tree
             errno = EINVAL;
@@ -290,19 +276,19 @@ static node *apply_name_test(node *object, void *context)
     return value;
 }
 
-static bool add_to_nodelist_map_value_iterator(node *key, node *value, void *context)
+static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context)
 {
 #pragma unused(key)
-    nodelist *list = (nodelist *)context;
+    nodelist *target = (nodelist *)context;
     switch(node_get_kind(value))
     {
         case SCALAR:
         case MAPPING:
-            return nodelist_add(list, value);
+            return nodelist_add(target, value);
         case SEQUENCE:
-            return iterate_sequence(value, add_to_nodelist_iterator, context);
+            return iterate_sequence(value, add_to_nodelist_sequence_iterator, target);
         case DOCUMENT:
-            // xxx - add error - document node cannot be a child of any other node
+            // xxx - add error - document node found nested in document tree
             errno = EINVAL;
             return false;
     }
@@ -328,18 +314,6 @@ static nodelist *make_result_nodelist(document_model *model)
     nodelist_add(list, document);
 
     return list;
-}
-
-static nodelist *nodelist_clone(nodelist *list)
-{
-    nodelist *clone = make_nodelist_with_capacity(nodelist_length(list));
-    ENSURE_NONNULL_ELSE_NULL(errno, clone);
-    for(size_t i = 0; i < nodelist_length(list); i++)
-    {
-        nodelist_add(clone, nodelist_get(list, i));
-    }
-
-    return clone;
 }
 
 
