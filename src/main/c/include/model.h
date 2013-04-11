@@ -58,6 +58,14 @@ enum scalar_kind
     SCALAR_NULL
 };
 
+struct key_value_pair
+{
+    node *key;
+    node *value;
+};
+
+typedef struct key_value_pair key_value_pair;
+
 struct node
 {
     struct 
@@ -99,14 +107,6 @@ struct node
 };
 
 typedef struct node node;
-
-struct key_value_pair
-{
-    node *key;
-    node *value;
-};
-
-typedef struct key_value_pair key_value_pair;
 
 struct model
 {
