@@ -606,45 +606,45 @@ END_TEST
 
 Suite *nodelist_suite(void)
 {
-    TCase *bad_input = tcase_create("bad input");
-    tcase_add_test(bad_input, bad_clear);
-    tcase_add_test(bad_input, bad_length);
-    tcase_add_test(bad_input, bad_is_empty);
-    tcase_add_test(bad_input, bad_get);
-    tcase_add_test(bad_input, bad_add);
-    tcase_add_test(bad_input, bad_set);
-    tcase_add_test(bad_input, bad_iterate);
-    tcase_add_test(bad_input, bad_map);
-    tcase_add_test(bad_input, bad_map_into);
-    tcase_add_test(bad_input, bad_map_overwrite);
-    tcase_add_test(bad_input, bad_flatmap);
-    tcase_add_test(bad_input, bad_flatmap_into);
+    TCase *bad_input_case = tcase_create("bad input");
+    tcase_add_test(bad_input_case, bad_clear);
+    tcase_add_test(bad_input_case, bad_length);
+    tcase_add_test(bad_input_case, bad_is_empty);
+    tcase_add_test(bad_input_case, bad_get);
+    tcase_add_test(bad_input_case, bad_add);
+    tcase_add_test(bad_input_case, bad_set);
+    tcase_add_test(bad_input_case, bad_iterate);
+    tcase_add_test(bad_input_case, bad_map);
+    tcase_add_test(bad_input_case, bad_map_into);
+    tcase_add_test(bad_input_case, bad_map_overwrite);
+    tcase_add_test(bad_input_case, bad_flatmap);
+    tcase_add_test(bad_input_case, bad_flatmap_into);
     
-    TCase *basic = tcase_create("basic");
-    tcase_add_test(basic, ctor_dtor);
+    TCase *basic_case = tcase_create("basic");
+    tcase_add_test(basic_case, ctor_dtor);
 
-    TCase *mutate = tcase_create("mutate");
-    tcase_add_checked_fixture(mutate, nodelist_setup, nodelist_teardown);
-    tcase_add_test(mutate, add);
-    tcase_add_test(mutate, set);
-    tcase_add_test(mutate, add_all);
+    TCase *mutate_case = tcase_create("mutate");
+    tcase_add_checked_fixture(mutate_case, nodelist_setup, nodelist_teardown);
+    tcase_add_test(mutate_case, add);
+    tcase_add_test(mutate_case, set);
+    tcase_add_test(mutate_case, add_all);
 
-    TCase *iterate = tcase_create("iterate");
-    tcase_add_checked_fixture(iterate, nodelist_setup, nodelist_teardown);
-    tcase_add_test(iterate, iteration);
-    tcase_add_test(iterate, fail_iteration);
-    tcase_add_test(iterate, map);
-    tcase_add_test(iterate, fail_map);
-    tcase_add_test(iterate, map_overwrite);
-    tcase_add_test(iterate, fail_map_overwrite);
-    tcase_add_test(iterate, flatmap);
-    tcase_add_test(iterate, fail_flatmap);
+    TCase *iterate_case = tcase_create("iterate");
+    tcase_add_checked_fixture(iterate_case, nodelist_setup, nodelist_teardown);
+    tcase_add_test(iterate_case, iteration);
+    tcase_add_test(iterate_case, fail_iteration);
+    tcase_add_test(iterate_case, map);
+    tcase_add_test(iterate_case, fail_map);
+    tcase_add_test(iterate_case, map_overwrite);
+    tcase_add_test(iterate_case, fail_map_overwrite);
+    tcase_add_test(iterate_case, flatmap);
+    tcase_add_test(iterate_case, fail_flatmap);
 
-    Suite *nodelist = suite_create("Nodelist");
-    suite_add_tcase(nodelist, basic);
-    suite_add_tcase(nodelist, mutate);
-    suite_add_tcase(nodelist, iterate);
+    Suite *nodelist_suite = suite_create("Nodelist");
+    suite_add_tcase(nodelist_suite, basic_case);
+    suite_add_tcase(nodelist_suite, mutate_case);
+    suite_add_tcase(nodelist_suite, iterate_case);
 
-    return nodelist;
+    return nodelist_suite;
 }
 

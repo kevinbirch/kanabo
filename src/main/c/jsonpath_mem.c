@@ -53,40 +53,40 @@ void jsonpath_free(jsonpath *path)
     free(path->steps);
 }
 
-void step_free(step *step)
+void step_free(step *value)
 {
-    if(NULL == step)
+    if(NULL == value)
     {
         return;
     }
-    if(NAME_TEST == step->test.kind)
+    if(NAME_TEST == value->test.kind)
     {
-        if(NULL != step->test.name.value)
+        if(NULL != value->test.name.value)
         {
-            free(step->test.name.value);
-            step->test.name.value = NULL;
-            step->test.name.length = 0;
+            free(value->test.name.value);
+            value->test.name.value = NULL;
+            value->test.name.length = 0;
         }
     }
-    if(NULL != step->predicate)
+    if(NULL != value->predicate)
     {
-        predicate_free(step->predicate);
+        predicate_free(value->predicate);
     }
-    free(step);
+    free(value);
 }
 
-static void predicate_free(predicate *predicate)
+static void predicate_free(predicate *value)
 {
-    if(NULL == predicate)
+    if(NULL == value)
     {
         return;
     }
-    if(JOIN == predicate_get_kind(predicate))
+    if(JOIN == predicate_get_kind(value))
     {
-        jsonpath_free(predicate->join.left);
-        jsonpath_free(predicate->join.right);
+        jsonpath_free(value->join.left);
+        jsonpath_free(value->join.right);
     }
 
-    free(predicate);
+    free(value);
 }
 

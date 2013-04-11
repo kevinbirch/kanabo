@@ -121,10 +121,10 @@ node   *model_get_document(const document_model * restrict model, size_t index);
 node   *model_get_document_root(const document_model * restrict model, size_t index);
 size_t  model_get_document_count(const document_model * restrict model);
 
-enum node_kind  node_get_kind(const node * restrict node);
-uint8_t        *node_get_name(const node * restrict node);
-size_t          node_get_name_length(const node * restrict node);
-size_t          node_get_size(const node * restrict node);
+enum node_kind  node_get_kind(const node * restrict value);
+uint8_t        *node_get_name(const node * restrict value);
+size_t          node_get_name_length(const node * restrict value);
+size_t          node_get_size(const node * restrict value);
 
 node *document_get_root(const node * restrict document);
 

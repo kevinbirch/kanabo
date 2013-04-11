@@ -57,15 +57,12 @@ enum emit_mode
 {
     BASH,
     ZSH,
-    UNKNOWN
 };
-
-typedef enum emit_mode emit_mode;
 
 struct settings
 {
     const char *program_name;
-    emit_mode  emit_mode;
+    enum emit_mode  emit_mode;
     const char *expression;
     const char *input_file_name;
 };

@@ -40,8 +40,10 @@
 
 #include "test.h"
 
-int main()
+int main(int argc, char **argv)
 {
+#pragma unused(argc, argv)
+
     SRunner *runner = srunner_create(master_suite());
     srunner_add_suite(runner, loader_suite());
     srunner_add_suite(runner, jsonpath_suite());
@@ -49,7 +51,7 @@ int main()
     srunner_add_suite(runner, nodelist_suite());
     srunner_add_suite(runner, evaluator_suite());
     
-    srunner_run_all(runner, CK_VERBOSE);
+    srunner_run_all(runner, CK_NORMAL);
     
     int failures = srunner_ntests_failed(runner);
     srunner_free(runner);

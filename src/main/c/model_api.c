@@ -84,52 +84,52 @@ size_t model_get_document_count(const document_model * restrict model)
     return model->size;
 }
 
-enum node_kind node_get_kind(const node * restrict node)
+enum node_kind node_get_kind(const node * restrict value)
 {
-    if(NULL == node)
+    if(NULL == value)
     {
         errno = EINVAL;
         return (enum node_kind)-1;
     }
 
     errno = 0;
-    return node->tag.kind;
+    return value->tag.kind;
 }
 
-uint8_t *node_get_name(const node * restrict node)
+uint8_t *node_get_name(const node * restrict value)
 {
-    if(NULL == node)
+    if(NULL == value)
     {
         errno = EINVAL;
         return NULL;
     }
 
     errno = 0;
-    return node->tag.name;
+    return value->tag.name;
 }
 
-size_t node_get_name_length(const node * restrict node)
+size_t node_get_name_length(const node * restrict value)
 {
-    if(NULL == node)
+    if(NULL == value)
     {
         errno = EINVAL;
         return 0;
     }
 
     errno = 0;
-    return node->tag.name_length;
+    return value->tag.name_length;
 }
 
-size_t node_get_size(const node * restrict node)
+size_t node_get_size(const node * restrict value)
 {
-    if(NULL == node)
+    if(NULL == value)
     {
         errno = EINVAL;
         return 0;
     }
 
     errno = 0;
-    return node->content.size;
+    return value->content.size;
 }
 
 node *document_get_root(const node * restrict document)

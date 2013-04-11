@@ -56,7 +56,7 @@ static void assert_single_type_step(jsonpath *path, size_t index, enum type_test
 static void assert_recursive_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind);
 static void assert_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind, enum step_kind expected_step_kind);
 static void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind);
-static void assert_name(step * step, uint8_t *value, size_t length);
+static void assert_name(step * current, uint8_t *value, size_t length);
 static void assert_no_predicates(jsonpath *path, size_t index);
 static void assert_wildcard_predicate(jsonpath *path, size_t path_index);
 static void assert_subscript_predicate(jsonpath *path, size_t path_index, uint_fast32_t index_value);
@@ -475,10 +475,10 @@ static void assert_step(jsonpath *path, size_t index, enum step_kind expected_st
     ck_assert_int_eq(expected_test_kind, step_get_test_kind(path_get_step(path, index)));
 }
 
-static void assert_name(step *step, uint8_t *name, size_t length)
+static void assert_name(step *current, uint8_t *name, size_t length)
 {
-    ck_assert_int_eq(length, name_test_step_get_length(step));
-    ck_assert_buf_eq(name, length, name_test_step_get_name(step), name_test_step_get_length(step));
+    ck_assert_int_eq(length, name_test_step_get_length(current));
+    ck_assert_buf_eq(name, length, name_test_step_get_name(current), name_test_step_get_length(current));
 }
 
 static void assert_no_predicates(jsonpath *path, size_t index)
@@ -1007,67 +1007,67 @@ END_TEST
 
 Suite *jsonpath_suite(void)
 {
-    TCase *bad_input = tcase_create("bad input");
-    tcase_add_test(bad_input, null_expression);
-    tcase_add_test(bad_input, zero_length);
-    tcase_add_test(bad_input, null_path);
-    tcase_add_test(bad_input, missing_step_test);
-    tcase_add_test(bad_input, missing_recursive_step_test);
-    tcase_add_test(bad_input, missing_dot);
-    tcase_add_test(bad_input, relative_path_begins_with_dot);
-    tcase_add_test(bad_input, quoted_empty_step);
-    tcase_add_test(bad_input, bogus_type_test_name);
-    tcase_add_test(bad_input, bogus_type_test_name_oblong);
-    tcase_add_test(bad_input, bogus_type_test_name_alloy);
-    tcase_add_test(bad_input, bogus_type_test_name_strong);
-    tcase_add_test(bad_input, bogus_type_test_name_numred);
-    tcase_add_test(bad_input, bogus_type_test_name_booloud);
-    tcase_add_test(bad_input, bogus_type_test_name_narl);
-    tcase_add_test(bad_input, empty_type_test_name);
-    tcase_add_test(bad_input, empty_predicate);
-    tcase_add_test(bad_input, whitespace_predicate);
-    tcase_add_test(bad_input, extra_junk_in_predicate);
-    tcase_add_test(bad_input, bogus_predicate);
-    tcase_add_test(bad_input, wildcard_with_trailing_junk);
-    tcase_add_test(bad_input, type_test_with_trailing_junk);
+    TCase *bad_input_case = tcase_create("bad input");
+    tcase_add_test(bad_input_case, null_expression);
+    tcase_add_test(bad_input_case, zero_length);
+    tcase_add_test(bad_input_case, null_path);
+    tcase_add_test(bad_input_case, missing_step_test);
+    tcase_add_test(bad_input_case, missing_recursive_step_test);
+    tcase_add_test(bad_input_case, missing_dot);
+    tcase_add_test(bad_input_case, relative_path_begins_with_dot);
+    tcase_add_test(bad_input_case, quoted_empty_step);
+    tcase_add_test(bad_input_case, bogus_type_test_name);
+    tcase_add_test(bad_input_case, bogus_type_test_name_oblong);
+    tcase_add_test(bad_input_case, bogus_type_test_name_alloy);
+    tcase_add_test(bad_input_case, bogus_type_test_name_strong);
+    tcase_add_test(bad_input_case, bogus_type_test_name_numred);
+    tcase_add_test(bad_input_case, bogus_type_test_name_booloud);
+    tcase_add_test(bad_input_case, bogus_type_test_name_narl);
+    tcase_add_test(bad_input_case, empty_type_test_name);
+    tcase_add_test(bad_input_case, empty_predicate);
+    tcase_add_test(bad_input_case, whitespace_predicate);
+    tcase_add_test(bad_input_case, extra_junk_in_predicate);
+    tcase_add_test(bad_input_case, bogus_predicate);
+    tcase_add_test(bad_input_case, wildcard_with_trailing_junk);
+    tcase_add_test(bad_input_case, type_test_with_trailing_junk);
 
-    TCase *basic = tcase_create("basic");
-    tcase_add_test(basic, dollar_only);
-    tcase_add_test(basic, absolute_single_step);
-    tcase_add_test(basic, absolute_recursive_step);
-    tcase_add_test(basic, absolute_multi_step);
-    tcase_add_test(basic, quoted_multi_step);
-    tcase_add_test(basic, relative_multi_step);
-    tcase_add_test(basic, whitespace);
-    tcase_add_test(basic, wildcard);
-    tcase_add_test(basic, recursive_wildcard);
+    TCase *basic_case = tcase_create("basic");
+    tcase_add_test(basic_case, dollar_only);
+    tcase_add_test(basic_case, absolute_single_step);
+    tcase_add_test(basic_case, absolute_recursive_step);
+    tcase_add_test(basic_case, absolute_multi_step);
+    tcase_add_test(basic_case, quoted_multi_step);
+    tcase_add_test(basic_case, relative_multi_step);
+    tcase_add_test(basic_case, whitespace);
+    tcase_add_test(basic_case, wildcard);
+    tcase_add_test(basic_case, recursive_wildcard);
 
-    TCase *node_type = tcase_create("node type test");
-    tcase_add_test(node_type, type_test_missing_closing_paren);
-    tcase_add_test(node_type, recursive_type_test);
-    tcase_add_test(node_type, object_type_test);
-    tcase_add_test(node_type, array_type_test);
-    tcase_add_test(node_type, string_type_test);
-    tcase_add_test(node_type, number_type_test);
-    tcase_add_test(node_type, boolean_type_test);
-    tcase_add_test(node_type, null_type_test);
+    TCase *node_type_case = tcase_create("node type test");
+    tcase_add_test(node_type_case, type_test_missing_closing_paren);
+    tcase_add_test(node_type_case, recursive_type_test);
+    tcase_add_test(node_type_case, object_type_test);
+    tcase_add_test(node_type_case, array_type_test);
+    tcase_add_test(node_type_case, string_type_test);
+    tcase_add_test(node_type_case, number_type_test);
+    tcase_add_test(node_type_case, boolean_type_test);
+    tcase_add_test(node_type_case, null_type_test);
 
-    TCase *predicate = tcase_create("predicate");
-    tcase_add_test(predicate, wildcard_predicate);
-    tcase_add_test(predicate, wildcard_predicate_with_whitespace);
-    tcase_add_test(predicate, subscript_predicate);
+    TCase *predicate_case = tcase_create("predicate");
+    tcase_add_test(predicate_case, wildcard_predicate);
+    tcase_add_test(predicate_case, wildcard_predicate_with_whitespace);
+    tcase_add_test(predicate_case, subscript_predicate);
 
-    TCase *api = tcase_create("api");
-    tcase_add_test(api, bad_path_input);
-    tcase_add_test(api, bad_step_input);
-    tcase_add_test(api, bad_predicate_input);
+    TCase *api_case = tcase_create("api");
+    tcase_add_test(api_case, bad_path_input);
+    tcase_add_test(api_case, bad_step_input);
+    tcase_add_test(api_case, bad_predicate_input);
 
-    Suite *jsonpath = suite_create("JSONPath");
-    suite_add_tcase(jsonpath, bad_input);
-    suite_add_tcase(jsonpath, basic);
-    suite_add_tcase(jsonpath, node_type);
-    suite_add_tcase(jsonpath, predicate);
-    suite_add_tcase(jsonpath, api);
+    Suite *jsonpath_suite = suite_create("JSONPath");
+    suite_add_tcase(jsonpath_suite, bad_input_case);
+    suite_add_tcase(jsonpath_suite, basic_case);
+    suite_add_tcase(jsonpath_suite, node_type_case);
+    suite_add_tcase(jsonpath_suite, predicate_case);
+    suite_add_tcase(jsonpath_suite, api_case);
 
-    return jsonpath;
+    return jsonpath_suite;
 }

@@ -41,7 +41,7 @@ VERSION = 1.0.0-SNAPSHOT
 PACKAGING = program
 
 DEPENDENCIES = yaml
-CFLAGS = -std=c11 -Wall -pedantic-errors -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -O2
+CFLAGS = -std=c11 -Wall -pedantic-errors -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -O2
 TEST_DEPENDENCIES = check
 
 BUILD_DEBUG = yes

@@ -62,7 +62,8 @@ void evaluator_setup(void)
     ck_assert_not_null(result);
     ck_assert_int_eq(LOADER_SUCCESS, result->code);
 
-    ck_assert_int_eq(0, fclose(input));
+    int closed = fclose(input);
+    ck_assert_int_eq(0, closed);
     free_loader_result(result);
 }
 
@@ -336,26 +337,26 @@ END_TEST
 
 Suite *evaluator_suite(void)
 {
-    TCase *basic = tcase_create("basic");
-    tcase_add_checked_fixture(basic, evaluator_setup, evaluator_teardown);
-    tcase_add_test(basic, dollar_only);
-    tcase_add_test(basic, single_name_step);
-    tcase_add_test(basic, long_path);
-    tcase_add_test(basic, wildcard);
-    tcase_add_test(basic, object_test);
-    tcase_add_test(basic, array_test);
-    tcase_add_test(basic, number_test);
+    TCase *basic_case = tcase_create("basic");
+    tcase_add_checked_fixture(basic_case, evaluator_setup, evaluator_teardown);
+    tcase_add_test(basic_case, dollar_only);
+    tcase_add_test(basic_case, single_name_step);
+    tcase_add_test(basic_case, long_path);
+    tcase_add_test(basic_case, wildcard);
+    tcase_add_test(basic_case, object_test);
+    tcase_add_test(basic_case, array_test);
+    tcase_add_test(basic_case, number_test);
 
-    TCase *predicate = tcase_create("predicate");
-    tcase_add_checked_fixture(predicate, evaluator_setup, evaluator_teardown);
-    tcase_add_test(predicate, wildcard_predicate);
-    tcase_add_test(predicate, wildcard_predicate_on_mapping);
-    tcase_add_test(predicate, wildcard_predicate_on_scalar);
-    tcase_add_test(predicate, subscript_predicate);
+    TCase *predicate_case = tcase_create("predicate");
+    tcase_add_checked_fixture(predicate_case, evaluator_setup, evaluator_teardown);
+    tcase_add_test(predicate_case, wildcard_predicate);
+    tcase_add_test(predicate_case, wildcard_predicate_on_mapping);
+    tcase_add_test(predicate_case, wildcard_predicate_on_scalar);
+    tcase_add_test(predicate_case, subscript_predicate);
     
     Suite *evaluator = suite_create("Evaluator");
-    suite_add_tcase(evaluator, basic);
-    suite_add_tcase(evaluator, predicate);
+    suite_add_tcase(evaluator, basic_case);
+    suite_add_tcase(evaluator, predicate_case);
 
     return evaluator;
 }

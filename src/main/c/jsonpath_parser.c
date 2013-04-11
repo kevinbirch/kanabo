@@ -141,8 +141,8 @@ static void name(parser_context *context, step *name_test);
 static void node_type_test(parser_context *context);
 
 // parser helpers
-static enum type_test_kind node_type_test_value(parser_context *context, size_t length);
-static inline enum type_test_kind check_one_node_type_test_value(parser_context *context, size_t length, const char *target, enum type_test_kind result);
+static int32_t node_type_test_value(parser_context *context, size_t length);
+static inline int32_t check_one_node_type_test_value(parser_context *context, size_t length, const char *target, enum type_test_kind result);
 
 // input stream handling
 static inline bool has_more_input(parser_context *context);
@@ -176,10 +176,10 @@ static inline void unexpected_value(parser_context *context, uint8_t expected);
 
 extern void step_free(step *step);
 
-jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, jsonpath *jsonpath)
+jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, jsonpath *value)
 {
     parser_context context;
-    if(!validate(&context, expression, length, jsonpath))
+    if(!validate(&context, expression, length, value))
     {
         return context.code;
     }
@@ -188,29 +188,29 @@ jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, js
     fwrite(expression, length, 1, stdout);
     fprintf(stdout, "'\n");
     
-    prepare_context(&context, expression, length, jsonpath);
+    prepare_context(&context, expression, length, value);
     
     path(&context);
 
-    jsonpath->result.code = context.code;
-    jsonpath->result.position = context.cursor;
+    value->result.code = context.code;
+    value->result.position = context.cursor;
     if(JSONPATH_SUCCESS == context.code)
     {
         unwind_context(&context);
         if(JSONPATH_SUCCESS == context.code)
         {
-            fprintf(stdout, "done. found %zd steps.\n", jsonpath->length);
+            fprintf(stdout, "done. found %zd steps.\n", value->length);
         }
         else
         {
-            jsonpath->result.code = context.code;
-            fprintf(stdout, "aborted. unable to create json path model\n");
+            value->result.code = context.code;
+            fprintf(stdout, "aborted. unable to create jsonpath model\n");
         }
     }
     else
     {
-        jsonpath->result.expected_char = context.expected;
-        jsonpath->result.actual_char = context.input[context.cursor];
+        value->result.expected_char = context.expected;
+        value->result.actual_char = context.input[context.cursor];
         
         abort_context(&context);
         char *message = make_status_message(context.path);
@@ -447,21 +447,21 @@ static void node_type_test(parser_context *context)
         return;
     }
 
-    enum type_test_kind kind = node_type_test_value(context, length);
+    int32_t kind = node_type_test_value(context, length);
     if(-1 == kind)
     {
         context->code = ERR_EXPECTED_NODE_TYPE_TEST;
         return;
     }
-    current->test.type = kind;
+    current->test.type = (enum type_test_kind)kind;
     
     consume_chars(context, length);
     context->code = JSONPATH_SUCCESS;
 }
 
-static enum type_test_kind node_type_test_value(parser_context *context, size_t length)
+static int32_t node_type_test_value(parser_context *context, size_t length)
 {
-    enum type_test_kind result;
+    int32_t result;
     
     switch(get_char(context))
     {
@@ -485,14 +485,14 @@ static enum type_test_kind node_type_test_value(parser_context *context, size_t 
             result = check_one_node_type_test_value(context, length, "boolean", BOOLEAN_TEST);
             break;
         default:
-            result = (enum type_test_kind)-1;
+            result = -1;
             break;
     }
 
     return result;
 }
 
-static inline enum type_test_kind check_one_node_type_test_value(parser_context *context, size_t length, const char *target, enum type_test_kind result)
+static inline int32_t check_one_node_type_test_value(parser_context *context, size_t length, const char *target, enum type_test_kind result)
 {
     if(strlen(target) == length  && 0 == memcmp(target, context->input + context->cursor, length))
     {
@@ -500,7 +500,7 @@ static inline enum type_test_kind check_one_node_type_test_value(parser_context 
     }
     else
     {
-        return (enum type_test_kind)-1;
+        return -1;
     }
 }
 
@@ -796,7 +796,7 @@ static inline step *make_step(enum step_kind step_kind, enum test_kind test_kind
     return result;
 }
 
-static bool push_step(parser_context *context, step *step)
+static bool push_step(parser_context *context, step *value)
 {
     node *current = (node *)malloc(sizeof(node));
     if(NULL == current)
@@ -804,7 +804,7 @@ static bool push_step(parser_context *context, step *step)
         context->code = ERR_OUT_OF_MEMORY;
         return false;
     }
-    current->step = step;
+    current->step = value;
     current->next = NULL;
     context->path->length++;
 
@@ -833,23 +833,24 @@ static step *pop_step(parser_context *context)
     return result;
 }
 
-static inline bool validate(parser_context *context, const uint8_t *expression, size_t length, jsonpath *path)
+static inline bool validate(parser_context *context, const uint8_t *expression, size_t length, jsonpath *value)
 {
-    if(NULL == path)
+    if(NULL == value)
     {
         context->code = ERR_NULL_OUTPUT_PATH;
         return false;
     }
+    value->result.position = 0;
     if(NULL == expression)
     {
         context->code = ERR_NULL_EXPRESSION;
-        path->result.code = context->code;
+        value->result.code = context->code;
         return false;
     }
     if(0 == length)
     {
         context->code = ERR_ZERO_LENGTH;
-        path->result.code = context->code;
+        value->result.code = context->code;
         return false;
     }
 

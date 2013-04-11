@@ -39,13 +39,13 @@
 
 const void * SENTINEL = (void *)"SENTINEL";
 
-bool is_null(void * first, ...)
+bool is_null(const void * restrict first, ...)
 {
     va_list args;
     bool result = false;
     
     va_start(args, first);
-    for(void *arg = first; arg != SENTINEL; arg = va_arg(args, void *))
+    for(const void *arg = first; arg != SENTINEL; arg = va_arg(args, void *))
     {
         if(NULL == arg)
         {

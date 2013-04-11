@@ -43,7 +43,7 @@
 
 #include "options.h"
 
-static inline emit_mode process_emit_mode(const char * restrict argument);
+static inline int32_t process_emit_mode(const char * restrict argument);
 static inline const char *process_program_name(const char *argv0);
 
 static struct option options[] = 
@@ -73,6 +73,7 @@ cmd process_options(const int argc, char * const *argv, struct settings * restri
 {
     int opt;
     int command = -1;
+    int32_t mode = -1;
     bool done = false;
 
     settings->program_name = process_program_name(argv[0]);
@@ -109,13 +110,14 @@ cmd process_options(const int argc, char * const *argv, struct settings * restri
                 settings->expression = optarg;
                 break;
             case 's':
-                settings->emit_mode = process_emit_mode(optarg);
-                if(UNKNOWN == settings->emit_mode)
+                mode = process_emit_mode(optarg);
+                if(-1 == mode)
                 {
                     fprintf(stderr, "%s: unsupported shell mode `%s'\n", settings->program_name, optarg);
                     command = SHOW_HELP;
                     done = true;
                 }
+                settings->emit_mode = (enum emit_mode)mode;
                 break;
             case 'f':
                 settings->input_file_name = optarg;
@@ -142,7 +144,7 @@ cmd process_options(const int argc, char * const *argv, struct settings * restri
     return command;
 }
 
-static inline emit_mode process_emit_mode(const char * restrict argument)
+static inline int32_t process_emit_mode(const char * restrict argument)
 {
     if(strncmp("bash", argument, 4) == 0)
     {
@@ -154,7 +156,7 @@ static inline emit_mode process_emit_mode(const char * restrict argument)
     }
     else
     {
-        return UNKNOWN;
+        return -1;
     }
 }
 

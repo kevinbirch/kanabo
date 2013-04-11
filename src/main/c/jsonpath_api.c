@@ -72,156 +72,156 @@ step *path_get_step(const jsonpath * restrict path, size_t index)
     return path->steps[index];
 }
 
-enum step_kind step_get_kind(const step * restrict step)
+enum step_kind step_get_kind(const step * restrict value)
 {
-    if(NULL == step)
+    if(NULL == value)
     {
         errno = EINVAL;
         return (enum step_kind)-1;
     }
     errno = 0;
-    return step->kind;
+    return value->kind;
 }
 
-enum test_kind step_get_test_kind(const step * restrict step)
+enum test_kind step_get_test_kind(const step * restrict value)
 {
-    if(NULL == step)
+    if(NULL == value)
     {
         errno = EINVAL;
         return (enum test_kind)-1;
     }
     errno = 0;
-    return step->test.kind;
+    return value->test.kind;
 }
 
-enum type_test_kind type_test_step_get_type(const step * restrict step)
+enum type_test_kind type_test_step_get_type(const step * restrict value)
 {
-    if(NULL == step || NAME_TEST == step->test.kind)
+    if(NULL == value || NAME_TEST == value->test.kind)
     {
         errno = EINVAL;
         return (enum type_test_kind)-1;
     }
     errno = 0;
-    return step->test.type;
+    return value->test.type;
 }
 
-uint8_t *name_test_step_get_name(const step * restrict step)
+uint8_t *name_test_step_get_name(const step * restrict value)
 {
-    if(NULL == step || TYPE_TEST == step->test.kind)
+    if(NULL == value || TYPE_TEST == value->test.kind)
     {
         errno = EINVAL;
         return NULL;
     }
     errno = 0;
-    return step->test.name.value;
+    return value->test.name.value;
 }
 
-size_t name_test_step_get_length(const step * restrict step)
+size_t name_test_step_get_length(const step * restrict value)
 {
-    if(NULL == step || TYPE_TEST == step->test.kind)
+    if(NULL == value || TYPE_TEST == value->test.kind)
     {
         errno = EINVAL;
         return 0;
     }
     errno = 0;
-    return step->test.name.length;
+    return value->test.name.length;
 }
 
-bool step_has_predicate(const step * restrict step)
+bool step_has_predicate(const step * restrict value)
 {
-    if(NULL == step)
+    if(NULL == value)
     {
         errno = EINVAL;
         return false;
     }
     errno = 0;
-    return NULL != step->predicate;
+    return NULL != value->predicate;
 }
 
-predicate *step_get_predicate(const step * restrict step)
+predicate *step_get_predicate(const step * restrict value)
 {
-    if(NULL == step || NULL == step->predicate)
+    if(NULL == value || NULL == value->predicate)
     {
         errno = EINVAL;
         return NULL;
     }
     errno = 0;
-    return step->predicate;
+    return value->predicate;
 }
 
-enum predicate_kind predicate_get_kind(const predicate * restrict predicate)
+enum predicate_kind predicate_get_kind(const predicate * restrict value)
 {
-    if(NULL == predicate)
+    if(NULL == value)
     {
         errno = EINVAL;
         return (enum predicate_kind)-1;
     }
     errno = 0;
-    return predicate->kind;
+    return value->kind;
 }
 
-size_t subscript_predicate_get_index(const predicate * restrict predicate)
+size_t subscript_predicate_get_index(const predicate * restrict value)
 {
-    if(NULL == predicate || SUBSCRIPT != predicate->kind)
+    if(NULL == value || SUBSCRIPT != value->kind)
     {
         errno = EINVAL;
         return 0;
     }
     errno = 0;
-    return predicate->subscript.index;
+    return value->subscript.index;
 }
 
-int_fast32_t slice_predicate_get_to(const predicate * restrict predicate)
+int_fast32_t slice_predicate_get_to(const predicate * restrict value)
 {
-    if(NULL == predicate || SLICE != predicate->kind)
+    if(NULL == value || SLICE != value->kind)
     {
         errno = EINVAL;
         return 0;
     }
     errno = 0;
-    return predicate->slice.to;
+    return value->slice.to;
 }
 
-int_fast32_t slice_predicate_get_from(const predicate * restrict predicate)
+int_fast32_t slice_predicate_get_from(const predicate * restrict value)
 {
-    if(NULL == predicate || SLICE != predicate->kind)
+    if(NULL == value || SLICE != value->kind)
     {
         errno = EINVAL;
         return 0;
     }
     errno = 0;
-    return predicate->slice.from;
+    return value->slice.from;
 }
 
-size_t slice_predicate_get_step(const predicate * restrict predicate)
+size_t slice_predicate_get_step(const predicate * restrict value)
 {
-    if(NULL == predicate || SLICE != predicate->kind)
+    if(NULL == value || SLICE != value->kind)
     {
         errno = EINVAL;
         return 0;
     }
     errno = 0;
-    return predicate->slice.step;
+    return value->slice.step;
 }
 
-jsonpath *join_predicate_get_left(const predicate * restrict predicate)
+jsonpath *join_predicate_get_left(const predicate * restrict value)
 {
-    if(NULL == predicate || JOIN != predicate->kind)
+    if(NULL == value || JOIN != value->kind)
     {
         errno = EINVAL;
         return NULL;
     }
     errno = 0;
-    return predicate->join.left;
+    return value->join.left;
 }
 
-jsonpath *join_predicate_get_right(const predicate * restrict predicate)
+jsonpath *join_predicate_get_right(const predicate * restrict value)
 {
-    if(NULL == predicate || JOIN != predicate->kind)
+    if(NULL == value || JOIN != value->kind)
     {
         errno = EINVAL;
         return NULL;
     }
     errno = 0;
-    return predicate->join.right;
+    return value->join.right;
 }

@@ -74,13 +74,13 @@ static int dispatch(int command, struct settings *settings)
     switch(command)
     {
         case SHOW_HELP:
-            fprintf(stdout, HELP);
+            fprintf(stdout, "%s", HELP);
             break;
         case SHOW_VERSION:
             fprintf(stdout, "version information\n");
             break;
         case SHOW_WARRANTY:
-            fprintf(stdout, NO_WARRANTY);
+            fprintf(stdout, "%s", NO_WARRANTY);
             break;
         case ENTER_INTERACTIVE:
             result = interactive_mode(settings);

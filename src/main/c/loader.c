@@ -343,8 +343,8 @@ static bool push_scalar(document_context *context, yaml_event_t *event)
     {
         errno = 0;
         char *endptr;
-        double value = strtod((char *)event->data.scalar.value, &endptr);
-        if(0 != errno || (0.0 == value && endptr == (char *)event->data.scalar.value))
+        strtod((char *)event->data.scalar.value, &endptr);
+        if(0 != errno || endptr == (char *)event->data.scalar.value)
         {
             scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_STRING);
         }
@@ -458,7 +458,7 @@ static bool unwind_sequence(document_context *context)
         }
     }
     node *temp;
-    for(size_t i = 0; i < floor(count / 2); i++)
+    for(size_t i = 0; i < floor((double)count / 2); i++)
     {
         temp = sequence_get(sequence, i);
         sequence_set(sequence, sequence_get(sequence, count - 1 - i), i);

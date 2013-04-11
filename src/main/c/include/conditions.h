@@ -51,14 +51,11 @@ extern const void * SENTINEL;
 #define STRINGIFY(x) #x
 
 #define ENSURE_NONNULL(ERR_RESULT, ERRNO, ...)                          \
-    _Pragma(STRINGIFY(GCC diagnostic push))                             \
-    _Pragma(STRINGIFY(GCC diagnostic ignored "-Wincompatible-pointer-types")) \
     if(is_null(__VA_ARGS__, SENTINEL))                                  \
     {                                                                   \
         errno = 0 == errno ? (ERRNO) : errno;                           \
         return ERR_RESULT;                                              \
-    }                                                                   \
-    _Pragma(STRINGIFY(GCC diagnostic pop))
+    }
 
 #define ENSURE_THAT(ERR_RESULT, ERRNO, ...)                             \
     if(is_false(__VA_ARGS__, -1))                                       \
@@ -88,7 +85,7 @@ extern const void * SENTINEL;
 #define ENSURE_ELSE_FALSE(ERRNO, ...) ENSURE_THAT(false, ERRNO, __VA_ARGS__)
 
 
-bool is_null(void * first, ...);
+bool is_null(const void * restrict first, ...);
 bool is_false(int_fast8_t first, ...);
 
 
