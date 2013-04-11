@@ -19,6 +19,8 @@ LICENSE file for more details.
 
 Enhancements:
 
+* add a strictness mode: strict - fail invalid paths, leinent - skip bad paths, return no values
+* use a evaluator context
 * stop setting errno to 0 internally
 * add error message generator
 * propagate errors everywhere
@@ -30,6 +32,7 @@ Enhancements:
 
 Enhancements:
 
+* document api with doxygen
 * stop setting errno to 0 internally
 * use precondition helpers
 * use strtoul for predicate integers
@@ -55,6 +58,7 @@ Features:
 
 Enhancements:
 
+* document api with doxygen
 * stop setting errno to 0 internally
 * use precondition helpers
 * make loader api return an enum instead of a struct
@@ -72,6 +76,7 @@ Features:
 
 Enhancements:
 
+* document api with doxygen
 * use precondition helpers
 * iterate\_sequence -> sequence\_iterate
 * switch the iterator return types to bool to propigate the evaluation status
