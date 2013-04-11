@@ -42,6 +42,16 @@
 #include "jsonpath.h"
 #include "nodelist.h"
 
+enum evaluator_status_code
+{
+    EVALUATOR_SUCCESS = 0,
+    ERR_NO_DOCUMENT_IN_MODEL = 1024,  // no root document node was found in the model
+    ERR_MISPLACED_DOCUMENT_NODE,      // a document node was found embedded in side another document tree
+    ERR_NAME_IS_NOT_SEQUENCE,         // attempted to apply a subscript to a non-sequence node
+    ERR_NAME_IS_NOT_MAPPING,          // attempted to apply a key to a non-mapping node
+    ERR_KEY_NOT_IN_MAPPING,           // attempted to access a key that does not existing in the mapping
+};
+
 nodelist *evaluate(document_model *model, jsonpath *path);
 
 #endif
