@@ -97,13 +97,12 @@ TEST_CFLAGS := -I$(TEST_INCLUDE_DIR) $(CFLAGS)
 TEST_LDLIBS := $(addprefix -l, $(DEPENDENCIES)) $(addprefix -l, $(TEST_DEPENDENCIES))
 
 ## Project source file locations
-PROGRAM_SOURCES ?= $(shell find $(SOURCE_DIR) -type f \( -name '*.c' -or -name '*.C' \) -exec grep -l -E '(int|void)\s+main' {} \;)
-PROGRAM_OBJECTS := $(call source_to_object,$(PROGRAM_SOURCES),$(OBJECT_DIR))
-
-vpath %.c $(call make_vpath,$(SOURCE_DIR))
 SOURCES := $(call find_source_files,$(SOURCE_DIR))
 OBJECTS := $(call source_to_object,$(SOURCES),$(OBJECT_DIR))
-LIBRARY_OBJECTS := $(filter-out $(ENTRY_OBJECTS),$(OBJECTS))
+PROGRAM_SOURCES ?= $(shell grep -l -E '(int|void)\s+main' $(SOURCES))
+PROGRAM_OBJECTS := $(call source_to_object,$(PROGRAM_SOURCES),$(OBJECT_DIR))
+LIBRARY_OBJECTS := $(filter-out $(PROGRAM_OBJECTS),$(OBJECTS))
+vpath %.c $(call make_vpath,$(SOURCE_DIR))
 vpath %.h $(INCLUDE_DIR)
 DEPENDS := $(call source_to_depend,$(SOURCES),$(GENERATED_DEPEND_DIR))
 
@@ -195,7 +194,7 @@ $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	@echo ""
 	@echo " -- Building test harness $(TEST_PROGRAM_TARGET)"
 	@echo "------------------------------------------------------------------------"
-	$(CC) -o $(TEST_PROGRAM_TARGET) $(TEST_LDLIBS) -L$(TARGET_DIR) -l$(LIBRARY_NAME_BASE) $(wildcard $(TEST_OBJECT_DIR)/*.o)
+	$(CC) -o $(TEST_PROGRAM_TARGET) $(TEST_LDLIBS) -L$(TARGET_DIR) -l$(LIBRARY_NAME_BASE) $(TEST_OBJECTS)
 
 $(TEST_PROGRAM): $(TEST_PROGRAM_TARGET)
 
