@@ -19,8 +19,7 @@ LICENSE file for more details.
 
 Enhancements:
 
-* bad input tests
-* add error codes
+* stop setting errno to 0 internally
 * add error message generator
 * propagate errors everywhere
 * tag created boolean nodes as synthetic so they can be freed anytime
@@ -31,6 +30,7 @@ Enhancements:
 
 Enhancements:
 
+* stop setting errno to 0 internally
 * use precondition helpers
 * use strtoul for predicate integers
 * is there a security issue with strtod et al?  could a segv be thrown if reading past the end of byte string?
@@ -55,6 +55,7 @@ Features:
 
 Enhancements:
 
+* stop setting errno to 0 internally
 * use precondition helpers
 * make loader api return an enum instead of a struct
   * expose input struct, add c'tor/d'tor
@@ -96,7 +97,6 @@ Features:
 Enhancements:
 
 * add version header generation support
-* can the warnings from include be supressed somehow? they show up when the depend files don't exist yet
 
 Features:
 
