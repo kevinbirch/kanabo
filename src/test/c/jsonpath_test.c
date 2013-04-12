@@ -42,6 +42,7 @@
 
 #include "jsonpath.h"
 #include "test.h"
+#include "log.h"
 
 static void assert_parser_result(jsonpath_status_code result, jsonpath *path, enum path_kind expected_kind, size_t expected_length);
 
@@ -71,7 +72,7 @@ START_TEST (null_expression)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     ck_assert_int_eq(0, path.result.position);
@@ -87,7 +88,7 @@ START_TEST (zero_length)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     ck_assert_int_eq(0, path.result.position);
@@ -112,7 +113,7 @@ START_TEST (missing_step_test)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -129,7 +130,7 @@ START_TEST (missing_recursive_step_test)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -146,7 +147,7 @@ START_TEST (missing_dot)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -163,7 +164,7 @@ START_TEST (relative_path_begins_with_dot)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -181,7 +182,7 @@ START_TEST (quoted_empty_step)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -199,7 +200,7 @@ START_TEST (empty_predicate)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -217,7 +218,7 @@ START_TEST (extra_junk_in_predicate)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -235,7 +236,7 @@ START_TEST (whitespace_predicate)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     jsonpath_free(&path);
 }
@@ -252,7 +253,7 @@ START_TEST (bogus_predicate)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -270,7 +271,7 @@ START_TEST (bogus_type_test_name)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -288,7 +289,7 @@ START_TEST (bogus_type_test_name_oblong)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -306,7 +307,7 @@ START_TEST (bogus_type_test_name_alloy)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -324,17 +325,17 @@ START_TEST (bogus_type_test_name_strong)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
 }
 END_TEST
 
-START_TEST (bogus_type_test_name_numred)
+START_TEST (bogus_type_test_name_numbered)
 {
     jsonpath path;
-    char *expression = "$.foo.numred()";
+    char *expression = "$.foo.numbered()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
@@ -342,17 +343,17 @@ START_TEST (bogus_type_test_name_numred)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
 }
 END_TEST
 
-START_TEST (bogus_type_test_name_booloud)
+START_TEST (bogus_type_test_name_booger)
 {
     jsonpath path;
-    char *expression = "$.foo.booloud()";
+    char *expression = "$.foo.booger()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
@@ -360,7 +361,7 @@ START_TEST (bogus_type_test_name_booloud)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -378,7 +379,7 @@ START_TEST (bogus_type_test_name_narl)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -396,7 +397,7 @@ START_TEST (empty_type_test_name)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -649,7 +650,7 @@ START_TEST (wildcard_with_trailing_junk)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -703,7 +704,7 @@ START_TEST (type_test_with_trailing_junk)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    fprintf(stdout, "received expected failure message: '%s'\n", message);
+    log_info("received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -1020,8 +1021,8 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input_case, bogus_type_test_name_oblong);
     tcase_add_test(bad_input_case, bogus_type_test_name_alloy);
     tcase_add_test(bad_input_case, bogus_type_test_name_strong);
-    tcase_add_test(bad_input_case, bogus_type_test_name_numred);
-    tcase_add_test(bad_input_case, bogus_type_test_name_booloud);
+    tcase_add_test(bad_input_case, bogus_type_test_name_numbered);
+    tcase_add_test(bad_input_case, bogus_type_test_name_booger);
     tcase_add_test(bad_input_case, bogus_type_test_name_narl);
     tcase_add_test(bad_input_case, empty_type_test_name);
     tcase_add_test(bad_input_case, empty_predicate);

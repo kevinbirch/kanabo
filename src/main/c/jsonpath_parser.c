@@ -38,13 +38,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <inttypes.h>
 #include <errno.h>
 
 #include "jsonpath.h"
+#include "log.h"
 
 struct node
 {
@@ -176,6 +176,33 @@ static inline void unexpected_value(parser_context *context, uint8_t expected);
 
 extern void step_free(step *step);
 
+#ifdef USE_LOGGING
+
+#define component_name "parser"
+
+#define parser_info(FORMAT, ...)  log_info(component_name, FORMAT, __VA_ARGS)
+#define parser_debug(FORMAT, ...) log_debug(component_name, FORMAT, __VA_ARGS)
+#define parser_trace(FORMAT, ...) log_trace(component_name, FORMAT, __VA_ARGS)
+
+void log_string(const uint8_t * restrict value, size_t length, const char * retrict format);
+
+void log_string(const uint8_t * restrict value, size_t length, const char * retrict format)
+{
+    char string[length + 1];
+    memcpy(&string, value, length);
+    string[length] = '\0';
+    log_info(component_name, format, string);
+}
+
+#else
+
+#define parser_info(...)
+#define parser_debug(...)
+#define parser_trace(...)
+#define log_string(...)
+
+#endif
+
 jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, jsonpath *value)
 {
     parser_context context;
@@ -184,10 +211,7 @@ jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, js
         return context.code;
     }
 
-    fprintf(stdout, "starting expression: '");
-    fwrite(expression, length, 1, stdout);
-    fprintf(stdout, "'\n");
-    
+    log_string("starting expression: '%s'", expression, length);    
     prepare_context(&context, expression, length, value);
     
     path(&context);
@@ -199,12 +223,12 @@ jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, js
         unwind_context(&context);
         if(JSONPATH_SUCCESS == context.code)
         {
-            fprintf(stdout, "done. found %zd steps.\n", value->length);
+            parser_info("done. found %zd steps.", value->length);
         }
         else
         {
             value->result.code = context.code;
-            fprintf(stdout, "aborted. unable to create jsonpath model\n");
+            parser_info("aborted. unable to create jsonpath model");
         }
     }
     else
@@ -214,7 +238,7 @@ jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, js
         
         abort_context(&context);
         char *message = make_status_message(context.path);
-        fprintf(stdout, "aborted. %s\n", message);
+        parser_info("aborted. %s", message);
         free(message);
     }
     
@@ -882,6 +906,6 @@ static inline void unexpected_value(parser_context *context, uint8_t expected)
 static inline void enter_state(parser_context *context, enum state state)
 {
     context->state = state;
-    fprintf(stdout, "entering state: '%s'\n", STATES[state]);
+    parser_trace("entering state: '%s'", STATES[state]);
 }
 
