@@ -38,8 +38,6 @@
 #ifndef TEST_H
 #define TEST_H
 
-#include <stdio.h>
-
 #define ck_assert_null(X) ck_assert_msg((X) == NULL, "Assertion '"#X"==NULL' failed")
 #define ck_assert_not_null(X) ck_assert_msg((X) != NULL, "Assertion '"#X"!=NULL' failed")
 #define ck_assert_buf_eq(X, N1, Y, N2) ck_assert_msg(memcmp((X), (Y), (N1) > (N2) ? (N2) : (N1)) == 0, "Assertion 'memcmp("#X", "#Y", %zd)' failed", (N1) > (N2) ? (N2) : (N1))
@@ -50,8 +48,6 @@
 #define ck_assert_noerr() ck_assert_errno(0)
 
 #define reset_errno() errno = 0
-
-#define mark() fprintf(stderr, "mark mark mark: %s:%s\n", __FILE__, __LINE__)
 
 Suite *master_suite(void);
 Suite *loader_suite(void);

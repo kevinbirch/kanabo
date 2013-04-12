@@ -180,18 +180,18 @@ extern void step_free(step *step);
 
 #define component_name "parser"
 
-#define parser_info(FORMAT, ...)  log_info(component_name, FORMAT, __VA_ARGS)
-#define parser_debug(FORMAT, ...) log_debug(component_name, FORMAT, __VA_ARGS)
-#define parser_trace(FORMAT, ...) log_trace(component_name, FORMAT, __VA_ARGS)
+#define parser_info(FORMAT, ...)  log_info(component_name, FORMAT, __VA_ARGS__)
+#define parser_debug(FORMAT, ...) log_debug(component_name, FORMAT, __VA_ARGS__)
+#define parser_trace(FORMAT, ...) log_trace(component_name, FORMAT, __VA_ARGS__)
 
-void log_string(const uint8_t * restrict value, size_t length, const char * retrict format);
+void log_string(const char * restrict format, const uint8_t * restrict value, size_t length);
 
-void log_string(const uint8_t * restrict value, size_t length, const char * retrict format)
+void log_string(const char * restrict format, const uint8_t * restrict value, size_t length)
 {
     char string[length + 1];
     memcpy(&string, value, length);
     string[length] = '\0';
-    log_info(component_name, format, string);
+    log_debug(component_name, format, string);
 }
 
 #else
@@ -199,6 +199,7 @@ void log_string(const uint8_t * restrict value, size_t length, const char * retr
 #define parser_info(...)
 #define parser_debug(...)
 #define parser_trace(...)
+
 #define log_string(...)
 
 #endif
@@ -223,12 +224,12 @@ jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, js
         unwind_context(&context);
         if(JSONPATH_SUCCESS == context.code)
         {
-            parser_info("done. found %zd steps.", value->length);
+            parser_debug("done. found %zd steps.", value->length);
         }
         else
         {
             value->result.code = context.code;
-            parser_info("aborted. unable to create jsonpath model");
+            parser_debug("aborted. unable to create jsonpath model. status: %d", context.code);
         }
     }
     else
@@ -238,7 +239,7 @@ jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, js
         
         abort_context(&context);
         char *message = make_status_message(context.path);
-        parser_info("aborted. %s", message);
+        parser_debug("aborted. %s", message);
         free(message);
     }
     

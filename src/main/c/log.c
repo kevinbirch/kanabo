@@ -56,12 +56,12 @@ static const char * const LEVELS[] =
 static bool LOGGING_ENABLED = false;
 static enum log_level LOG_LEVEL = ERROR;
 
-void enable_logging()
+void enable_logging(void)
 {
     LOGGING_ENABLED = true;
 }
 
-void disable_logging()
+void disable_logging(void)
 {
     LOGGING_ENABLED = false;
 }
@@ -77,10 +77,11 @@ void logger(enum log_level level, const char * restrict component, const char * 
     {
         return;
     }
-    struct tm now;
-    localtime_r(time(NULL), &now);
-    int result = fprintf(stderr, "%d-%d-%d %02d:%02d:%02d %s %s", now.tm_year + 1900, now.tm_mon + 1, now.tm_mday, 
-                         now.tm_hour, now.tm_min, now.tm_sec, LEVELS[level], component);
+    time_t now = time(NULL);
+    struct tm now_tm;
+    localtime_r(&now, &now_tm);
+    int result = fprintf(stderr, "%d-%d-%d %02d:%02d:%02d %s %s - ", now_tm.tm_year + 1900, now_tm.tm_mon + 1, now_tm.tm_mday, 
+                         now_tm.tm_hour, now_tm.tm_min, now_tm.tm_sec, LEVELS[level], component);
     if(-1 == result)
     {
         return;

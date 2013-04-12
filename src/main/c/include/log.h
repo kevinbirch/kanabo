@@ -48,8 +48,8 @@ enum log_level
 
 #ifdef USE_LOGGING
 
-void enable_logging();
-void disable_logging();
+void enable_logging(void);
+void disable_logging(void);
 void set_log_level(enum log_level level);
 
 #define log_error(COMPONENT, FORMAT, ...)  logger(ERROR, COMPONENT, FORMAT, __VA_ARGS__);
@@ -62,8 +62,8 @@ void logger(enum log_level level, const char * restrict component, const char * 
 
 #else
 
-#define enable_logging(...)
-#define disable_logging(...)
+#define enable_logging()
+#define disable_logging()
 #define set_log_level(...)
 
 #define log_error(...)

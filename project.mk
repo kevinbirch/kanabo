@@ -46,3 +46,7 @@ TEST_DEPENDENCIES = check
 
 BUILD_DEBUG = yes
 
+ifeq ($(BUILD_DEBUG),yes)
+CFLAGS := $(CFLAGS) -DUSE_LOGGING
+endif
+

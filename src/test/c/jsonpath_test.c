@@ -72,7 +72,7 @@ START_TEST (null_expression)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     ck_assert_int_eq(0, path.result.position);
@@ -88,7 +88,7 @@ START_TEST (zero_length)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     ck_assert_int_eq(0, path.result.position);
@@ -113,7 +113,7 @@ START_TEST (missing_step_test)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -130,7 +130,7 @@ START_TEST (missing_recursive_step_test)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -147,7 +147,7 @@ START_TEST (missing_dot)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -164,7 +164,7 @@ START_TEST (relative_path_begins_with_dot)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -182,7 +182,7 @@ START_TEST (quoted_empty_step)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -200,7 +200,7 @@ START_TEST (empty_predicate)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -218,7 +218,7 @@ START_TEST (extra_junk_in_predicate)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -236,7 +236,7 @@ START_TEST (whitespace_predicate)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     jsonpath_free(&path);
 }
@@ -253,7 +253,7 @@ START_TEST (bogus_predicate)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -271,7 +271,7 @@ START_TEST (bogus_type_test_name)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -289,7 +289,7 @@ START_TEST (bogus_type_test_name_oblong)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -307,7 +307,7 @@ START_TEST (bogus_type_test_name_alloy)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -325,7 +325,7 @@ START_TEST (bogus_type_test_name_strong)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -343,7 +343,7 @@ START_TEST (bogus_type_test_name_numbered)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -361,7 +361,7 @@ START_TEST (bogus_type_test_name_booger)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -379,7 +379,7 @@ START_TEST (bogus_type_test_name_narl)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -397,7 +397,7 @@ START_TEST (empty_type_test_name)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -650,7 +650,7 @@ START_TEST (wildcard_with_trailing_junk)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);
@@ -704,7 +704,7 @@ START_TEST (type_test_with_trailing_junk)
     char *message = make_status_message(&path);
     ck_assert_not_null(message);
 
-    log_info("received expected failure message: '%s'", message);
+    log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
     jsonpath_free(&path);

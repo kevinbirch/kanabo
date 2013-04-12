@@ -39,10 +39,14 @@
 #include <check.h>
 
 #include "test.h"
+#include "log.h"
 
 int main(int argc, char **argv)
 {
 #pragma unused(argc, argv)
+
+    enable_logging();
+    set_log_level(INFO);
 
     SRunner *runner = srunner_create(master_suite());
     srunner_add_suite(runner, loader_suite());
