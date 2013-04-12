@@ -19,6 +19,8 @@ LICENSE file for more details.
 
 Enhancements:
 
+* move boolean node to handling to model, make into singletons
+  * use designated initializer
 * add a strictness mode: strict - fail invalid paths, leinent - skip bad paths, return no values
 * use a evaluator context
 * stop setting errno to 0 internally
