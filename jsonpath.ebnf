@@ -45,31 +45,43 @@ absolute path
     ;
 
 qualified path
-    = abbreviated relative path
-    | ".", relative path
+    = recursive location
+    | relative location
     ;
 
-abbreviated relative path
+recurisive location
     = "..", relative path
     ;
 
-relative path
-    = "*"
-    | node type test, "()"
-    | name test, [ qualified path ]
+relative location
+    = ".", relative path
     ;
 
-node type test
+relative path
+    = step, [ qualified path ]
+    ;
+
+step
+    = node test, [ predicate ]
+    ;
+
+node test
+    = name test
+    | node type, "(", ")"
+    ;
+
+name test
+    = "*"
+    | name
+    ;
+
+node type
     = "object"
     | "array"
     | "string"
     | "number"
     | "boolean"
     | "null"
-    ;
-
-name test
-    = name, [ predicate ]
     ;
 
 name
