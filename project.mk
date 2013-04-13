@@ -37,7 +37,7 @@
 
 GROUP_ID = com.webguys
 ARTIFACT_ID = kanabo
-VERSION = 1.0.0-SNAPSHOT
+VERSION = 0.1.0-SNAPSHOT
 PACKAGING = program
 
 DEPENDENCIES = yaml
