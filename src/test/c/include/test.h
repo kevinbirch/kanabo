@@ -38,6 +38,8 @@
 #ifndef TEST_H
 #define TEST_H
 
+#include <stdio.h>
+
 #define ck_assert_null(X) ck_assert_msg((X) == NULL, "Assertion '"#X"==NULL' failed")
 #define ck_assert_not_null(X) ck_assert_msg((X) != NULL, "Assertion '"#X"!=NULL' failed")
 #define ck_assert_buf_eq(X, N1, Y, N2) ck_assert_msg(memcmp((X), (Y), (N1) > (N2) ? (N2) : (N1)) == 0, "Assertion 'memcmp("#X", "#Y", %zd)' failed", (N1) > (N2) ? (N2) : (N1))
