@@ -267,6 +267,6 @@ script
     ;
 
 script expression
-    = ? implementation defined, ouside the scope of this description ?
+    = ? implementation defined, ouside the scope of this grammar ?
     ;
 
