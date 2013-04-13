@@ -19,14 +19,13 @@ LICENSE file for more details.
 
 Enhancements:
 
-* move boolean node to handling to model, make into singletons
-  * use designated initializer
-* add a strictness mode: strict - fail invalid paths, leinent - skip bad paths, return no values
+* elimintate generated booleans, this is not correct behavior
+  * type tests act as a filter, not as a query
+* add a strictness mode: strict - fail invalid paths, lenient - skip bad paths, return no values
+  * default is lenient
 * use a evaluator context
 * stop setting errno to 0 internally
 * add error message generator
-* propagate errors everywhere
-* tag created boolean nodes as synthetic so they can be freed anytime
 * nodes owned by a document tree must be preserved unless destroying the tree
 * eliminate nodelist\_map\_overwrite?
 
@@ -45,8 +44,7 @@ Enhancements:
 * refactor direct status code setters into function calls
 * clean up and extract common patterns
 * add more checks for end of input
-* wrap output in debug conditionals
-  * add exit state function with output
+* add exit state function with output
 * should we allow an optional qualified path expression after the filter expression in the union expression production?
 
 Features:
