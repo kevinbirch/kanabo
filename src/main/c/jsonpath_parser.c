@@ -679,9 +679,18 @@ static void subscript_predicate(parser_context *context)
 {
     enter_state(context, ST_SUBSCRIPT_PREDICATE);
 
+    size_t mark = context->cursor;
     uint_fast32_t subscript = integer(context);
     if(JSONPATH_SUCCESS != context->code)
     {
+        reset(context, mark);
+        return;
+    }
+    skip_ws(context);
+    if(']' != get_char(context))
+    {
+        reset(context, mark);
+        context->code = ERR_EXTRA_JUNK_AFTER_PREDICATE;
         return;
     }
     predicate *pred = add_predicate(context, SUBSCRIPT);
@@ -721,7 +730,7 @@ static uint_fast32_t integer(parser_context *context)
         }                                               \
     }
 
-#define parse_to() consume_char(context);       \
+#define parse_to()                              \
     to = signed_integer(context);               \
     if(JSONPATH_SUCCESS != context->code)       \
     {                                           \
@@ -733,9 +742,9 @@ static void slice_predicate(parser_context *context)
 {
     enter_state(context, ST_SLICE_PREDICATE);
 
-    int_fast32_t from = 0;
+    int_fast32_t from = INT_FAST32_MIN;
     int_fast32_t to = INT_FAST32_MAX;
-    size_t step = 1;
+    uint_fast32_t step = 1;
     skip_ws(context);
     if(!look_for(context, ":"))
     {
@@ -744,6 +753,8 @@ static void slice_predicate(parser_context *context)
     }
     if(':' == get_char(context))
     {
+        // this is form 1
+        consume_char(context);
         parse_to();
     }
     else
@@ -763,12 +774,15 @@ static void slice_predicate(parser_context *context)
         skip_ws(context);
         if(':' == get_char(context))
         {
+            // this is form 2 with step
             parse_step();
         }
-        else
+        else if(isdigit(get_char(context)) || '-' == get_char(context) || '+' == get_char(context))
         {
+            // this is form 3
             parse_to();
         }
+        // this is form 2 with no step
     }
     context->code = JSONPATH_SUCCESS;
     predicate *pred = add_predicate(context, SLICE);

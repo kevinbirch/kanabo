@@ -503,6 +503,14 @@ static void assert_subscript_predicate(jsonpath *path, size_t path_index, uint_f
     ck_assert_int_eq(index_value, subscript_predicate_get_index(step_get_predicate(path_get_step(path, path_index))));
 }
 
+static void assert_slice_predicate(jsonpath *path, size_t path_index, int_fast32_t from_value, int_fast32_t to_value, uint_fast32_t step_value)
+{
+    assert_predicate(path, path_index, SLICE);
+    ck_assert_int_eq(from_value, slice_predicate_get_from(step_get_predicate(path_get_step(path, path_index))));
+    ck_assert_int_eq(to_value,   slice_predicate_get_to(step_get_predicate(path_get_step(path, path_index))));
+    ck_assert_int_eq(step_value, slice_predicate_get_step(step_get_predicate(path_get_step(path, path_index))));
+}
+
 static void assert_predicate(jsonpath *path, size_t path_index, enum predicate_kind expected_predicate_kind)
 {
     ck_assert_true(step_has_predicate(path_get_step(path, path_index)));
@@ -927,6 +935,145 @@ START_TEST (negative_subscript_predicate)
 }
 END_TEST
 
+START_TEST (slice_predicate_form1)
+{
+    jsonpath path;
+    char *expression = "$.foo[:-3].bar";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_slice_predicate(&path, 1, INT_FAST32_MIN, -3, 1);
+    assert_single_name_step(&path, 2, "bar");
+    assert_no_predicates(&path, 2);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (slice_predicate_form1_with_step)
+{
+    jsonpath path;
+    char *expression = "$.foo[:-3:2].bar";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_slice_predicate(&path, 1, INT_FAST32_MIN, -3, 2);
+    assert_single_name_step(&path, 2, "bar");
+    assert_no_predicates(&path, 2);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (slice_predicate_form2)
+{
+    jsonpath path;
+    char *expression = "$.foo[-3:].bar";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_slice_predicate(&path, 1, -3, INT_FAST32_MAX, 1);
+    assert_single_name_step(&path, 2, "bar");
+    assert_no_predicates(&path, 2);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (slice_predicate_form2_with_step)
+{
+    jsonpath path;
+    char *expression = "$.foo[-1::2].bar";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_slice_predicate(&path, 1, -1, INT_FAST32_MAX, 2);
+    assert_single_name_step(&path, 2, "bar");
+    assert_no_predicates(&path, 2);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (slice_predicate_form3)
+{
+    jsonpath path;
+    char *expression = "$.foo[3:5].bar";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_slice_predicate(&path, 1, 3, 5, 1);
+    assert_single_name_step(&path, 2, "bar");
+    assert_no_predicates(&path, 2);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (slice_predicate_form3_with_step)
+{
+    jsonpath path;
+    char *expression = "$.foo[1:4:2].bar";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_slice_predicate(&path, 1, 1, 4, 2);
+    assert_single_name_step(&path, 2, "bar");
+    assert_no_predicates(&path, 2);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (slice_predicate_with_whitespace)
+{
+    jsonpath path;
+    char *expression = "$.foo  [\t1\t:\t5\r:\n3\t]\n.bar";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
+    assert_root_step(&path);
+    assert_single_name_step(&path, 1, "foo");
+    assert_slice_predicate(&path, 1, 1, 5, 3);
+    assert_single_name_step(&path, 2, "bar");
+    assert_no_predicates(&path, 2);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (negative_step_slice_predicate)
+{
+    jsonpath path;
+    char *expression = "$.foo[1:3:-3].bar";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    // xxx - fixme! this should be ERR_EXPECTED_INTEGER instead!
+    ck_assert_int_eq(ERR_UNSUPPORTED_PRED_TYPE, result);
+    ck_assert_int_eq(10, path.result.position);
+    char *message = make_status_message(&path);
+    ck_assert_not_null(message);
+
+    log_info("parser test", "received expected failure message: '%s'", message);
+
+    free(message);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
 START_TEST (bad_path_input)
 {
     errno = 0;
@@ -1103,6 +1250,14 @@ Suite *jsonpath_suite(void)
     tcase_add_test(predicate_case, subscript_predicate);
     tcase_add_test(predicate_case, subscript_predicate_with_whitespace);
     tcase_add_test(predicate_case, negative_subscript_predicate);
+    tcase_add_test(predicate_case, slice_predicate_form1);
+    tcase_add_test(predicate_case, slice_predicate_form1_with_step);
+    tcase_add_test(predicate_case, slice_predicate_form2);
+    tcase_add_test(predicate_case, slice_predicate_form2_with_step);
+    tcase_add_test(predicate_case, slice_predicate_form3);
+    tcase_add_test(predicate_case, slice_predicate_form3_with_step);
+    tcase_add_test(predicate_case, slice_predicate_with_whitespace);
+    tcase_add_test(predicate_case, negative_step_slice_predicate);
 
     TCase *api_case = tcase_create("api");
     tcase_add_test(api_case, bad_path_input);

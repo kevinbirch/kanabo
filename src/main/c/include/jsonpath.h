@@ -65,7 +65,7 @@ struct predicate
         {
             int_fast32_t from;
             int_fast32_t to;
-            size_t step;
+            uint_fast32_t step;
         } slice;
         
         struct
