@@ -36,17 +36,19 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <check.h>
 
 #include "test.h"
 #include "log.h"
 
+static void init_logging(void);
+
 int main(int argc, char **argv)
 {
 #pragma unused(argc, argv)
 
-    enable_logging();
-    set_log_level(INFO);
+    init_logging();
 
     SRunner *runner = srunner_create(master_suite());
     srunner_add_suite(runner, loader_suite());
@@ -61,4 +63,40 @@ int main(int argc, char **argv)
     srunner_free(runner);
     
     return 0 == failures ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
+static void init_logging(void)
+{
+    enable_logging();
+
+    char *level = getenv("KANABO_TEST_LOG_LEVEL");
+    if(NULL == level)
+    {
+        set_log_level(INFO);
+    }
+    else if(0 == memcmp("ERROR", level, 5))
+    {
+        set_log_level(ERROR);
+    }
+    else if(0 == memcmp("WARNING", level, 7))
+    {
+        set_log_level(WARNING);
+    }
+    else if(0 == memcmp("INFO", level, 4))
+    {
+        set_log_level(INFO);
+    }
+    else if(0 == memcmp("DEBUG", level, 5))
+    {
+        set_log_level(DEBUG);
+    }
+    else if(0 == memcmp("TRACE", level, 5))
+    {
+        set_log_level(TRACE);
+    }
+    else
+    {
+        set_log_level(INFO);
+    }
+
 }
