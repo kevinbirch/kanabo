@@ -137,11 +137,13 @@ static void wildcard_name(parser_context *context);
 static void step_predicate(parser_context *context);
 static void wildcard_predicate(parser_context *context);
 static void subscript_predicate(parser_context *context);
-//static void slice_predicate(parser_context *context);
+static void slice_predicate(parser_context *context);
 static void name(parser_context *context, step *name_test);
 static void node_type_test(parser_context *context);
 
 // parser helpers
+static uint_fast32_t integer(parser_context *context);
+static int_fast32_t signed_integer(parser_context *context);
 static int32_t node_type_test_value(parser_context *context, size_t length);
 static inline int32_t check_one_node_type_test_value(parser_context *context, size_t length, const char *target, enum type_test_kind result);
 
@@ -643,7 +645,7 @@ static void step_predicate(parser_context *context)
 
         try_predicate_parser(wildcard_predicate);
         try_predicate_parser(subscript_predicate);
-        //try_predicate_parser(slice_predicate);
+        try_predicate_parser(slice_predicate);
 
         if(JSONPATH_SUCCESS != context->code && ERR_OUT_OF_MEMORY != context->code)
         {
@@ -677,46 +679,120 @@ static void subscript_predicate(parser_context *context)
 {
     enter_state(context, ST_SUBSCRIPT_PREDICATE);
 
-    skip_ws(context);
-    if('-' == get_char(context))
+    uint_fast32_t subscript = integer(context);
+    if(JSONPATH_SUCCESS != context->code)
     {
-        context->code = ERR_EXPECTED_INTEGER;
         return;
     }
-    char *begin = (char *)context->input + context->cursor;
-    char *end;
-    errno = 0;
-    unsigned long subscript = strtoul(begin, &end, 10);
-    if(0 != errno || begin == end)
-    {
-        context->code = ERR_INVALID_NUMBER;
-        return;
-    }
-    context->code = JSONPATH_SUCCESS;
-    consume_chars(context, (size_t)(end - begin));
     predicate *pred = add_predicate(context, SUBSCRIPT);
     pred->subscript.index = (size_t)subscript;
 }
 
-/*
+static uint_fast32_t integer(parser_context *context)
+{
+    skip_ws(context);
+    if('-' == get_char(context))
+    {
+        context->code = ERR_EXPECTED_INTEGER;
+        return 0;
+    }
+    char *begin = (char *)context->input + context->cursor;
+    char *end;
+    errno = 0;
+    uint_fast32_t value = (uint_fast32_t)strtoul(begin, &end, 10);
+    if(0 != errno || begin == end)
+    {
+        context->code = ERR_INVALID_NUMBER;
+        return 0;
+    }
+    context->code = JSONPATH_SUCCESS;
+    consume_chars(context, (size_t)(end - begin));
+    return value;
+}
+
+#define parse_step() skip_ws(context);                  \
+    if(':' == get_char(context))                        \
+    {                                                   \
+        consume_char(context);                          \
+        step = integer(context);                        \
+        if(JSONPATH_SUCCESS != context->code)           \
+        {                                               \
+            return;                                     \
+        }                                               \
+    }
+
+#define parse_to() consume_char(context);       \
+    to = signed_integer(context);               \
+    if(JSONPATH_SUCCESS != context->code)       \
+    {                                           \
+        return;                                 \
+    }                                           \
+    parse_step();
+
 static void slice_predicate(parser_context *context)
 {
     enter_state(context, ST_SLICE_PREDICATE);
 
+    int_fast32_t from = 0;
+    int_fast32_t to = INT_FAST32_MAX;
+    size_t step = 1;
     skip_ws(context);
-    errno = 0;
-    if(":" == peek(context, ))
+    if(!look_for(context, ":"))
     {
-        skip_ws(context);
-        signed_integer(context);
-
+        context->code = ERR_UNSUPPORTED_PRED_TYPE;
+        return;
+    }
+    if(':' == get_char(context))
+    {
+        parse_to();
     }
     else
     {
-
+        from = signed_integer(context);
+        if(JSONPATH_SUCCESS != context->code)
+        {
+            return;
+        }
+        skip_ws(context);
+        if(':' != get_char(context))
+        {
+            unexpected_value(context, ':');
+            return;
+        }
+        consume_char(context);
+        skip_ws(context);
+        if(':' == get_char(context))
+        {
+            parse_step();
+        }
+        else
+        {
+            parse_to();
+        }
     }
+    context->code = JSONPATH_SUCCESS;
+    predicate *pred = add_predicate(context, SLICE);
+    pred->slice.from = from;
+    pred->slice.to = to;
+    pred->slice.step = step;
 }
-*/
+
+static int_fast32_t signed_integer(parser_context *context)
+{
+    skip_ws(context);
+    char *begin = (char *)context->input + context->cursor;
+    char *end;
+    errno = 0;
+    int_fast32_t value = (int_fast32_t)strtol(begin, &end, 10);
+    if(0 != errno || begin == end)
+    {
+        context->code = ERR_INVALID_NUMBER;
+        return 0;
+    }
+    context->code = JSONPATH_SUCCESS;
+    consume_chars(context, (size_t)(end - begin));
+    return value;
+}
 
 static predicate *add_predicate(parser_context *context, enum predicate_kind kind)
 {
@@ -797,7 +873,6 @@ static inline void consume_chars(parser_context *context, size_t count)
     {
         context->cursor += count;
     }
-    //context->cursor += count;
 }
 
 static inline void push_back(parser_context *context)
