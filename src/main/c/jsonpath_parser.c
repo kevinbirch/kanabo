@@ -137,6 +137,7 @@ static void wildcard_name(parser_context *context);
 static void step_predicate(parser_context *context);
 static void wildcard_predicate(parser_context *context);
 static void subscript_predicate(parser_context *context);
+//static void slice_predicate(parser_context *context);
 static void name(parser_context *context, step *name_test);
 static void node_type_test(parser_context *context);
 
@@ -606,7 +607,7 @@ static void name(parser_context *context, step *name_step)
 }
 
 #define try_predicate_parser(PARSER) PARSER(context);              \
-    if(JSONPATH_SUCCESS == context->code)                                   \
+    if(JSONPATH_SUCCESS == context->code)                          \
     {                                                              \
         skip_ws(context);                                          \
         if(']' == get_char(context))                               \
@@ -642,6 +643,7 @@ static void step_predicate(parser_context *context)
 
         try_predicate_parser(wildcard_predicate);
         try_predicate_parser(subscript_predicate);
+        //try_predicate_parser(slice_predicate);
 
         if(JSONPATH_SUCCESS != context->code && ERR_OUT_OF_MEMORY != context->code)
         {
@@ -676,32 +678,45 @@ static void subscript_predicate(parser_context *context)
     enter_state(context, ST_SUBSCRIPT_PREDICATE);
 
     skip_ws(context);
-    size_t length = 0;
-    while(1)
+    if('-' == get_char(context))
     {
-        if(']' == peek(context, length) || isspace(peek(context, length)))
-        {
-            break;
-        }
-        if(!isdigit(peek(context, length)))
-        {
-            context->code = ERR_EXPECTED_INTEGER;
-            return;
-        }
-        length++;
+        context->code = ERR_EXPECTED_INTEGER;
+        return;
     }
+    char *begin = (char *)context->input + context->cursor;
+    char *end;
     errno = 0;
-    long subscript = strtol((char *)context->input + context->cursor, (char **)NULL, 10);
-    if(0 != errno || 0 > subscript)
+    unsigned long subscript = strtoul(begin, &end, 10);
+    if(0 != errno || begin == end)
     {
         context->code = ERR_INVALID_NUMBER;
         return;
     }
     context->code = JSONPATH_SUCCESS;
-    consume_chars(context, length);
+    consume_chars(context, (size_t)(end - begin));
     predicate *pred = add_predicate(context, SUBSCRIPT);
     pred->subscript.index = (size_t)subscript;
 }
+
+/*
+static void slice_predicate(parser_context *context)
+{
+    enter_state(context, ST_SLICE_PREDICATE);
+
+    skip_ws(context);
+    errno = 0;
+    if(":" == peek(context, ))
+    {
+        skip_ws(context);
+        signed_integer(context);
+
+    }
+    else
+    {
+
+    }
+}
+*/
 
 static predicate *add_predicate(parser_context *context, enum predicate_kind kind)
 {
@@ -774,7 +789,15 @@ static inline void consume_char(parser_context *context)
 
 static inline void consume_chars(parser_context *context, size_t count)
 {
-    context->cursor += count;
+    if(context->cursor + count > context->length)
+    {
+        context->cursor = context->length - 1;
+    }
+    else
+    {
+        context->cursor += count;
+    }
+    //context->cursor += count;
 }
 
 static inline void push_back(parser_context *context)
