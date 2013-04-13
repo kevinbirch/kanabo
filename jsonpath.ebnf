@@ -94,6 +94,10 @@ name character
     ;
 
 predicate
+    = "[", predicate expression , "]"
+    ;
+
+predicate expression
     = wildcard
     | subscript
     | slice
@@ -103,22 +107,22 @@ predicate
     ;
 
 wildcard
-    = "[", "*", "]"
+    = "*"
     ;
 
 subscript
-     = "[", integer, "]"
+     = integer
      ;
 
 slice
-    = "[", ":", signed integer, [ ":", integer ], "]"
-    | "[", signed integer, ":", [ ":", integer ], "]"
-    | "[", signed integer, ":", signed integer, [ ":", integer ], "]"
+    = ":", signed integer, [ ":", integer ]
+    | signed integer, ":", [ ":", integer ]
+    | signed integer, ":", signed integer, [ ":", integer ]
     ;
 
 union
-    = "[", integer, ",", integer, "]"
-    | "[", union expression, ",", union expression, "]"
+    = integer, ",", integer
+    | union expression, ",", union expression
     ;
 
 union expression
@@ -127,7 +131,7 @@ union expression
     ;
 
 filter
-    = "[", "?(", filter expression, ")", "]"
+    = "?(", filter expression, ")"
     ;
 
 filter expression
@@ -259,10 +263,10 @@ hex upper
     ;
 
 script
-    = "[", "(", script expression, ")", "]"
+    = "(", script expression, ")"
     ;
 
 script expression
-    = ? a set of implementation defined characters, ouside the scope of this definition ?
+    = ? implementation defined, ouside the scope of this description ?
     ;
 
