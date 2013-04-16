@@ -53,17 +53,17 @@ bool scalar_true(node *each, void *context);
 void evaluator_setup(void)
 {
     model = make_model(1);
-    ck_assert_not_null(model);
+    assert_not_null(model);
     
     FILE *input = fopen("inventory.json", "r");
-    ck_assert_not_null(input);
+    assert_not_null(input);
     
     loader_result *result = load_model_from_file(input, model);
-    ck_assert_not_null(result);
-    ck_assert_int_eq(LOADER_SUCCESS, result->code);
+    assert_not_null(result);
+    assert_int_eq(LOADER_SUCCESS, result->code);
 
     int closed = fclose(input);
-    ck_assert_int_eq(0, closed);
+    assert_int_eq(0, closed);
     free_loader_result(result);
 }
 
@@ -77,16 +77,16 @@ START_TEST (dollar_only)
 {
     jsonpath path;
     jsonpath_status_code code = parse_jsonpath((uint8_t *)"$", 1, &path);
-    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+    assert_int_eq(JSONPATH_SUCCESS, code);
 
-    errno = 0;
+    reset_errno();
     nodelist *list = evaluate(model, &path);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(list);
-    ck_assert_int_eq(1, nodelist_length(list));
-    ck_assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 0)));
-    ck_assert_int_eq(1, node_get_size(nodelist_get(list, 0)));
-    ck_assert_true(mapping_contains_key(nodelist_get(list, 0), "store"));
+    assert_noerr();
+    assert_not_null(list);
+    assert_nodelist_length(list, 1);
+    assert_node_kind(nodelist_get(list, 0), MAPPING);
+    assert_node_size(nodelist_get(list, 0), 1);
+    assert_mapping_has_key(nodelist_get(list, 0), "store");
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -97,20 +97,20 @@ START_TEST (single_name_step)
 {
     jsonpath path;
     jsonpath_status_code code = parse_jsonpath((uint8_t *)"$.store", 7, &path);
-    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+    assert_int_eq(JSONPATH_SUCCESS, code);
 
-    errno = 0;
+    reset_errno();
     nodelist *list = evaluate(model, &path);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(list);
-    ck_assert_int_eq(1, nodelist_length(list));
+    assert_noerr();
+    assert_not_null(list);
+    assert_int_eq(1, nodelist_length(list));
     node *store = nodelist_get(list, 0);
-    ck_assert_not_null(store);
+    assert_not_null(store);
 
-    ck_assert_int_eq(MAPPING, node_get_kind(store));
-    ck_assert_int_eq(2, node_get_size(store));
-    ck_assert_true(mapping_contains_key(store, "book"));
-    ck_assert_true(mapping_contains_key(store, "bicycle"));
+    assert_int_eq(MAPPING, node_get_kind(store));
+    assert_int_eq(2, node_get_size(store));
+    assert_true(mapping_contains_key(store, "book"));
+    assert_true(mapping_contains_key(store, "bicycle"));
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -122,18 +122,18 @@ START_TEST (long_path)
     jsonpath path;
     char *expr = "$.store.bicycle.color";
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
-    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+    assert_int_eq(JSONPATH_SUCCESS, code);
 
-    errno = 0;
+    reset_errno();
     nodelist *list = evaluate(model, &path);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(list);
-    ck_assert_int_eq(1, nodelist_length(list));
+    assert_noerr();
+    assert_not_null(list);
+    assert_int_eq(1, nodelist_length(list));
     node *color = nodelist_get(list, 0);
-    ck_assert_not_null(color);
+    assert_not_null(color);
 
-    ck_assert_int_eq(SCALAR, node_get_kind(color));
-    ck_assert_buf_eq("red", 3, scalar_get_value(color), node_get_size(color));
+    assert_int_eq(SCALAR, node_get_kind(color));
+    assert_buf_eq("red", 3, scalar_get_value(color), node_get_size(color));
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -145,19 +145,19 @@ START_TEST (wildcard)
     jsonpath path;
     char *expr = "$.store.*";
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
-    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+    assert_int_eq(JSONPATH_SUCCESS, code);
 
-    errno = 0;
+    reset_errno();
     nodelist *list = evaluate(model, &path);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(list);
-    ck_assert_int_eq(5, nodelist_length(list));
+    assert_noerr();
+    assert_not_null(list);
+    assert_int_eq(5, nodelist_length(list));
 
-    ck_assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 0)));
-    ck_assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 1)));
-    ck_assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 2)));
-    ck_assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 3)));
-    ck_assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 4)));
+    assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 0)));
+    assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 1)));
+    assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 2)));
+    assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 3)));
+    assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 4)));
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -169,18 +169,18 @@ START_TEST (object_test)
     jsonpath path;
     char *expr = "$.store.object()";
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
-    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+    assert_int_eq(JSONPATH_SUCCESS, code);
 
-    errno = 0;
+    reset_errno();
     nodelist *list = evaluate(model, &path);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(list);
-    ck_assert_int_eq(1, nodelist_length(list));
+    assert_noerr();
+    assert_not_null(list);
+    assert_int_eq(1, nodelist_length(list));
     node *boolean = nodelist_get(list, 0);
-    ck_assert_not_null(boolean);
+    assert_not_null(boolean);
 
-    ck_assert_int_eq(SCALAR, node_get_kind(boolean));
-    ck_assert_buf_eq("true", 4, scalar_get_value(boolean), node_get_size(boolean));
+    assert_int_eq(SCALAR, node_get_kind(boolean));
+    assert_buf_eq("true", 4, scalar_get_value(boolean), node_get_size(boolean));
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -192,18 +192,18 @@ START_TEST (array_test)
     jsonpath path;
     char * expr = "$.store.book.array()";
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
-    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+    assert_int_eq(JSONPATH_SUCCESS, code);
 
-    errno = 0;
+    reset_errno();
     nodelist *list = evaluate(model, &path);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(list);
-    ck_assert_int_eq(1, nodelist_length(list));
+    assert_noerr();
+    assert_not_null(list);
+    assert_int_eq(1, nodelist_length(list));
     node *boolean = nodelist_get(list, 0);
-    ck_assert_not_null(boolean);
+    assert_not_null(boolean);
 
-    ck_assert_int_eq(SCALAR, node_get_kind(boolean));
-    ck_assert_buf_eq("true", 4, scalar_get_value(boolean), node_get_size(boolean));
+    assert_int_eq(SCALAR, node_get_kind(boolean));
+    assert_buf_eq("true", 4, scalar_get_value(boolean), node_get_size(boolean));
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -215,15 +215,15 @@ START_TEST (number_test)
     jsonpath path;
     char * expr = "$.store.book[*].price.number()";
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
-    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+    assert_int_eq(JSONPATH_SUCCESS, code);
 
-    errno = 0;
+    reset_errno();
     nodelist *list = evaluate(model, &path);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(list);
-    ck_assert_int_eq(4, nodelist_length(list));
+    assert_noerr();
+    assert_not_null(list);
+    assert_int_eq(4, nodelist_length(list));
 
-    ck_assert_true(nodelist_iterate(list, scalar_true, NULL));
+    assert_true(nodelist_iterate(list, scalar_true, NULL));
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -244,18 +244,18 @@ START_TEST (wildcard_predicate)
     jsonpath path;
     char *expr = "$.store.book[*].author";
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
-    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+    assert_int_eq(JSONPATH_SUCCESS, code);
 
-    errno = 0;
+    reset_errno();
     nodelist *list = evaluate(model, &path);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(list);
-    ck_assert_int_eq(4, nodelist_length(list));
+    assert_noerr();
+    assert_not_null(list);
+    assert_int_eq(4, nodelist_length(list));
 
-    ck_assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 0)));
-    ck_assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 1)));
-    ck_assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 2)));
-    ck_assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 3)));
+    assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 0)));
+    assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 1)));
+    assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 2)));
+    assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 3)));
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -267,17 +267,17 @@ START_TEST (wildcard_predicate_on_mapping)
     jsonpath path;
     char *expr = "$.store.bicycle[*].color";
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
-    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+    assert_int_eq(JSONPATH_SUCCESS, code);
 
-    errno = 0;
+    reset_errno();
     nodelist *list = evaluate(model, &path);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(list);
-    ck_assert_int_eq(1, nodelist_length(list));
+    assert_noerr();
+    assert_not_null(list);
+    assert_int_eq(1, nodelist_length(list));
 
     node *scalar = nodelist_get(list, 0);
-    ck_assert_int_eq(SCALAR, node_get_kind(scalar));
-    ck_assert_buf_eq("red", 3, scalar_get_value(scalar), node_get_size(scalar));
+    assert_int_eq(SCALAR, node_get_kind(scalar));
+    assert_buf_eq("red", 3, scalar_get_value(scalar), node_get_size(scalar));
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -289,17 +289,17 @@ START_TEST (wildcard_predicate_on_scalar)
     jsonpath path;
     char *expr = "$.store.bicycle.color[*]";
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
-    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+    assert_int_eq(JSONPATH_SUCCESS, code);
 
-    errno = 0;
+    reset_errno();
     nodelist *list = evaluate(model, &path);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(list);
-    ck_assert_int_eq(1, nodelist_length(list));
+    assert_noerr();
+    assert_not_null(list);
+    assert_int_eq(1, nodelist_length(list));
 
     node *scalar = nodelist_get(list, 0);
-    ck_assert_int_eq(SCALAR, node_get_kind(scalar));
-    ck_assert_buf_eq("red", 3, scalar_get_value(scalar), node_get_size(scalar));
+    assert_int_eq(SCALAR, node_get_kind(scalar));
+    assert_buf_eq("red", 3, scalar_get_value(scalar), node_get_size(scalar));
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -311,24 +311,126 @@ START_TEST (subscript_predicate)
     jsonpath path;
     char *expr = "$.store.book[2]";
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
-    ck_assert_int_eq(JSONPATH_SUCCESS, code);
+    assert_int_eq(JSONPATH_SUCCESS, code);
 
-    errno = 0;
+    reset_errno();
     nodelist *list = evaluate(model, &path);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(list);
-    ck_assert_int_eq(1, nodelist_length(list));
+    assert_noerr();
+    assert_not_null(list);
+    assert_int_eq(1, nodelist_length(list));
 
-    errno = 0;
+    reset_errno();
     node *mapping = nodelist_get(list, 0);
-    ck_assert_int_eq(MAPPING, node_get_kind(mapping));
-    ck_assert_int_eq(0, errno);
-    errno = 0;
+    assert_int_eq(MAPPING, node_get_kind(mapping));
+    assert_noerr();
+    reset_errno();
     node *author = mapping_get_value(mapping, "author");
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(author);
+    assert_noerr();
+    assert_not_null(author);
     char *melville = "Herman Melville";
-    ck_assert_buf_eq(melville, strlen(melville), scalar_get_value(author), node_get_size(author));
+    assert_buf_eq(melville, strlen(melville), scalar_get_value(author), node_get_size(author));
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (slice_predicate)
+{
+    jsonpath path;
+    char *expr = "$.store.book[:2]";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    assert_int_eq(JSONPATH_SUCCESS, code);
+
+    reset_errno();
+    nodelist *list = evaluate(model, &path);
+    assert_noerr();
+    assert_not_null(list);
+    assert_nodelist_length(list, 2);
+
+    reset_errno();
+    node *book = nodelist_get(list, 0);
+    assert_noerr();
+    assert_node_kind(book, MAPPING);
+
+    reset_errno();
+    node *author = mapping_get_value(book, "author");
+    assert_noerr();
+    assert_not_null(author);
+    char *name = "Nigel Rees";
+    assert_buf_eq(name, strlen(name), scalar_get_value(author), node_get_size(author));
+
+    reset_errno();
+    book = nodelist_get(list, 1);
+    assert_noerr();
+    assert_node_kind(book, MAPPING);
+
+    reset_errno();
+    author = mapping_get_value(book, "author");
+    assert_noerr();
+    assert_not_null(author);
+    name = "Evelyn Waugh";
+    assert_buf_eq(name, strlen(name), scalar_get_value(author), node_get_size(author));
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (slice_predicate_with_step)
+{
+    jsonpath path;
+    char *expr = "$.store.book[:2:2]";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    assert_int_eq(JSONPATH_SUCCESS, code);
+
+    reset_errno();
+    nodelist *list = evaluate(model, &path);
+    assert_noerr();
+    assert_not_null(list);
+    assert_nodelist_length(list, 1);
+
+    reset_errno();
+    node *book = nodelist_get(list, 0);
+    assert_noerr();
+    assert_node_kind(book, MAPPING);
+
+    reset_errno();
+    node *author = mapping_get_value(book, "author");
+    assert_noerr();
+    assert_not_null(author);
+    char *name = "Evelyn Waugh";
+    assert_buf_eq(name, strlen(name), scalar_get_value(author), node_get_size(author));
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (slice_predicate_reverse)
+{
+    jsonpath path;
+    char *expr = "$.store.book[-1:]";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    assert_int_eq(JSONPATH_SUCCESS, code);
+
+    reset_errno();
+    nodelist *list = evaluate(model, &path);
+    assert_noerr();
+    assert_not_null(list);
+    assert_nodelist_length(list, 1);
+
+    reset_errno();
+    node *book = nodelist_get(list, 0);
+    assert_noerr();
+    assert_node_kind(book, MAPPING);
+
+    reset_errno();
+    node *author = mapping_get_value(book, "author");
+    assert_noerr();
+    assert_not_null(author);
+    char *name = "J. R. R. Tolkien";
+    assert_buf_eq(name, strlen(name), scalar_get_value(author), node_get_size(author));
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -353,6 +455,9 @@ Suite *evaluator_suite(void)
     tcase_add_test(predicate_case, wildcard_predicate_on_mapping);
     tcase_add_test(predicate_case, wildcard_predicate_on_scalar);
     tcase_add_test(predicate_case, subscript_predicate);
+    tcase_add_test(predicate_case, slice_predicate);
+    tcase_add_test(predicate_case, slice_predicate_with_step);
+    tcase_add_test(predicate_case, slice_predicate_reverse);
     
     Suite *evaluator = suite_create("Evaluator");
     suite_add_tcase(evaluator, basic_case);

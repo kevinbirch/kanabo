@@ -67,9 +67,9 @@ START_TEST (load_from_file)
 
     FILE *input = tmpfile();
     size_t written = fwrite(YAML, sizeof(char), yaml_size, input);
-    ck_assert_int_eq(written, yaml_size);
+    assert_int_eq(written, yaml_size);
     int ret = fflush(input);
-    ck_assert_int_eq(0, ret);
+    assert_int_eq(0, ret);
 
     rewind(input);
 
@@ -98,73 +98,73 @@ END_TEST
 
 static void assert_model_state(loader_result *result, document_model *model)
 {
-    ck_assert_int_eq(LOADER_SUCCESS, result->code);
-    ck_assert_not_null(model);
-    ck_assert_int_eq(1, model_get_document_count(model));
+    assert_int_eq(LOADER_SUCCESS, result->code);
+    assert_not_null(model);
+    assert_int_eq(1, model_get_document_count(model));
 
     node *root = model_get_document_root(model, 0);
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(root);
+    assert_int_eq(0, errno);
+    assert_not_null(root);
     
-    ck_assert_int_eq(MAPPING, node_get_kind(root));
-    ck_assert_int_eq(5, node_get_size(root));
-    ck_assert_not_null(mapping_get_all(root));
+    assert_int_eq(MAPPING, node_get_kind(root));
+    assert_int_eq(5, node_get_size(root));
+    assert_not_null(mapping_get_all(root));
 
     node *one = mapping_get_value(root, "one");
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(one);
-    ck_assert_int_eq(SEQUENCE, node_get_kind(one));
-    ck_assert_int_eq(2, node_get_size(one));
+    assert_int_eq(0, errno);
+    assert_not_null(one);
+    assert_int_eq(SEQUENCE, node_get_kind(one));
+    assert_int_eq(2, node_get_size(one));
     node *one_0 = sequence_get(one, 0);
-    ck_assert_int_eq(0, errno);
-    ck_assert_int_eq(SCALAR, node_get_kind(one_0));
-    ck_assert_buf_eq("foo1", 4, scalar_get_value(one_0), node_get_size(one_0));
-    ck_assert_int_eq(SCALAR_STRING, scalar_get_kind(one_0));
+    assert_int_eq(0, errno);
+    assert_int_eq(SCALAR, node_get_kind(one_0));
+    assert_buf_eq("foo1", 4, scalar_get_value(one_0), node_get_size(one_0));
+    assert_int_eq(SCALAR_STRING, scalar_get_kind(one_0));
     node *one_1 = sequence_get(one, 1);
-    ck_assert_int_eq(0, errno);
-    ck_assert_int_eq(SCALAR, node_get_kind(one_1));
-    ck_assert_buf_eq("bar1", 4, scalar_get_value(one_1), node_get_size(one_1));
-    ck_assert_int_eq(SCALAR_STRING, scalar_get_kind(one_1));
+    assert_int_eq(0, errno);
+    assert_int_eq(SCALAR, node_get_kind(one_1));
+    assert_buf_eq("bar1", 4, scalar_get_value(one_1), node_get_size(one_1));
+    assert_int_eq(SCALAR_STRING, scalar_get_kind(one_1));
 
     node *two = mapping_get_value(root, "two");
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(two);
-    ck_assert_int_eq(SCALAR, node_get_kind(two));
-    ck_assert_buf_eq("foo2", 4, scalar_get_value(two), node_get_size(two));
-    ck_assert_int_eq(SCALAR_STRING, scalar_get_kind(two));
+    assert_int_eq(0, errno);
+    assert_not_null(two);
+    assert_int_eq(SCALAR, node_get_kind(two));
+    assert_buf_eq("foo2", 4, scalar_get_value(two), node_get_size(two));
+    assert_int_eq(SCALAR_STRING, scalar_get_kind(two));
 
     node *three = mapping_get_value(root, "three");
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(three);
-    ck_assert_int_eq(SCALAR, node_get_kind(three));
-    ck_assert_buf_eq("null", 4, scalar_get_value(three), node_get_size(three));
-    ck_assert_int_eq(SCALAR_NULL, scalar_get_kind(three));
+    assert_int_eq(0, errno);
+    assert_not_null(three);
+    assert_int_eq(SCALAR, node_get_kind(three));
+    assert_buf_eq("null", 4, scalar_get_value(three), node_get_size(three));
+    assert_int_eq(SCALAR_NULL, scalar_get_kind(three));
 
     node *four = mapping_get_value(root, "four");
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(four);
-    ck_assert_int_eq(SEQUENCE, node_get_kind(four));
+    assert_int_eq(0, errno);
+    assert_not_null(four);
+    assert_int_eq(SEQUENCE, node_get_kind(four));
     node *four_0 = sequence_get(four, 0);
-    ck_assert_int_eq(0, errno);
-    ck_assert_int_eq(SCALAR, node_get_kind(four_0));
-    ck_assert_buf_eq("true", 4, scalar_get_value(four_0), node_get_size(four_0));
-    ck_assert_int_eq(SCALAR_BOOLEAN, scalar_get_kind(four_0));
-    ck_assert_true(scalar_boolean_is_true(four_0));
-    ck_assert_false(scalar_boolean_is_false(four_0));
+    assert_int_eq(0, errno);
+    assert_int_eq(SCALAR, node_get_kind(four_0));
+    assert_buf_eq("true", 4, scalar_get_value(four_0), node_get_size(four_0));
+    assert_int_eq(SCALAR_BOOLEAN, scalar_get_kind(four_0));
+    assert_true(scalar_boolean_is_true(four_0));
+    assert_false(scalar_boolean_is_false(four_0));
     node *four_1 = sequence_get(four, 1);
-    ck_assert_int_eq(0, errno);
-    ck_assert_int_eq(SCALAR, node_get_kind(four_0));
-    ck_assert_buf_eq("false", 5, scalar_get_value(four_1), node_get_size(four_1));
-    ck_assert_int_eq(SCALAR_BOOLEAN, scalar_get_kind(four_1));
-    ck_assert_true(scalar_boolean_is_false(four_1));
-    ck_assert_false(scalar_boolean_is_true(four_1));
+    assert_int_eq(0, errno);
+    assert_int_eq(SCALAR, node_get_kind(four_0));
+    assert_buf_eq("false", 5, scalar_get_value(four_1), node_get_size(four_1));
+    assert_int_eq(SCALAR_BOOLEAN, scalar_get_kind(four_1));
+    assert_true(scalar_boolean_is_false(four_1));
+    assert_false(scalar_boolean_is_true(four_1));
 
     node *five = mapping_get_value(root, "five");
-    ck_assert_int_eq(0, errno);
-    ck_assert_not_null(five);
-    ck_assert_int_eq(SCALAR, node_get_kind(five));
-    ck_assert_buf_eq("1.5", 3, scalar_get_value(five), node_get_size(five));
-    ck_assert_int_eq(SCALAR_NUMBER, scalar_get_kind(five));
+    assert_int_eq(0, errno);
+    assert_not_null(five);
+    assert_int_eq(SCALAR, node_get_kind(five));
+    assert_buf_eq("1.5", 3, scalar_get_value(five), node_get_size(five));
+    assert_int_eq(SCALAR_NUMBER, scalar_get_kind(five));
 }
 
 Suite *loader_suite(void)

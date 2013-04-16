@@ -35,47 +35,41 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <stdio.h>
-#include <errno.h>
-
-#include <check.h>
-
-#include "jsonpath.h"
 #include "test.h"
-#include "log.h"
+#include "jsonpath.h"
 
-static void assert_parser_result(const char * restrict expression, jsonpath_status_code result, jsonpath *path, enum path_kind expected_kind, size_t expected_length);
+static inline void assert_parser_result(const char * restrict expression, jsonpath_status_code result, jsonpath *path, enum path_kind expected_kind, size_t expected_length);
 
-static void assert_root_step(jsonpath *path);
-static void assert_single_name_step(jsonpath *path, size_t index, char *name);
-static void assert_single_wildcard_step(jsonpath *path, size_t index);
-static void assert_recursive_wildcard_step(jsonpath *path, size_t index);
-static void assert_wildcard_step(jsonpath *path, size_t index, enum step_kind expected_step_kind);
-static void assert_recursive_name_step(jsonpath *path, size_t index, char *name);
-static void assert_name_step(jsonpath *path, size_t index, char *name, enum step_kind expected_step_kind);
-static void assert_single_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind);
-static void assert_recursive_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind);
-static void assert_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind, enum step_kind expected_step_kind);
-static void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind);
-static void assert_name(step * current, uint8_t *value, size_t length);
-static void assert_no_predicates(jsonpath *path, size_t index);
-static void assert_wildcard_predicate(jsonpath *path, size_t path_index);
-static void assert_subscript_predicate(jsonpath *path, size_t path_index, uint_fast32_t index_value);
-static void assert_predicate(jsonpath *path, size_t path_index, enum predicate_kind expected_predicate_kind);
+static inline void assert_root_step(jsonpath *path);
+static inline void assert_single_name_step(jsonpath *path, size_t index, char *name);
+static inline void assert_single_wildcard_step(jsonpath *path, size_t index);
+static inline void assert_recursive_wildcard_step(jsonpath *path, size_t index);
+static inline void assert_wildcard_step(jsonpath *path, size_t index, enum step_kind expected_step_kind);
+static inline void assert_recursive_name_step(jsonpath *path, size_t index, char *name);
+static inline void assert_name_step(jsonpath *path, size_t index, char *name, enum step_kind expected_step_kind);
+static inline void assert_single_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind);
+static inline void assert_recursive_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind);
+static inline void assert_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind, enum step_kind expected_step_kind);
+static inline void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind);
+static inline void assert_name(step * current, uint8_t *value, size_t length);
+static inline void assert_no_predicates(jsonpath *path, size_t index);
+static inline void assert_wildcard_predicate(jsonpath *path, size_t path_index);
+static inline void assert_subscript_predicate(jsonpath *path, size_t path_index, uint_fast32_t index_value);
+static inline void assert_predicate(jsonpath *path, size_t path_index, enum predicate_kind expected_predicate_kind);
 
 START_TEST (null_expression)
 {
     jsonpath path;
     jsonpath_status_code result = parse_jsonpath(NULL, 50, &path);
     
-    ck_assert_int_eq(ERR_NULL_EXPRESSION, result);
+    assert_int_eq(ERR_NULL_EXPRESSION, result);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
-    ck_assert_int_eq(0, path.result.position);
+    assert_int_eq(0, path.result.position);
 }
 END_TEST
 
@@ -84,14 +78,14 @@ START_TEST (zero_length)
     jsonpath path;
     jsonpath_status_code result = parse_jsonpath((uint8_t *)"", 0, &path);
     
-    ck_assert_int_eq(ERR_ZERO_LENGTH, result);
+    assert_int_eq(ERR_ZERO_LENGTH, result);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
     free(message);
-    ck_assert_int_eq(0, path.result.position);
+    assert_int_eq(0, path.result.position);
 }
 END_TEST
 
@@ -99,7 +93,7 @@ START_TEST (null_path)
 {
     jsonpath_status_code result = parse_jsonpath((uint8_t *)"", 5, NULL);
     
-    ck_assert_int_eq(ERR_NULL_OUTPUT_PATH, result);
+    assert_int_eq(ERR_NULL_OUTPUT_PATH, result);
 }
 END_TEST
 
@@ -108,10 +102,10 @@ START_TEST (missing_step_test)
     jsonpath path;
     jsonpath_status_code result = parse_jsonpath((uint8_t *)"$.", 2, &path);
     
-    ck_assert_int_eq(ERR_PREMATURE_END_OF_INPUT, result);
-    ck_assert_int_eq(2, path.result.position);
+    assert_int_eq(ERR_PREMATURE_END_OF_INPUT, result);
+    assert_int_eq(2, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -125,10 +119,10 @@ START_TEST (missing_recursive_step_test)
     jsonpath path;
     jsonpath_status_code result = parse_jsonpath((uint8_t *)"$..", 3, &path);
     
-    ck_assert_int_eq(ERR_PREMATURE_END_OF_INPUT, result);
-    ck_assert_int_eq(3, path.result.position);
+    assert_int_eq(ERR_PREMATURE_END_OF_INPUT, result);
+    assert_int_eq(3, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -142,10 +136,10 @@ START_TEST (missing_dot)
     jsonpath path;
     jsonpath_status_code result = parse_jsonpath((uint8_t *)"$x", 2, &path);
     
-    ck_assert_int_eq(ERR_UNEXPECTED_VALUE, result);
-    ck_assert_int_eq(1, path.result.position);
+    assert_int_eq(ERR_UNEXPECTED_VALUE, result);
+    assert_int_eq(1, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -159,10 +153,10 @@ START_TEST (relative_path_begins_with_dot)
     jsonpath path;
     jsonpath_status_code result = parse_jsonpath((uint8_t *)".x", 2, &path);
     
-    ck_assert_int_eq(ERR_EXPECTED_NAME_CHAR, result);
-    ck_assert_int_eq(0, path.result.position);
+    assert_int_eq(ERR_EXPECTED_NAME_CHAR, result);
+    assert_int_eq(0, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -177,10 +171,10 @@ START_TEST (quoted_empty_step)
     char *expression = "$.foo.''.bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXPECTED_NAME_CHAR, result);
-    ck_assert_int_eq(7, path.result.position);
+    assert_int_eq(ERR_EXPECTED_NAME_CHAR, result);
+    assert_int_eq(7, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -195,10 +189,10 @@ START_TEST (empty_predicate)
     char *expression = "$.foo[].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EMPTY_PREDICATE, result);
-    ck_assert_int_eq(6, path.result.position);
+    assert_int_eq(ERR_EMPTY_PREDICATE, result);
+    assert_int_eq(6, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -213,10 +207,10 @@ START_TEST (extra_junk_in_predicate)
     char *expression = "$.foo[ * quux].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXTRA_JUNK_AFTER_PREDICATE, result);
-    ck_assert_int_eq(9, path.result.position);
+    assert_int_eq(ERR_EXTRA_JUNK_AFTER_PREDICATE, result);
+    assert_int_eq(9, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -231,10 +225,10 @@ START_TEST (whitespace_predicate)
     char *expression = "$.foo[ \t ].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EMPTY_PREDICATE, result);
-    ck_assert_int_eq(9, path.result.position);
+    assert_int_eq(ERR_EMPTY_PREDICATE, result);
+    assert_int_eq(9, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -248,10 +242,10 @@ START_TEST (bogus_predicate)
     char *expression = "$.foo[asdf].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_UNSUPPORTED_PRED_TYPE, result);
-    ck_assert_int_eq(6, path.result.position);
+    assert_int_eq(ERR_UNSUPPORTED_PRED_TYPE, result);
+    assert_int_eq(6, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -266,10 +260,10 @@ START_TEST (bogus_type_test_name)
     char *expression = "$.foo.monkey()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
-    ck_assert_int_eq(6, path.result.position);
+    assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    assert_int_eq(6, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -284,10 +278,10 @@ START_TEST (bogus_type_test_name_oblong)
     char *expression = "$.foo.oblong()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
-    ck_assert_int_eq(6, path.result.position);
+    assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    assert_int_eq(6, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -302,10 +296,10 @@ START_TEST (bogus_type_test_name_alloy)
     char *expression = "$.foo.alloy()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
-    ck_assert_int_eq(6, path.result.position);
+    assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    assert_int_eq(6, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -320,10 +314,10 @@ START_TEST (bogus_type_test_name_strong)
     char *expression = "$.foo.strong()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
-    ck_assert_int_eq(6, path.result.position);
+    assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    assert_int_eq(6, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -338,10 +332,10 @@ START_TEST (bogus_type_test_name_numbered)
     char *expression = "$.foo.numbered()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
-    ck_assert_int_eq(6, path.result.position);
+    assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    assert_int_eq(6, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -356,10 +350,10 @@ START_TEST (bogus_type_test_name_booger)
     char *expression = "$.foo.booger()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
-    ck_assert_int_eq(6, path.result.position);
+    assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    assert_int_eq(6, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -374,10 +368,10 @@ START_TEST (bogus_type_test_name_narl)
     char *expression = "$.foo.narl()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
-    ck_assert_int_eq(6, path.result.position);
+    assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    assert_int_eq(6, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -392,10 +386,10 @@ START_TEST (empty_type_test_name)
     char *expression = "$.foo.()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
-    ck_assert_int_eq(6, path.result.position);
+    assert_int_eq(ERR_EXPECTED_NODE_TYPE_TEST, result);
+    assert_int_eq(6, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -404,119 +398,119 @@ START_TEST (empty_type_test_name)
 }
 END_TEST
 
-static void assert_parser_result(const char * restrict expression, jsonpath_status_code result, jsonpath *path, enum path_kind expected_kind, size_t expected_length)
+static inline void assert_parser_result(const char * restrict expression, jsonpath_status_code result, jsonpath *path, enum path_kind expected_kind, size_t expected_length)
 {
     char *message = make_status_message(path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
     if(JSONPATH_SUCCESS != result)
     {
         log_error("parser test", "failed for the expression: '%s', received: '%s'", expression, message);
     }
     free(message);
-    ck_assert_int_eq(JSONPATH_SUCCESS, result);
-    ck_assert_int_ne(0, path->result.position);
-    ck_assert_int_eq(expected_kind, path_get_kind(path));
-    ck_assert_not_null(path->steps);
-    ck_assert_int_eq(expected_length, path_get_length(path));
+    assert_int_eq(JSONPATH_SUCCESS, result);
+    assert_int_ne(0, path->result.position);
+    assert_int_eq(expected_kind, path_get_kind(path));
+    assert_not_null(path->steps);
+    assert_int_eq(expected_length, path_get_length(path));
 }
 
-static void assert_root_step(jsonpath *path)
+static inline void assert_root_step(jsonpath *path)
 {
     assert_step(path, 0, ROOT, NAME_TEST);
     assert_no_predicates(path, 0);
 }
 
-static void assert_single_name_step(jsonpath *path, size_t index, char *name)
+static inline void assert_single_name_step(jsonpath *path, size_t index, char *name)
 {
     assert_name_step(path, index, name, SINGLE);
 }
 
-static void assert_single_wildcard_step(jsonpath *path, size_t index)
+static inline void assert_single_wildcard_step(jsonpath *path, size_t index)
 {
     assert_wildcard_step(path, index, SINGLE);
 }
 
-static void assert_recursive_wildcard_step(jsonpath *path, size_t index)
+static inline void assert_recursive_wildcard_step(jsonpath *path, size_t index)
 {
     assert_wildcard_step(path, index, RECURSIVE);
 }
 
-static void assert_wildcard_step(jsonpath *path, size_t index, enum step_kind expected_step_kind)
+static inline void assert_wildcard_step(jsonpath *path, size_t index, enum step_kind expected_step_kind)
 {
     assert_step(path, index, expected_step_kind, WILDCARD_TEST);
     assert_name(path_get_step(path, index), (uint8_t *)"*", 1);
 }
 
-static void assert_recursive_name_step(jsonpath *path, size_t index, char *name)
+static inline void assert_recursive_name_step(jsonpath *path, size_t index, char *name)
 {
     assert_name_step(path, index, name, RECURSIVE);
 }
 
-static void assert_name_step(jsonpath *path, size_t index, char *name, enum step_kind expected_step_kind)
+static inline void assert_name_step(jsonpath *path, size_t index, char *name, enum step_kind expected_step_kind)
 {
     assert_step(path, index, expected_step_kind, NAME_TEST);
     assert_name(path_get_step(path, index), (uint8_t *)name, strlen(name));
 }
 
-static void assert_single_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind)
+static inline void assert_single_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind)
 {
     assert_type_step(path, index, expected_type_kind, SINGLE);
 }
 
-static void assert_recursive_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind)
+static inline void assert_recursive_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind)
 {
     assert_type_step(path, index, expected_type_kind, RECURSIVE);
 }
 
-static void assert_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind, enum step_kind expected_step_kind)
+static inline void assert_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind, enum step_kind expected_step_kind)
 {
     assert_step(path, index, expected_step_kind, TYPE_TEST);
-    ck_assert_int_eq(expected_type_kind, type_test_step_get_type(path_get_step(path, index)));
+    assert_int_eq(expected_type_kind, type_test_step_get_type(path_get_step(path, index)));
 }
 
-static void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind)
+static inline void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind)
 {
-    ck_assert_int_eq(expected_step_kind, step_get_kind(path_get_step(path, index)));
-    ck_assert_int_eq(expected_test_kind, step_get_test_kind(path_get_step(path, index)));
+    assert_int_eq(expected_step_kind, step_get_kind(path_get_step(path, index)));
+    assert_int_eq(expected_test_kind, step_get_test_kind(path_get_step(path, index)));
 }
 
-static void assert_name(step *current, uint8_t *name, size_t length)
+static inline void assert_name(step *current, uint8_t *name, size_t length)
 {
-    ck_assert_int_eq(length, name_test_step_get_length(current));
-    ck_assert_buf_eq(name, length, name_test_step_get_name(current), name_test_step_get_length(current));
+    assert_int_eq(length, name_test_step_get_length(current));
+    assert_buf_eq(name, length, name_test_step_get_name(current), name_test_step_get_length(current));
 }
 
-static void assert_no_predicates(jsonpath *path, size_t index)
+static inline void assert_no_predicates(jsonpath *path, size_t index)
 {
-    ck_assert_false(step_has_predicate(path_get_step(path, index)));
-    ck_assert_null(path->steps[index]->predicate);
+    assert_false(step_has_predicate(path_get_step(path, index)));
+    assert_null(path->steps[index]->predicate);
 }
 
-static void assert_wildcard_predicate(jsonpath *path, size_t path_index)
+static inline void assert_wildcard_predicate(jsonpath *path, size_t path_index)
 {
     assert_predicate(path, path_index, WILDCARD);
 }
 
-static void assert_subscript_predicate(jsonpath *path, size_t path_index, uint_fast32_t index_value)
+static inline void assert_subscript_predicate(jsonpath *path, size_t path_index, uint_fast32_t index_value)
 {
     assert_predicate(path, path_index, SUBSCRIPT);
-    ck_assert_int_eq(index_value, subscript_predicate_get_index(step_get_predicate(path_get_step(path, path_index))));
+    assert_int_eq(index_value, subscript_predicate_get_index(step_get_predicate(path_get_step(path, path_index))));
 }
 
-static void assert_slice_predicate(jsonpath *path, size_t path_index, int_fast32_t from_value, int_fast32_t to_value, uint_fast32_t step_value)
+static inline void assert_slice_predicate(jsonpath *path, size_t path_index, int_fast32_t from_value, int_fast32_t to_value, uint_fast32_t step_value)
 {
     assert_predicate(path, path_index, SLICE);
-    ck_assert_int_eq(from_value, slice_predicate_get_from(step_get_predicate(path_get_step(path, path_index))));
-    ck_assert_int_eq(to_value,   slice_predicate_get_to(step_get_predicate(path_get_step(path, path_index))));
-    ck_assert_int_eq(step_value, slice_predicate_get_step(step_get_predicate(path_get_step(path, path_index))));
+    assert_int_eq(from_value, slice_predicate_get_from(step_get_predicate(path_get_step(path, path_index))));
+    assert_int_eq(to_value,   slice_predicate_get_to(step_get_predicate(path_get_step(path, path_index))));
+    assert_int_eq(step_value, slice_predicate_get_step(step_get_predicate(path_get_step(path, path_index))));
 }
 
-static void assert_predicate(jsonpath *path, size_t path_index, enum predicate_kind expected_predicate_kind)
+static inline void assert_predicate(jsonpath *path, size_t path_index, enum predicate_kind expected_predicate_kind)
 {
-    ck_assert_true(step_has_predicate(path_get_step(path, path_index)));
-    ck_assert_not_null(path->steps[path_index]->predicate);
-    ck_assert_not_null(step_get_predicate(path_get_step(path, path_index)));
-    ck_assert_int_eq(expected_predicate_kind, predicate_get_kind(step_get_predicate(path_get_step(path, path_index))));
+    assert_true(step_has_predicate(path_get_step(path, path_index)));
+    assert_not_null(path->steps[path_index]->predicate);
+    assert_not_null(step_get_predicate(path_get_step(path, path_index)));
+    assert_int_eq(expected_predicate_kind, predicate_get_kind(step_get_predicate(path_get_step(path, path_index))));
 }
 
 START_TEST (dollar_only)
@@ -660,10 +654,10 @@ START_TEST (wildcard_with_trailing_junk)
     char *expression = "$.foo.* [0]";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXTRA_JUNK_AFTER_WILDCARD, result);
-    ck_assert_int_eq(7, path.result.position);
+    assert_int_eq(ERR_EXTRA_JUNK_AFTER_WILDCARD, result);
+    assert_int_eq(7, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -714,10 +708,10 @@ START_TEST (type_test_with_trailing_junk)
     char *expression = "$.foo.array()[0]";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    ck_assert_int_eq(ERR_EXTRA_JUNK_AFTER_TYPE_TEST, result);
-    ck_assert_int_eq(13, path.result.position);
+    assert_int_eq(ERR_EXTRA_JUNK_AFTER_TYPE_TEST, result);
+    assert_int_eq(13, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -922,10 +916,10 @@ START_TEST (negative_subscript_predicate)
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     // xxx - fixme! this should be ERR_EXPECTED_INTEGER instead!
-    ck_assert_int_eq(ERR_UNSUPPORTED_PRED_TYPE, result);
-    ck_assert_int_eq(7, path.result.position);
+    assert_int_eq(ERR_UNSUPPORTED_PRED_TYPE, result);
+    assert_int_eq(7, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -1061,10 +1055,10 @@ START_TEST (negative_step_slice_predicate)
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     // xxx - fixme! this should be ERR_EXPECTED_INTEGER instead!
-    ck_assert_int_eq(ERR_UNSUPPORTED_PRED_TYPE, result);
-    ck_assert_int_eq(10, path.result.position);
+    assert_int_eq(ERR_UNSUPPORTED_PRED_TYPE, result);
+    assert_int_eq(10, path.result.position);
     char *message = make_status_message(&path);
-    ck_assert_not_null(message);
+    assert_not_null(message);
 
     log_info("parser test", "received expected failure message: '%s'", message);
 
@@ -1077,14 +1071,14 @@ END_TEST
 START_TEST (bad_path_input)
 {
     errno = 0;
-    ck_assert_int_eq(-1, path_get_kind(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(-1, path_get_kind(NULL));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_int_eq(0, path_get_length(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(0, path_get_length(NULL));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_null(path_get_step(NULL, 0));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_null(path_get_step(NULL, 0));
+    assert_int_eq(EINVAL, errno);
     
     jsonpath path;
     char *expression = "$";
@@ -1092,8 +1086,8 @@ START_TEST (bad_path_input)
     assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 1);
 
     errno = 0;
-    ck_assert_null(path_get_step(&path, 1));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_null(path_get_step(&path, 1));
+    assert_int_eq(EINVAL, errno);
 
     jsonpath_free(&path);
 }
@@ -1102,21 +1096,21 @@ END_TEST
 START_TEST (bad_step_input)
 {
     errno = 0;
-    ck_assert_int_eq(-1, step_get_kind(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(-1, step_get_kind(NULL));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_int_eq(-1, step_get_test_kind(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(-1, step_get_test_kind(NULL));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_int_eq(-1, type_test_step_get_type(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(-1, type_test_step_get_type(NULL));
+    assert_int_eq(EINVAL, errno);
     
     errno = 0;
-    ck_assert_false(step_has_predicate(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_false(step_has_predicate(NULL));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_null(step_get_predicate(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_null(step_get_predicate(NULL));
+    assert_int_eq(EINVAL, errno);
     
     jsonpath path;
     char *expression = "$.foo.array()";
@@ -1124,19 +1118,19 @@ START_TEST (bad_step_input)
     assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
 
     errno = 0;
-    ck_assert_int_eq(-1, type_test_step_get_type(path_get_step(&path, 1)));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(-1, type_test_step_get_type(path_get_step(&path, 1)));
+    assert_int_eq(EINVAL, errno);
 
     step *step2 = path_get_step(&path, 2);
     errno = 0;
-    ck_assert_int_eq(0, name_test_step_get_length(step2));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(0, name_test_step_get_length(step2));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_null(name_test_step_get_name(step2));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_null(name_test_step_get_name(step2));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_null(step_get_predicate(step2));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_null(step_get_predicate(step2));
+    assert_int_eq(EINVAL, errno);
 
     jsonpath_free(&path);
 }
@@ -1145,26 +1139,26 @@ END_TEST
 START_TEST (bad_predicate_input)
 {
     errno = 0;
-    ck_assert_int_eq(-1, predicate_get_kind(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(-1, predicate_get_kind(NULL));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_int_eq(0, subscript_predicate_get_index(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(0, subscript_predicate_get_index(NULL));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_int_eq(0, slice_predicate_get_from(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(0, slice_predicate_get_from(NULL));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_int_eq(0, slice_predicate_get_to(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(0, slice_predicate_get_to(NULL));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_int_eq(0, slice_predicate_get_step(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(0, slice_predicate_get_step(NULL));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_null(join_predicate_get_left(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_null(join_predicate_get_left(NULL));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_null(join_predicate_get_right(NULL));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_null(join_predicate_get_right(NULL));
+    assert_int_eq(EINVAL, errno);
 
     jsonpath path;
     char *expression = "$.foo[42].bar[*]";
@@ -1173,25 +1167,25 @@ START_TEST (bad_predicate_input)
 
     predicate *subscript = step_get_predicate(path_get_step(&path, 1));
     errno = 0;
-    ck_assert_int_eq(0, slice_predicate_get_to(subscript));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(0, slice_predicate_get_to(subscript));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_int_eq(0, slice_predicate_get_from(subscript));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(0, slice_predicate_get_from(subscript));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_int_eq(0, slice_predicate_get_step(subscript));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(0, slice_predicate_get_step(subscript));
+    assert_int_eq(EINVAL, errno);
 
     predicate *wildcard = step_get_predicate(path_get_step(&path, 2));
     errno = 0;
-    ck_assert_int_eq(0, subscript_predicate_get_index(wildcard));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_int_eq(0, subscript_predicate_get_index(wildcard));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_null(join_predicate_get_left(wildcard));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_null(join_predicate_get_left(wildcard));
+    assert_int_eq(EINVAL, errno);
     errno = 0;
-    ck_assert_null(join_predicate_get_right(wildcard));
-    ck_assert_int_eq(EINVAL, errno);
+    assert_null(join_predicate_get_right(wildcard));
+    assert_int_eq(EINVAL, errno);
 
     jsonpath_free(&path);
 }
