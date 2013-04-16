@@ -17,6 +17,10 @@ LICENSE file for more details.
 
 ### evaluator
 
+Global:
+
+* switch to #pragma once
+
 Enhancements:
 
 * elimintate generated booleans, this is not correct behavior
@@ -33,6 +37,7 @@ Enhancements:
 
 Enhancements:
 
+* rename test to parser_test
 * document api with doxygen
 * stop setting errno to 0 internally
 * use precondition helpers
