@@ -115,9 +115,7 @@ subscript
      ;
 
 slice
-    = ":", signed integer, [ ":", integer ]
-    | signed integer, ":", [ ":", integer ]
-    | signed integer, ":", signed integer, [ ":", integer ]
+    = [ signed integer ], ":", [ signed integer ], [ ":", [ signed integer ] ]
     ;
 
 union
