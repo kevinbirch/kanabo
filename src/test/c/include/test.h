@@ -35,21 +35,42 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef TEST_H
-#define TEST_H
+#pragma once
 
 #include <stdio.h>
+#include <errno.h>
+#include <check.h>
 
-#define ck_assert_null(X) ck_assert_msg((X) == NULL, "Assertion '"#X"==NULL' failed")
-#define ck_assert_not_null(X) ck_assert_msg((X) != NULL, "Assertion '"#X"!=NULL' failed")
-#define ck_assert_buf_eq(X, N1, Y, N2) ck_assert_msg(memcmp((X), (Y), (N1) > (N2) ? (N2) : (N1)) == 0, "Assertion 'memcmp("#X", "#Y", %zd)' failed", (N1) > (N2) ? (N2) : (N1))
-#define ck_assert_true(X) ck_assert_msg((X) == true, "Assertion '"#X"==true' failed")
-#define ck_assert_false(X) ck_assert_msg((X) == false, "Assertion '"#X"==false' failed")
+#include "log.h"
+#include "model.h"
 
-#define ck_assert_errno(X) ck_assert_int_eq((X), errno) 
-#define ck_assert_noerr() ck_assert_errno(0)
+#define assert_int_eq(X, Y)  ck_assert_int_eq(X, Y)
+#define assert_int_ne(X, Y)  ck_assert_int_ne(X, Y)
+#define assert_int_lt(X, Y)  ck_assert_int(X, <, Y)
+#define assert_int_le(X, Y)  ck_assert_int(X, <=, Y)
+#define assert_int_gt(X, Y)  ck_assert_int(X, >, Y)
+#define assert_int_ge(X, Y)  ck_assert_int(X, >=, Y)
 
-#define reset_errno() errno = 0
+#define assert_ptr_eq(X, Y)  ck_assert_msg((X) == (Y), "Assertion '" #X " == " #Y "' failed: "#X"==%p, "#Y"==%p", (X), (Y))
+
+#define assert_null(X)              ck_assert_msg((X) == NULL, "Assertion '"#X" == NULL' failed")
+#define assert_not_null(X)          ck_assert_msg((X) != NULL, "Assertion '"#X" != NULL' failed")
+#define assert_buf_eq(X, N1, Y, N2) ck_assert_msg(memcmp((X), (Y), (N1) > (N2) ? (N2) : (N1)) == 0, "Assertion 'memcmp("#X", "#Y", %zd)' failed", (N1) > (N2) ? (N2) : (N1))
+#define assert_true(X)              ck_assert_msg((X) == true, "Assertion '"#X" == true' failed")
+#define assert_false(X)             ck_assert_msg((X) == false, "Assertion '"#X" == false' failed")
+
+#define assert_errno(X) assert_int_eq((X), errno) 
+#define assert_noerr()  assert_errno(0)
+#define reset_errno()   errno = 0
+
+// node assertions
+#define assert_node_kind(NODE, EXPECTED_KIND) assert_int_eq((EXPECTED_KIND), node_get_kind((NODE)))
+#define assert_node_size(NODE, EXPECTED_SIZE) assert_int_eq((EXPECTED_SIZE), node_get_size((NODE)))
+#define assert_mapping_has_key(NODE, KEY) assert_true(mapping_contains_key((NODE), (KEY)));
+
+// nodelist assertions
+#define assert_nodelist_length(NODELIST, EXPECTED_LENGTH) assert_int_eq(EXPECTED_LENGTH, nodelist_length(NODELIST))
+
 
 Suite *master_suite(void);
 Suite *loader_suite(void);
@@ -58,6 +79,3 @@ Suite *model_suite(void);
 Suite *nodelist_suite(void);
 Suite *evaluator_suite(void);
 
-
-
-#endif
