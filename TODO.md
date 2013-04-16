@@ -123,7 +123,6 @@ Features:
 
 ### unit testing
 
-* upgrade to latest version of check
 * try CTest
 
 * CT https://github.com/kr/ct
