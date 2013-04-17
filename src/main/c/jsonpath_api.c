@@ -46,7 +46,6 @@ enum path_kind path_get_kind(const jsonpath * restrict path)
         errno = EINVAL;
         return (enum path_kind)-1;
     }
-    errno = 0;
     return path->kind;
 }
 
@@ -57,7 +56,6 @@ size_t path_get_length(const jsonpath * restrict path)
         errno = EINVAL;
         return 0;
     }
-    errno = 0;
     return path->length;
 }
 
@@ -68,7 +66,6 @@ step *path_get_step(const jsonpath * restrict path, size_t index)
         errno = EINVAL;
         return NULL;
     }
-    errno = 0;
     return path->steps[index];
 }
 
@@ -79,7 +76,6 @@ enum step_kind step_get_kind(const step * restrict value)
         errno = EINVAL;
         return (enum step_kind)-1;
     }
-    errno = 0;
     return value->kind;
 }
 
@@ -90,7 +86,6 @@ enum test_kind step_get_test_kind(const step * restrict value)
         errno = EINVAL;
         return (enum test_kind)-1;
     }
-    errno = 0;
     return value->test.kind;
 }
 
@@ -101,7 +96,6 @@ enum type_test_kind type_test_step_get_type(const step * restrict value)
         errno = EINVAL;
         return (enum type_test_kind)-1;
     }
-    errno = 0;
     return value->test.type;
 }
 
@@ -112,7 +106,6 @@ uint8_t *name_test_step_get_name(const step * restrict value)
         errno = EINVAL;
         return NULL;
     }
-    errno = 0;
     return value->test.name.value;
 }
 
@@ -123,7 +116,6 @@ size_t name_test_step_get_length(const step * restrict value)
         errno = EINVAL;
         return 0;
     }
-    errno = 0;
     return value->test.name.length;
 }
 
@@ -134,7 +126,6 @@ bool step_has_predicate(const step * restrict value)
         errno = EINVAL;
         return false;
     }
-    errno = 0;
     return NULL != value->predicate;
 }
 
@@ -145,7 +136,6 @@ predicate *step_get_predicate(const step * restrict value)
         errno = EINVAL;
         return NULL;
     }
-    errno = 0;
     return value->predicate;
 }
 
@@ -156,7 +146,6 @@ enum predicate_kind predicate_get_kind(const predicate * restrict value)
         errno = EINVAL;
         return (enum predicate_kind)-1;
     }
-    errno = 0;
     return value->kind;
 }
 
@@ -167,7 +156,6 @@ size_t subscript_predicate_get_index(const predicate * restrict value)
         errno = EINVAL;
         return 0;
     }
-    errno = 0;
     return value->subscript.index;
 }
 
@@ -178,7 +166,6 @@ int_fast32_t slice_predicate_get_to(const predicate * restrict value)
         errno = EINVAL;
         return 0;
     }
-    errno = 0;
     return value->slice.to;
 }
 
@@ -189,7 +176,6 @@ int_fast32_t slice_predicate_get_from(const predicate * restrict value)
         errno = EINVAL;
         return 0;
     }
-    errno = 0;
     return value->slice.from;
 }
 
@@ -200,7 +186,6 @@ int_fast32_t slice_predicate_get_step(const predicate * restrict value)
         errno = EINVAL;
         return 0;
     }
-    errno = 0;
     return value->slice.step;
 }
 
@@ -211,7 +196,6 @@ jsonpath *join_predicate_get_left(const predicate * restrict value)
         errno = EINVAL;
         return NULL;
     }
-    errno = 0;
     return value->join.left;
 }
 
@@ -222,6 +206,5 @@ jsonpath *join_predicate_get_right(const predicate * restrict value)
         errno = EINVAL;
         return NULL;
     }
-    errno = 0;
     return value->join.right;
 }

@@ -53,7 +53,6 @@ node *make_document_node(node *root)
         return NULL;
     }
 
-    errno = 0;
     node *result = make_node(DOCUMENT);
     if(NULL != result)
     {
@@ -72,7 +71,6 @@ node *make_sequence_node(size_t capacity)
         return NULL;
     }
 
-    errno = 0;
     node *result = make_node(SEQUENCE);
 
     if(NULL != result)
@@ -98,7 +96,6 @@ node *make_mapping_node(size_t capacity)
         return NULL;
     }
 
-    errno = 0;
     node *result = make_node(MAPPING);
     if(NULL != result)
     {
@@ -123,7 +120,6 @@ node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kin
         return NULL;
     }
 
-    errno = 0;
     node *result = make_node(SCALAR);
     if(NULL != result)
     {
@@ -143,7 +139,6 @@ node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kin
 
 static inline node *make_node(enum node_kind kind)
 {
-    errno = 0;
     node *result = (node *)malloc(sizeof(struct node));
 
     if(NULL != result)
@@ -243,7 +238,6 @@ bool model_init(document_model * restrict model, size_t capacity)
         return false;
     }
 
-    errno = 0;
     bool result = true;
     model->size = 0;
     model->documents = (node **)malloc(sizeof(node *) * capacity);

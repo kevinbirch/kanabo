@@ -50,7 +50,6 @@ nodelist *make_nodelist(void)
 
 nodelist *make_nodelist_with_capacity(size_t capacity)
 {
-    errno = 0;
     nodelist *result = (nodelist *)malloc(sizeof(nodelist));
     if(NULL == result)
     {
@@ -72,7 +71,6 @@ void nodelist_free(nodelist *list)
 {
     PRECOND_NONNULL_ELSE_VOID(list);
 
-    errno = 0;
     if(0 < list->length)
     {
         free(list->nodes);
@@ -85,7 +83,6 @@ void nodelist_free_nodes(nodelist *list)
 {
     PRECOND_NONNULL_ELSE_VOID(list);
 
-    errno = 0;
     for(int32_t i = (int32_t)list->length - 1; i >= 0; i--)
     {
         node_free(list->nodes[i]);
@@ -97,7 +94,6 @@ bool nodelist_clear(nodelist *list)
 {
     PRECOND_NONNULL_ELSE_FALSE(list);
 
-    errno = 0;
     if(NULL != list->nodes)
     {
         free(list->nodes);
@@ -110,7 +106,6 @@ size_t nodelist_length(const nodelist * restrict list)
 {
     PRECOND_NONNULL_ELSE_ZERO(list);
 
-    errno = 0;
     return list->length;
 }
 
@@ -118,7 +113,6 @@ bool nodelist_is_empty(const nodelist * restrict list)
 {
     PRECOND_NONNULL_ELSE_TRUE(list);
 
-    errno = 0;
     return 0 == list->length;
 }
 
@@ -127,7 +121,6 @@ node *nodelist_get(const nodelist * restrict list, size_t index)
     PRECOND_NONNULL_ELSE_NULL(list);
     PRECOND_ELSE_NULL(index < list->length);
 
-    errno = 0;
     return list->nodes[index];
 }
 
@@ -139,7 +132,6 @@ bool nodelist_add(nodelist * restrict list, node  * restrict value)
         return false;
     }
     list->nodes[list->length++] = value;
-    errno = 0;
     return true;
 }
 
@@ -160,7 +152,6 @@ bool nodelist_set(nodelist * restrict list, node *value, size_t index)
     PRECOND_ELSE_FALSE(index < list->length);
 
     list->nodes[index] = value;
-    errno = 0;
     return true;
 }
 
@@ -281,7 +272,6 @@ static bool allocate(nodelist * restrict list, size_t capacity)
 {
     list->length = 0;
     list->capacity = capacity;
-    errno = 0;
     list->nodes = (node **)malloc(sizeof(node *) * capacity);
     if(NULL == list->nodes)
     {

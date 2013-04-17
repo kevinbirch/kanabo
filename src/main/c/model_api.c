@@ -54,13 +54,11 @@ node *model_get_document(const document_model * restrict model, size_t index)
         return NULL;
     }
 
-    errno = 0;
     return model->documents[index];
 }
 
 node *model_get_document_root(const document_model * restrict model, size_t index)
 {
-    errno = 0;
     node *document = model_get_document(model, index);
     node *result = NULL;
     
@@ -80,7 +78,6 @@ size_t model_get_document_count(const document_model * restrict model)
         return 0;
     }
 
-    errno = 0;
     return model->size;
 }
 
@@ -92,7 +89,6 @@ enum node_kind node_get_kind(const node * restrict value)
         return (enum node_kind)-1;
     }
 
-    errno = 0;
     return value->tag.kind;
 }
 
@@ -104,7 +100,6 @@ uint8_t *node_get_name(const node * restrict value)
         return NULL;
     }
 
-    errno = 0;
     return value->tag.name;
 }
 
@@ -116,7 +111,6 @@ size_t node_get_name_length(const node * restrict value)
         return 0;
     }
 
-    errno = 0;
     return value->tag.name_length;
 }
 
@@ -128,7 +122,6 @@ size_t node_get_size(const node * restrict value)
         return 0;
     }
 
-    errno = 0;
     return value->content.size;
 }
 
@@ -140,7 +133,6 @@ node *document_get_root(const node * restrict document)
         return NULL;
     }    
 
-    errno = 0;
     return document->content.document.root;
 }
 
@@ -152,7 +144,6 @@ uint8_t *scalar_get_value(const node * restrict scalar)
         return NULL;
     }    
 
-    errno = 0;
     return scalar->content.scalar.value;
 }
 
@@ -164,19 +155,16 @@ enum scalar_kind scalar_get_kind(const node * restrict scalar)
         return (enum scalar_kind)-1;
     }    
 
-    errno = 0;
     return scalar->content.scalar.kind;
 }
 
 bool scalar_boolean_is_true(const node * restrict scalar)
 {
-    errno = 0;
     return 0 == memcmp("true", scalar_get_value(scalar), 4);
 }
 
 bool scalar_boolean_is_false(const node * restrict scalar)
 {
-    errno = 0;
     return 0 == memcmp("false", scalar_get_value(scalar), 5);
 }
 
@@ -188,7 +176,6 @@ node *sequence_get(const node * restrict sequence, size_t index)
         return NULL;
     }
 
-    errno = 0;
     return sequence->content.sequence.value[index];
 }
 
@@ -200,7 +187,6 @@ node **sequence_get_all(const node * restrict sequence)
         return NULL;
     }
 
-    errno = 0;
     return sequence->content.sequence.value;
 }
 
@@ -261,7 +247,6 @@ node *mapping_get_value_node_key(const node * restrict mapping, const node *key)
         }
     }
 
-    errno = 0;
     return result;
 }
 
@@ -283,7 +268,6 @@ key_value_pair **mapping_get_all(const node * restrict mapping)
         return NULL;
     }
 
-    errno = 0;
     return mapping->content.mapping.value;
 }
 

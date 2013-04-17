@@ -28,7 +28,6 @@ LICENSE file for more details.
 * add a strictness mode: strict - fail invalid paths, lenient - skip bad paths, return no values
   * default is lenient
 * use a evaluator context
-* stop setting errno to 0 internally
 * add error message generator
 * nodes owned by a document tree must be preserved unless destroying the tree
 * eliminate nodelist\_map\_overwrite?
@@ -38,14 +37,8 @@ LICENSE file for more details.
 #### Enhancements:
 
 * negative subscripts should return ERR\_EXPECTED\_INTEGER instead of ERR\_UNSUPPORTED\_PRED\_TYPE
-* rename test to parser_test
 * document api with doxygen
-* stop setting errno to 0 internally
 * use precondition helpers
-* use strtoul for predicate integers
-* is there a security issue with strtod et al?  could a segv be thrown if reading past the end of byte string?
-  * loader.c:push_scalar()
-* allow negative indices in slices
 * ensure memory is freed on secondary failure modes in parser functions
 * refactor direct status code setters into function calls
 * clean up and extract common patterns
@@ -65,7 +58,6 @@ LICENSE file for more details.
 #### Enhancements:
 
 * document api with doxygen
-* stop setting errno to 0 internally
 * use precondition helpers
 * make loader api return an enum instead of a struct
   * expose input struct, add c'tor/d'tor
