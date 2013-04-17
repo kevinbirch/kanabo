@@ -20,6 +20,7 @@ LICENSE file for more details.
 Global:
 
 * switch to #pragma once
+* replace malloc/memset w/ calloc
 
 Enhancements:
 
