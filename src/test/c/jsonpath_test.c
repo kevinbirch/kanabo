@@ -38,8 +38,8 @@
 #include "test.h"
 #include "jsonpath.h"
 
-#define assert_path_length(PATH, EXPECTED) assert_int_eq(EXPECTED, path_get_length(&PATH))
-#define assert_path_kind(PATH, EXPECTED) assert_int_eq(EXPECTED, path_get_kind(&PATH))
+#define assert_path_length(PATH, EXPECTED) assert_int_eq(EXPECTED, path_get_length(PATH))
+#define assert_path_kind(PATH, EXPECTED) assert_int_eq(EXPECTED, path_get_kind(PATH))
 
 #define assert_parser_success(EXPRESSION, RESULT, PATH, EXPECTED_KIND, EXPECTED_LENGTH) \
     if(JSONPATH_SUCCESS != RESULT)                                      \
@@ -51,15 +51,15 @@
     }                                                                   \
     assert_int_eq(JSONPATH_SUCCESS, RESULT);                            \
     assert_int_ne(0, PATH.result.position);                             \
-    assert_path_kind(PATH, EXPECTED_KIND);                              \
+    assert_path_kind(&PATH, EXPECTED_KIND);                             \
     assert_not_null(PATH.steps);                                        \
-    assert_path_length(PATH, EXPECTED_LENGTH)
+    assert_path_length(&PATH, EXPECTED_LENGTH)
 
 #define assert_parser_failure(EXPRESSION, RESULT, PATH, EXPECTED_RESULT, EXPECTED_POSITION) \
     assert_int_eq(EXPECTED_RESULT, RESULT);                             \
     char *_assert_message = make_status_message(&path);                 \
     assert_not_null(_assert_message);                                   \
-    log_info("parser test", "for expression: '%s', received expected failure message: '%s'", EXPRESSION, _assert_message); \
+    log_debug("parser test", "for expression: '%s', received expected failure message: '%s'", EXPRESSION, _assert_message); \
     free(_assert_message);                                              \
     assert_int_eq(EXPECTED_POSITION, PATH.result.position)
 
@@ -70,8 +70,9 @@
     assert_step_kind(path_get_step(&PATH, INDEX), EXPECTED_STEP_KIND);   \
     assert_test_kind(path_get_step(&PATH, INDEX), EXPECTED_TEST_KIND)
 
+#define assert_name_length(STEP, NAME) assert_int_eq(strlen(NAME), name_test_step_get_length(STEP))
 #define assert_name(STEP, NAME)                                         \
-    assert_int_eq(strlen(NAME), name_test_step_get_length(STEP));    \
+    assert_name_length(STEP, NAME);                                     \
     assert_buf_eq(NAME, strlen(NAME), name_test_step_get_name(STEP), name_test_step_get_length(STEP))
 
 #define assert_no_predicates(PATH, INDEX)                           \
@@ -114,14 +115,20 @@
     assert_predicate_kind(step_get_predicate(path_get_step(&PATH, PATH_INDEX)), EXPECTED_PREDICATE_KIND)
 
 #define assert_wildcard_predicate(PATH, PATH_INDEX) assert_predicate(PATH, PATH_INDEX, WILDCARD)
+
+#define assert_subscript_index(PREDICATE, VALUE) assert_int_eq(VALUE, subscript_predicate_get_index(PREDICATE))
 #define assert_subscript_predicate(PATH, PATH_INDEX, INDEX_VALUE)       \
     assert_predicate(PATH, PATH_INDEX, SUBSCRIPT);                      \
-    assert_int_eq(INDEX_VALUE, subscript_predicate_get_index(step_get_predicate(path_get_step(&PATH, PATH_INDEX))))
+    assert_subscript_index(step_get_predicate(path_get_step(&PATH, PATH_INDEX)), INDEX_VALUE);
+
+#define assert_slice_from(PREDICATE, VALUE) assert_int_eq(VALUE, slice_predicate_get_from(PREDICATE))
+#define assert_slice_to(PREDICATE, VALUE) assert_int_eq(VALUE, slice_predicate_get_to(PREDICATE))
+#define assert_slice_step(PREDICATE, VALUE) assert_int_eq(VALUE, slice_predicate_get_step(PREDICATE))
 #define assert_slice_predicate(PATH, PATH_INDEX, FROM_VALUE, TO_VALUE, STEP_VALUE) \
     assert_predicate(path, PATH_INDEX, SLICE);                          \
-    assert_int_eq(FROM_VALUE, slice_predicate_get_from(step_get_predicate(path_get_step(&PATH, PATH_INDEX)))); \
-    assert_int_eq(TO_VALUE,   slice_predicate_get_to(step_get_predicate(path_get_step(&PATH, PATH_INDEX)))); \
-    assert_int_eq(STEP_VALUE, slice_predicate_get_step(step_get_predicate(path_get_step(&PATH, PATH_INDEX))))
+    assert_slice_from(step_get_predicate(path_get_step(&PATH, PATH_INDEX)), FROM_VALUE); \
+    assert_slice_to(step_get_predicate(path_get_step(&PATH, PATH_INDEX)), TO_VALUE); \
+    assert_slice_step(step_get_predicate(path_get_step(&PATH, PATH_INDEX)), STEP_VALUE)
 
 START_TEST (null_expression)
 {
@@ -478,15 +485,8 @@ START_TEST (wildcard_with_trailing_junk)
     jsonpath path;
     char *expression = "$.foo.* [0]";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
-    
-    assert_int_eq(ERR_EXTRA_JUNK_AFTER_WILDCARD, result);
-    assert_int_eq(7, path.result.position);
-    char *message = make_status_message(&path);
-    assert_not_null(message);
 
-    log_info("parser test", "received expected failure message: '%s'", message);
-
-    free(message);
+    assert_parser_failure(expression, result, path, ERR_EXTRA_JUNK_AFTER_WILDCARD, 7);
     jsonpath_free(&path);
 }
 END_TEST
@@ -533,14 +533,7 @@ START_TEST (type_test_with_trailing_junk)
     char *expression = "$.foo.array()[0]";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_int_eq(ERR_EXTRA_JUNK_AFTER_TYPE_TEST, result);
-    assert_int_eq(13, path.result.position);
-    char *message = make_status_message(&path);
-    assert_not_null(message);
-
-    log_info("parser test", "received expected failure message: '%s'", message);
-
-    free(message);
+    assert_parser_failure(expression, result, path, ERR_EXTRA_JUNK_AFTER_TYPE_TEST, 13);
     jsonpath_free(&path);
 }
 END_TEST
@@ -741,15 +734,7 @@ START_TEST (negative_subscript_predicate)
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
     // xxx - fixme! this should be ERR_EXPECTED_INTEGER instead!
-    assert_int_eq(ERR_UNSUPPORTED_PRED_TYPE, result);
-    assert_int_eq(7, path.result.position);
-    char *message = make_status_message(&path);
-    assert_not_null(message);
-
-    log_info("parser test", "received expected failure message: '%s'", message);
-
-    free(message);
-
+    assert_parser_failure(expression, result, path, ERR_UNSUPPORTED_PRED_TYPE, 7);
     jsonpath_free(&path);
 }
 END_TEST
@@ -879,15 +864,12 @@ START_TEST (negative_step_slice_predicate)
     char *expression = "$.foo[1:3:-3].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    // xxx - fixme! this should be ERR_EXPECTED_INTEGER instead!
-    assert_int_eq(ERR_UNSUPPORTED_PRED_TYPE, result);
-    assert_int_eq(10, path.result.position);
-    char *message = make_status_message(&path);
-    assert_not_null(message);
-
-    log_info("parser test", "received expected failure message: '%s'", message);
-
-    free(message);
+    assert_parser_success(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_slice_predicate(path, 1, 1, 3, -3);
+    assert_single_name_step(path, 2, "bar");
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -895,24 +877,25 @@ END_TEST
 
 START_TEST (bad_path_input)
 {
-    errno = 0;
-    assert_int_eq(-1, path_get_kind(NULL));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
-    assert_int_eq(0, path_get_length(NULL));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
+    reset_errno();
+    assert_path_kind(NULL, -1);
+    assert_errno(EINVAL);
+    
+    reset_errno();
+    assert_path_length(NULL, 0);
+    assert_errno(EINVAL);
+    reset_errno();
     assert_null(path_get_step(NULL, 0));
-    assert_int_eq(EINVAL, errno);
+    assert_errno(EINVAL);
     
     jsonpath path;
     char *expression = "$";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     assert_parser_success(expression, result, path, ABSOLUTE_PATH, 1);
 
-    errno = 0;
+    reset_errno();
     assert_null(path_get_step(&path, 1));
-    assert_int_eq(EINVAL, errno);
+    assert_errno(EINVAL);
 
     jsonpath_free(&path);
 }
@@ -920,42 +903,47 @@ END_TEST
 
 START_TEST (bad_step_input)
 {
-    errno = 0;
-    assert_int_eq(-1, step_get_kind(NULL));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
-    assert_int_eq(-1, step_get_test_kind(NULL));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
-    assert_int_eq(-1, type_test_step_get_type(NULL));
-    assert_int_eq(EINVAL, errno);
+    reset_errno();
+    assert_step_kind(NULL, -1);
+    assert_errno(EINVAL);
+
+    reset_errno();
+    assert_test_kind(NULL, -1);
+    assert_errno(EINVAL);
+
+    reset_errno();
+    assert_type_kind(NULL, -1);
+    assert_errno(EINVAL);
     
-    errno = 0;
+    reset_errno();
     assert_false(step_has_predicate(NULL));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
+    assert_errno(EINVAL);
+
+    reset_errno();
     assert_null(step_get_predicate(NULL));
-    assert_int_eq(EINVAL, errno);
+    assert_errno(EINVAL);
     
     jsonpath path;
     char *expression = "$.foo.array()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     assert_parser_success(expression, result, path, ABSOLUTE_PATH, 3);
 
-    errno = 0;
-    assert_int_eq(-1, type_test_step_get_type(path_get_step(&path, 1)));
-    assert_int_eq(EINVAL, errno);
+    reset_errno();
+    assert_type_kind(path_get_step(&path, 1), -1);
+    assert_errno(EINVAL);
 
     step *step2 = path_get_step(&path, 2);
-    errno = 0;
+    reset_errno();
     assert_int_eq(0, name_test_step_get_length(step2));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
+    assert_errno(EINVAL);
+
+    reset_errno();
     assert_null(name_test_step_get_name(step2));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
+    assert_errno(EINVAL);
+
+    reset_errno();
     assert_null(step_get_predicate(step2));
-    assert_int_eq(EINVAL, errno);
+    assert_errno(EINVAL);
 
     jsonpath_free(&path);
 }
@@ -963,27 +951,33 @@ END_TEST
 
 START_TEST (bad_predicate_input)
 {
-    errno = 0;
-    assert_int_eq(-1, predicate_get_kind(NULL));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
-    assert_int_eq(0, subscript_predicate_get_index(NULL));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
-    assert_int_eq(0, slice_predicate_get_from(NULL));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
-    assert_int_eq(0, slice_predicate_get_to(NULL));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
-    assert_int_eq(0, slice_predicate_get_step(NULL));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
+    reset_errno();
+    assert_predicate_kind(NULL, -1);
+    assert_errno(EINVAL);
+
+    reset_errno();
+    assert_subscript_index(NULL, 0);
+    assert_errno(EINVAL);
+
+    reset_errno();
+    assert_slice_from(NULL, 0);
+    assert_errno(EINVAL);
+
+    reset_errno();
+    assert_slice_to(NULL, 0);
+    assert_errno(EINVAL);
+
+    reset_errno();
+    assert_slice_step(NULL, 0);
+    assert_errno(EINVAL);
+
+    reset_errno();
     assert_null(join_predicate_get_left(NULL));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
+    assert_errno(EINVAL);
+
+    reset_errno();
     assert_null(join_predicate_get_right(NULL));
-    assert_int_eq(EINVAL, errno);
+    assert_errno(EINVAL);
 
     jsonpath path;
     char *expression = "$.foo[42].bar[*]";
@@ -991,26 +985,26 @@ START_TEST (bad_predicate_input)
     assert_parser_success(expression, result, path, ABSOLUTE_PATH, 3);
 
     predicate *subscript = step_get_predicate(path_get_step(&path, 1));
-    errno = 0;
+    reset_errno();
     assert_int_eq(0, slice_predicate_get_to(subscript));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
+    assert_errno(EINVAL);
+    reset_errno();
     assert_int_eq(0, slice_predicate_get_from(subscript));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
+    assert_errno(EINVAL);
+    reset_errno();
     assert_int_eq(0, slice_predicate_get_step(subscript));
-    assert_int_eq(EINVAL, errno);
+    assert_errno(EINVAL);
 
     predicate *wildcard = step_get_predicate(path_get_step(&path, 2));
-    errno = 0;
+    reset_errno();
     assert_int_eq(0, subscript_predicate_get_index(wildcard));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
+    assert_errno(EINVAL);
+    reset_errno();
     assert_null(join_predicate_get_left(wildcard));
-    assert_int_eq(EINVAL, errno);
-    errno = 0;
+    assert_errno(EINVAL);
+    reset_errno();
     assert_null(join_predicate_get_right(wildcard));
-    assert_int_eq(EINVAL, errno);
+    assert_errno(EINVAL);
 
     jsonpath_free(&path);
 }
