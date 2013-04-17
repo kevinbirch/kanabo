@@ -65,7 +65,7 @@ struct predicate
         {
             int_fast32_t from;
             int_fast32_t to;
-            uint_fast32_t step;
+            int_fast32_t step;
         } slice;
         
         struct
@@ -190,7 +190,7 @@ enum predicate_kind predicate_get_kind(const predicate * restrict value);
 size_t              subscript_predicate_get_index(const predicate * restrict value);
 int_fast32_t        slice_predicate_get_to(const predicate * restrict value);
 int_fast32_t        slice_predicate_get_from(const predicate * restrict value);
-size_t              slice_predicate_get_step(const predicate * restrict value);
+int_fast32_t        slice_predicate_get_step(const predicate * restrict value);
 jsonpath           *join_predicate_get_left(const predicate * restrict value);
 jsonpath           *join_predicate_get_right(const predicate * restrict value);
 

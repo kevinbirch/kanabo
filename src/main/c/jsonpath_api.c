@@ -193,7 +193,7 @@ int_fast32_t slice_predicate_get_from(const predicate * restrict value)
     return value->slice.from;
 }
 
-size_t slice_predicate_get_step(const predicate * restrict value)
+int_fast32_t slice_predicate_get_step(const predicate * restrict value)
 {
     if(NULL == value || SLICE != value->kind)
     {

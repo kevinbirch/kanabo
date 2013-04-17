@@ -723,7 +723,7 @@ static uint_fast32_t integer(parser_context *context)
     if(':' == get_char(context))                        \
     {                                                   \
         consume_char(context);                          \
-        step = integer(context);                        \
+        step = signed_integer(context);                 \
         if(JSONPATH_SUCCESS != context->code)           \
         {                                               \
             return;                                     \
@@ -744,7 +744,7 @@ static void slice_predicate(parser_context *context)
 
     int_fast32_t from = INT_FAST32_MIN;
     int_fast32_t to = INT_FAST32_MAX;
-    uint_fast32_t step = 1;
+    int_fast32_t step = 1;
     skip_ws(context);
     if(!look_for(context, ":"))
     {
