@@ -108,6 +108,7 @@ LICENSE file for more details.
 
 #### Enhancements:
 
+* add check for check.h header existence
 * add version header generation support
 
 #### Features:
