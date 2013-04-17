@@ -15,13 +15,14 @@ LICENSE file for more details.
 
 ## TODO
 
-### evaluator
-
-Global:
+### global
 
 * switch to #pragma once
+* don't return -1 from enum return type functions
 
-Enhancements:
+### evaluator
+
+#### Enhancements:
 
 * elimintate generated booleans, this is not correct behavior
   * type tests act as a filter, not as a query
@@ -35,8 +36,9 @@ Enhancements:
 
 ### parser
 
-Enhancements:
+#### Enhancements:
 
+* negative subscripts should return ERR\_EXPECTED\_INTEGER instead of ERR\_UNSUPPORTED\_PRED\_TYPE
 * rename test to parser_test
 * document api with doxygen
 * stop setting errno to 0 internally
@@ -52,7 +54,7 @@ Enhancements:
 * add exit state function with output
 * should we allow an optional qualified path expression after the filter expression in the union expression production?
 
-Features:
+#### Features:
 
 * union support
   * allow array indices
@@ -61,7 +63,7 @@ Features:
 
 ### loader
 
-Enhancements:
+#### Enhancements:
 
 * document api with doxygen
 * stop setting errno to 0 internally
@@ -71,7 +73,7 @@ Enhancements:
   * fold current load functions into single loader from input struct
   * expose methods to make error message from input struct
 
-Features:
+#### Features:
 
 * handle anchors and aliases
   * https://en.wikipedia.org/wiki/Hashed_array_tree
@@ -79,7 +81,7 @@ Features:
 
 ### model
 
-Enhancements:
+#### Enhancements:
 
 * document api with doxygen
 * use precondition helpers
@@ -87,7 +89,7 @@ Enhancements:
 * switch the iterator return types to bool to propigate the evaluation status
 * expand scalar nodes to include json subtypes
 
-Features:
+#### Features:
 
 * add tree walker api
 * add printing visitor
@@ -104,11 +106,11 @@ Features:
 
 ### makefile
 
-Enhancements:
+#### Enhancements:
 
 * add version header generation support
 
-Features:
+#### Features:
 
 * add submodule build support
 * add package phase impl
