@@ -42,14 +42,13 @@
 #include <check.h>
 
 #include "log.h"
-#include "model.h"
 
 #define assert_int_eq(X, Y)  ck_assert_int_eq(X, Y)
 #define assert_int_ne(X, Y)  ck_assert_int_ne(X, Y)
-#define assert_int_lt(X, Y)  ck_assert_int(X, <, Y)
-#define assert_int_le(X, Y)  ck_assert_int(X, <=, Y)
-#define assert_int_gt(X, Y)  ck_assert_int(X, >, Y)
-#define assert_int_ge(X, Y)  ck_assert_int(X, >=, Y)
+#define assert_int_lt(X, Y)  ck_assert_int_lt(X, Y)
+#define assert_int_le(X, Y)  ck_assert_int_le(X, Y)
+#define assert_int_gt(X, Y)  ck_assert_int_gt(X, Y)
+#define assert_int_ge(X, Y)  ck_assert_int_ge(X, Y)
 
 #define assert_ptr_eq(X, Y)  ck_assert_msg((X) == (Y), "Assertion '" #X " == " #Y "' failed: "#X"==%p, "#Y"==%p", (X), (Y))
 
@@ -63,14 +62,7 @@
 #define assert_noerr()  assert_errno(0)
 #define reset_errno()   errno = 0
 
-// node assertions
-#define assert_node_kind(NODE, EXPECTED_KIND) assert_int_eq((EXPECTED_KIND), node_get_kind((NODE)))
-#define assert_node_size(NODE, EXPECTED_SIZE) assert_int_eq((EXPECTED_SIZE), node_get_size((NODE)))
-#define assert_mapping_has_key(NODE, KEY) assert_true(mapping_contains_key((NODE), (KEY)));
-
-// nodelist assertions
-#define assert_nodelist_length(NODELIST, EXPECTED_LENGTH) assert_int_eq(EXPECTED_LENGTH, nodelist_length(NODELIST))
-
+// test suites
 
 Suite *master_suite(void);
 Suite *loader_suite(void);

@@ -43,6 +43,7 @@
 
 #include "loader.h"
 #include "test.h"
+#include "test_model.h"
 
 static const unsigned char * const YAML = (unsigned char *)
     "one:\n"
@@ -106,55 +107,55 @@ static void assert_model_state(loader_result *result, document_model *model)
     assert_int_eq(0, errno);
     assert_not_null(root);
     
-    assert_int_eq(MAPPING, node_get_kind(root));
-    assert_int_eq(5, node_get_size(root));
+    assert_node_kind(root, MAPPING);
+    assert_node_size(root, 5);
     assert_not_null(mapping_get_all(root));
 
     node *one = mapping_get_value(root, "one");
     assert_int_eq(0, errno);
     assert_not_null(one);
-    assert_int_eq(SEQUENCE, node_get_kind(one));
-    assert_int_eq(2, node_get_size(one));
+    assert_node_kind(one, SEQUENCE);
+    assert_node_size(one, 2);
     node *one_0 = sequence_get(one, 0);
     assert_int_eq(0, errno);
-    assert_int_eq(SCALAR, node_get_kind(one_0));
-    assert_buf_eq("foo1", 4, scalar_get_value(one_0), node_get_size(one_0));
+    assert_node_kind(one_0, SCALAR);
+    assert_scalar_value(one_0, "foo1");
     assert_int_eq(SCALAR_STRING, scalar_get_kind(one_0));
     node *one_1 = sequence_get(one, 1);
     assert_int_eq(0, errno);
-    assert_int_eq(SCALAR, node_get_kind(one_1));
-    assert_buf_eq("bar1", 4, scalar_get_value(one_1), node_get_size(one_1));
+    assert_node_kind(one_1, SCALAR);
+    assert_scalar_value(one_1, "bar1");
     assert_int_eq(SCALAR_STRING, scalar_get_kind(one_1));
 
     node *two = mapping_get_value(root, "two");
     assert_int_eq(0, errno);
     assert_not_null(two);
-    assert_int_eq(SCALAR, node_get_kind(two));
-    assert_buf_eq("foo2", 4, scalar_get_value(two), node_get_size(two));
+    assert_node_kind(two, SCALAR);
+    assert_scalar_value(two, "foo2");
     assert_int_eq(SCALAR_STRING, scalar_get_kind(two));
 
     node *three = mapping_get_value(root, "three");
     assert_int_eq(0, errno);
     assert_not_null(three);
-    assert_int_eq(SCALAR, node_get_kind(three));
-    assert_buf_eq("null", 4, scalar_get_value(three), node_get_size(three));
+    assert_node_kind(three, SCALAR);
+    assert_scalar_value(three, "null");
     assert_int_eq(SCALAR_NULL, scalar_get_kind(three));
 
     node *four = mapping_get_value(root, "four");
     assert_int_eq(0, errno);
     assert_not_null(four);
-    assert_int_eq(SEQUENCE, node_get_kind(four));
+    assert_node_kind(four, SEQUENCE);
     node *four_0 = sequence_get(four, 0);
     assert_int_eq(0, errno);
-    assert_int_eq(SCALAR, node_get_kind(four_0));
-    assert_buf_eq("true", 4, scalar_get_value(four_0), node_get_size(four_0));
+    assert_node_kind(four_0, SCALAR);
+    assert_scalar_value(four_0, "true");
     assert_int_eq(SCALAR_BOOLEAN, scalar_get_kind(four_0));
     assert_true(scalar_boolean_is_true(four_0));
     assert_false(scalar_boolean_is_false(four_0));
     node *four_1 = sequence_get(four, 1);
     assert_int_eq(0, errno);
-    assert_int_eq(SCALAR, node_get_kind(four_0));
-    assert_buf_eq("false", 5, scalar_get_value(four_1), node_get_size(four_1));
+    assert_node_kind(four_0, SCALAR);
+    assert_scalar_value(four_1, "false");
     assert_int_eq(SCALAR_BOOLEAN, scalar_get_kind(four_1));
     assert_true(scalar_boolean_is_false(four_1));
     assert_false(scalar_boolean_is_true(four_1));
@@ -162,8 +163,8 @@ static void assert_model_state(loader_result *result, document_model *model)
     node *five = mapping_get_value(root, "five");
     assert_int_eq(0, errno);
     assert_not_null(five);
-    assert_int_eq(SCALAR, node_get_kind(five));
-    assert_buf_eq("1.5", 3, scalar_get_value(five), node_get_size(five));
+    assert_node_kind(five, SCALAR);
+    assert_scalar_value(five, "1.5");
     assert_int_eq(SCALAR_NUMBER, scalar_get_kind(five));
 }
 

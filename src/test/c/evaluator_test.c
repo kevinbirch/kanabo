@@ -42,6 +42,8 @@
 #include "evaluator.h"
 #include "loader.h"
 #include "test.h"
+#include "test_model.h"
+#include "test_nodelist.h"
 
 static document_model *model = NULL;
 
@@ -103,14 +105,14 @@ START_TEST (single_name_step)
     nodelist *list = evaluate(model, &path);
     assert_noerr();
     assert_not_null(list);
-    assert_int_eq(1, nodelist_length(list));
+    assert_nodelist_length(list, 1);
     node *store = nodelist_get(list, 0);
     assert_not_null(store);
 
-    assert_int_eq(MAPPING, node_get_kind(store));
-    assert_int_eq(2, node_get_size(store));
-    assert_true(mapping_contains_key(store, "book"));
-    assert_true(mapping_contains_key(store, "bicycle"));
+    assert_node_kind(store, MAPPING);
+    assert_node_size(store, 2);
+    assert_mapping_has_key(store, "book");
+    assert_mapping_has_key(store, "bicycle");
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -128,12 +130,12 @@ START_TEST (long_path)
     nodelist *list = evaluate(model, &path);
     assert_noerr();
     assert_not_null(list);
-    assert_int_eq(1, nodelist_length(list));
+    assert_nodelist_length(list, 1);
     node *color = nodelist_get(list, 0);
     assert_not_null(color);
 
-    assert_int_eq(SCALAR, node_get_kind(color));
-    assert_buf_eq("red", 3, scalar_get_value(color), node_get_size(color));
+    assert_node_kind(color, SCALAR);
+    assert_scalar_value(color, "red");
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -151,13 +153,13 @@ START_TEST (wildcard)
     nodelist *list = evaluate(model, &path);
     assert_noerr();
     assert_not_null(list);
-    assert_int_eq(5, nodelist_length(list));
+    assert_nodelist_length(list, 5);
 
-    assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 0)));
-    assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 1)));
-    assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 2)));
-    assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 3)));
-    assert_int_eq(MAPPING, node_get_kind(nodelist_get(list, 4)));
+    assert_node_kind(nodelist_get(list, 0), MAPPING);
+    assert_node_kind(nodelist_get(list, 1), MAPPING);
+    assert_node_kind(nodelist_get(list, 2), MAPPING);
+    assert_node_kind(nodelist_get(list, 3), MAPPING);
+    assert_node_kind(nodelist_get(list, 4), MAPPING);
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -175,12 +177,12 @@ START_TEST (object_test)
     nodelist *list = evaluate(model, &path);
     assert_noerr();
     assert_not_null(list);
-    assert_int_eq(1, nodelist_length(list));
+    assert_nodelist_length(list, 1);
     node *boolean = nodelist_get(list, 0);
     assert_not_null(boolean);
 
-    assert_int_eq(SCALAR, node_get_kind(boolean));
-    assert_buf_eq("true", 4, scalar_get_value(boolean), node_get_size(boolean));
+    assert_node_kind(boolean, SCALAR);
+    assert_scalar_value(boolean, "true");
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -198,12 +200,12 @@ START_TEST (array_test)
     nodelist *list = evaluate(model, &path);
     assert_noerr();
     assert_not_null(list);
-    assert_int_eq(1, nodelist_length(list));
+    assert_nodelist_length(list, 1);
     node *boolean = nodelist_get(list, 0);
     assert_not_null(boolean);
 
-    assert_int_eq(SCALAR, node_get_kind(boolean));
-    assert_buf_eq("true", 4, scalar_get_value(boolean), node_get_size(boolean));
+    assert_node_kind(boolean, SCALAR);
+    assert_scalar_value(boolean, "true");
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -221,7 +223,7 @@ START_TEST (number_test)
     nodelist *list = evaluate(model, &path);
     assert_noerr();
     assert_not_null(list);
-    assert_int_eq(4, nodelist_length(list));
+    assert_nodelist_length(list, 4);
 
     assert_true(nodelist_iterate(list, scalar_true, NULL));
 
@@ -250,12 +252,12 @@ START_TEST (wildcard_predicate)
     nodelist *list = evaluate(model, &path);
     assert_noerr();
     assert_not_null(list);
-    assert_int_eq(4, nodelist_length(list));
+    assert_nodelist_length(list, 4);
 
-    assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 0)));
-    assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 1)));
-    assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 2)));
-    assert_int_eq(SCALAR, node_get_kind(nodelist_get(list, 3)));
+    assert_node_kind(nodelist_get(list, 0), SCALAR);
+    assert_node_kind(nodelist_get(list, 1), SCALAR);
+    assert_node_kind(nodelist_get(list, 2), SCALAR);
+    assert_node_kind(nodelist_get(list, 3), SCALAR);
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -273,11 +275,11 @@ START_TEST (wildcard_predicate_on_mapping)
     nodelist *list = evaluate(model, &path);
     assert_noerr();
     assert_not_null(list);
-    assert_int_eq(1, nodelist_length(list));
+    assert_nodelist_length(list, 1);
 
     node *scalar = nodelist_get(list, 0);
-    assert_int_eq(SCALAR, node_get_kind(scalar));
-    assert_buf_eq("red", 3, scalar_get_value(scalar), node_get_size(scalar));
+    assert_node_kind(scalar, SCALAR);
+    assert_scalar_value(scalar, "red");
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -295,11 +297,11 @@ START_TEST (wildcard_predicate_on_scalar)
     nodelist *list = evaluate(model, &path);
     assert_noerr();
     assert_not_null(list);
-    assert_int_eq(1, nodelist_length(list));
+    assert_nodelist_length(list, 1);
 
     node *scalar = nodelist_get(list, 0);
-    assert_int_eq(SCALAR, node_get_kind(scalar));
-    assert_buf_eq("red", 3, scalar_get_value(scalar), node_get_size(scalar));
+    assert_node_kind(scalar, SCALAR);
+    assert_scalar_value(scalar, "red");
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -317,18 +319,17 @@ START_TEST (subscript_predicate)
     nodelist *list = evaluate(model, &path);
     assert_noerr();
     assert_not_null(list);
-    assert_int_eq(1, nodelist_length(list));
+    assert_nodelist_length(list, 1);
 
     reset_errno();
     node *mapping = nodelist_get(list, 0);
-    assert_int_eq(MAPPING, node_get_kind(mapping));
+    assert_node_kind(mapping, MAPPING);
     assert_noerr();
     reset_errno();
     node *author = mapping_get_value(mapping, "author");
     assert_noerr();
     assert_not_null(author);
-    char *melville = "Herman Melville";
-    assert_buf_eq(melville, strlen(melville), scalar_get_value(author), node_get_size(author));
+    assert_scalar_value(author, "Herman Melville");
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -357,8 +358,7 @@ START_TEST (slice_predicate)
     node *author = mapping_get_value(book, "author");
     assert_noerr();
     assert_not_null(author);
-    char *name = "Nigel Rees";
-    assert_buf_eq(name, strlen(name), scalar_get_value(author), node_get_size(author));
+    assert_scalar_value(author, "Nigel Rees");
 
     reset_errno();
     book = nodelist_get(list, 1);
@@ -369,8 +369,7 @@ START_TEST (slice_predicate)
     author = mapping_get_value(book, "author");
     assert_noerr();
     assert_not_null(author);
-    name = "Evelyn Waugh";
-    assert_buf_eq(name, strlen(name), scalar_get_value(author), node_get_size(author));
+    assert_scalar_value(author, "Evelyn Waugh");
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -399,8 +398,7 @@ START_TEST (slice_predicate_with_step)
     node *author = mapping_get_value(book, "author");
     assert_noerr();
     assert_not_null(author);
-    char *name = "Evelyn Waugh";
-    assert_buf_eq(name, strlen(name), scalar_get_value(author), node_get_size(author));
+    assert_scalar_value(author, "Evelyn Waugh");
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -429,8 +427,7 @@ START_TEST (slice_predicate_reverse)
     node *author = mapping_get_value(book, "author");
     assert_noerr();
     assert_not_null(author);
-    char *name = "J. R. R. Tolkien";
-    assert_buf_eq(name, strlen(name), scalar_get_value(author), node_get_size(author));
+    assert_scalar_value(author, "J. R. R. Tolkien");
 
     nodelist_free(list);
     jsonpath_free(&path);

@@ -40,6 +40,8 @@
 
 #include "nodelist.h"
 #include "test.h"
+#include "test_model.h"
+#include "test_nodelist.h"
 
 void nodelist_setup(void);
 void nodelist_teardown(void);
@@ -64,7 +66,7 @@ END_TEST
 START_TEST (bad_length)
 {
     reset_errno();
-    assert_int_eq(0, nodelist_length(NULL));
+    assert_nodelist_length(NULL, 0);
     assert_int_eq(EINVAL, errno);
 }
 END_TEST
@@ -309,10 +311,10 @@ void nodelist_setup(void)
     reset_errno();
     assert_true(nodelist_add(list, foo));
     assert_noerr();
-    assert_int_eq(1, nodelist_length(list));
+    assert_nodelist_length(list, 1);
     assert_true(nodelist_add(list, bar));
     assert_noerr();
-    assert_int_eq(2, nodelist_length(list));
+    assert_nodelist_length(list, 2);
 }
 
 void nodelist_teardown(void)
@@ -331,7 +333,7 @@ START_TEST (add)
     reset_errno();
     nodelist_add(list, baz);
     assert_noerr();
-    assert_int_eq(3, nodelist_length(list));
+    assert_nodelist_length(list, 3);
     assert_true(node_equals(baz, nodelist_get(list, 2)));
 
     // N.B. not freeing baz here as it is added to `list` and will be freed by teardown
@@ -348,7 +350,7 @@ START_TEST (set)
     reset_errno();
     assert_true(nodelist_set(list, baz, 0));
     assert_noerr();
-    assert_int_eq(2, nodelist_length(list));
+    assert_nodelist_length(list, 2);
     assert_true(node_equals(baz, nodelist_get(list, 0)));
 
     // N.B. not freeing baz here as it is added to `list` and will be freed by teardown
@@ -385,7 +387,7 @@ START_TEST (add_all)
     reset_errno();
     assert_true(nodelist_add_all(list, other_list));
     assert_noerr();
-    assert_int_eq(4, nodelist_length(list));
+    assert_nodelist_length(list, 4);
     assert_int_eq(2, nodelist_length(other_list));
     
     // N.B. not freeing baz and quaz here as they are added to `list` and will be freed by teardown
@@ -445,15 +447,15 @@ START_TEST (map)
     assert_not_null(result);
     assert_noerr();
     assert_int_eq(2, count);
-    assert_int_eq(2, nodelist_length(result));
+    assert_nodelist_length(result, 2);
     node *zero = nodelist_get(result, 0);
     assert_not_null(zero);
     assert_int_eq(SCALAR_NUMBER, scalar_get_kind(zero));
-    assert_buf_eq("1", 1, scalar_get_value(zero), node_get_size(zero));
+    assert_scalar_value(zero, "1");
     node *one = nodelist_get(result, 1);
     assert_not_null(one);
     assert_int_eq(SCALAR_NUMBER, scalar_get_kind(one));
-    assert_buf_eq("2", 1, scalar_get_value(one), node_get_size(one));
+    assert_scalar_value(one, "2");
 
     nodelist_free_nodes(result);
     nodelist_free(result);
@@ -506,15 +508,15 @@ START_TEST (flatmap)
     assert_not_null(result);
     assert_noerr();
     assert_int_eq(2, count);
-    assert_int_eq(2, nodelist_length(result));
+    assert_nodelist_length(result, 2);
     node *zero = nodelist_get(result, 0);
     assert_not_null(zero);
     assert_int_eq(SCALAR_NUMBER, scalar_get_kind(zero));
-    assert_buf_eq("1", 1, scalar_get_value(zero), node_get_size(zero));
+    assert_scalar_value(zero, "1");
     node *one = nodelist_get(result, 1);
     assert_not_null(one);
     assert_int_eq(SCALAR_NUMBER, scalar_get_kind(one));
-    assert_buf_eq("2", 1, scalar_get_value(one), node_get_size(one));
+    assert_scalar_value(one, "2");
 
     nodelist_free_nodes(result);
     nodelist_free(result);
@@ -572,15 +574,15 @@ START_TEST (map_overwrite)
     assert_not_null(result);
     assert_noerr();
     assert_int_eq(2, count);
-    assert_int_eq(2, nodelist_length(result));
+    assert_nodelist_length(result, 2);
     node *zero = nodelist_get(list, 0);
     assert_not_null(zero);
     assert_int_eq(SCALAR_NUMBER, scalar_get_kind(zero));
-    assert_buf_eq("1", 1, scalar_get_value(zero), node_get_size(zero));
+    assert_scalar_value(zero, "1");
     node *one = nodelist_get(list, 1);
     assert_not_null(one);
     assert_int_eq(SCALAR_NUMBER, scalar_get_kind(one));
-    assert_buf_eq("2", 1, scalar_get_value(one), node_get_size(one));
+    assert_scalar_value(one, "2");
 }
 END_TEST
 
@@ -592,15 +594,15 @@ START_TEST (fail_map_overwrite)
     assert_null(result);
     assert_noerr();
     assert_int_eq(1, count);
-    assert_int_eq(2, nodelist_length(list));
+    assert_nodelist_length(list, 2);
     node *zero = nodelist_get(list, 0);
     assert_not_null(zero);
     assert_int_eq(SCALAR_STRING, scalar_get_kind(zero));
-    assert_buf_eq("munky", 5, scalar_get_value(zero), node_get_size(zero));
+    assert_scalar_value(zero, "munky");
     node *one = nodelist_get(list, 1);
     assert_not_null(one);
     assert_int_eq(SCALAR_STRING, scalar_get_kind(one));
-    assert_buf_eq("bar", 3, scalar_get_value(one), node_get_size(one));
+    assert_scalar_value(one, "bar");
 }
 END_TEST
 

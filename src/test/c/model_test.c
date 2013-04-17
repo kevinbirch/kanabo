@@ -42,6 +42,7 @@
 
 #include "model.h"
 #include "test.h"
+#include "test_model.h"
 
 void model_setup(void);
 void model_teardown(void);
@@ -82,7 +83,7 @@ END_TEST
 START_TEST (null_node)
 {
     errno = 0;
-    assert_int_eq(-1, node_get_kind(NULL));
+    assert_node_kind(NULL, -1);
     assert_int_eq(EINVAL, errno);
 
     errno = 0;
@@ -94,7 +95,7 @@ START_TEST (null_node)
     assert_int_eq(EINVAL, errno);
 
     errno = 0;
-    assert_int_eq(0, node_get_size(NULL));
+    assert_node_size(NULL, 0);
     assert_int_eq(EINVAL, errno);
 }
 END_TEST
@@ -139,7 +140,7 @@ START_TEST (null_mapping)
     assert_null(mapping_get_value_node_key(NULL, NULL));
     assert_int_eq(EINVAL, errno);
     errno = 0;
-    assert_false(mapping_contains_key(NULL, NULL));
+    assert_mapping_has_no_key(NULL, NULL);
     assert_int_eq(EINVAL, errno);
     errno = 0;
     assert_false(mapping_contains_node_key(NULL, NULL));
@@ -306,7 +307,7 @@ START_TEST (document)
     node *r1 = model_get_document_root(&model, 0);
     assert_int_eq(0, errno);
     assert_not_null(r1);
-    assert_int_eq(MAPPING, node_get_kind(r1));
+    assert_node_kind(r1, MAPPING);
 
     errno = 0;
     node *r2 = document_get_root(d);
@@ -322,7 +323,7 @@ START_TEST (nodes)
     node *r = model_get_document_root(&model, 0);
     assert_int_eq(0, errno);
     assert_not_null(r);
-    assert_int_eq(MAPPING, node_get_kind(r));
+    assert_node_kind(r, MAPPING);
 
     errno = 0;
     unsigned char *n = node_get_name(r);
@@ -347,14 +348,14 @@ START_TEST (scalar)
     node *r = model_get_document_root(&model, 0);
     assert_int_eq(0, errno);
     assert_not_null(r);
-    assert_int_eq(MAPPING, node_get_kind(r));
+    assert_node_kind(r, MAPPING);
 
     errno = 0;
     node *s = mapping_get_value(r, "two");
     assert_int_eq(0, errno);
     assert_not_null(s);
-    assert_int_eq(SCALAR, node_get_kind(s));
-    assert_buf_eq("foo2", 4, scalar_get_value(s), node_get_size(s));
+    assert_node_kind(s, SCALAR);
+    assert_scalar_value(s, "foo2");
 }
 END_TEST
 
@@ -364,13 +365,13 @@ START_TEST (scalar_boolean)
     node *r = model_get_document_root(&model, 0);
     assert_int_eq(0, errno);
     assert_not_null(r);
-    assert_int_eq(MAPPING, node_get_kind(r));
+    assert_node_kind(r, MAPPING);
 
     errno = 0;
     node *three = mapping_get_value(r, "three");
     assert_int_eq(0, errno);
     assert_not_null(three);
-    assert_int_eq(SCALAR, node_get_kind(three));
+    assert_node_kind(three, SCALAR);
     assert_true(scalar_boolean_is_false(three));
     assert_false(scalar_boolean_is_true(three));
 
@@ -378,7 +379,7 @@ START_TEST (scalar_boolean)
     node *four = mapping_get_value(r, "four");
     assert_int_eq(0, errno);
     assert_not_null(four);
-    assert_int_eq(SCALAR, node_get_kind(four));
+    assert_node_kind(four, SCALAR);
     assert_true(scalar_boolean_is_true(four));
     assert_false(scalar_boolean_is_false(four));
 }
@@ -390,26 +391,26 @@ START_TEST (sequence)
     node *r = model_get_document_root(&model, 0);
     assert_int_eq(0, errno);
     assert_not_null(r);
-    assert_int_eq(MAPPING, node_get_kind(r));
+    assert_node_kind(r, MAPPING);
 
     errno = 0;
     node *s = mapping_get_value(r, "one");
     assert_int_eq(0, errno);
     assert_not_null(s);
-    assert_int_eq(SEQUENCE, node_get_kind(s));
-    assert_int_eq(2, node_get_size(s));
+    assert_node_kind(s, SEQUENCE);
+    assert_node_size(s, 2);
     
     errno = 0;
     node *zero = sequence_get(s, 0);
     assert_int_eq(0, errno);
     assert_not_null(zero);
-    assert_int_eq(SCALAR, node_get_kind(zero));
+    assert_node_kind(zero, SCALAR);
     
     errno = 0;
     node *one = sequence_get(s, 1);
     assert_int_eq(0, errno);
     assert_not_null(one);
-    assert_int_eq(SCALAR, node_get_kind(one));
+    assert_node_kind(one, SCALAR);
 
     errno = 0;
     node **all = sequence_get_all(s);
@@ -461,11 +462,11 @@ START_TEST (mapping)
     node *r = model_get_document_root(&model, 0);
     assert_int_eq(0, errno);
     assert_not_null(r);
-    assert_int_eq(MAPPING, node_get_kind(r));
-    assert_int_eq(4, node_get_size(r));
+    assert_node_kind(r, MAPPING);
+    assert_node_size(r, 4);
 
-    assert_true(mapping_contains_key(r, "two"));
-    assert_false(mapping_contains_key(r, "bogus"));
+    assert_mapping_has_key(r, "two");
+    assert_mapping_has_no_key(r, "bogus");
 
     errno = 0;
     node *key = make_scalar_node((uint8_t *)"two", 3, SCALAR_STRING);
@@ -484,19 +485,19 @@ START_TEST (mapping)
     node *string_value = mapping_get_value(r, "two");
     assert_int_eq(0, errno);
     assert_not_null(string_value);
-    assert_int_eq(SCALAR, node_get_kind(string_value));
+    assert_node_kind(string_value, SCALAR);
 
     errno = 0;
     node *scalar_value = mapping_get_value_scalar_key(r, (uint8_t *)"two", 3);
     assert_int_eq(0, errno);
     assert_not_null(scalar_value);
-    assert_int_eq(SCALAR, node_get_kind(scalar_value));
+    assert_node_kind(scalar_value, SCALAR);
 
     errno = 0;
     node *node_value = mapping_get_value_node_key(r, key);
     assert_int_eq(0, errno);
     assert_not_null(node_value);
-    assert_int_eq(SCALAR, node_get_kind(node_value));
+    assert_node_kind(node_value, SCALAR);
 
     assert_ptr_eq(string_value, scalar_value);
     assert_ptr_eq(string_value, node_value);
@@ -517,14 +518,14 @@ START_TEST (sequence_iteration)
     node *r = model_get_document_root(&model, 0);
     assert_int_eq(0, errno);
     assert_not_null(r);
-    assert_int_eq(MAPPING, node_get_kind(r));
+    assert_node_kind(r, MAPPING);
     
     errno = 0;
     node *s = mapping_get_value(r, "one");
     assert_int_eq(0, errno);
     assert_not_null(s);
-    assert_int_eq(SEQUENCE, node_get_kind(s));
-    assert_int_eq(2, node_get_size(s));
+    assert_node_kind(s, SEQUENCE);
+    assert_node_size(s, 2);
     
     size_t count = 0;
     errno = 0;
@@ -548,14 +549,14 @@ START_TEST (fail_sequence_iteration)
     node *r = model_get_document_root(&model, 0);
     assert_int_eq(0, errno);
     assert_not_null(r);
-    assert_int_eq(MAPPING, node_get_kind(r));
+    assert_node_kind(r, MAPPING);
     
     errno = 0;
     node *s = mapping_get_value(r, "one");
     assert_int_eq(0, errno);
     assert_not_null(s);
-    assert_int_eq(SEQUENCE, node_get_kind(s));
-    assert_int_eq(2, node_get_size(s));
+    assert_node_kind(s, SEQUENCE);
+    assert_node_size(s, 2);
     
     size_t count = 0;
     errno = 0;
@@ -586,8 +587,8 @@ START_TEST (mapping_iteration)
     errno = 0;
     node *r = model_get_document_root(&model, 0);
     assert_not_null(r);
-    assert_int_eq(MAPPING, node_get_kind(r));
-    assert_int_eq(4, node_get_size(r));
+    assert_node_kind(r, MAPPING);
+    assert_node_size(r, 4);
     
     errno = 0;
     size_t count = 0;
@@ -611,8 +612,8 @@ START_TEST (fail_mapping_iteration)
     node *r = model_get_document_root(&model, 0);
     assert_int_eq(0, errno);
     assert_not_null(r);
-    assert_int_eq(MAPPING, node_get_kind(r));
-    assert_int_eq(4, node_get_size(r));
+    assert_node_kind(r, MAPPING);
+    assert_node_size(r, 4);
     
     size_t count = 0;
     errno = 0;
