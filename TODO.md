@@ -106,6 +106,7 @@ Features:
 
 Enhancements:
 
+* add check for check.h header existence
 * add version header generation support
 
 Features:
