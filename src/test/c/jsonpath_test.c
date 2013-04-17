@@ -38,24 +38,70 @@
 #include "test.h"
 #include "jsonpath.h"
 
-static inline void assert_parser_result(const char * restrict expression, jsonpath_status_code result, jsonpath *path, enum path_kind expected_kind, size_t expected_length);
+#define assert_parser_result(EXPRESSION, RESULT, PATH, EXPECTED_KIND, EXPECTED_LENGTH) \
+    char *_assert_message = make_status_message(&PATH);                 \
+    assert_not_null(_assert_message);                                   \
+    if(JSONPATH_SUCCESS != RESULT)                                      \
+    {                                                                   \
+        log_error("parser test", "failed for the expression: '%s', received: '%s'", EXPRESSION, _assert_message); \
+    }                                                                   \
+    free(_assert_message);                                              \
+    assert_int_eq(JSONPATH_SUCCESS, RESULT);                            \
+    assert_int_ne(0, PATH.result.position);                             \
+    assert_int_eq(EXPECTED_KIND, path_get_kind(&PATH));                 \
+    assert_not_null(PATH.steps);                                        \
+    assert_int_eq(EXPECTED_LENGTH, path_get_length(&PATH))
 
-static inline void assert_root_step(jsonpath *path);
-static inline void assert_single_name_step(jsonpath *path, size_t index, char *name);
-static inline void assert_single_wildcard_step(jsonpath *path, size_t index);
-static inline void assert_recursive_wildcard_step(jsonpath *path, size_t index);
-static inline void assert_wildcard_step(jsonpath *path, size_t index, enum step_kind expected_step_kind);
-static inline void assert_recursive_name_step(jsonpath *path, size_t index, char *name);
-static inline void assert_name_step(jsonpath *path, size_t index, char *name, enum step_kind expected_step_kind);
-static inline void assert_single_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind);
-static inline void assert_recursive_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind);
-static inline void assert_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind, enum step_kind expected_step_kind);
-static inline void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind);
-static inline void assert_name(step * current, uint8_t *value, size_t length);
-static inline void assert_no_predicates(jsonpath *path, size_t index);
-static inline void assert_wildcard_predicate(jsonpath *path, size_t path_index);
-static inline void assert_subscript_predicate(jsonpath *path, size_t path_index, uint_fast32_t index_value);
-static inline void assert_predicate(jsonpath *path, size_t path_index, enum predicate_kind expected_predicate_kind);
+#define assert_step(PATH, INDEX, EXPECTED_STEP_KIND, EXPECTED_TEST_KIND) \
+    assert_int_eq(EXPECTED_STEP_KIND, step_get_kind(path_get_step(&PATH, INDEX))); \
+    assert_int_eq(EXPECTED_TEST_KIND, step_get_test_kind(path_get_step(&PATH, INDEX)))
+
+#define assert_name(CURRENT, NAME, LENGTH)                              \
+    assert_int_eq(LENGTH, name_test_step_get_length(CURRENT));          \
+    assert_buf_eq(NAME, LENGTH, name_test_step_get_name(CURRENT), name_test_step_get_length(CURRENT))
+
+#define assert_no_predicates(PATH, INDEX)                           \
+    assert_false(step_has_predicate(path_get_step(&PATH, INDEX)));  \
+    assert_null(PATH.steps[INDEX]->predicate)
+
+#define assert_root_step(PATH)                  \
+    assert_step(PATH, 0, ROOT, NAME_TEST);      \
+    assert_no_predicates(PATH, 0)
+
+#define assert_name_step(PATH,INDEX, NAME, EXPECTED_STEP_KIND)          \
+    assert_step(PATH, INDEX, EXPECTED_STEP_KIND, NAME_TEST);            \
+    assert_name(path_get_step(&PATH, INDEX), (uint8_t *)NAME, strlen(NAME))
+#define assert_single_name_step(PATH, INDEX, NAME) assert_name_step(PATH, INDEX, NAME, SINGLE)
+#define assert_recursive_name_step(PATH, INDEX, NAME) assert_name_step(PATH, INDEX, NAME, RECURSIVE)
+
+#define assert_wildcard_step(PATH, INDEX, EXPECTED_STEP_KIND)       \
+    assert_step(PATH, INDEX, EXPECTED_STEP_KIND, WILDCARD_TEST);    \
+    assert_name(path_get_step(&PATH, INDEX), (uint8_t *)"*", 1)
+#define assert_single_wildcard_step(PATH, INDEX) assert_wildcard_step(PATH, INDEX, SINGLE)
+#define assert_recursive_wildcard_step(PATH, INDEX) assert_wildcard_step(PATH, INDEX, RECURSIVE)
+
+#define assert_type_step(PATH, INDEX, EXPECTED_TYPE_KIND, EXPECTED_STEP_KIND) \
+    assert_step(PATH, INDEX, EXPECTED_STEP_KIND, TYPE_TEST);            \
+    assert_int_eq(EXPECTED_TYPE_KIND, type_test_step_get_type(path_get_step(&PATH, INDEX)))
+#define assert_single_type_step(PATH, INDEX, EXPECTED_TYPE_KIND)    \
+    assert_type_step(PATH, INDEX, EXPECTED_TYPE_KIND, SINGLE)
+#define assert_recursive_type_step(PATH, INDEX, EXPECTED_TYPE_KIND) \
+    assert_type_step(PATH, INDEX, EXPECTED_TYPE_KIND, RECURSIVE)
+
+#define assert_predicate(PATH, PATH_INDEX, EXPECTED_PREDICATE_KIND)     \
+    assert_true(step_has_predicate(path_get_step(&PATH, PATH_INDEX)));  \
+    assert_not_null(PATH.steps[PATH_INDEX]->predicate);                 \
+    assert_not_null(step_get_predicate(path_get_step(&PATH, PATH_INDEX))); \
+    assert_int_eq(EXPECTED_PREDICATE_KIND, predicate_get_kind(step_get_predicate(path_get_step(&PATH, PATH_INDEX))))
+#define assert_wildcard_predicate(PATH, PATH_INDEX) assert_predicate(PATH, PATH_INDEX, WILDCARD)
+#define assert_subscript_predicate(PATH, PATH_INDEX, INDEX_VALUE)       \
+    assert_predicate(PATH, PATH_INDEX, SUBSCRIPT);                      \
+    assert_int_eq(INDEX_VALUE, subscript_predicate_get_index(step_get_predicate(path_get_step(&PATH, PATH_INDEX))))
+#define assert_slice_predicate(PATH, PATH_INDEX, FROM_VALUE, TO_VALUE, STEP_VALUE) \
+    assert_predicate(path, PATH_INDEX, SLICE);                          \
+    assert_int_eq(FROM_VALUE, slice_predicate_get_from(step_get_predicate(path_get_step(&PATH, PATH_INDEX)))); \
+    assert_int_eq(TO_VALUE,   slice_predicate_get_to(step_get_predicate(path_get_step(&PATH, PATH_INDEX)))); \
+    assert_int_eq(STEP_VALUE, slice_predicate_get_step(step_get_predicate(path_get_step(&PATH, PATH_INDEX))))
 
 START_TEST (null_expression)
 {
@@ -398,129 +444,14 @@ START_TEST (empty_type_test_name)
 }
 END_TEST
 
-static inline void assert_parser_result(const char * restrict expression, jsonpath_status_code result, jsonpath *path, enum path_kind expected_kind, size_t expected_length)
-{
-    char *message = make_status_message(path);
-    assert_not_null(message);
-    if(JSONPATH_SUCCESS != result)
-    {
-        log_error("parser test", "failed for the expression: '%s', received: '%s'", expression, message);
-    }
-    free(message);
-    assert_int_eq(JSONPATH_SUCCESS, result);
-    assert_int_ne(0, path->result.position);
-    assert_int_eq(expected_kind, path_get_kind(path));
-    assert_not_null(path->steps);
-    assert_int_eq(expected_length, path_get_length(path));
-}
-
-static inline void assert_root_step(jsonpath *path)
-{
-    assert_step(path, 0, ROOT, NAME_TEST);
-    assert_no_predicates(path, 0);
-}
-
-static inline void assert_single_name_step(jsonpath *path, size_t index, char *name)
-{
-    assert_name_step(path, index, name, SINGLE);
-}
-
-static inline void assert_single_wildcard_step(jsonpath *path, size_t index)
-{
-    assert_wildcard_step(path, index, SINGLE);
-}
-
-static inline void assert_recursive_wildcard_step(jsonpath *path, size_t index)
-{
-    assert_wildcard_step(path, index, RECURSIVE);
-}
-
-static inline void assert_wildcard_step(jsonpath *path, size_t index, enum step_kind expected_step_kind)
-{
-    assert_step(path, index, expected_step_kind, WILDCARD_TEST);
-    assert_name(path_get_step(path, index), (uint8_t *)"*", 1);
-}
-
-static inline void assert_recursive_name_step(jsonpath *path, size_t index, char *name)
-{
-    assert_name_step(path, index, name, RECURSIVE);
-}
-
-static inline void assert_name_step(jsonpath *path, size_t index, char *name, enum step_kind expected_step_kind)
-{
-    assert_step(path, index, expected_step_kind, NAME_TEST);
-    assert_name(path_get_step(path, index), (uint8_t *)name, strlen(name));
-}
-
-static inline void assert_single_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind)
-{
-    assert_type_step(path, index, expected_type_kind, SINGLE);
-}
-
-static inline void assert_recursive_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind)
-{
-    assert_type_step(path, index, expected_type_kind, RECURSIVE);
-}
-
-static inline void assert_type_step(jsonpath *path, size_t index, enum type_test_kind expected_type_kind, enum step_kind expected_step_kind)
-{
-    assert_step(path, index, expected_step_kind, TYPE_TEST);
-    assert_int_eq(expected_type_kind, type_test_step_get_type(path_get_step(path, index)));
-}
-
-static inline void assert_step(jsonpath *path, size_t index, enum step_kind expected_step_kind, enum test_kind expected_test_kind)
-{
-    assert_int_eq(expected_step_kind, step_get_kind(path_get_step(path, index)));
-    assert_int_eq(expected_test_kind, step_get_test_kind(path_get_step(path, index)));
-}
-
-static inline void assert_name(step *current, uint8_t *name, size_t length)
-{
-    assert_int_eq(length, name_test_step_get_length(current));
-    assert_buf_eq(name, length, name_test_step_get_name(current), name_test_step_get_length(current));
-}
-
-static inline void assert_no_predicates(jsonpath *path, size_t index)
-{
-    assert_false(step_has_predicate(path_get_step(path, index)));
-    assert_null(path->steps[index]->predicate);
-}
-
-static inline void assert_wildcard_predicate(jsonpath *path, size_t path_index)
-{
-    assert_predicate(path, path_index, WILDCARD);
-}
-
-static inline void assert_subscript_predicate(jsonpath *path, size_t path_index, uint_fast32_t index_value)
-{
-    assert_predicate(path, path_index, SUBSCRIPT);
-    assert_int_eq(index_value, subscript_predicate_get_index(step_get_predicate(path_get_step(path, path_index))));
-}
-
-static inline void assert_slice_predicate(jsonpath *path, size_t path_index, int_fast32_t from_value, int_fast32_t to_value, uint_fast32_t step_value)
-{
-    assert_predicate(path, path_index, SLICE);
-    assert_int_eq(from_value, slice_predicate_get_from(step_get_predicate(path_get_step(path, path_index))));
-    assert_int_eq(to_value,   slice_predicate_get_to(step_get_predicate(path_get_step(path, path_index))));
-    assert_int_eq(step_value, slice_predicate_get_step(step_get_predicate(path_get_step(path, path_index))));
-}
-
-static inline void assert_predicate(jsonpath *path, size_t path_index, enum predicate_kind expected_predicate_kind)
-{
-    assert_true(step_has_predicate(path_get_step(path, path_index)));
-    assert_not_null(path->steps[path_index]->predicate);
-    assert_not_null(step_get_predicate(path_get_step(path, path_index)));
-    assert_int_eq(expected_predicate_kind, predicate_get_kind(step_get_predicate(path_get_step(path, path_index))));
-}
-
 START_TEST (dollar_only)
 {
     jsonpath path;
     char *expression = "$";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, 1, &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 1);
-    assert_root_step(&path);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 1);
+    assert_root_step(path);
 
     jsonpath_free(&path);
 }
@@ -532,10 +463,10 @@ START_TEST (absolute_single_step)
     char *expression = "$.foo";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, 5, &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 2);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_no_predicates(&path, 0);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 2);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_no_predicates(path, 0);
 
     jsonpath_free(&path);    
 }
@@ -547,10 +478,10 @@ START_TEST (absolute_recursive_step)
     char *expression = "$..foo";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, 6, &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 2);
-    assert_root_step(&path);
-    assert_recursive_name_step(&path, 1, "foo");
-    assert_no_predicates(&path, 0);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 2);
+    assert_root_step(path);
+    assert_recursive_name_step(path, 1, "foo");
+    assert_no_predicates(path, 0);
 
     jsonpath_free(&path);    
 }
@@ -562,16 +493,16 @@ START_TEST (absolute_multi_step)
     char *expression = "$.foo.baz..yobble.thingum";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 5);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_single_name_step(&path, 2, "baz");
-    assert_recursive_name_step(&path, 3, "yobble");
-    assert_single_name_step(&path, 4, "thingum");
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
-    assert_no_predicates(&path, 3);
-    assert_no_predicates(&path, 4);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 5);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_single_name_step(path, 2, "baz");
+    assert_recursive_name_step(path, 3, "yobble");
+    assert_single_name_step(path, 4, "thingum");
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
+    assert_no_predicates(path, 3);
+    assert_no_predicates(path, 4);
 
     jsonpath_free(&path);    
 }
@@ -583,13 +514,13 @@ START_TEST (relative_multi_step)
     char *expression = "foo.bar..baz";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, RELATIVE_PATH, 3);
-    assert_single_name_step(&path, 0, "foo");
-    assert_single_name_step(&path, 1, "bar");
-    assert_recursive_name_step(&path, 2, "baz");
-    assert_no_predicates(&path, 0);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, RELATIVE_PATH, 3);
+    assert_single_name_step(path, 0, "foo");
+    assert_single_name_step(path, 1, "bar");
+    assert_recursive_name_step(path, 2, "baz");
+    assert_no_predicates(path, 0);
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);    
 }
@@ -601,14 +532,14 @@ START_TEST (quoted_multi_step)
     char *expression = "$.foo.'happy fun ball'.bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 4);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_single_name_step(&path, 2, "happy fun ball");
-    assert_single_name_step(&path, 3, "bar");
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
-    assert_no_predicates(&path, 3);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 4);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_single_name_step(path, 2, "happy fun ball");
+    assert_single_name_step(path, 3, "bar");
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
+    assert_no_predicates(path, 3);
 
     jsonpath_free(&path);    
 }
@@ -620,12 +551,12 @@ START_TEST (wildcard)
     char *expression = "$.foo.*";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_single_wildcard_step(&path, 2);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_single_wildcard_step(path, 2);
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -637,12 +568,12 @@ START_TEST (recursive_wildcard)
     char *expression = "$.foo..*";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_recursive_wildcard_step(&path, 2);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_recursive_wildcard_step(path, 2);
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -672,14 +603,14 @@ START_TEST (whitespace)
     char *expression = "  $ \r\n. foo \n.\n. \t'happy fun ball' . \t string()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 4);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_recursive_name_step(&path, 2, "happy fun ball");
-    assert_single_type_step(&path, 3, STRING_TEST);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
-    assert_no_predicates(&path, 3);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 4);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_recursive_name_step(path, 2, "happy fun ball");
+    assert_single_type_step(path, 3, STRING_TEST);
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
+    assert_no_predicates(path, 3);
 
     jsonpath_free(&path);    
 }
@@ -691,12 +622,12 @@ START_TEST (type_test_missing_closing_paren)
     char *expression = "$.foo.null(";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_single_name_step(&path, 2, "null(");
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_single_name_step(path, 2, "null(");
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -726,12 +657,12 @@ START_TEST (recursive_type_test)
     char *expression = "$.foo..string()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_recursive_type_step(&path, 2, STRING_TEST);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_recursive_type_step(path, 2, STRING_TEST);
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -743,12 +674,12 @@ START_TEST (object_type_test)
     char *expression = "$.foo.object()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_single_type_step(&path, 2, OBJECT_TEST);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_single_type_step(path, 2, OBJECT_TEST);
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -760,12 +691,12 @@ START_TEST (array_type_test)
     char *expression = "$.foo.array()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_single_type_step(&path, 2, ARRAY_TEST);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_single_type_step(path, 2, ARRAY_TEST);
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -777,12 +708,12 @@ START_TEST (string_type_test)
     char *expression = "$.foo.string()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_single_type_step(&path, 2, STRING_TEST);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_single_type_step(path, 2, STRING_TEST);
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -794,12 +725,12 @@ START_TEST (number_type_test)
     char *expression = "$.foo.number()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_single_type_step(&path, 2, NUMBER_TEST);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_single_type_step(path, 2, NUMBER_TEST);
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -811,12 +742,12 @@ START_TEST (boolean_type_test)
     char *expression = "$.foo.boolean()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_single_type_step(&path, 2, BOOLEAN_TEST);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_single_type_step(path, 2, BOOLEAN_TEST);
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -828,12 +759,12 @@ START_TEST (null_type_test)
     char *expression = "$.foo.null()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_single_type_step(&path, 2, NULL_TEST);
-    assert_no_predicates(&path, 1);
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_single_type_step(path, 2, NULL_TEST);
+    assert_no_predicates(path, 1);
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -845,14 +776,14 @@ START_TEST (wildcard_predicate)
     char *expression = "$.store.book[*].author";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 4);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "store");
-    assert_no_predicates(&path, 1);
-    assert_single_name_step(&path, 2, "book");
-    assert_wildcard_predicate(&path, 2);
-    assert_single_name_step(&path, 3, "author");
-    assert_no_predicates(&path, 3);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 4);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "store");
+    assert_no_predicates(path, 1);
+    assert_single_name_step(path, 2, "book");
+    assert_wildcard_predicate(path, 2);
+    assert_single_name_step(path, 3, "author");
+    assert_no_predicates(path, 3);
 
     jsonpath_free(&path);
 }
@@ -864,12 +795,12 @@ START_TEST (wildcard_predicate_with_whitespace)
     char *expression = "$.foo  [\t*\n]  .bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_wildcard_predicate(&path, 1);
-    assert_single_name_step(&path, 2, "bar");
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_wildcard_predicate(path, 1);
+    assert_single_name_step(path, 2, "bar");
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -881,12 +812,12 @@ START_TEST (subscript_predicate)
     char *expression = "$.foo[42].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_subscript_predicate(&path, 1, 42);
-    assert_single_name_step(&path, 2, "bar");
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_subscript_predicate(path, 1, 42);
+    assert_single_name_step(path, 2, "bar");
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -898,12 +829,12 @@ START_TEST (subscript_predicate_with_whitespace)
     char *expression = "$.foo  [\t42\r]\n.bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_subscript_predicate(&path, 1, 42);
-    assert_single_name_step(&path, 2, "bar");
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_subscript_predicate(path, 1, 42);
+    assert_single_name_step(path, 2, "bar");
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -935,12 +866,12 @@ START_TEST (slice_predicate_form1)
     char *expression = "$.foo[:-3].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_slice_predicate(&path, 1, INT_FAST32_MIN, -3, 1);
-    assert_single_name_step(&path, 2, "bar");
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_slice_predicate(path, 1, INT_FAST32_MIN, -3, 1);
+    assert_single_name_step(path, 2, "bar");
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -952,12 +883,12 @@ START_TEST (slice_predicate_form1_with_step)
     char *expression = "$.foo[:-3:2].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_slice_predicate(&path, 1, INT_FAST32_MIN, -3, 2);
-    assert_single_name_step(&path, 2, "bar");
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_slice_predicate(path, 1, INT_FAST32_MIN, -3, 2);
+    assert_single_name_step(path, 2, "bar");
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -969,12 +900,12 @@ START_TEST (slice_predicate_form2)
     char *expression = "$.foo[-3:].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_slice_predicate(&path, 1, -3, INT_FAST32_MAX, 1);
-    assert_single_name_step(&path, 2, "bar");
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_slice_predicate(path, 1, -3, INT_FAST32_MAX, 1);
+    assert_single_name_step(path, 2, "bar");
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -986,12 +917,12 @@ START_TEST (slice_predicate_form2_with_step)
     char *expression = "$.foo[-1::2].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_slice_predicate(&path, 1, -1, INT_FAST32_MAX, 2);
-    assert_single_name_step(&path, 2, "bar");
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_slice_predicate(path, 1, -1, INT_FAST32_MAX, 2);
+    assert_single_name_step(path, 2, "bar");
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -1003,12 +934,12 @@ START_TEST (slice_predicate_form3)
     char *expression = "$.foo[3:5].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_slice_predicate(&path, 1, 3, 5, 1);
-    assert_single_name_step(&path, 2, "bar");
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_slice_predicate(path, 1, 3, 5, 1);
+    assert_single_name_step(path, 2, "bar");
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -1020,12 +951,12 @@ START_TEST (slice_predicate_form3_with_step)
     char *expression = "$.foo[1:4:2].bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_slice_predicate(&path, 1, 1, 4, 2);
-    assert_single_name_step(&path, 2, "bar");
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_slice_predicate(path, 1, 1, 4, 2);
+    assert_single_name_step(path, 2, "bar");
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -1037,12 +968,12 @@ START_TEST (slice_predicate_with_whitespace)
     char *expression = "$.foo  [\t1\t:\t5\r:\n3\t]\n.bar";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
     
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
-    assert_root_step(&path);
-    assert_single_name_step(&path, 1, "foo");
-    assert_slice_predicate(&path, 1, 1, 5, 3);
-    assert_single_name_step(&path, 2, "bar");
-    assert_no_predicates(&path, 2);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
+    assert_root_step(path);
+    assert_single_name_step(path, 1, "foo");
+    assert_slice_predicate(path, 1, 1, 5, 3);
+    assert_single_name_step(path, 2, "bar");
+    assert_no_predicates(path, 2);
 
     jsonpath_free(&path);
 }
@@ -1083,7 +1014,7 @@ START_TEST (bad_path_input)
     jsonpath path;
     char *expression = "$";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 1);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 1);
 
     errno = 0;
     assert_null(path_get_step(&path, 1));
@@ -1115,7 +1046,7 @@ START_TEST (bad_step_input)
     jsonpath path;
     char *expression = "$.foo.array()";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
 
     errno = 0;
     assert_int_eq(-1, type_test_step_get_type(path_get_step(&path, 1)));
@@ -1163,7 +1094,7 @@ START_TEST (bad_predicate_input)
     jsonpath path;
     char *expression = "$.foo[42].bar[*]";
     jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);    
-    assert_parser_result(expression, result, &path, ABSOLUTE_PATH, 3);
+    assert_parser_result(expression, result, path, ABSOLUTE_PATH, 3);
 
     predicate *subscript = step_get_predicate(path_get_step(&path, 1));
     errno = 0;
