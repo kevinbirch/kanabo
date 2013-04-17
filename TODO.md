@@ -17,7 +17,6 @@ LICENSE file for more details.
 
 ### global
 
-* switch to #pragma once
 * don't return -1 from enum return type functions
 
 ### evaluator

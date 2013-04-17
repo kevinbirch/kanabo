@@ -35,6 +35,8 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#pragma once
+
 static const char * const HELP =
     "kanabo [*OPTION*]... --query *expression*\n"
     "kanabo [--shell *shell*] --file *input-file* --interactive\n"

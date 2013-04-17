@@ -35,8 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef MODEL_H
-#define MODEL_H
+#pragma once
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -168,4 +167,3 @@ bool sequence_add(node * restrict sequence, node *item);
 bool sequence_set(node * restrict sequence, node *item, size_t index);
 bool mapping_put(node * restrict mapping, node *key, node *value);
 
-#endif

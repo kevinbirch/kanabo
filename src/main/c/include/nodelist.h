@@ -35,8 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef NODELIST_H
-#define NODELIST_H
+#pragma once
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -82,5 +81,3 @@ typedef bool (*nodelist_to_many_function)(node *each, void *context, nodelist *t
 nodelist *nodelist_flatmap(const nodelist * restrict list, nodelist_to_many_function function, void *context);
 nodelist *nodelist_flatmap_into(const nodelist * restrict list, nodelist_to_many_function function, void *context, nodelist * restrict target);
 
-
-#endif

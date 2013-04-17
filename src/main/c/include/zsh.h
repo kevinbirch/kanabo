@@ -35,10 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef ZSH_H
-#define ZSH_H
+#pragma once
 
 int emit_zsh(void);
 
-
-#endif

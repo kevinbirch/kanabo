@@ -35,8 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef EVALUATOR_H
-#define EVALUATOR_H
+#pragma once
 
 #include "model.h"
 #include "jsonpath.h"
@@ -54,4 +53,3 @@ enum evaluator_status_code
 
 nodelist *evaluate(document_model *model, jsonpath *path);
 
-#endif

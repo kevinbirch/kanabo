@@ -35,8 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef PRECONDITIONS_H
-#define PRECONDITIONS_H
+#pragma once
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -89,5 +88,3 @@ bool is_null(const void * restrict first, ...);
 bool is_false(int_fast8_t first, ...);
 
 
-
-#endif

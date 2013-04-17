@@ -74,6 +74,6 @@ void logger(enum log_level level, const char * restrict component, const char * 
 
 #define logger(...)
 
-#endif
+#endif /* USE_LOGGING */
 
 

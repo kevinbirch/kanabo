@@ -35,8 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#pragma once
 
 #include <getopt.h>
 
@@ -80,4 +79,3 @@ typedef int cmd;
 
 cmd process_options(const int argc, char * const *argv, struct settings * restrict settings);
 
-#endif

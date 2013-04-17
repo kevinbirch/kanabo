@@ -35,8 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef LOADER_H
-#define LOADER_H
+#pragma once
 
 #include <stdio.h>
 
@@ -72,4 +71,3 @@ loader_result *load_model_from_file(FILE * restrict input, document_model * rest
 void free_loader_result(loader_result *result);
 
 
-#endif

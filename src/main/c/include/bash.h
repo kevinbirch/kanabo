@@ -35,11 +35,8 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef BASH_H
-#define BASH_H
-
+#pragma once
 
 void emit_bash(void);
 
 
-#endif

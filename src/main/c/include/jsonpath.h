@@ -35,8 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#ifndef JSONPATH_H
-#define JSONPATH_H
+#pragma once
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -194,4 +193,3 @@ int_fast32_t        slice_predicate_get_step(const predicate * restrict value);
 jsonpath           *join_predicate_get_left(const predicate * restrict value);
 jsonpath           *join_predicate_get_right(const predicate * restrict value);
 
-#endif
