@@ -36,6 +36,7 @@ LICENSE file for more details.
 
 #### Enhancements:
 
+* slice step must not accept 0
 * negative subscripts should return ERR\_EXPECTED\_INTEGER instead of ERR\_UNSUPPORTED\_PRED\_TYPE
 * document api with doxygen
 * use precondition helpers
