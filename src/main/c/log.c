@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
+#include <string.h>
 
 #include "log.h"
 
@@ -56,6 +57,9 @@ static const char * const LEVELS[] =
 static bool LOGGING_ENABLED = false;
 static enum log_level LOG_LEVEL = ERROR;
 
+void vlogger(enum log_level level, const char * restrict component, const char * restrict format, va_list args);
+bool print_prelude(enum log_level level, const char * restrict component);
+
 void enable_logging(void)
 {
     LOGGING_ENABLED = true;
@@ -71,12 +75,33 @@ void set_log_level(enum log_level level)
     LOG_LEVEL = level;
 }
 
+#define ensure_log_enabled(LEVEL) if(!LOGGING_ENABLED || LOG_LEVEL < LEVEL) return
+
 void logger(enum log_level level, const char * restrict component, const char * restrict format, ...)
 {
-    if(!LOGGING_ENABLED || LOG_LEVEL < level)
+    ensure_log_enabled(level);
+    va_list args;
+    va_start(args, format);
+    vlogger(level, component, format, args);
+    va_end(args);
+}
+
+void vlogger(enum log_level level, const char * restrict component, const char * restrict format, va_list args)
+{
+    ensure_log_enabled(level);
+    if(!print_prelude(level, component))
     {
         return;
     }
+    vfprintf(stderr, format, args);
+    if('\n' != format[strlen(format) - 1])
+    {
+        fprintf(stderr, "\n");
+    }
+}
+
+bool print_prelude(enum log_level level, const char * restrict component)
+{
     time_t now = time(NULL);
     struct tm now_tm;
     localtime_r(&now, &now_tm);
@@ -84,14 +109,9 @@ void logger(enum log_level level, const char * restrict component, const char * 
                          now_tm.tm_hour, now_tm.tm_min, now_tm.tm_sec, LEVELS[level], component);
     if(-1 == result)
     {
-        return;
+        return false;
     }
-    va_list args;
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-
-    fprintf(stderr, "\n");
+    return true;
 }
 
 #endif

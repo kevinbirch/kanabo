@@ -52,11 +52,21 @@ void enable_logging(void);
 void disable_logging(void);
 void set_log_level(enum log_level level);
 
-#define log_error(COMPONENT, FORMAT, ...)  logger(ERROR, COMPONENT, FORMAT, __VA_ARGS__);
-#define log_warn(COMPONENT, FORMAT, ...)   logger(WARNING, COMPONENT, FORMAT, __VA_ARGS__);
-#define log_info(COMPONENT, FORMAT, ...)   logger(INFO, COMPONENT, FORMAT, __VA_ARGS__);
-#define log_debug(COMPONENT, FORMAT, ...)  logger(DEBUG, COMPONENT, FORMAT, __VA_ARGS__);
-#define log_trace(COMPONENT, FORMAT, ...)  logger(TRACE, COMPONENT, FORMAT, __VA_ARGS__);
+#define log_error(COMPONENT, FORMAT, ...)  logger(ERROR, COMPONENT, FORMAT, ##__VA_ARGS__);
+#define log_warn(COMPONENT, FORMAT, ...)   logger(WARNING, COMPONENT, FORMAT, ##__VA_ARGS__);
+#define log_info(COMPONENT, FORMAT, ...)   logger(INFO, COMPONENT, FORMAT, ##__VA_ARGS__);
+#define log_debug(COMPONENT, FORMAT, ...)  logger(DEBUG, COMPONENT, FORMAT, ##__VA_ARGS__);
+#define log_trace(COMPONENT, FORMAT, ...)  logger(TRACE, COMPONENT, FORMAT, ##__VA_ARGS__);
+
+#define log_string(LEVEL, COMP, FORMAT, VALUE, LENGTH, ...)             \
+    do {                                                                \
+    const uint8_t * restrict _log_value = (VALUE);                      \
+    const size_t _log_length = (LENGTH);                                \
+    char _log_string[_log_length + 1];                                  \
+    memcpy(&_log_string, _log_value, _log_length);                      \
+    _log_string[_log_length] = '\0';                                    \
+    logger(LEVEL, COMP, FORMAT, _log_string, ##__VA_ARGS__);            \
+    } while(0)
 
 void logger(enum log_level level, const char * restrict component, const char * restrict format, ...);
 

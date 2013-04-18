@@ -179,33 +179,11 @@ static inline void unexpected_value(parser_context *context, uint8_t expected);
 
 extern void step_free(step *step);
 
-#ifdef USE_LOGGING
-
 #define component_name "parser"
 
-#define parser_info(FORMAT, ...)  log_info(component_name, FORMAT, __VA_ARGS__)
-#define parser_debug(FORMAT, ...) log_debug(component_name, FORMAT, __VA_ARGS__)
-#define parser_trace(FORMAT, ...) log_trace(component_name, FORMAT, __VA_ARGS__)
-
-void log_string(const char * restrict format, const uint8_t * restrict value, size_t length);
-
-void log_string(const char * restrict format, const uint8_t * restrict value, size_t length)
-{
-    char string[length + 1];
-    memcpy(&string, value, length);
-    string[length] = '\0';
-    log_debug(component_name, format, string);
-}
-
-#else
-
-#define parser_info(...)
-#define parser_debug(...)
-#define parser_trace(...)
-
-#define log_string(...)
-
-#endif
+#define parser_info(FORMAT, ...)  log_info(component_name, FORMAT, ##__VA_ARGS__)
+#define parser_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
+#define parser_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
 
 jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, jsonpath *value)
 {
@@ -215,7 +193,7 @@ jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, js
         return context.code;
     }
 
-    log_string("starting expression: '%s'", expression, length);    
+    log_string(DEBUG, component_name, "starting expression: '%s'", expression, length);    
     prepare_context(&context, expression, length, value);
     
     path(&context);
