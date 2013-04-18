@@ -23,6 +23,7 @@ LICENSE file for more details.
 
 #### Enhancements:
 
+* use compound literals (http://gcc.gnu.org/onlinedocs/gcc-3.0.2/gcc_5.html#SEC88) for predicate parameter block?
 * elimintate generated booleans, this is not correct behavior
   * type tests act as a filter, not as a query
 * add a strictness mode: strict - fail invalid paths, lenient - skip bad paths, return no values
@@ -36,6 +37,8 @@ LICENSE file for more details.
 
 #### Enhancements:
 
+* add human readable names for enum types
+* add original expression to jsonpath struct
 * slice step must not accept 0
 * negative subscripts should return ERR\_EXPECTED\_INTEGER instead of ERR\_UNSUPPORTED\_PRED\_TYPE
 * document api with doxygen
@@ -75,6 +78,7 @@ LICENSE file for more details.
 
 #### Enhancements:
 
+* add human readable names for enum types
 * document api with doxygen
 * use precondition helpers
 * iterate\_sequence -> sequence\_iterate
