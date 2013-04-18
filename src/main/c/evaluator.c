@@ -40,6 +40,7 @@
 
 #include "evaluator.h"
 #include "conditions.h"
+#include "log.h"
 
 struct predicate_parameter_block
 {
@@ -55,7 +56,9 @@ typedef struct predicate_parameter_block predicate_parameter_block;
 
 static nodelist *evaluate_steps(document_model *model, jsonpath *path);
 static bool evaluate_step(step *current, nodelist **list);
+static bool evaluate_root_step(nodelist **list);
 static bool evaluate_single_step(step *current, nodelist **list);
+static bool evaluate_recursive_step(step *current, nodelist **list);
 
 static inline bool evaluate_wildcard_test(nodelist **list);
 static bool apply_wildcard_test(node *each, void *context, nodelist *target);
@@ -75,14 +78,25 @@ static bool apply_slice_predicate(node *each, void *context, nodelist *target);
 
 static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context);
 static node *make_boolean_node(bool value);
-static size_t normalize(bool specified, int_fast32_t actual, size_t fallback, size_t length);
+static int_fast32_t normalize_from(predicate *predicate);
+static int_fast32_t normalize_to(predicate *predicate, node *each);
+static int_fast32_t normalize(bool specified, int_fast32_t actual, int_fast32_t fallback, int_fast32_t length);
 static nodelist *make_result_nodelist(document_model *model);
+
+#define component_name "evaluator"
+
+#define evaluator_info(FORMAT, ...)  log_info(component_name, FORMAT, ##__VA_ARGS__)
+#define evaluator_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
+#define evaluator_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
+
+#define trace_string(FORMAT, ...) log_string(TRACE, component_name, FORMAT, __VA_ARGS__)
 
 nodelist *evaluate(document_model *model, jsonpath *path)
 {
     PRECOND_NONNULL_ELSE_NULL(model, path, model_get_document_root(model, 0));
-    PRECOND_ELSE_NULL(ABSOLUTE_PATH == path->kind, 0 < model_get_document_count(model))
+    PRECOND_ELSE_NULL(ABSOLUTE_PATH == path->kind, 0 < model_get_document_count(model));
 
+    evaluator_debug("beginning evaluation of %d steps", path_get_length(path));
     return evaluate_steps(model, path);
 }
 
@@ -93,15 +107,18 @@ static nodelist *evaluate_steps(document_model *model, jsonpath *path)
 
     for(size_t i = 0; i < path_get_length(path); i++)
     {
+        evaluator_trace("step: %zd", i);
         step *current = path_get_step(path, i);
         if(!evaluate_step(current, &list))
         {
+            evaluator_trace("aborted");
             nodelist_free_nodes(list);
             nodelist_free(list);
             return NULL;
         }
     }
 
+    evaluator_trace("done");
     return list;
 }
 
@@ -111,22 +128,37 @@ static bool evaluate_step(step *current, nodelist **list)
     switch(step_get_kind(current))
     {
         case ROOT:
-            result = nodelist_set(*list, document_get_root(nodelist_get(*list, 0)), 0);
+            result = evaluate_root_step(list);
             break;
         case SINGLE:
             result = evaluate_single_step(current, list);
             break;
         case RECURSIVE:
-            // xxx - implement me!
-            result = false;
+            result = evaluate_recursive_step(current, list);
             break;
     }
     return result;
 }
 
+static bool evaluate_root_step(nodelist **list)
+{
+    evaluator_trace("evaluating root step");
+    return nodelist_set(*list, document_get_root(nodelist_get(*list, 0)), 0);
+}
+
+static bool evaluate_recursive_step(step *current, nodelist **list)
+{
+#pragma unused(current, list)
+    evaluator_trace("evaluating recursive step");
+    // xxx - implement me!
+
+    return false;
+}
+
 static bool evaluate_single_step(step *current, nodelist **list)
 {
     bool result = false;
+    evaluator_trace("evaluating single step across %zd nodes", nodelist_length(*list));
     switch(step_get_test_kind(current))
     {
         case WILDCARD_TEST:
@@ -144,6 +176,7 @@ static bool evaluate_single_step(step *current, nodelist **list)
 
 static inline bool evaluate_wildcard_test(nodelist **list)
 {
+    evaluator_trace("evaluating wildcard test across %zd nodes", nodelist_length(*list));
     nodelist *result = nodelist_flatmap(*list, apply_wildcard_test, NULL);
     return NULL == result ? false : (nodelist_free(*list), *list = result, true);
 }
@@ -155,15 +188,19 @@ static bool apply_wildcard_test(node *each, void *context, nodelist *target)
     switch(node_get_kind(each))
     {
         case MAPPING:
+            evaluator_trace("wildcard test: adding %zd mapping values", node_get_size(each));
             result = iterate_mapping(each, add_values_to_nodelist_map_iterator, target);
             break;
         case SEQUENCE:
+            evaluator_trace("wildcard test: adding %zd sequence items", node_get_size(each));
             result = iterate_sequence(each, add_to_nodelist_sequence_iterator, target);
             break;
         case SCALAR:
+            evaluator_trace("wildcard test: adding scalar");
             result = nodelist_add(target, each);
             break;
         case DOCUMENT:
+            evaluator_trace("wildcard test: uh-oh! found a document node somehow, aborting...");
             errno = ERR_MISPLACED_DOCUMENT_NODE;
             result = false;
             break;
@@ -173,6 +210,7 @@ static bool apply_wildcard_test(node *each, void *context, nodelist *target)
 
 static inline bool evaluate_type_test(step *current, nodelist *list)
 {
+    evaluator_trace("evaluating type test across %zd nodes", nodelist_length(list));
     return NULL != nodelist_map_overwrite(list, apply_type_test, current, list);
 }
 
@@ -183,24 +221,31 @@ static node *apply_type_test(node *each, void *context)
     switch(type_test_step_get_type(step_context))
     {
         case OBJECT_TEST:
+            evaluator_trace("type test: testing for an object");
             result = MAPPING == node_get_kind(each);
             break;
         case ARRAY_TEST:
+            evaluator_trace("type test: testing for an array");
             result = SEQUENCE == node_get_kind(each);
             break;
         case STRING_TEST:
+            evaluator_trace("type test: testing for a string");
             result = SCALAR_STRING == scalar_get_kind(each);
             break;
         case NUMBER_TEST:
+            evaluator_trace("type test: testing for a number");
             result = SCALAR_NUMBER == scalar_get_kind(each);
             break;
         case BOOLEAN_TEST:
+            evaluator_trace("type test: testing for a boolean");
             result = SCALAR_BOOLEAN == scalar_get_kind(each);
             break;
         case NULL_TEST:
+            evaluator_trace("type test: testing for a null");
             result = SCALAR_NULL == scalar_get_kind(each);
             break;
     }
+    evaluator_trace("type test: test %s successful", result ? "was" : "was not");
     return make_boolean_node(result);
 }
 
@@ -212,6 +257,7 @@ static inline bool evaluate_name_test(step *current, nodelist **list)
     }
     else
     {
+        trace_string("evaluating name test '%s', across %zd nodes", name_test_step_get_name(current), name_test_step_get_length(current), nodelist_length(*list));
         return NULL != nodelist_map_overwrite(*list, apply_name_test, current, *list);
     }
 }
@@ -232,6 +278,7 @@ static bool evaluate_predicated_name_test(step *current, nodelist **list)
     nodelist *evaluated;
     bool result = false;
 
+    trace_string("evaluating predicated name test '%s', across %zd nodes", name_test_step_get_name(current), name_test_step_get_length(current), nodelist_length(*list));
     switch(predicate_get_kind(step_get_predicate(current)))
     {
         case WILDCARD:
@@ -280,10 +327,15 @@ static bool apply_wildcard_predicate(node *each, void *context, nodelist *target
     switch(node_get_kind(each))
     {
         case SCALAR:
+            trace_string("wildcard predicate: adding scalar '%s'", scalar_get_value(each), node_get_size(each));
+            result = nodelist_add(target, each);
+            break;
         case MAPPING:
+            evaluator_trace("wildcard predicate: adding mapping");
             result = nodelist_add(target, each);
             break;
         case SEQUENCE:
+            evaluator_trace("wildcard predicate: adding %zd sequence items", node_get_size(each));
             result = iterate_sequence(each, add_to_nodelist_sequence_iterator, target);
             break;
         case DOCUMENT:
@@ -299,6 +351,7 @@ static node *apply_subscript_predicate(node *each, void *context)
     step *step_context = (step *)context;
     ENSURE_ELSE_NULL(ERR_NAME_IS_NOT_SEQUENCE, SEQUENCE == node_get_kind(each));
     size_t index = subscript_predicate_get_index(step_get_predicate(step_context));
+    evaluator_trace("subscript predicate: adding index %zd from sequence of %zd", index, node_get_size(each));
     return sequence_get(each, index);
 }
 
@@ -306,19 +359,22 @@ static bool apply_slice_predicate(node *each, void *context, nodelist *target)
 {
     ENSURE_ELSE_FALSE(ERR_NAME_IS_NOT_SEQUENCE, SEQUENCE == node_get_kind(each));
 
-    predicate *predicate = step_get_predicate((step *)context);
-    size_t from = normalize(slice_predicate_has_from(predicate), slice_predicate_get_from(predicate), 0, node_get_size(each));
-    size_t to =   normalize(slice_predicate_has_to(predicate), slice_predicate_get_to(predicate), node_get_size(each), node_get_size(each));
-    int_fast32_t step = slice_predicate_has_step(predicate) ? slice_predicate_get_step(predicate) : 1;
-    
-    for(size_t i = from; i > to; i = i + step)
+    predicate *slice = step_get_predicate((step *)context);
+    int_fast32_t step = slice_predicate_has_step(slice) ? slice_predicate_get_step(slice) : 1;
+    int_fast32_t from = 0 > step ? normalize_to(slice, each) : normalize_from(slice);
+    int_fast32_t to   = 0 > step ? normalize_from(slice) : normalize_to(slice, each);
+    evaluator_trace("slice predicate: evaluating normalized interval [%d:%d:%d] on sequence of %zd", from, to, step, node_get_size(each));
+
+    for(int_fast32_t i = from; 0 > step ? i < to : i > to; i += step)
     {
         errno = 0;
-        node *selected = sequence_get(each, i);
+        node *selected = sequence_get(each, (size_t)i);
         if(NULL == selected || 0 != errno || !nodelist_add(target, selected))
         {
             return false;
         }
+        evaluator_trace("slice predicate: adding index %d", i);         
+        nodelist_add(target, selected);
     }
     return true;
 }
@@ -355,26 +411,33 @@ static node *make_boolean_node(bool value)
     return result;
 }
 
-static size_t normalize(bool specified, int_fast32_t actual, size_t fallback, size_t length)
+static int_fast32_t normalize_from(predicate *slice)
+{
+    return normalize(slice_predicate_has_from(slice), slice_predicate_get_from(slice), 0, 0);
+}
+
+static int_fast32_t normalize_to(predicate *slice, node *each)
+{
+    int_fast32_t length = (int_fast32_t)node_get_size(each);
+    return normalize(slice_predicate_has_to(slice), slice_predicate_get_to(slice), length, length);
+}
+
+static int_fast32_t normalize(bool specified, int_fast32_t given, int_fast32_t fallback, int_fast32_t limit)
 {
     if(!specified)
     {
         return fallback;
     }
-    int_fast32_t result = actual;
-    if(0 > result)
-    {
-        result += length;
-    }
+    int_fast32_t result = 0 > given ? given + limit: given;
     if(0 > result)
     {
         return 0;
     }
-    if(length < result)
+    if(limit < result)
     {
-        return length;
+        return limit;
     }
-    return (size_t)result;
+    return result;
 }
 
 static nodelist *make_result_nodelist(document_model *model)
