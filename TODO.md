@@ -100,13 +100,15 @@ LICENSE file for more details.
 #### Enhancements:
 
 * add check for check.h header existence
-* add version header generation support
 
 #### Features:
 
+* add version header generation support
 * add submodule build support
+  * subpaths under $source-root should be preserved, e.g. $src/jsonpath/parser.c -> $target/objects/jsonpath/parser.o
 * add package phase impl
 * add install phase impl
+* add site phase impl
 * extract as its own project
 
 ### path languages
@@ -117,34 +119,13 @@ LICENSE file for more details.
 
 ### unit testing
 
-* try CTest
+#### Enhancements:
 
-* CT https://github.com/kr/ct
-  * pros: forks test, autogenerates test driver code
-  * cons: not a library
-* Check http://check.sourceforge.net
-  * pro: forks tests, still alive
-  * con: installed as a library, macro based test setup
-* CTest https://github.com/bvdberg/ctest
-  * candidate for improvement using forking
-  * pro: embedible - single h file, suite support, setup/teardown support, fixture support
-  * con: does not fork, uses macro based test setup
-* CuTest http://cutest.sourceforge.net
-  * pro: embedible - single c/h file, has an API
-  * con: does not fork, not updated in 2 years, many outstanding bugs and patches, originated on Windows
-  * non-starter, not maintained
-* head-unit https://github.com/boothj5/head-unit
-  * pro: has an API, C/C++ support, nice output
-  * con: does not fork, installed as a library, no user base?
-  * non-starter, no other users
-* AceUnit http://aceunit.sourceforge.net
-  * pro: JUnit 4 style
-  * con: requires Java
-  * non-starter, using java is crazy
-* CUnit http://cunit.sourceforge.net
-  * pro: uses an API, various runners, nice output
-  * con: API is very cumbersome, does not fork, not updated for several years, installed as a library, complex, many outstanding bugs and patches, requires glib
-  * non-starter, API is terrible
+* add command line single test run support
+* add more beautiful runner output
+* can ctest's style of test macros be used in check?
+  * https://github.com/bvdberg/ctest
+* eliminate check's end_test macro by creating hidden trampoline function that delegates to user's test function
 
 ### site
 
