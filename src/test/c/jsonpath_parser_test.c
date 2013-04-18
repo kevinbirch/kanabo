@@ -89,9 +89,7 @@
 #define assert_single_name_step(PATH, INDEX, NAME) assert_name_step(PATH, INDEX, NAME, SINGLE)
 #define assert_recursive_name_step(PATH, INDEX, NAME) assert_name_step(PATH, INDEX, NAME, RECURSIVE)
 
-#define assert_wildcard_step(PATH, INDEX, EXPECTED_STEP_KIND)       \
-    assert_step(PATH, INDEX, EXPECTED_STEP_KIND, WILDCARD_TEST);    \
-    assert_name(path_get_step(&PATH, INDEX), "*")
+#define assert_wildcard_step(PATH, INDEX, EXPECTED_STEP_KIND) assert_step(PATH, INDEX, EXPECTED_STEP_KIND, WILDCARD_TEST)
 #define assert_single_wildcard_step(PATH, INDEX) assert_wildcard_step(PATH, INDEX, SINGLE)
 #define assert_recursive_wildcard_step(PATH, INDEX) assert_wildcard_step(PATH, INDEX, RECURSIVE)
 

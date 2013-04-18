@@ -60,7 +60,8 @@ size_t path_get_length(const jsonpath * restrict path)
 
 step *path_get_step(const jsonpath * restrict path, size_t index)
 {
-    PRECOND_NONNULL_ELSE_NULL(path, path->steps);
+    PRECOND_NONNULL_ELSE_NULL(path);
+    PRECOND_NONNULL_ELSE_NULL(path->steps);
     PRECOND_ELSE_NULL(0 != path->length, index < path->length);
     return path->steps[index];
 }
@@ -104,8 +105,8 @@ uint8_t *name_test_step_get_name(const step * restrict value)
 
 size_t name_test_step_get_length(const step * restrict value)
 {
-    PRECOND_NONNULL_ELSE_NULL(value);
-    PRECOND_ELSE_NULL(NAME_TEST == value->test.kind);
+    PRECOND_NONNULL_ELSE_ZERO(value);
+    PRECOND_ELSE_ZERO(NAME_TEST == value->test.kind);
     return value->test.name.length;
 }
 
@@ -117,7 +118,8 @@ bool step_has_predicate(const step * restrict value)
 
 predicate *step_get_predicate(const step * restrict value)
 {
-    PRECOND_NONNULL_ELSE_NULL(value, value->predicate);
+    PRECOND_NONNULL_ELSE_NULL(value);
+    PRECOND_NONNULL_ELSE_NULL(value->predicate);
     return value->predicate;
 }
 

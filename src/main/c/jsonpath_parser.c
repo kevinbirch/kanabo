@@ -436,14 +436,6 @@ static void wildcard_name(parser_context *context)
     push_step(context, current);
 
     consume_char(context);
-    current->test.name.value = (uint8_t *)malloc(1);
-    if(NULL == current->test.name.value)
-    {
-        context->code = ERR_OUT_OF_MEMORY;
-        return;
-    }
-    memcpy(current->test.name.value, "*", 1);
-    current->test.name.length = 1;
     context->code = JSONPATH_SUCCESS;
 }
 
