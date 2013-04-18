@@ -38,6 +38,9 @@
 #include <errno.h>
 
 #include "jsonpath.h"
+#include "conditions.h"
+
+static bool slice_predicate_has(const predicate * restrict value, enum slice_specifiers specifier);
 
 enum path_kind path_get_kind(const jsonpath * restrict path)
 {
@@ -51,21 +54,14 @@ enum path_kind path_get_kind(const jsonpath * restrict path)
 
 size_t path_get_length(const jsonpath * restrict path)
 {
-    if(NULL == path)
-    {
-        errno = EINVAL;
-        return 0;
-    }
+    PRECOND_NONNULL_ELSE_ZERO(path);
     return path->length;
 }
 
 step *path_get_step(const jsonpath * restrict path, size_t index)
 {
-    if(NULL == path || 0 == path->length || NULL == path->steps || index >= path->length)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+    PRECOND_NONNULL_ELSE_NULL(path, path->steps);
+    PRECOND_ELSE_NULL(0 != path->length, index < path->length);
     return path->steps[index];
 }
 
@@ -101,41 +97,27 @@ enum type_test_kind type_test_step_get_type(const step * restrict value)
 
 uint8_t *name_test_step_get_name(const step * restrict value)
 {
-    if(NULL == value || TYPE_TEST == value->test.kind)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+    PRECOND_NONNULL_ELSE_NULL(value);
+    PRECOND_ELSE_NULL(NAME_TEST == value->test.kind);
     return value->test.name.value;
 }
 
 size_t name_test_step_get_length(const step * restrict value)
 {
-    if(NULL == value || TYPE_TEST == value->test.kind)
-    {
-        errno = EINVAL;
-        return 0;
-    }
+    PRECOND_NONNULL_ELSE_NULL(value);
+    PRECOND_ELSE_NULL(NAME_TEST == value->test.kind);
     return value->test.name.length;
 }
 
 bool step_has_predicate(const step * restrict value)
 {
-    if(NULL == value)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    PRECOND_NONNULL_ELSE_FALSE(value);
     return NULL != value->predicate;
 }
 
 predicate *step_get_predicate(const step * restrict value)
 {
-    if(NULL == value || NULL == value->predicate)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+    PRECOND_NONNULL_ELSE_NULL(value, value->predicate);
     return value->predicate;
 }
 
@@ -151,42 +133,51 @@ enum predicate_kind predicate_get_kind(const predicate * restrict value)
 
 size_t subscript_predicate_get_index(const predicate * restrict value)
 {
-    if(NULL == value || SUBSCRIPT != value->kind)
-    {
-        errno = EINVAL;
-        return 0;
-    }
+    PRECOND_NONNULL_ELSE_ZERO(value);
+    PRECOND_ELSE_ZERO(SUBSCRIPT == value->kind);
     return value->subscript.index;
 }
 
 int_fast32_t slice_predicate_get_to(const predicate * restrict value)
 {
-    if(NULL == value || SLICE != value->kind)
-    {
-        errno = EINVAL;
-        return 0;
-    }
+    PRECOND_NONNULL_ELSE_ZERO(value);
+    PRECOND_ELSE_ZERO(SLICE == value->kind);
     return value->slice.to;
 }
 
 int_fast32_t slice_predicate_get_from(const predicate * restrict value)
 {
-    if(NULL == value || SLICE != value->kind)
-    {
-        errno = EINVAL;
-        return 0;
-    }
+    PRECOND_NONNULL_ELSE_ZERO(value);
+    PRECOND_ELSE_ZERO(SLICE == value->kind);
     return value->slice.from;
 }
 
 int_fast32_t slice_predicate_get_step(const predicate * restrict value)
 {
-    if(NULL == value || SLICE != value->kind)
-    {
-        errno = EINVAL;
-        return 0;
-    }
+    PRECOND_NONNULL_ELSE_ZERO(value);
+    PRECOND_ELSE_ZERO(SLICE == value->kind);
     return value->slice.step;
+}
+bool slice_predicate_has_to(const predicate * restrict value)
+{
+    return slice_predicate_has(value, SLICE_TO);
+}
+
+bool slice_predicate_has_from(const predicate * restrict value)
+{
+    return slice_predicate_has(value, SLICE_FROM);
+}
+
+bool slice_predicate_has_step(const predicate * restrict value)
+{
+    return slice_predicate_has(value, SLICE_STEP);
+}
+
+static bool slice_predicate_has(const predicate * restrict value, enum slice_specifiers specifier)
+{
+    PRECOND_NONNULL_ELSE_FALSE(value);
+    PRECOND_ELSE_FALSE(SLICE == value->kind);
+    return value->slice.specified & specifier;
 }
 
 jsonpath *join_predicate_get_left(const predicate * restrict value)

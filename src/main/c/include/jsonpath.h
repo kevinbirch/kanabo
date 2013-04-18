@@ -43,6 +43,13 @@
 
 typedef struct jsonpath jsonpath;
 
+enum slice_specifiers
+{
+    SLICE_FROM = 1,
+    SLICE_TO   = 2,
+    SLICE_STEP = 4
+};
+
 struct predicate
 {
     enum predicate_kind
@@ -62,6 +69,7 @@ struct predicate
         
         struct
         {
+            uint8_t      specified;
             int_fast32_t from;
             int_fast32_t to;
             int_fast32_t step;
@@ -187,9 +195,14 @@ predicate *step_get_predicate(const step * restrict value);
 
 enum predicate_kind predicate_get_kind(const predicate * restrict value);
 size_t              subscript_predicate_get_index(const predicate * restrict value);
+
 int_fast32_t        slice_predicate_get_to(const predicate * restrict value);
 int_fast32_t        slice_predicate_get_from(const predicate * restrict value);
 int_fast32_t        slice_predicate_get_step(const predicate * restrict value);
+bool                slice_predicate_has_to(const predicate * restrict value);
+bool                slice_predicate_has_from(const predicate * restrict value);
+bool                slice_predicate_has_step(const predicate * restrict value);
+
 jsonpath           *join_predicate_get_left(const predicate * restrict value);
 jsonpath           *join_predicate_get_right(const predicate * restrict value);
 

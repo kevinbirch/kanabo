@@ -64,17 +64,19 @@ static inline bool evaluate_type_test(step *current, nodelist *list);
 static node *apply_type_test(node *each, void *context);
 
 static inline bool evaluate_name_test(step *current, nodelist **list);
+static node *apply_name_test(node *object, void *context);
+
 static bool evaluate_predicated_name_test(step *current, nodelist **list);
 static node *apply_to_one_predicate(node *each, void *context);
 static bool apply_to_many_predicate(node *each, void *context, nodelist *target);
 static bool apply_wildcard_predicate(node *each, void *context, nodelist *target);
 static node *apply_subscript_predicate(node *object, void *context);
-
-static node *apply_name_test(node *object, void *context);
+static bool apply_slice_predicate(node *each, void *context, nodelist *target);
 
 static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context);
-static nodelist *make_result_nodelist(document_model *model);
 static node *make_boolean_node(bool value);
+static size_t normalize(bool specified, int_fast32_t actual, size_t fallback, size_t length);
+static nodelist *make_result_nodelist(document_model *model);
 
 nodelist *evaluate(document_model *model, jsonpath *path)
 {
@@ -214,6 +216,15 @@ static inline bool evaluate_name_test(step *current, nodelist **list)
     }
 }
 
+static node *apply_name_test(node *object, void *context)
+{
+    step *step_context = (step *)context;
+    ENSURE_ELSE_NULL(ERR_NAME_IS_NOT_MAPPING, MAPPING == node_get_kind(object));
+    node *value = mapping_get_value_scalar_key(object, name_test_step_get_name(step_context), name_test_step_get_length(step_context));
+    ENSURE_NONNULL_ELSE_NULL(ERR_KEY_NOT_IN_MAPPING, value);
+    return value;
+}
+
 static bool evaluate_predicated_name_test(step *current, nodelist **list)
 {
     predicate_parameter_block block;
@@ -233,9 +244,9 @@ static bool evaluate_predicated_name_test(step *current, nodelist **list)
             result = NULL != nodelist_map_overwrite(*list, apply_to_one_predicate, &block, *list);
             break;
         case SLICE:
-            // xxx - implement me!
-            //return evaluate_slice_predicate(current, list);
-            result = false;
+            block.to_many_predicate = apply_slice_predicate;
+            evaluated = nodelist_flatmap(*list, apply_to_many_predicate, &block);
+            result = NULL == evaluated ? false : (nodelist_free(*list), *list = evaluated, true);
             break;
         case JOIN:
             // xxx - implement me!
@@ -291,13 +302,25 @@ static node *apply_subscript_predicate(node *each, void *context)
     return sequence_get(each, index);
 }
 
-static node *apply_name_test(node *object, void *context)
+static bool apply_slice_predicate(node *each, void *context, nodelist *target)
 {
-    step *step_context = (step *)context;
-    ENSURE_ELSE_NULL(ERR_NAME_IS_NOT_MAPPING, MAPPING == node_get_kind(object));
-    node *value = mapping_get_value_scalar_key(object, name_test_step_get_name(step_context), name_test_step_get_length(step_context));
-    ENSURE_NONNULL_ELSE_NULL(ERR_KEY_NOT_IN_MAPPING, value);
-    return value;
+    ENSURE_ELSE_FALSE(ERR_NAME_IS_NOT_SEQUENCE, SEQUENCE == node_get_kind(each));
+
+    predicate *predicate = step_get_predicate((step *)context);
+    size_t from = normalize(slice_predicate_has_from(predicate), slice_predicate_get_from(predicate), 0, node_get_size(each));
+    size_t to =   normalize(slice_predicate_has_to(predicate), slice_predicate_get_to(predicate), node_get_size(each), node_get_size(each));
+    int_fast32_t step = slice_predicate_has_step(predicate) ? slice_predicate_get_step(predicate) : 1;
+    
+    for(size_t i = from; i > to; i = i + step)
+    {
+        errno = 0;
+        node *selected = sequence_get(each, i);
+        if(NULL == selected || 0 != errno || !nodelist_add(target, selected))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context)
@@ -330,6 +353,28 @@ static node *make_boolean_node(bool value)
     ENSURE_NONNULL_ELSE_NULL(errno, result);
     
     return result;
+}
+
+static size_t normalize(bool specified, int_fast32_t actual, size_t fallback, size_t length)
+{
+    if(!specified)
+    {
+        return fallback;
+    }
+    int_fast32_t result = actual;
+    if(0 > result)
+    {
+        result += length;
+    }
+    if(0 > result)
+    {
+        return 0;
+    }
+    if(length < result)
+    {
+        return length;
+    }
+    return (size_t)result;
 }
 
 static nodelist *make_result_nodelist(document_model *model)

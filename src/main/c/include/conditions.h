@@ -72,6 +72,7 @@ extern const void * SENTINEL;
 
 #define PRECOND_ELSE_NULL(...) ENSURE_THAT(NULL, EINVAL, __VA_ARGS__)
 #define PRECOND_ELSE_FALSE(...) ENSURE_THAT(false, EINVAL, __VA_ARGS__)
+#define PRECOND_ELSE_ZERO(...) ENSURE_THAT(0, EINVAL, __VA_ARGS__)
 
 // common invariants
 #define ENSURE_NONNULL_ELSE_NULL(ERRNO, ...) ENSURE_NONNULL(NULL, ERRNO, __VA_ARGS__)
