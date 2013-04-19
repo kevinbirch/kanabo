@@ -35,41 +35,27 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include "evaluator.h"
 
-#include "model.h"
-#include "jsonpath.h"
-#include "nodelist.h"
-
-enum evaluator_status_code
+static const char * const MESSAGES[] =
 {
-    EVALUATOR_SUCCESS = 0,
-    ERR_MODEL_IS_NULL,             // the model given
-    ERR_PATH_IS_NULL,              // the path given was null
-    ERR_NO_DOCUMENT_IN_MODEL,      // no document node was found in the model
-    ERR_NO_ROOT_IN_DOCUMENT,       // no root node was found in the document
-    ERR_PATH_IS_NOT_ABSOLUTE,      // the jsonpath given is not an absolute path
-    ERR_PATH_IS_EMPTY,             // the jsonpath given is empty
-    ERR_EVALUATOR_OUT_OF_MEMORY,   // the evaluator ran out of memory
-    ERR_UNEXPECTED_DOCUMENT_NODE,  // a document node was found embedded inside another document tree
-    ERR_UNSUPPORTED_PATH,          // the jsonpath provided is not supported
+    "Success",
+    "Model argument is NULL",
+    "Path argument is NULL",
+    "Document node in model argument is NULL",
+    "Root node of document in model argument is NULL",
+    "Path argument is not an absolute path",
+    "Path argument has no steps",
+    "Out of memory",
+    "Found a document node embedded in the tree",
+    "The path argument is not supported",
 };
 
-struct evaluator_context
+const char *get_status_message(evaluator_context *context)
 {
-    enum evaluator_status_code code;
-    size_t                     current_step;
-    document_model            *model;
-    jsonpath                  *path;
-    nodelist                  *result;
-};
-
-typedef struct evaluator_context evaluator_context;
-
-evaluator_context *make_evaluator(document_model *model, jsonpath *path);
-void evaluator_free(evaluator_context *context);
-
-nodelist *evaluate(evaluator_context *context);
-
-const char *get_status_message(evaluator_context *context);
-
+    if(NULL == context)
+    {
+        return NULL;
+    }
+    return MESSAGES[context->code];
+}

@@ -19,16 +19,14 @@ LICENSE file for more details.
 
 * don't return -1 from enum return type functions
 
-* fix module api
+* fix parser api
+* fix loader api
 * connect front & back ends
 * cut alpha release tag
 
 ### evaluator
 
 #### Enhancements:
-
-* use a evaluator context
-* add error message generator
 
 #### Features:
 
@@ -39,9 +37,12 @@ LICENSE file for more details.
 
 #### Enhancements:
 
+* implement lexer
+* implement combinators
+* add full tracing
 * add human readable names for enum types
 * add original expression to jsonpath struct
-* slice step must not accept 0
+* add step and predicate expressions to jsonpath struct
 * negative subscripts should return ERR\_EXPECTED\_INTEGER instead of ERR\_UNSUPPORTED\_PRED\_TYPE
 * document api with doxygen
 * use precondition helpers
@@ -65,6 +66,7 @@ LICENSE file for more details.
 
 * document api with doxygen
 * use precondition helpers
+* add full tracing
 * make loader api return an enum instead of a struct
   * expose input struct, add c'tor/d'tor
   * fold current load functions into single loader from input struct
@@ -74,6 +76,7 @@ LICENSE file for more details.
 
 * handle anchors and aliases
   * https://en.wikipedia.org/wiki/Hashed_array_tree
+  * use for mappings as well
 * handle tags
 
 ### model

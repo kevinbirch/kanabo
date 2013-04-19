@@ -81,8 +81,11 @@ START_TEST (dollar_only)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)"$", 1, &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
@@ -90,6 +93,7 @@ START_TEST (dollar_only)
     assert_node_size(nodelist_get(list, 0), 1);
     assert_mapping_has_key(nodelist_get(list, 0), "store");
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -101,8 +105,11 @@ START_TEST (single_name_step)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)"$.store", 7, &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
@@ -114,6 +121,7 @@ START_TEST (single_name_step)
     assert_mapping_has_key(store, "book");
     assert_mapping_has_key(store, "bicycle");
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -126,8 +134,11 @@ START_TEST (long_path)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
@@ -137,6 +148,7 @@ START_TEST (long_path)
     assert_node_kind(color, SCALAR);
     assert_scalar_value(color, "red");
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -149,8 +161,11 @@ START_TEST (wildcard)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 5);
@@ -161,6 +176,7 @@ START_TEST (wildcard)
     assert_node_kind(nodelist_get(list, 3), MAPPING);
     assert_node_kind(nodelist_get(list, 4), MAPPING);
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -173,8 +189,11 @@ START_TEST (object_test)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
@@ -186,6 +205,7 @@ START_TEST (object_test)
     assert_mapping_has_key(value, "book");
     assert_mapping_has_key(value, "bicycle");
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -198,8 +218,11 @@ START_TEST (array_test)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
@@ -209,6 +232,7 @@ START_TEST (array_test)
     assert_node_kind(value, SEQUENCE);
     assert_node_size(value, 4);
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -221,8 +245,11 @@ START_TEST (number_test)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 4);
@@ -232,6 +259,7 @@ START_TEST (number_test)
     assert_scalar_value(nodelist_get(list, 2), "8.99");
     assert_scalar_value(nodelist_get(list, 3), "22.99");
     
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -253,8 +281,11 @@ START_TEST (wildcard_predicate)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 4);
@@ -264,6 +295,7 @@ START_TEST (wildcard_predicate)
     assert_node_kind(nodelist_get(list, 2), SCALAR);
     assert_node_kind(nodelist_get(list, 3), SCALAR);
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -276,8 +308,11 @@ START_TEST (wildcard_predicate_on_mapping)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
@@ -286,6 +321,7 @@ START_TEST (wildcard_predicate_on_mapping)
     assert_node_kind(scalar, SCALAR);
     assert_scalar_value(scalar, "red");
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -298,8 +334,11 @@ START_TEST (wildcard_predicate_on_scalar)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
@@ -308,6 +347,7 @@ START_TEST (wildcard_predicate_on_scalar)
     assert_node_kind(scalar, SCALAR);
     assert_scalar_value(scalar, "red");
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -320,8 +360,11 @@ START_TEST (subscript_predicate)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
@@ -336,6 +379,7 @@ START_TEST (subscript_predicate)
     assert_not_null(author);
     assert_scalar_value(author, "Herman Melville");
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -348,8 +392,11 @@ START_TEST (slice_predicate)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 2);
@@ -376,6 +423,7 @@ START_TEST (slice_predicate)
     assert_not_null(author);
     assert_scalar_value(author, "Evelyn Waugh");
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -388,8 +436,11 @@ START_TEST (slice_predicate_with_step)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
@@ -405,6 +456,7 @@ START_TEST (slice_predicate_with_step)
     assert_not_null(author);
     assert_scalar_value(author, "Nigel Rees");
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -417,8 +469,11 @@ START_TEST (slice_predicate_negative_from)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
@@ -434,6 +489,7 @@ START_TEST (slice_predicate_negative_from)
     assert_not_null(author);
     assert_scalar_value(author, "J. R. R. Tolkien");
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -446,8 +502,11 @@ START_TEST (slice_predicate_copy)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 4);
@@ -465,6 +524,7 @@ START_TEST (slice_predicate_copy)
     assert_scalar_value(mapping_get_value(nodelist_get(list, 3), "author"), "J. R. R. Tolkien");
     assert_noerr();
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
@@ -477,8 +537,11 @@ START_TEST (slice_predicate_reverse)
     jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
     assert_int_eq(JSONPATH_SUCCESS, code);
 
+    evaluator_context *context = make_evaluator(model, &path);
+    assert_not_null(context);
+
     reset_errno();
-    nodelist *list = evaluate(model, &path);
+    nodelist *list = evaluate(context);
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 4);
@@ -496,6 +559,7 @@ START_TEST (slice_predicate_reverse)
     assert_scalar_value(mapping_get_value(nodelist_get(list, 3), "author"), "Nigel Rees");
     assert_noerr();
 
+    evaluator_free(context);
     nodelist_free(list);
     jsonpath_free(&path);
 }
