@@ -19,6 +19,11 @@ LICENSE file for more details.
 
 * don't return -1 from enum return type functions
 
+* fix evaluator
+* fix module api
+* connect front & back ends
+* cut alpha release tag
+
 ### evaluator
 
 #### Enhancements:
@@ -32,6 +37,11 @@ LICENSE file for more details.
 * add error message generator
 * nodes owned by a document tree must be preserved unless destroying the tree
 * eliminate nodelist\_map\_overwrite?
+
+#### Features:
+
+* implement recurisve step
+* implement union predicates
 
 ### parser
 
