@@ -180,7 +180,7 @@ static nodelist *evaluate_steps(evaluator_context *context)
         }
     }
 
-    evaluator_debug("done");
+    evaluator_debug("done, found %d matching nodes", nodelist_length(context->result));
     return context->result;
 }
 
