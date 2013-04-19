@@ -873,6 +873,20 @@ START_TEST (negative_step_slice_predicate)
 }
 END_TEST
 
+START_TEST (zero_step_slice_predicate)
+{
+    jsonpath path;
+    char *expression = "$.foo[::0].bar";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    // xxx - fix me! this should be ERR_STEP_CANNOT_BE_ZERO instead
+    // xxx - fix me! this should be position 8 instead, need a non-zero signed int parser
+    assert_parser_failure(expression, result, path, ERR_UNSUPPORTED_PRED_TYPE, 9);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
 START_TEST (bad_path_input)
 {
     reset_errno();
@@ -1069,6 +1083,7 @@ Suite *jsonpath_suite(void)
     tcase_add_test(predicate_case, slice_predicate_form3_with_step);
     tcase_add_test(predicate_case, slice_predicate_with_whitespace);
     tcase_add_test(predicate_case, negative_step_slice_predicate);
+    tcase_add_test(predicate_case, zero_step_slice_predicate);
 
     TCase *api_case = tcase_create("api");
     tcase_add_test(api_case, bad_path_input);

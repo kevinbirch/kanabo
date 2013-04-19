@@ -761,6 +761,12 @@ static void slice_predicate(parser_context *context)
                 parser_trace("slice: uh oh! couldn't parse step value, aborting...");
                 return;
             }
+            if(0 == step)
+            {
+                parser_trace("slice: uh oh! couldn't parse step value, aborting...");
+                context->code = ERR_STEP_CANNOT_BE_ZERO;
+                return;
+            }
             parser_trace("slice: found step value: %d", step);
             pred->slice.specified |= SLICE_STEP;
         }

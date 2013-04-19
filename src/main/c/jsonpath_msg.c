@@ -58,8 +58,9 @@ static const char * const MESSAGES[] =
     "At position %d: extra characters after valid type test step definition.",
     "At position %d: expected a name character, but found '%c' instead.",
     "At position %d: expected a node type test.",
-    "At position %d: expected an integer."
-    "At position %d: invalid integer."
+    "At position %d: expected an integer.",
+    "At position %d: invalid integer.",
+    "At position %d: slice step value must be non-zero."
 };
 
 static char *make_simple_status_message(jsonpath_status_code code);
