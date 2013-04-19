@@ -37,6 +37,10 @@
 
 #pragma once
 
+#ifdef USE_LOGGING
+
+#include <stdio.h>
+
 enum log_level
 {
     ERROR,
@@ -45,8 +49,6 @@ enum log_level
     DEBUG,
     TRACE
 };
-
-#ifdef USE_LOGGING
 
 void enable_logging(void);
 void disable_logging(void);

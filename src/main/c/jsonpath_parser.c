@@ -689,25 +689,6 @@ static uint_fast32_t integer(parser_context *context)
     return value;
 }
 
-#define parse_step() skip_ws(context);                  \
-    if(':' == get_char(context))                        \
-    {                                                   \
-        consume_char(context);                          \
-        step = signed_integer(context);                 \
-        if(JSONPATH_SUCCESS != context->code)           \
-        {                                               \
-            return;                                     \
-        }                                               \
-    }
-
-#define parse_to()                              \
-    to = signed_integer(context);               \
-    if(JSONPATH_SUCCESS != context->code)       \
-    {                                           \
-        return;                                 \
-    }                                           \
-    parse_step();
-
 static void slice_predicate(parser_context *context)
 {
     enter_state(context, ST_SLICE_PREDICATE);
@@ -715,47 +696,82 @@ static void slice_predicate(parser_context *context)
     int_fast32_t from = INT_FAST32_MIN;
     int_fast32_t to = INT_FAST32_MAX;
     int_fast32_t step = 1;
-    skip_ws(context);
+    predicate *pred = add_predicate(context, SLICE);
+
     if(!look_for(context, ":"))
     {
+        parser_trace("slice: uh oh! no ':' found, aborting...");
         context->code = ERR_UNSUPPORTED_PRED_TYPE;
         return;
     }
-    if(':' == get_char(context))
+
+    skip_ws(context);
+    if(isdigit(get_char(context)) || '-' == get_char(context) || '+' == get_char(context))
     {
-        // this is form 1
-        consume_char(context);
-        parse_to();
-    }
-    else
-    {
+        parser_trace("slice: parsing from value...");
         from = signed_integer(context);
         if(JSONPATH_SUCCESS != context->code)
         {
+            parser_trace("slice: uh oh! couldn't parse from value, aborting...");
             return;
         }
-        skip_ws(context);
-        if(':' != get_char(context))
+        parser_trace("slice: found from value: %d", to);
+        pred->slice.specified |= SLICE_FROM;
+    }
+    else
+    {
+        parser_trace("slice: no from value specified");
+    }
+    skip_ws(context);
+    if(':' != get_char(context))
+    {
+        parser_trace("slice: uh oh! missing ':' between from and to, aborting...");
+        unexpected_value(context, ':');
+        return;
+    }
+    consume_char(context);
+    skip_ws(context);
+    if(isdigit(get_char(context)) || '-' == get_char(context) || '+' == get_char(context))
+    {
+        parser_trace("slice: parsing to value...");
+        to = signed_integer(context);
+        if(JSONPATH_SUCCESS != context->code)
         {
-            unexpected_value(context, ':');
+            parser_trace("slice: uh oh! couldn't parse to value, aborting...");
             return;
         }
+        parser_trace("slice: found to value: %d", to);
+        pred->slice.specified |= SLICE_TO;
+    }
+    else
+    {
+        parser_trace("slice: no to value specified");    
+    }
+    skip_ws(context);
+    if(':' == get_char(context))
+    {
         consume_char(context);
         skip_ws(context);
-        if(':' == get_char(context))
+        if(isdigit(get_char(context)) || '-' == get_char(context) || '+' == get_char(context))
         {
-            // this is form 2 with step
-            parse_step();
+            parser_trace("slice: parsing step value...");
+            step = signed_integer(context);
+            if(JSONPATH_SUCCESS != context->code)
+            {
+                parser_trace("slice: uh oh! couldn't parse step value, aborting...");
+                return;
+            }
+            parser_trace("slice: found step value: %d", step);
+            pred->slice.specified |= SLICE_STEP;
         }
-        else if(isdigit(get_char(context)) || '-' == get_char(context) || '+' == get_char(context))
+        else
         {
-            // this is form 3
-            parse_to();
+            parser_trace("slice: no step value specified");
         }
-        // this is form 2 with no step
+
     }
+
     context->code = JSONPATH_SUCCESS;
-    predicate *pred = add_predicate(context, SLICE);
     pred->slice.from = from;
     pred->slice.to = to;
     pred->slice.step = step;

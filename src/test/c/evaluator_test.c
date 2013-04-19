@@ -398,14 +398,14 @@ START_TEST (slice_predicate_with_step)
     node *author = mapping_get_value(book, "author");
     assert_noerr();
     assert_not_null(author);
-    assert_scalar_value(author, "Evelyn Waugh");
+    assert_scalar_value(author, "Nigel Rees");
 
     nodelist_free(list);
     jsonpath_free(&path);
 }
 END_TEST
 
-START_TEST (slice_predicate_reverse)
+START_TEST (slice_predicate_negative_from)
 {
     jsonpath path;
     char *expr = "$.store.book[-1:]";
@@ -434,6 +434,68 @@ START_TEST (slice_predicate_reverse)
 }
 END_TEST
 
+START_TEST (slice_predicate_copy)
+{
+    jsonpath path;
+    char *expr = "$.store.book[::]";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    assert_int_eq(JSONPATH_SUCCESS, code);
+
+    reset_errno();
+    nodelist *list = evaluate(model, &path);
+    assert_noerr();
+    assert_not_null(list);
+    assert_nodelist_length(list, 4);
+
+    reset_errno();
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 0), "author"), "Nigel Rees");
+    assert_noerr();
+    reset_errno();
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 1), "author"), "Evelyn Waugh");
+    assert_noerr();
+    reset_errno();
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 2), "author"), "Herman Melville");
+    assert_noerr();
+    reset_errno();
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 3), "author"), "J. R. R. Tolkien");
+    assert_noerr();
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
+START_TEST (slice_predicate_reverse)
+{
+    jsonpath path;
+    char *expr = "$.store.book[::-1]";
+    jsonpath_status_code code = parse_jsonpath((uint8_t *)expr, strlen(expr), &path);
+    assert_int_eq(JSONPATH_SUCCESS, code);
+
+    reset_errno();
+    nodelist *list = evaluate(model, &path);
+    assert_noerr();
+    assert_not_null(list);
+    assert_nodelist_length(list, 4);
+
+    reset_errno();
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 0), "author"), "J. R. R. Tolkien");
+    assert_noerr();
+    reset_errno();
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 1), "author"), "Herman Melville");
+    assert_noerr();
+    reset_errno();
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 2), "author"), "Evelyn Waugh");
+    assert_noerr();
+    reset_errno();
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 3), "author"), "Nigel Rees");
+    assert_noerr();
+
+    nodelist_free(list);
+    jsonpath_free(&path);
+}
+END_TEST
+
 Suite *evaluator_suite(void)
 {
     TCase *basic_case = tcase_create("basic");
@@ -454,8 +516,10 @@ Suite *evaluator_suite(void)
     tcase_add_test(predicate_case, subscript_predicate);
     tcase_add_test(predicate_case, slice_predicate);
     tcase_add_test(predicate_case, slice_predicate_with_step);
+    tcase_add_test(predicate_case, slice_predicate_negative_from);
+    tcase_add_test(predicate_case, slice_predicate_copy);
     tcase_add_test(predicate_case, slice_predicate_reverse);
-    
+
     Suite *evaluator = suite_create("Evaluator");
     suite_add_tcase(evaluator, basic_case);
     suite_add_tcase(evaluator, predicate_case);

@@ -78,7 +78,7 @@ static bool apply_slice_predicate(node *each, void *context, nodelist *target);
 
 static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context);
 static node *make_boolean_node(bool value);
-static int_fast32_t normalize_from(predicate *predicate);
+static int_fast32_t normalize_from(predicate *predicate, node *each);
 static int_fast32_t normalize_to(predicate *predicate, node *each);
 static int_fast32_t normalize(bool specified, int_fast32_t actual, int_fast32_t fallback, int_fast32_t length);
 static nodelist *make_result_nodelist(document_model *model);
@@ -339,6 +339,7 @@ static bool apply_wildcard_predicate(node *each, void *context, nodelist *target
             result = iterate_sequence(each, add_to_nodelist_sequence_iterator, target);
             break;
         case DOCUMENT:
+            evaluator_trace("wildcard predicate: uh-oh! found a document node somehow, aborting...");
             errno = ERR_MISPLACED_DOCUMENT_NODE;
             result = false;
             break;
@@ -351,7 +352,7 @@ static node *apply_subscript_predicate(node *each, void *context)
     step *step_context = (step *)context;
     ENSURE_ELSE_NULL(ERR_NAME_IS_NOT_SEQUENCE, SEQUENCE == node_get_kind(each));
     size_t index = subscript_predicate_get_index(step_get_predicate(step_context));
-    evaluator_trace("subscript predicate: adding index %zd from sequence of %zd", index, node_get_size(each));
+    evaluator_trace("subscript predicate: adding index %zd from sequence of %zd items", index, node_get_size(each));
     return sequence_get(each, index);
 }
 
@@ -360,21 +361,28 @@ static bool apply_slice_predicate(node *each, void *context, nodelist *target)
     ENSURE_ELSE_FALSE(ERR_NAME_IS_NOT_SEQUENCE, SEQUENCE == node_get_kind(each));
 
     predicate *slice = step_get_predicate((step *)context);
+    char *from_fmt = NULL, *to_fmt = NULL, *step_fmt = NULL;
+    evaluator_trace("slice predicate: using interval [%s:%s:%s] on sequence of %zd items",
+                    slice_predicate_has_from(slice) ? (asprintf(&from_fmt, "%d", slice_predicate_get_from(slice)), from_fmt) : "_",
+                    slice_predicate_has_to(slice) ? (asprintf(&to_fmt, "%d", slice_predicate_get_to(slice)), to_fmt) : "_",
+                    slice_predicate_has_step(slice) ? (asprintf(&step_fmt, "%d", slice_predicate_get_step(slice)), step_fmt) : "_",
+                    node_get_size(each));
+    free(from_fmt); free(to_fmt); free(step_fmt);
     int_fast32_t step = slice_predicate_has_step(slice) ? slice_predicate_get_step(slice) : 1;
-    int_fast32_t from = 0 > step ? normalize_to(slice, each) : normalize_from(slice);
-    int_fast32_t to   = 0 > step ? normalize_from(slice) : normalize_to(slice, each);
-    evaluator_trace("slice predicate: evaluating normalized interval [%d:%d:%d] on sequence of %zd", from, to, step, node_get_size(each));
+    int_fast32_t from = 0 > step ? normalize_to(slice, each) - 1 : normalize_from(slice, each);
+    int_fast32_t to   = 0 > step ? normalize_from(slice, each) : normalize_to(slice, each);
+    evaluator_trace("slice predicate: evaluating normalized interval [%d:%d:%d]", from, to, step);
 
-    for(int_fast32_t i = from; 0 > step ? i < to : i > to; i += step)
+    for(int_fast32_t i = from; 0 > step ? i >= to : i < to; i += step)
     {
         errno = 0;
         node *selected = sequence_get(each, (size_t)i);
         if(NULL == selected || 0 != errno || !nodelist_add(target, selected))
         {
+            evaluator_trace("slice predicate: uh oh! aborting. index: %d, selected: %p, errno: %d (\"%s\")", i, selected, errno, strerror(errno));
             return false;
         }
-        evaluator_trace("slice predicate: adding index %d", i);         
-        nodelist_add(target, selected);
+        evaluator_trace("slice predicate: adding index: %d, selected: %p", i, selected);         
     }
     return true;
 }
@@ -411,13 +419,16 @@ static node *make_boolean_node(bool value)
     return result;
 }
 
-static int_fast32_t normalize_from(predicate *slice)
+static int_fast32_t normalize_from(predicate *slice, node *each)
 {
-    return normalize(slice_predicate_has_from(slice), slice_predicate_get_from(slice), 0, 0);
+    evaluator_trace("slice predicate: normalizing from, specified: %s, value: %d", slice_predicate_has_from(slice) ? "yes" : "no", slice_predicate_get_from(slice));
+    int_fast32_t length = (int_fast32_t)node_get_size(each);
+    return normalize(slice_predicate_has_from(slice), slice_predicate_get_from(slice), 0, length);
 }
 
 static int_fast32_t normalize_to(predicate *slice, node *each)
 {
+    evaluator_trace("slice predicate: normalizing to, specified: %s, value: %d", slice_predicate_has_to(slice) ? "yes" : "no", slice_predicate_get_to(slice));
     int_fast32_t length = (int_fast32_t)node_get_size(each);
     return normalize(slice_predicate_has_to(slice), slice_predicate_get_to(slice), length, length);
 }
@@ -426,17 +437,21 @@ static int_fast32_t normalize(bool specified, int_fast32_t given, int_fast32_t f
 {
     if(!specified)
     {
+        evaluator_trace("slice predicate: (normalizer) no value specified, defaulting to %d", fallback);
         return fallback;
     }
     int_fast32_t result = 0 > given ? given + limit: given;
     if(0 > result)
     {
+        evaluator_trace("slice predicate: (normalizer) negative value, clamping to zero");
         return 0;
     }
     if(limit < result)
     {
+        evaluator_trace("slice predicate: (normalizer) value over limit, clamping to %d", limit);
         return limit;
     }
+    evaluator_trace("slice predicate: (normalizer) constrained to %d", result);
     return result;
 }
 
