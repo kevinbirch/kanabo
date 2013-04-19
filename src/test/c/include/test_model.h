@@ -40,10 +40,15 @@
 #include "model.h"
 
 // model assertions
-#define assert_node_kind(NODE, EXPECTED_KIND) assert_int_eq((EXPECTED_KIND), node_get_kind((NODE)))
-#define assert_node_size(NODE, EXPECTED_SIZE) assert_int_eq((EXPECTED_SIZE), node_get_size((NODE)))
+#define assert_node_kind(NODE, EXPECTED)      assert_int_eq((EXPECTED), node_get_kind((NODE)))
+#define assert_node_size(NODE, EXPECTED)      assert_int_eq((EXPECTED), node_get_size((NODE)))
+
+#define assert_node_equals(X, Y)              assert_true(node_equals((X), (Y)))
+
 #define assert_mapping_has_key(NODE, KEY)     assert_true(mapping_contains_key((NODE), (KEY)))
 #define assert_mapping_has_no_key(NODE, KEY)  assert_false(mapping_contains_key((NODE), (KEY)))
+
+#define assert_scalar_kind(NODE, EXPECTED)    assert_int_eq(EXPECTED, scalar_get_kind((NODE)))
 #define assert_scalar_value(NODE, VALUE) do {                           \
         assert_not_null(NODE);                                          \
         assert_node_kind(NODE, SCALAR);                                 \

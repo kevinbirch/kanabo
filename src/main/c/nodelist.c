@@ -175,7 +175,7 @@ bool add_to_nodelist_sequence_iterator(node *each, void *context)
     return nodelist_add(list, each);
 }
 
-nodelist *nodelist_map(const nodelist * restrict list, nodelist_to_one_function function, void *context)
+nodelist *nodelist_map(const nodelist * restrict list, nodelist_map_function function, void *context)
 {
     PRECOND_NONNULL_ELSE_NULL(list, function);
 
@@ -194,66 +194,7 @@ nodelist *nodelist_map(const nodelist * restrict list, nodelist_to_one_function 
     return target;            
 }
 
-nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_to_one_function function, void *context, nodelist * restrict target)
-{
-    PRECOND_NONNULL_ELSE_NULL(list, function, target);
-
-    for(size_t i = 0; i < nodelist_length(list); i++)
-    {
-        node *each = function(list->nodes[i], context);
-        if(NULL == each)
-        {
-            return NULL;
-        }
-        if(!nodelist_add(target, each))
-        {
-            return NULL;
-        }
-    }
-
-    return target;
-}
-
-nodelist *nodelist_map_overwrite(const nodelist * restrict list, nodelist_to_one_function function, void *context, nodelist * restrict target)
-{
-    PRECOND_NONNULL_ELSE_NULL(list, function, target);
-    PRECOND_ELSE_NULL(nodelist_length(target) >= nodelist_length(list));
-
-    for(size_t i = 0; i < nodelist_length(list); i++)
-    {
-        node *each = function(list->nodes[i], context);
-        if(NULL == each)
-        {
-            return NULL;
-        }
-        if(!nodelist_set(target, each, i))
-        {
-            return NULL;
-        }
-    }
-
-    return target;
-}
-
-nodelist *nodelist_flatmap(const nodelist * restrict list, nodelist_to_many_function function, void *context)
-{
-    PRECOND_NONNULL_ELSE_NULL(list, function);
-
-    nodelist *target = make_nodelist_with_capacity(nodelist_length(list));
-    if(NULL == target)
-    {
-        return NULL;
-    }
-    nodelist *result = nodelist_flatmap_into(list, function, context, target);
-    if(NULL == result)
-    {
-        nodelist_free_nodes(target);
-        return result;
-    }
-    return target;
-}
-
-nodelist *nodelist_flatmap_into(const nodelist * restrict list, nodelist_to_many_function function, void *context, nodelist * restrict target)
+nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_map_function function, void *context, nodelist * restrict target)
 {
     PRECOND_NONNULL_ELSE_NULL(list, function, target);
 

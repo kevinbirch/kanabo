@@ -19,7 +19,6 @@ LICENSE file for more details.
 
 * don't return -1 from enum return type functions
 
-* fix evaluator
 * fix module api
 * connect front & back ends
 * cut alpha release tag
@@ -28,15 +27,8 @@ LICENSE file for more details.
 
 #### Enhancements:
 
-* use compound literals (http://gcc.gnu.org/onlinedocs/gcc-3.0.2/gcc_5.html#SEC88) for predicate parameter block?
-* elimintate generated booleans, this is not correct behavior
-  * type tests act as a filter, not as a query
-* add a strictness mode: strict - fail invalid paths, lenient - skip bad paths, return no values
-  * default is lenient
 * use a evaluator context
 * add error message generator
-* nodes owned by a document tree must be preserved unless destroying the tree
-* eliminate nodelist\_map\_overwrite?
 
 #### Features:
 
@@ -94,6 +86,7 @@ LICENSE file for more details.
 * iterate\_sequence -> sequence\_iterate
 * switch the iterator return types to bool to propigate the evaluation status
 * expand scalar nodes to include json subtypes
+* give nodes a pointer back to their owning document?
 
 #### Features:
 

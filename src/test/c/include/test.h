@@ -58,7 +58,7 @@
 #define assert_true(X)              ck_assert_msg((X) == true, "Assertion '"#X" == true' failed")
 #define assert_false(X)             ck_assert_msg((X) == false, "Assertion '"#X" == false' failed")
 
-#define assert_errno(X) assert_int_eq((X), errno) 
+#define assert_errno(X) ck_assert_msg(errno == (X), "Assertion 'errno == "#X"' failed. errno is %d (%s)", errno, strerror(errno))
 #define assert_noerr()  assert_errno(0)
 #define reset_errno()   errno = 0
 

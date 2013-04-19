@@ -178,11 +178,13 @@ START_TEST (object_test)
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
-    node *boolean = nodelist_get(list, 0);
-    assert_not_null(boolean);
 
-    assert_node_kind(boolean, SCALAR);
-    assert_scalar_value(boolean, "true");
+    node *value = nodelist_get(list, 0);
+    assert_not_null(value);
+
+    assert_node_kind(value, MAPPING);
+    assert_mapping_has_key(value, "book");
+    assert_mapping_has_key(value, "bicycle");
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -201,11 +203,11 @@ START_TEST (array_test)
     assert_noerr();
     assert_not_null(list);
     assert_nodelist_length(list, 1);
-    node *boolean = nodelist_get(list, 0);
-    assert_not_null(boolean);
 
-    assert_node_kind(boolean, SCALAR);
-    assert_scalar_value(boolean, "true");
+    node *value = nodelist_get(list, 0);
+    assert_not_null(value);
+    assert_node_kind(value, SEQUENCE);
+    assert_node_size(value, 4);
 
     nodelist_free(list);
     jsonpath_free(&path);
@@ -225,8 +227,11 @@ START_TEST (number_test)
     assert_not_null(list);
     assert_nodelist_length(list, 4);
 
-    assert_true(nodelist_iterate(list, scalar_true, NULL));
-
+    assert_scalar_value(nodelist_get(list, 0), "8.95");
+    assert_scalar_value(nodelist_get(list, 1), "12.99");
+    assert_scalar_value(nodelist_get(list, 2), "8.99");
+    assert_scalar_value(nodelist_get(list, 3), "22.99");
+    
     nodelist_free(list);
     jsonpath_free(&path);
 }
