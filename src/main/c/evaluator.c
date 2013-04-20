@@ -51,7 +51,7 @@ struct meta_context
 typedef struct meta_context meta_context;
 
 static nodelist *evaluate_steps(evaluator_context *context);
-static bool evaluate_step(evaluator_context *context);
+static bool evaluate_step(step* each, void *context);
 static bool evaluate_root_step(evaluator_context *context);
 static bool evaluate_single_step(evaluator_context *context);
 static bool evaluate_recursive_step(evaluator_context *context);
@@ -167,37 +167,39 @@ static nodelist *evaluate_steps(evaluator_context *context)
 {
     evaluator_debug("beginning evaluation of %d steps", path_get_length(context->path));
 
-    for(size_t i = 0; i < path_get_length(context->path); i++)
+    if(!path_iterate(context->path, evaluate_step, context))
     {
-        evaluator_trace("step: %zd", i);
-        context->current_step = i;
-        if(!evaluate_step(context))
-        {
-            evaluator_debug("aborted, step: %d, code: %d (%s)", i, context->code, get_status_message(context));
-            nodelist_free(context->result);
-            context->result = NULL;
-            return NULL;
-        }
+        evaluator_debug("aborted, step: %d, code: %d (%s)", context->current_step, context->code, get_status_message(context));
+        nodelist_free(context->result);
+        context->result = NULL;
+        return NULL;
     }
 
     evaluator_debug("done, found %d matching nodes", nodelist_length(context->result));
     return context->result;
 }
 
-static bool evaluate_step(evaluator_context *context)
+static bool evaluate_step(step* each, void *context)
 {
+    evaluator_context *step_context = (evaluator_context *)context;
+    evaluator_trace("step: %zd", step_context->current_step);
+
     bool result = false;
-    switch(step_get_kind(current_step(context)))
+    switch(step_get_kind(each))
     {
         case ROOT:
-            result = evaluate_root_step(context);
+            result = evaluate_root_step(step_context);
             break;
         case SINGLE:
-            result = evaluate_single_step(context);
+            result = evaluate_single_step(step_context);
             break;
         case RECURSIVE:
-            result = evaluate_recursive_step(context);
+            result = evaluate_recursive_step(step_context);
             break;
+    }
+    if(result)
+    {
+        step_context->current_step++;
     }
     return result;
 }
