@@ -37,6 +37,7 @@ LICENSE file for more details.
 
 #### Enhancements:
 
+* simplify api function names - remove `get`
 * implement lexer
 * implement combinators
 * add full tracing

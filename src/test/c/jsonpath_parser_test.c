@@ -128,6 +128,9 @@
     assert_slice_to(step_get_predicate(path_get_step(&PATH, PATH_INDEX)), TO_VALUE); \
     assert_slice_step(step_get_predicate(path_get_step(&PATH, PATH_INDEX)), STEP_VALUE)
 
+static bool count(step *each, void *context);
+static bool fail_count(step *each, void *context);
+
 START_TEST (null_expression)
 {
     jsonpath path;
@@ -887,6 +890,58 @@ START_TEST (zero_step_slice_predicate)
 }
 END_TEST
 
+START_TEST (iteration)
+{
+    jsonpath path;
+    char *expression = "$.foo.bar";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_success(expression, result, path, ABSOLUTE_PATH, 3);
+
+    unsigned long counter = 0;
+    assert_true(path_iterate(&path, count, &counter));
+    assert_int_eq(3, counter);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
+static bool count(step *each, void *context)
+{
+#pragma unused(each)
+    unsigned long *counter = (unsigned long *)context;
+    (*counter)++;
+    return true;
+}
+
+START_TEST (fail_iteration)
+{
+    jsonpath path;
+    char *expression = "$.foo.bar";
+    jsonpath_status_code result = parse_jsonpath((uint8_t *)expression, strlen(expression), &path);
+    
+    assert_parser_success(expression, result, path, ABSOLUTE_PATH, 3);
+
+    unsigned long counter = 0;
+    assert_false(path_iterate(&path, fail_count, &counter));
+    assert_int_eq(1, counter);
+
+    jsonpath_free(&path);
+}
+END_TEST
+
+static bool fail_count(step *each, void *context)
+{
+#pragma unused(each)
+    unsigned long *counter = (unsigned long *)context;
+    if(0 == *counter)
+    {
+        (*counter)++;
+        return true;
+    }
+    return false;
+}
+
 START_TEST (bad_path_input)
 {
     reset_errno();
@@ -1089,6 +1144,8 @@ Suite *jsonpath_suite(void)
     tcase_add_test(api_case, bad_path_input);
     tcase_add_test(api_case, bad_step_input);
     tcase_add_test(api_case, bad_predicate_input);
+    tcase_add_test(api_case, iteration);
+    tcase_add_test(api_case, fail_iteration);
 
     Suite *jsonpath_suite = suite_create("JSONPath");
     suite_add_tcase(jsonpath_suite, bad_input_case);

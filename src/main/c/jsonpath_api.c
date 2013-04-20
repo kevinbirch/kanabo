@@ -42,6 +42,20 @@
 
 static bool slice_predicate_has(const predicate * restrict value, enum slice_specifiers specifier);
 
+bool path_iterate(const jsonpath * restrict path, path_iterator iterator, void *context)
+{
+    PRECOND_NONNULL_ELSE_FALSE(path, iterator);
+
+    for(size_t i = 0; i < path_get_length(path); i++)
+    {
+        if(!iterator(path->steps[i], context))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 enum path_kind path_get_kind(const jsonpath * restrict path)
 {
     if(NULL == path)

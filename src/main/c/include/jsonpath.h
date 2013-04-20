@@ -179,6 +179,9 @@ char *make_status_message(const jsonpath * restrict path);
 
 void jsonpath_free(jsonpath *path);
 
+typedef bool (*path_iterator)(step *each, void *context);
+bool path_iterate(const jsonpath * restrict path, path_iterator iterator, void *context);
+
 // jsonpath model api
 enum path_kind path_get_kind(const jsonpath * restrict path);
 size_t         path_get_length(const jsonpath * restrict path);
