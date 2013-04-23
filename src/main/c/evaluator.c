@@ -100,6 +100,11 @@ evaluator_context *make_evaluator(const document_model *model, const jsonpath *p
     return result;
 }
 
+enum evaluator_status_code evaluator_status(evaluator_context *context)
+{
+    return context->code;
+}
+
 void evaluator_free(evaluator_context *context)
 {
     evaluator_debug("destroying evaluator context");

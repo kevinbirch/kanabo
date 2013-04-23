@@ -80,25 +80,24 @@ START_TEST (dollar_only)
     char *expression = "$";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 1);
     assert_node_kind(nodelist_get(list, 0), MAPPING);
     assert_node_size(nodelist_get(list, 0), 1);
     assert_mapping_has_key(nodelist_get(list, 0), "store");
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -110,19 +109,18 @@ START_TEST (single_name_step)
     char *expression = "$.store";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 1);
     node *store = nodelist_get(list, 0);
     assert_not_null(store);
@@ -132,7 +130,7 @@ START_TEST (single_name_step)
     assert_mapping_has_key(store, "book");
     assert_mapping_has_key(store, "bicycle");
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -144,19 +142,18 @@ START_TEST (long_path)
     char *expression = "$.store.bicycle.color";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 1);
     node *color = nodelist_get(list, 0);
     assert_not_null(color);
@@ -164,7 +161,7 @@ START_TEST (long_path)
     assert_node_kind(color, SCALAR);
     assert_scalar_value(color, "red");
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -176,19 +173,18 @@ START_TEST (wildcard)
     char *expression = "$.store.*";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 5);
 
     assert_node_kind(nodelist_get(list, 0), MAPPING);
@@ -197,7 +193,7 @@ START_TEST (wildcard)
     assert_node_kind(nodelist_get(list, 3), MAPPING);
     assert_node_kind(nodelist_get(list, 4), MAPPING);
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -209,19 +205,18 @@ START_TEST (object_test)
     char *expression = "$.store.object()";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 1);
 
     node *value = nodelist_get(list, 0);
@@ -231,7 +226,7 @@ START_TEST (object_test)
     assert_mapping_has_key(value, "book");
     assert_mapping_has_key(value, "bicycle");
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -243,19 +238,18 @@ START_TEST (array_test)
     char * expression = "$.store.book.array()";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 1);
 
     node *value = nodelist_get(list, 0);
@@ -263,7 +257,7 @@ START_TEST (array_test)
     assert_node_kind(value, SEQUENCE);
     assert_node_size(value, 4);
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -275,19 +269,18 @@ START_TEST (number_test)
     char * expression = "$.store.book[*].price.number()";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 4);
 
     assert_scalar_value(nodelist_get(list, 0), "8.95");
@@ -295,7 +288,7 @@ START_TEST (number_test)
     assert_scalar_value(nodelist_get(list, 2), "8.99");
     assert_scalar_value(nodelist_get(list, 3), "22.99");
     
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -316,19 +309,18 @@ START_TEST (wildcard_predicate)
     char *expression = "$.store.book[*].author";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 4);
 
     assert_node_kind(nodelist_get(list, 0), SCALAR);
@@ -336,7 +328,7 @@ START_TEST (wildcard_predicate)
     assert_node_kind(nodelist_get(list, 2), SCALAR);
     assert_node_kind(nodelist_get(list, 3), SCALAR);
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -348,26 +340,25 @@ START_TEST (wildcard_predicate_on_mapping)
     char *expression = "$.store.bicycle[*].color";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 1);
 
     node *scalar = nodelist_get(list, 0);
     assert_node_kind(scalar, SCALAR);
     assert_scalar_value(scalar, "red");
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -379,26 +370,25 @@ START_TEST (wildcard_predicate_on_scalar)
     char *expression = "$.store.bicycle.color[*]";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 1);
 
     node *scalar = nodelist_get(list, 0);
     assert_node_kind(scalar, SCALAR);
     assert_scalar_value(scalar, "red");
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -410,19 +400,18 @@ START_TEST (subscript_predicate)
     char *expression = "$.store.book[2]";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 1);
 
     reset_errno();
@@ -435,7 +424,7 @@ START_TEST (subscript_predicate)
     assert_not_null(author);
     assert_scalar_value(author, "Herman Melville");
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -447,19 +436,18 @@ START_TEST (slice_predicate)
     char *expression = "$.store.book[:2]";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 2);
 
     reset_errno();
@@ -484,7 +472,7 @@ START_TEST (slice_predicate)
     assert_not_null(author);
     assert_scalar_value(author, "Evelyn Waugh");
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -496,19 +484,18 @@ START_TEST (slice_predicate_with_step)
     char *expression = "$.store.book[:2:2]";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 1);
 
     reset_errno();
@@ -522,7 +509,7 @@ START_TEST (slice_predicate_with_step)
     assert_not_null(author);
     assert_scalar_value(author, "Nigel Rees");
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -534,19 +521,18 @@ START_TEST (slice_predicate_negative_from)
     char *expression = "$.store.book[-1:]";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 1);
 
     reset_errno();
@@ -560,7 +546,7 @@ START_TEST (slice_predicate_negative_from)
     assert_not_null(author);
     assert_scalar_value(author, "J. R. R. Tolkien");
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -572,19 +558,18 @@ START_TEST (slice_predicate_copy)
     char *expression = "$.store.book[::]";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 4);
 
     reset_errno();
@@ -600,7 +585,7 @@ START_TEST (slice_predicate_copy)
     assert_scalar_value(mapping_get_value(nodelist_get(list, 3), "author"), "J. R. R. Tolkien");
     assert_noerr();
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);
@@ -612,19 +597,18 @@ START_TEST (slice_predicate_reverse)
     char *expression = "$.store.book[::-1]";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
-    assert_noerr();
 
     jsonpath *path = parse(parser);
     assert_not_null(path);
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
 
-    evaluator_context *context = make_evaluator(model, path);
-    assert_not_null(context);
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
 
-    reset_errno();
-    nodelist *list = evaluate(context);
-    assert_noerr();
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
+
     assert_nodelist_length(list, 4);
 
     reset_errno();
@@ -640,7 +624,7 @@ START_TEST (slice_predicate_reverse)
     assert_scalar_value(mapping_get_value(nodelist_get(list, 3), "author"), "Nigel Rees");
     assert_noerr();
 
-    evaluator_free(context);
+    evaluator_free(evaluator);
     nodelist_free(list);
     parser_free(parser);
     path_free(path);

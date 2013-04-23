@@ -60,7 +60,7 @@ static const char * const MESSAGES[] =
     "At position %d: slice step value must be non-zero."
 };
 
-static char *make_simple_status_message(jsonpath_status_code code);
+static char *make_simple_status_message(parser_status_code code);
 
 char *parser_status_message(const parser_context * restrict context)
 {
@@ -94,7 +94,7 @@ char *parser_status_message(const parser_context * restrict context)
     return message;
 }
 
-static char *make_simple_status_message(jsonpath_status_code code)
+static char *make_simple_status_message(parser_status_code code)
 {
     char *message = NULL;
     

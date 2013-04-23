@@ -67,6 +67,8 @@ struct evaluator_context
 typedef struct evaluator_context evaluator_context;
 
 evaluator_context *make_evaluator(const document_model *model, const jsonpath *path);
+enum evaluator_status_code evaluator_status(evaluator_context *context);
+
 void evaluator_free(evaluator_context *context);
 
 nodelist *evaluate(evaluator_context *context);

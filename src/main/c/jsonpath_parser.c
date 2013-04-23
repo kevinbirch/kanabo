@@ -173,7 +173,7 @@ parser_context *make_parser(const uint8_t *expression, size_t length)
     return context;
 }
 
-enum jsonpath_status_code parser_status(parser_context *context)
+enum parser_status_code parser_status(parser_context *context)
 {
     return context->result.code;
 }

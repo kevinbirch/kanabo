@@ -141,7 +141,7 @@ struct jsonpath
 
 };
 
-enum jsonpath_status_code
+enum parser_status_code
 {
     JSONPATH_SUCCESS = 0,
     ERR_NULL_EXPRESSION,             // the expression argument given was NULL
@@ -161,7 +161,7 @@ enum jsonpath_status_code
     ERR_STEP_CANNOT_BE_ZERO,         // slice step value must be non-zero
 };
 
-typedef enum jsonpath_status_code jsonpath_status_code;
+typedef enum parser_status_code parser_status_code;
 
 struct cell
 {
@@ -212,7 +212,7 @@ struct parser_context
 
     struct
     {
-        jsonpath_status_code code;
+        parser_status_code code;
         uint8_t expected_char;
         uint8_t actual_char;
     } result;
@@ -222,7 +222,7 @@ typedef struct parser_context parser_context;
 
 // parser entry point
 parser_context *make_parser(const uint8_t *expression, size_t length);
-enum jsonpath_status_code parser_status(parser_context *context);
+enum parser_status_code parser_status(parser_context *context);
 
 void parser_free(parser_context *context);
 
