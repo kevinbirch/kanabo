@@ -66,8 +66,8 @@ step
     ;
 
 node test
-    = name test
-    | node type, "(", ")"
+    = node type, "(", ")"
+    | name test
     ;
 
 name test
@@ -85,8 +85,12 @@ node type
     ;
 
 name
-    = "'", name character, { name character }, "'"
+    = "'", quoted name character, { quoted name character }, "'"
     = name character, { name character }
+    ;
+
+quoted name character
+    = ? any unicode character except '"' (unlesss it is quoted with a '\') ?
     ;
 
 name character

@@ -43,56 +43,51 @@
 static const char * const MESSAGES[] = 
 {
     "Success.",
-    "Expression is NULL.",
-    "Expression length is 0.",
-    "Output path is NULL.",
+    "Expression argument was NULL.",
+    "Expression length was 0.",
     "Unable to allocate memory.",
     "Not a JSONPath expression.",
     "Premature end of input after position %d.",
     "At position %d: unexpected character '%c', was expecting '%c' instead.",
     "At position %d: empty predicate.",
     "At position %d: missing closing predicate delimiter `]' before end of step.",
-    "At position %d: unsupported predicate.",
+    "At position %d: unsupported predicate found.",
     "At position %d: extra characters after valid predicate definition.",
-    "At position %d: extra characters after valid wildcard step definition.",
-    "At position %d: extra characters after valid type test step definition.",
     "At position %d: expected a name character, but found '%c' instead.",
     "At position %d: expected a node type test.",
     "At position %d: expected an integer.",
-    "At position %d: invalid integer.",
+    "At position %d: invalid number.",
     "At position %d: slice step value must be non-zero."
 };
 
 static char *make_simple_status_message(jsonpath_status_code code);
 
-char *make_status_message(const jsonpath * restrict path)
+char *parser_status_message(const parser_context * restrict context)
 {
     char *message = NULL;
     
-    switch(path->result.code)
+    switch(context->result.code)
     {
         case ERR_PREMATURE_END_OF_INPUT:
-            asprintf(&message, MESSAGES[path->result.code], path->result.position);
+            asprintf(&message, MESSAGES[context->result.code], context->cursor);
             break;
         case ERR_EXPECTED_NODE_TYPE_TEST:
         case ERR_EMPTY_PREDICATE:
         case ERR_UNBALANCED_PRED_DELIM:
         case ERR_EXTRA_JUNK_AFTER_PREDICATE:
-        case ERR_EXTRA_JUNK_AFTER_WILDCARD:
-        case ERR_EXTRA_JUNK_AFTER_TYPE_TEST:
         case ERR_UNSUPPORTED_PRED_TYPE:
         case ERR_EXPECTED_INTEGER:
         case ERR_INVALID_NUMBER:
-            asprintf(&message, MESSAGES[path->result.code], path->result.position + 1);
+            asprintf(&message, MESSAGES[context->result.code], context->cursor + 1);
             break;
         case ERR_UNEXPECTED_VALUE:
-            asprintf(&message, MESSAGES[path->result.code], path->result.position + 1, path->result.actual_char, path->result.expected_char);
+            asprintf(&message, MESSAGES[context->result.code], context->cursor + 1, context->result.actual_char, context->result.expected_char);
             break;
         case ERR_EXPECTED_NAME_CHAR:
-            asprintf(&message, MESSAGES[path->result.code], path->result.position + 1, path->result.actual_char);
+            asprintf(&message, MESSAGES[context->result.code], context->cursor + 1, context->result.actual_char);
             break;
         default:
-            message = make_simple_status_message(path->result.code);
+            message = make_simple_status_message(context->result.code);
             break;
     }
 

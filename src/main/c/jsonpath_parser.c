@@ -44,15 +44,8 @@
 #include <errno.h>
 
 #include "jsonpath.h"
+#include "conditions.h"
 #include "log.h"
-
-struct node
-{
-    step *step;
-    struct node *next;
-};
-
-typedef struct node node;
 
 static const char * const STATES[] =
 {
@@ -81,56 +74,12 @@ static const char * const STATES[] =
     "script"
 };
 
-enum state
-{
-    ST_START = 0,
-    ST_ABSOLUTE_PATH,
-    ST_QUALIFIED_PATH,
-    ST_RELATIVE_PATH,
-    ST_ABBREVIATED_RELATIVE_PATH,
-    ST_STEP,
-    ST_NAME_TEST,
-    ST_WILDCARD_NAME_TEST,
-    ST_NAME,
-    ST_NODE_TYPE_TEST,
-    ST_JSON_OBJECT_TYPE_TEST,
-    ST_JSON_ARRAY_TYPE_TEST,
-    ST_JSON_STRING_TYPE_TEST,
-    ST_JSON_NUMBER_TYPE_TEST,
-    ST_JSON_BOOLEAN_TYPE_TEST,
-    ST_JSON_NULL_TYPE_TEST,
-    ST_PREDICATE,
-    ST_WILDCARD_PREDICATE,
-    ST_SUBSCRIPT_PREDICATE,
-    ST_SLICE_PREDICATE,
-    ST_JOIN_PREDICATE,
-    ST_FILTER_PREDICATE,
-    ST_SCRIPT_PREDICATE
-};
-
-struct context
-{
-    const uint8_t *input;
-    size_t  length;
-    size_t  cursor;
-    
-    jsonpath *path;
-    node *steps;
-
-    enum state state;
-    enum step_kind current_step_kind;
-
-    jsonpath_status_code code;
-    uint8_t expected;
-};
-
-typedef struct context parser_context;
-
 // production parsers
 static void path(parser_context *context);
 static void absolute_path(parser_context *context);
 static void qualified_path(parser_context *context);
 static void relative_path(parser_context *context);
+static void step_parser(parser_context *context);
 static void abbreviated_relative_path(parser_context *context);
 static void name_test(parser_context *context);
 static void wildcard_name(parser_context *context);
@@ -165,13 +114,10 @@ static step *make_root_step(void);
 static inline step *make_step(enum step_kind step_kind, enum test_kind test_kind);
 
 // state management
-static inline bool validate(parser_context *context, const uint8_t *expression, size_t length, jsonpath *path);
-static inline void prepare_context(parser_context *context, const uint8_t *expression, size_t length, jsonpath *path);
+static void unwind_context(parser_context *context);
 static bool push_step(parser_context *context, step *step);
 static step *pop_step(parser_context *context);
 static inline void enter_state(parser_context *context, enum state state);
-static void unwind_context(parser_context *context);
-static void abort_context(parser_context *context);
 static predicate *add_predicate(parser_context *context, enum predicate_kind kind);
 
 // error handlers
@@ -185,70 +131,100 @@ extern void step_free(step *step);
 #define parser_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
 #define parser_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
 
-jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, jsonpath *value)
+#define trace_string(FORMAT, ...) log_string(TRACE, component_name, FORMAT, ##__VA_ARGS__)
+#define debug_string(FORMAT, ...) log_string(DEBUG, component_name, FORMAT, ##__VA_ARGS__)
+
+parser_context *make_parser(const uint8_t *expression, size_t length)
 {
-    parser_context context;
-    if(!validate(&context, expression, length, value))
+    parser_context *context = (parser_context *)calloc(1, sizeof(parser_context));
+    if(NULL == context)
     {
-        return context.code;
+        return NULL;
     }
-
-    log_string(DEBUG, component_name, "starting expression: '%s'", expression, length);    
-    prepare_context(&context, expression, length, value);
-    
-    path(&context);
-
-    value->result.code = context.code;
-    value->result.position = context.cursor;
-    if(JSONPATH_SUCCESS == context.code)
+    jsonpath *path = (jsonpath *)calloc(1, sizeof(jsonpath));
+    if(NULL == context)
     {
-        unwind_context(&context);
-        if(JSONPATH_SUCCESS == context.code)
+        free(context);
+        return NULL;
+    }
+    if(NULL == expression)
+    {
+        context->result.code = ERR_NULL_EXPRESSION;
+        errno = EINVAL;
+        return context;
+    }
+    if(0 == length)
+    {
+        context->result.code = ERR_ZERO_LENGTH;
+        errno = EINVAL;
+        return context;
+    }
+    
+    context->path = path;    
+    context->input = expression;
+    context->length = length;
+    context->cursor = 0;
+    context->state = ST_START;
+    context->path->kind = RELATIVE_PATH;
+    context->result.code = JSONPATH_SUCCESS;
+    context->result.expected_char = 0;
+    context->result.actual_char = 0;
+
+    return context;
+}
+
+enum jsonpath_status_code parser_status(parser_context *context)
+{
+    return context->result.code;
+}
+
+jsonpath *parse(parser_context *context)
+{
+    PRECOND_NONNULL_ELSE_NULL(context);
+    PRECOND_NONNULL_ELSE_NULL(context->path);
+    PRECOND_NONNULL_ELSE_NULL(context->input);
+    PRECOND_ELSE_NULL(0 != context->length);
+
+    debug_string("starting expression: '%s'", context->input, context->length);
+    path(context);
+
+    if(JSONPATH_SUCCESS == context->result.code)
+    {
+        unwind_context(context);
+        if(JSONPATH_SUCCESS == context->result.code)
         {
-            parser_debug("done. found %zd steps.", value->length);
+            parser_debug("done. found %zd steps.", context->path->length);
         }
         else
         {
-            value->result.code = context.code;
-            parser_debug("aborted. unable to create jsonpath model. status: %d", context.code);
+#ifdef USE_LOGGING
+            char *message = parser_status_message(context);
+            parser_debug("aborted. unable to create jsonpath model. status: %d (%s)", context->result.code, message);
+            free(message);
+#endif
+            return NULL;
         }
     }
     else
     {
-        value->result.expected_char = context.expected;
-        value->result.actual_char = context.input[context.cursor];
-        
-        abort_context(&context);
-        char *message = make_status_message(context.path);
-        parser_debug("aborted. %s", message);
+        context->result.actual_char = context->input[context->cursor];        
+#ifdef USE_LOGGING
+        char *message = parser_status_message(context);
+        parser_debug("aborted. %d (%s)", context->result.code, message);
         free(message);
+#endif
+        return NULL;
     }
-    
-    return context.code;
-}
 
-static void abort_context(parser_context *context)
-{
-    if(NULL == context->path->steps)
-    {
-        return;
-    }
-    for(size_t i = 0; i < context->path->length; i++)
-    {
-        step_free(pop_step(context));
-    }
-    
-    context->path->steps = NULL;
-    context->path->length = 0;
+    return context->path;
 }
 
 static void unwind_context(parser_context *context)
 {
-    context->path->steps = (step **)malloc(sizeof(step *) * context->path->length);
+    context->path->steps = (step **)calloc(1, sizeof(step *) * context->path->length);
     if(NULL == context->path->steps)
     {
-        context->code = ERR_OUT_OF_MEMORY;
-        abort_context(context);
+        context->result.code = ERR_PARSER_OUT_OF_MEMORY;
         return;
     }
 
@@ -265,7 +241,7 @@ static void path(parser_context *context)
     
     absolute_path(context);
 
-    if(ERR_UNEXPECTED_VALUE == context->code && '$' == context->expected)
+    if(ERR_UNEXPECTED_VALUE == context->result.code && '$' == context->result.expected_char)
     {
         enter_state(context, ST_START);
         context->current_step_kind = SINGLE;
@@ -279,7 +255,7 @@ static void absolute_path(parser_context *context)
 
     if('$' == get_char(context))
     {
-        context->code = JSONPATH_SUCCESS;
+        context->result.code = JSONPATH_SUCCESS;
         context->path->kind = ABSOLUTE_PATH;
         context->current_step_kind = ROOT;
         consume_char(context);
@@ -287,7 +263,7 @@ static void absolute_path(parser_context *context)
         step *root = make_root_step();
         if(NULL == root)
         {
-            context->code = ERR_OUT_OF_MEMORY;
+            context->result.code = ERR_PARSER_OUT_OF_MEMORY;
             return;
         }
         if(!push_step(context, root))
@@ -313,7 +289,7 @@ static void qualified_path(parser_context *context)
 
     abbreviated_relative_path(context);
     skip_ws(context);
-    if(JSONPATH_SUCCESS == context->code || !has_more_input(context))
+    if(JSONPATH_SUCCESS == context->result.code || !has_more_input(context))
     {
         return;
     }
@@ -361,43 +337,48 @@ static void relative_path(parser_context *context)
 
     if(!has_more_input(context))
     {
-        context->code = ERR_PREMATURE_END_OF_INPUT;
+        context->result.code = ERR_PREMATURE_END_OF_INPUT;
         return;
     }
     if('.' == get_char(context))
     {
-        context->code = ERR_EXPECTED_NAME_CHAR;
+        context->result.code = ERR_EXPECTED_NAME_CHAR;
         return;
     }
 
-    if('*' == get_char(context))
+    step_parser(context);
+    if(JSONPATH_SUCCESS == context->result.code && has_more_input(context))
     {
-        wildcard_name(context);
-        if(JSONPATH_SUCCESS == context->code && has_more_input(context))
-        {
-            context->code = ERR_EXTRA_JUNK_AFTER_WILDCARD;
-        }
+        qualified_path(context);
     }
-    else if(look_for(context, "()"))
+
+}
+
+static void step_parser(parser_context *context)
+{
+    if(look_for(context, "()"))
     {
         node_type_test(context);
-        if(JSONPATH_SUCCESS == context->code && has_more_input(context))
+        if(JSONPATH_SUCCESS == context->result.code && has_more_input(context))
         {
             consume_char(context);
             consume_char(context);
-            if(has_more_input(context))
-            {
-                context->code = ERR_EXTRA_JUNK_AFTER_TYPE_TEST;
-            }
         }
     }
     else
     {
         name_test(context);
-        if(JSONPATH_SUCCESS == context->code && has_more_input(context))
-        {
-            qualified_path(context);
-        }
+    }
+
+    if(JSONPATH_SUCCESS == context->result.code && has_more_input(context))
+    {
+        step_predicate(context);
+    }
+
+    if(ERR_UNEXPECTED_VALUE == context->result.code && '[' == context->result.expected_char)
+    {
+        enter_state(context, ST_STEP);
+        context->result.code = JSONPATH_SUCCESS;
     }
 }
 
@@ -408,13 +389,13 @@ static void wildcard_name(parser_context *context)
     step *current = make_step(context->current_step_kind, WILDCARD_TEST);
     if(NULL == current)
     {
-        context->code = ERR_OUT_OF_MEMORY;
+        context->result.code = ERR_PARSER_OUT_OF_MEMORY;
         return;
     }
     push_step(context, current);
 
     consume_char(context);
-    context->code = JSONPATH_SUCCESS;
+    context->result.code = JSONPATH_SUCCESS;
 }
 
 static void node_type_test(parser_context *context)
@@ -424,7 +405,7 @@ static void node_type_test(parser_context *context)
     step *current = make_step(context->current_step_kind, TYPE_TEST);
     if(NULL == current)
     {
-        context->code = ERR_OUT_OF_MEMORY;
+        context->result.code = ERR_PARSER_OUT_OF_MEMORY;
         return;
     }
     push_step(context, current);
@@ -441,20 +422,20 @@ static void node_type_test(parser_context *context)
     size_t length = offset - context->cursor;
     if(0 == length)
     {
-        context->code = ERR_EXPECTED_NODE_TYPE_TEST;
+        context->result.code = ERR_EXPECTED_NODE_TYPE_TEST;
         return;
     }
 
     int32_t kind = node_type_test_value(context, length);
     if(-1 == kind)
     {
-        context->code = ERR_EXPECTED_NODE_TYPE_TEST;
+        context->result.code = ERR_EXPECTED_NODE_TYPE_TEST;
         return;
     }
     current->test.type = (enum type_test_kind)kind;
     
     consume_chars(context, length);
-    context->code = JSONPATH_SUCCESS;
+    context->result.code = JSONPATH_SUCCESS;
 }
 
 static int32_t node_type_test_value(parser_context *context, size_t length)
@@ -505,32 +486,22 @@ static inline int32_t check_one_node_type_test_value(parser_context *context, si
 static void name_test(parser_context *context)
 {
     enter_state(context, ST_NAME_TEST);
-    if(1 > remaining(context))
+    if('*' == get_char(context))
     {
-        context->code = ERR_PREMATURE_END_OF_INPUT;
+        wildcard_name(context);
         return;
     }
 
     step *current = make_step(context->current_step_kind, NAME_TEST);
     if(NULL == current)
     {
-        context->code = ERR_OUT_OF_MEMORY;
+        context->result.code = ERR_PARSER_OUT_OF_MEMORY;
         return;
     }
     push_step(context, current);
 
-    context->code = JSONPATH_SUCCESS;
+    context->result.code = JSONPATH_SUCCESS;
     name(context, current);
-    if(JSONPATH_SUCCESS == context->code && has_more_input(context))
-    {
-        step_predicate(context);
-    }
-
-    if(ERR_UNEXPECTED_VALUE == context->code && '[' == context->expected)
-    {
-        enter_state(context, ST_STEP);
-        context->code = JSONPATH_SUCCESS;
-    }
 }
 
 static void name(parser_context *context, step *name_step)
@@ -560,13 +531,13 @@ static void name(parser_context *context, step *name_step)
     name_step->test.name.length = offset - context->cursor;
     if(0 == name_step->test.name.length)
     {
-        context->code = ERR_EXPECTED_NAME_CHAR;
+        context->result.code = ERR_EXPECTED_NAME_CHAR;
         return;
     }
-    name_step->test.name.value = (uint8_t *)malloc(name_step->test.name.length);
+    name_step->test.name.value = (uint8_t *)calloc(1, name_step->test.name.length);
     if(NULL == name_step->test.name.value)
     {
-        context->code = ERR_OUT_OF_MEMORY;
+        context->result.code = ERR_PARSER_OUT_OF_MEMORY;
         return;
     }
     memcpy(name_step->test.name.value, context->input + context->cursor, name_step->test.name.length);
@@ -579,7 +550,7 @@ static void name(parser_context *context, step *name_step)
 }
 
 #define try_predicate_parser(PARSER) PARSER(context);              \
-    if(JSONPATH_SUCCESS == context->code)                          \
+    if(JSONPATH_SUCCESS == context->result.code)                          \
     {                                                              \
         skip_ws(context);                                          \
         if(']' == get_char(context))                               \
@@ -588,7 +559,7 @@ static void name(parser_context *context, step *name_step)
         }                                                          \
         else                                                       \
         {                                                          \
-            context->code = ERR_EXTRA_JUNK_AFTER_PREDICATE;        \
+            context->result.code = ERR_EXTRA_JUNK_AFTER_PREDICATE;        \
         }                                                          \
         return;                                                    \
     }
@@ -603,13 +574,13 @@ static void step_predicate(parser_context *context)
         consume_char(context);
         if(!look_for(context, "]"))
         {
-            context->code = ERR_UNBALANCED_PRED_DELIM;
+            context->result.code = ERR_UNBALANCED_PRED_DELIM;
             return;
         }
         skip_ws(context);
         if(']' == get_char(context))
         {
-            context->code = ERR_EMPTY_PREDICATE;
+            context->result.code = ERR_EMPTY_PREDICATE;
             return;
         }
 
@@ -617,9 +588,9 @@ static void step_predicate(parser_context *context)
         try_predicate_parser(subscript_predicate);
         try_predicate_parser(slice_predicate);
 
-        if(JSONPATH_SUCCESS != context->code && ERR_OUT_OF_MEMORY != context->code)
+        if(JSONPATH_SUCCESS != context->result.code && ERR_PARSER_OUT_OF_MEMORY != context->result.code)
         {
-            context->code = ERR_UNSUPPORTED_PRED_TYPE;
+            context->result.code = ERR_UNSUPPORTED_PRED_TYPE;
         }
     }
     else
@@ -635,7 +606,7 @@ static void wildcard_predicate(parser_context *context)
     skip_ws(context);
     if('*' == get_char(context))
     {
-        context->code = JSONPATH_SUCCESS;
+        context->result.code = JSONPATH_SUCCESS;
         consume_char(context);
         add_predicate(context, WILDCARD);
     }
@@ -651,7 +622,7 @@ static void subscript_predicate(parser_context *context)
 
     size_t mark = context->cursor;
     uint_fast32_t subscript = integer(context);
-    if(JSONPATH_SUCCESS != context->code)
+    if(JSONPATH_SUCCESS != context->result.code)
     {
         reset(context, mark);
         return;
@@ -660,7 +631,7 @@ static void subscript_predicate(parser_context *context)
     if(']' != get_char(context))
     {
         reset(context, mark);
-        context->code = ERR_EXTRA_JUNK_AFTER_PREDICATE;
+        context->result.code = ERR_EXTRA_JUNK_AFTER_PREDICATE;
         return;
     }
     predicate *pred = add_predicate(context, SUBSCRIPT);
@@ -672,7 +643,7 @@ static uint_fast32_t integer(parser_context *context)
     skip_ws(context);
     if('-' == get_char(context))
     {
-        context->code = ERR_EXPECTED_INTEGER;
+        context->result.code = ERR_EXPECTED_INTEGER;
         return 0;
     }
     char *begin = (char *)context->input + context->cursor;
@@ -681,10 +652,10 @@ static uint_fast32_t integer(parser_context *context)
     uint_fast32_t value = (uint_fast32_t)strtoul(begin, &end, 10);
     if(0 != errno || begin == end)
     {
-        context->code = ERR_INVALID_NUMBER;
+        context->result.code = ERR_INVALID_NUMBER;
         return 0;
     }
-    context->code = JSONPATH_SUCCESS;
+    context->result.code = JSONPATH_SUCCESS;
     consume_chars(context, (size_t)(end - begin));
     return value;
 }
@@ -701,7 +672,7 @@ static void slice_predicate(parser_context *context)
     if(!look_for(context, ":"))
     {
         parser_trace("slice: uh oh! no ':' found, aborting...");
-        context->code = ERR_UNSUPPORTED_PRED_TYPE;
+        context->result.code = ERR_UNSUPPORTED_PRED_TYPE;
         return;
     }
 
@@ -710,7 +681,7 @@ static void slice_predicate(parser_context *context)
     {
         parser_trace("slice: parsing from value...");
         from = signed_integer(context);
-        if(JSONPATH_SUCCESS != context->code)
+        if(JSONPATH_SUCCESS != context->result.code)
         {
             parser_trace("slice: uh oh! couldn't parse from value, aborting...");
             return;
@@ -735,7 +706,7 @@ static void slice_predicate(parser_context *context)
     {
         parser_trace("slice: parsing to value...");
         to = signed_integer(context);
-        if(JSONPATH_SUCCESS != context->code)
+        if(JSONPATH_SUCCESS != context->result.code)
         {
             parser_trace("slice: uh oh! couldn't parse to value, aborting...");
             return;
@@ -756,7 +727,7 @@ static void slice_predicate(parser_context *context)
         {
             parser_trace("slice: parsing step value...");
             step = signed_integer(context);
-            if(JSONPATH_SUCCESS != context->code)
+            if(JSONPATH_SUCCESS != context->result.code)
             {
                 parser_trace("slice: uh oh! couldn't parse step value, aborting...");
                 return;
@@ -764,7 +735,7 @@ static void slice_predicate(parser_context *context)
             if(0 == step)
             {
                 parser_trace("slice: uh oh! couldn't parse step value, aborting...");
-                context->code = ERR_STEP_CANNOT_BE_ZERO;
+                context->result.code = ERR_STEP_CANNOT_BE_ZERO;
                 return;
             }
             parser_trace("slice: found step value: %d", step);
@@ -777,7 +748,7 @@ static void slice_predicate(parser_context *context)
 
     }
 
-    context->code = JSONPATH_SUCCESS;
+    context->result.code = JSONPATH_SUCCESS;
     pred->slice.from = from;
     pred->slice.to = to;
     pred->slice.step = step;
@@ -792,20 +763,20 @@ static int_fast32_t signed_integer(parser_context *context)
     int_fast32_t value = (int_fast32_t)strtol(begin, &end, 10);
     if(0 != errno || begin == end)
     {
-        context->code = ERR_INVALID_NUMBER;
+        context->result.code = ERR_INVALID_NUMBER;
         return 0;
     }
-    context->code = JSONPATH_SUCCESS;
+    context->result.code = JSONPATH_SUCCESS;
     consume_chars(context, (size_t)(end - begin));
     return value;
 }
 
 static predicate *add_predicate(parser_context *context, enum predicate_kind kind)
 {
-    predicate *pred = (predicate *)malloc(sizeof(struct predicate));
+    predicate *pred = (predicate *)calloc(1, sizeof(struct predicate));
     if(NULL == pred)
     {
-        context->code = ERR_OUT_OF_MEMORY;
+        context->result.code = ERR_PARSER_OUT_OF_MEMORY;
         return NULL;
     }
 
@@ -911,7 +882,7 @@ static step *make_root_step(void)
 
 static inline step *make_step(enum step_kind step_kind, enum test_kind test_kind)
 {
-    step *result = (step *)malloc(sizeof(step));
+    step *result = (step *)calloc(1, sizeof(step));
     if(NULL == result)
     {
         return NULL;
@@ -927,10 +898,10 @@ static inline step *make_step(enum step_kind step_kind, enum test_kind test_kind
 
 static bool push_step(parser_context *context, step *value)
 {
-    node *current = (node *)malloc(sizeof(node));
+    cell *current = (cell *)calloc(1, sizeof(cell));
     if(NULL == current)
     {
-        context->code = ERR_OUT_OF_MEMORY;
+        context->result.code = ERR_PARSER_OUT_OF_MEMORY;
         return false;
     }
     current->step = value;
@@ -955,57 +926,17 @@ static step *pop_step(parser_context *context)
     {
         return NULL;
     }
-    node *top = context->steps;
+    cell *top = context->steps;
     step *result = top->step;
     context->steps = top->next;
     free(top);
     return result;
 }
 
-static inline bool validate(parser_context *context, const uint8_t *expression, size_t length, jsonpath *value)
-{
-    if(NULL == value)
-    {
-        context->code = ERR_NULL_OUTPUT_PATH;
-        return false;
-    }
-    value->result.position = 0;
-    if(NULL == expression)
-    {
-        context->code = ERR_NULL_EXPRESSION;
-        value->result.code = context->code;
-        return false;
-    }
-    if(0 == length)
-    {
-        context->code = ERR_ZERO_LENGTH;
-        value->result.code = context->code;
-        return false;
-    }
-
-    return true;
-}
-
-static inline void prepare_context(parser_context *context, const uint8_t *expression, size_t length, jsonpath *path)
-{
-    path->length = 0;
-    path->steps = NULL;
-    
-    context->input = expression;
-    context->length = length;
-    context->cursor = 0;
-    context->state = ST_START;
-    context->path = path;    
-    context->path->kind = RELATIVE_PATH;
-    context->path->result.position = 0;
-    context->path->result.expected_char = 0;
-    context->path->result.actual_char = 0;
-}
-
 static inline void unexpected_value(parser_context *context, uint8_t expected)
 {
-    context->code = ERR_UNEXPECTED_VALUE;
-    context->expected = expected;
+    context->result.code = ERR_UNEXPECTED_VALUE;
+    context->result.expected_char = expected;
 }
 
 static inline void enter_state(parser_context *context, enum state state)

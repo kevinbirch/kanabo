@@ -40,7 +40,21 @@
 void step_free(step *step);
 static void predicate_free(predicate *predicate);
 
-void jsonpath_free(jsonpath *path)
+void parser_free(parser_context *context)
+{
+    if(NULL == context->steps)
+    {
+        return;
+    }
+    for(cell *entry = context->steps; NULL != entry; entry = context->steps)
+    {
+        context->steps = entry->next;
+        free(entry);
+    }
+    context->steps = NULL;
+}
+
+void path_free(jsonpath *path)
 {
     if(NULL == path || NULL == path->steps || 0 == path->length)
     {
@@ -83,8 +97,8 @@ static void predicate_free(predicate *value)
     }
     if(JOIN == predicate_get_kind(value))
     {
-        jsonpath_free(value->join.left);
-        jsonpath_free(value->join.right);
+        path_free(value->join.left);
+        path_free(value->join.right);
     }
 
     free(value);

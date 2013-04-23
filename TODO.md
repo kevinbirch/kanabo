@@ -17,17 +17,18 @@ LICENSE file for more details.
 
 ### global
 
+* fix parser api
+* fix loader api
+* connect front & back ends
+* cut alpha release tag
 * don't return -1 from enum return type functions
+* move struct decls into separate header file
 * secure coding
   * https://www.securecoding.cert.org/confluence/display/seccode/MEM07-C.+Ensure+that+the+arguments+to+calloc%28%29%2C+when+multiplied%2C+do+not+wrap
   * https://www.securecoding.cert.org/confluence/display/seccode/MEM08-C.+Use+realloc%28%29+only+to+resize+dynamically+allocated+arrays
   * https://www.securecoding.cert.org/confluence/display/seccode/MEM09-C.+Do+not+assume+memory+allocation+functions+initialize+memory
     * calloc's zero bits are not necessrily equivalent to NULL
 
-* fix parser api
-* fix loader api
-* connect front & back ends
-* cut alpha release tag
 
 ### evaluator
 

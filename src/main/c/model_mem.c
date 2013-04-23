@@ -81,6 +81,7 @@ node *make_sequence_node(size_t capacity)
         if(NULL == result->content.sequence.value)
         {
             free(result);
+            result = NULL;
             return NULL;
         }
     }
@@ -105,6 +106,7 @@ node *make_mapping_node(size_t capacity)
         if(NULL == result->content.mapping.value)
         {
             free(result);
+            result = NULL;
             return NULL;
         }        
     }
@@ -129,6 +131,7 @@ node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kin
         if(NULL == result->content.scalar.value)
         {
             free(result);
+            result = NULL;
             return NULL;
         }
         memcpy(result->content.scalar.value, value, length);
@@ -140,7 +143,6 @@ node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kin
 static inline node *make_node(enum node_kind kind)
 {
     node *result = (node *)malloc(sizeof(struct node));
-
     if(NULL != result)
     {
         result->tag.kind = kind;
@@ -159,7 +161,8 @@ void model_free(document_model *model)
     }
     for(size_t i = 0; i < model->size; i++)
     {
-        node_free(model_get_document(model, i));
+        node_free(model->documents[i]);
+        model->documents[i] = NULL;
     }
     model->size = 0;
     model->documents = NULL;
@@ -174,10 +177,12 @@ void node_free(node *value)
     switch(node_get_kind(value))
     {
         case DOCUMENT:
-            node_free(document_get_root(value));
+            node_free(value->content.document.root);
+            value->content.document.root = NULL;
             break;
         case SCALAR:
-            free(scalar_get_value(value));
+            free(value->content.scalar.value);
+            value->content.scalar.value = NULL;
             break;
         case SEQUENCE:
             sequence_free(value);
@@ -197,25 +202,30 @@ static inline void sequence_free(node *sequence)
     }
     for(size_t i = 0; i < node_get_size(sequence); i++)
     {
-        node_free(sequence_get(sequence, i));
+        node_free(sequence->content.sequence.value[i]);
+        sequence->content.sequence.value[i] = NULL;
     }
-    free(sequence_get_all(sequence));
+    free(sequence->content.sequence.value);
+    sequence->content.sequence.value = NULL;
 }
 
 static inline void mapping_free(node *mapping)
 {
-    key_value_pair **pairs = mapping_get_all(mapping);
-    if(NULL == pairs)
+    if(NULL == mapping->content.mapping.value)
     {
         return;
     }
     for(size_t i = 0; i < node_get_size(mapping); i++)
     {
-        node_free(pairs[i]->key);
-        node_free(pairs[i]->value);
-        free(pairs[i]);
+        node_free(mapping->content.mapping.value[i]->key);
+        mapping->content.mapping.value[i]->key = NULL;
+        node_free(mapping->content.mapping.value[i]->value);
+        mapping->content.mapping.value[i]->value = NULL;
+        free(mapping->content.mapping.value[i]);
+        mapping->content.mapping.value[i] = NULL;
     }
-    free(pairs);
+    free(mapping->content.mapping.value);
+    mapping->content.mapping.value = NULL;
 }
 
 document_model *make_model(size_t capacity)

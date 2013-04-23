@@ -84,7 +84,7 @@ static int_fast32_t normalize_extent(bool specified, int_fast32_t actual, int_fa
 
 #define current_step(CONTEXT) path_get_step((CONTEXT)->path, (CONTEXT)->current_step)
 
-evaluator_context *make_evaluator(document_model *model, jsonpath *path)
+evaluator_context *make_evaluator(const document_model *model, const jsonpath *path)
 {
     PRECOND_NONNULL_ELSE_NULL(model, path);
     evaluator_debug("creating evaluator context");
@@ -169,7 +169,7 @@ static nodelist *evaluate_steps(evaluator_context *context)
 
     if(!path_iterate(context->path, evaluate_step, context))
     {
-        evaluator_debug("aborted, step: %d, code: %d (%s)", context->current_step, context->code, get_status_message(context));
+        evaluator_debug("aborted, step: %d, code: %d (%s)", context->current_step, context->code, evaluator_status_message(context));
         nodelist_free(context->result);
         context->result = NULL;
         return NULL;

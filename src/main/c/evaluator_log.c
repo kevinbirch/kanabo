@@ -51,7 +51,7 @@ static const char * const MESSAGES[] =
     "The path argument is not supported",
 };
 
-const char *get_status_message(evaluator_context *context)
+const char *evaluator_status_message(const evaluator_context * restrict context)
 {
     if(NULL == context)
     {

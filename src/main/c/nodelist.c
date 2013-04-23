@@ -63,6 +63,7 @@ nodelist *make_nodelist_with_capacity(size_t capacity)
     else
     {
         free(result);
+        result = NULL;
         return NULL;
     }
 }
@@ -86,6 +87,7 @@ void nodelist_free_nodes(nodelist *list)
     for(int32_t i = (int32_t)list->length - 1; i >= 0; i--)
     {
         node_free(list->nodes[i]);
+        list->nodes[i] = NULL;
         list->length--;
     }
 }
@@ -187,9 +189,9 @@ nodelist *nodelist_map(const nodelist * restrict list, nodelist_map_function fun
     nodelist *result = nodelist_map_into(list, function, context, target);
     if(NULL == result)
     {
-        nodelist_free_nodes(target);
         nodelist_free(target);
-        return result;
+        target = NULL;
+        return NULL;
     }
     return target;            
 }

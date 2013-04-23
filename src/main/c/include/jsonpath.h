@@ -128,31 +128,6 @@ struct step
 
 typedef struct step step;
 
-enum jsonpath_status_code
-{
-    JSONPATH_SUCCESS = 0,
-    ERR_NULL_EXPRESSION,
-    ERR_ZERO_LENGTH,
-    ERR_NULL_OUTPUT_PATH,
-    ERR_OUT_OF_MEMORY,
-    ERR_NOT_JSONPATH,
-    ERR_PREMATURE_END_OF_INPUT,
-    ERR_UNEXPECTED_VALUE,
-    ERR_EMPTY_PREDICATE,
-    ERR_UNBALANCED_PRED_DELIM,
-    ERR_UNSUPPORTED_PRED_TYPE,
-    ERR_EXTRA_JUNK_AFTER_PREDICATE,
-    ERR_EXTRA_JUNK_AFTER_WILDCARD,
-    ERR_EXTRA_JUNK_AFTER_TYPE_TEST,
-    ERR_EXPECTED_NAME_CHAR,
-    ERR_EXPECTED_NODE_TYPE_TEST,
-    ERR_EXPECTED_INTEGER,
-    ERR_INVALID_NUMBER,
-    ERR_STEP_CANNOT_BE_ZERO
-};
-
-typedef enum jsonpath_status_code jsonpath_status_code;
-
 struct jsonpath
 {
     enum path_kind
@@ -164,25 +139,102 @@ struct jsonpath
     size_t length;
     step **steps;
 
+};
+
+enum jsonpath_status_code
+{
+    JSONPATH_SUCCESS = 0,
+    ERR_NULL_EXPRESSION,             // the expression argument given was NULL
+    ERR_ZERO_LENGTH,                 // expression length was 0
+    ERR_PARSER_OUT_OF_MEMORY,        // unable to allocate memory
+    ERR_NOT_JSONPATH,                // not a JSONPath expression
+    ERR_PREMATURE_END_OF_INPUT,      // premature end of input before expression was complete
+    ERR_UNEXPECTED_VALUE,            // expected one character but found another
+    ERR_EMPTY_PREDICATE,             // a predicate is empty
+    ERR_UNBALANCED_PRED_DELIM,       // missing closing predicate delimiter `]' before end of step
+    ERR_UNSUPPORTED_PRED_TYPE,       // unsupported predicate found
+    ERR_EXTRA_JUNK_AFTER_PREDICATE,  // extra characters after valid predicate definition
+    ERR_EXPECTED_NAME_CHAR,          // expected a name character, but found something else instead
+    ERR_EXPECTED_NODE_TYPE_TEST,     // expected a node type test
+    ERR_EXPECTED_INTEGER,            // expected an integer
+    ERR_INVALID_NUMBER,              // invalid number
+    ERR_STEP_CANNOT_BE_ZERO,         // slice step value must be non-zero
+};
+
+typedef enum jsonpath_status_code jsonpath_status_code;
+
+struct cell
+{
+    step *step;
+    struct cell *next;
+};
+
+typedef struct cell cell;
+
+enum state
+{
+    ST_START = 0,
+    ST_ABSOLUTE_PATH,
+    ST_QUALIFIED_PATH,
+    ST_RELATIVE_PATH,
+    ST_ABBREVIATED_RELATIVE_PATH,
+    ST_STEP,
+    ST_NAME_TEST,
+    ST_WILDCARD_NAME_TEST,
+    ST_NAME,
+    ST_NODE_TYPE_TEST,
+    ST_JSON_OBJECT_TYPE_TEST,
+    ST_JSON_ARRAY_TYPE_TEST,
+    ST_JSON_STRING_TYPE_TEST,
+    ST_JSON_NUMBER_TYPE_TEST,
+    ST_JSON_BOOLEAN_TYPE_TEST,
+    ST_JSON_NULL_TYPE_TEST,
+    ST_PREDICATE,
+    ST_WILDCARD_PREDICATE,
+    ST_SUBSCRIPT_PREDICATE,
+    ST_SLICE_PREDICATE,
+    ST_JOIN_PREDICATE,
+    ST_FILTER_PREDICATE,
+    ST_SCRIPT_PREDICATE
+};
+
+struct parser_context
+{
+    const uint8_t *input;
+    size_t  length;
+    size_t  cursor;
+    
+    jsonpath *path;
+    cell *steps;
+
+    enum state state;
+    enum step_kind current_step_kind;
+
     struct
     {
         jsonpath_status_code code;
-        size_t position;
         uint8_t expected_char;
         uint8_t actual_char;
     } result;
 };
 
+typedef struct parser_context parser_context;
+
 // parser entry point
-jsonpath_status_code parse_jsonpath(const uint8_t *expression, size_t length, jsonpath *path);
-char *make_status_message(const jsonpath * restrict path);
+parser_context *make_parser(const uint8_t *expression, size_t length);
+enum jsonpath_status_code parser_status(parser_context *context);
 
-void jsonpath_free(jsonpath *path);
+void parser_free(parser_context *context);
 
+jsonpath *parse(parser_context *context);
+void path_free(jsonpath *path);
+
+char *parser_status_message(const parser_context * restrict context);
+
+// jsonpath model api
 typedef bool (*path_iterator)(step *each, void *context);
 bool path_iterate(const jsonpath * restrict path, path_iterator iterator, void *context);
 
-// jsonpath model api
 enum path_kind path_get_kind(const jsonpath * restrict path);
 size_t         path_get_length(const jsonpath * restrict path);
 step *         path_get_step(const jsonpath * restrict path, size_t index);
