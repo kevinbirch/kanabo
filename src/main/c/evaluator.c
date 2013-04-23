@@ -82,7 +82,7 @@ static int_fast32_t normalize_extent(bool specified, int_fast32_t actual, int_fa
 
 #define trace_string(FORMAT, ...) log_string(TRACE, component_name, FORMAT, ##__VA_ARGS__)
 
-#define current_step(CONTEXT) path_get_step((CONTEXT)->path, (CONTEXT)->current_step)
+#define current_step(CONTEXT) path_get((CONTEXT)->path, (CONTEXT)->current_step)
 
 evaluator_context *make_evaluator(const document_model *model, const jsonpath *path)
 {
@@ -142,13 +142,13 @@ nodelist *evaluate(evaluator_context *context)
         context->code = ERR_NO_ROOT_IN_DOCUMENT;
         return NULL;
     }
-    if(ABSOLUTE_PATH != path_get_kind(context->path))
+    if(ABSOLUTE_PATH != path_kind(context->path))
     {
         evaluator_trace("path is not absolute");
         context->code = ERR_PATH_IS_NOT_ABSOLUTE;
         return NULL;
     }
-    if(0 == path_get_length(context->path))
+    if(0 == path_length(context->path))
     {
         evaluator_trace("path is empty");
         context->code = ERR_PATH_IS_EMPTY;
@@ -170,7 +170,7 @@ nodelist *evaluate(evaluator_context *context)
 
 static nodelist *evaluate_steps(evaluator_context *context)
 {
-    evaluator_debug("beginning evaluation of %d steps", path_get_length(context->path));
+    evaluator_debug("beginning evaluation of %d steps", path_length(context->path));
 
     if(!path_iterate(context->path, evaluate_step, context))
     {
@@ -190,7 +190,7 @@ static bool evaluate_step(step* each, void *context)
     evaluator_trace("step: %zd", step_context->current_step);
 
     bool result = false;
-    switch(step_get_kind(each))
+    switch(step_kind(each))
     {
         case ROOT:
             result = evaluate_root_step(step_context);
@@ -232,7 +232,7 @@ static bool evaluate_single_step(evaluator_context *context)
 {
     bool result = false;
     evaluator_trace("evaluating single step across %zd nodes", nodelist_length(context->result));
-    switch(step_get_test_kind(current_step(context)))
+    switch(step_test_kind(current_step(context)))
     {
         case WILDCARD_TEST:
             result = evaluate_test("wildcard", context, apply_wildcard_test);
@@ -279,7 +279,7 @@ static bool apply_wildcard_test(node *each, void *context, nodelist *target)
 static bool apply_type_test(node *each, void *context, nodelist *target)
 {
     bool result = false;
-    switch(type_test_step_get_type(current_step((evaluator_context *)context)))
+    switch(type_test_step_kind(current_step((evaluator_context *)context)))
     {
         case OBJECT_TEST:
             evaluator_trace("type test: testing for an object (%d)", MAPPING);
@@ -321,14 +321,14 @@ static bool apply_type_test(node *each, void *context, nodelist *target)
 static bool apply_name_test(node *each, void *context, nodelist *target)
 {
     step *context_step = current_step((evaluator_context *)context);
-    trace_string("name test: using key '%s'", name_test_step_get_name(context_step), name_test_step_get_length(context_step));
+    trace_string("name test: using key '%s'", name_test_step_name(context_step), name_test_step_length(context_step));
 
     if(MAPPING != node_get_kind(each))
     {
         evaluator_trace("name test: node is not a mapping type, cannot use a key on it (kind: %d), dropping (%p)", node_get_kind(each), each);
         return true;
     }
-    node *value = mapping_get_value_scalar_key(each, name_test_step_get_name(context_step), name_test_step_get_length(context_step));
+    node *value = mapping_get_value_scalar_key(each, name_test_step_name(context_step), name_test_step_length(context_step));
     if(NULL == value)
     {
         evaluator_trace("name test: key not found in mapping, dropping (%p)", each);
@@ -351,8 +351,8 @@ static bool apply_name_test(node *each, void *context, nodelist *target)
 
 static bool evaluate_predicate(node *value, evaluator_context *context, nodelist *target)
 {
-    predicate *context_predicate = step_get_predicate(current_step(context));
-    switch(predicate_get_kind(context_predicate))
+    predicate *context_predicate = step_predicate(current_step(context));
+    switch(predicate_kind(context_predicate))
     {
         case WILDCARD:
             evaluator_trace("name test: evaluating wildcard predicate");
@@ -395,8 +395,8 @@ static bool apply_subscript_predicate(node *value, evaluator_context *context, n
     {
         evaluator_trace("subscript predicate: node is not a sequence type, cannot use an index on it (kind: %d), dropping (%p)", node_get_kind(value), value);
     }
-    predicate *subscript = step_get_predicate(current_step(context));
-    size_t index = subscript_predicate_get_index(subscript);
+    predicate *subscript = step_predicate(current_step(context));
+    size_t index = subscript_predicate_index(subscript);
     if(index > node_get_size(value))
     {
         evaluator_trace("subscript predicate: index %zd not valid for sequence (length: %zd), dropping (%p)", index, node_get_size(value), value);
@@ -414,7 +414,7 @@ static bool apply_slice_predicate(node *value, evaluator_context *context, nodel
         evaluator_trace("slice predicate: node is not a sequence type, cannot use a slice on it (kind: %d), dropping (%p)", node_get_kind(value), value);
     }
 
-    predicate *slice = step_get_predicate(current_step(context));
+    predicate *slice = step_predicate(current_step(context));
     int_fast32_t from = 0, to = 0, step = 0;
     normalize_interval(value, slice, &from, &to, &step);
     evaluator_trace("slice predicate: using normalized interval [%d:%d:%d]", from, to, step);
@@ -481,28 +481,28 @@ static void normalize_interval(node *value, predicate *slice, int_fast32_t *from
 {
     char *from_fmt = NULL, *to_fmt = NULL, *step_fmt = NULL;
     evaluator_trace("slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items",
-                    slice_predicate_has_from(slice) ? (asprintf(&from_fmt, "%d", slice_predicate_get_from(slice)), from_fmt) : "_",
-                    slice_predicate_has_to(slice) ? (asprintf(&to_fmt, "%d", slice_predicate_get_to(slice)), to_fmt) : "_",
-                    slice_predicate_has_step(slice) ? (asprintf(&step_fmt, "%d", slice_predicate_get_step(slice)), step_fmt) : "_",
+                    slice_predicate_has_from(slice) ? (asprintf(&from_fmt, "%d", slice_predicate_from(slice)), from_fmt) : "_",
+                    slice_predicate_has_to(slice) ? (asprintf(&to_fmt, "%d", slice_predicate_to(slice)), to_fmt) : "_",
+                    slice_predicate_has_step(slice) ? (asprintf(&step_fmt, "%d", slice_predicate_step(slice)), step_fmt) : "_",
                     value, node_get_size(value));
     free(from_fmt); free(to_fmt); free(step_fmt);
-    *step = slice_predicate_has_step(slice) ? slice_predicate_get_step(slice) : 1;
+    *step = slice_predicate_has_step(slice) ? slice_predicate_step(slice) : 1;
     *from = 0 > *step ? normalize_to(slice, value) - 1 : normalize_from(slice, value);
     *to   = 0 > *step ? normalize_from(slice, value) : normalize_to(slice, value);
 }
 
 static int_fast32_t normalize_from(predicate *slice, node *value)
 {
-    evaluator_trace("slice predicate: normalizing from, specified: %s, value: %d", slice_predicate_has_from(slice) ? "yes" : "no", slice_predicate_get_from(slice));
+    evaluator_trace("slice predicate: normalizing from, specified: %s, value: %d", slice_predicate_has_from(slice) ? "yes" : "no", slice_predicate_from(slice));
     int_fast32_t length = (int_fast32_t)node_get_size(value);
-    return normalize_extent(slice_predicate_has_from(slice), slice_predicate_get_from(slice), 0, length);
+    return normalize_extent(slice_predicate_has_from(slice), slice_predicate_from(slice), 0, length);
 }
 
 static int_fast32_t normalize_to(predicate *slice, node *value)
 {
-    evaluator_trace("slice predicate: normalizing to, specified: %s, value: %d", slice_predicate_has_to(slice) ? "yes" : "no", slice_predicate_get_to(slice));
+    evaluator_trace("slice predicate: normalizing to, specified: %s, value: %d", slice_predicate_has_to(slice) ? "yes" : "no", slice_predicate_to(slice));
     int_fast32_t length = (int_fast32_t)node_get_size(value);
-    return normalize_extent(slice_predicate_has_to(slice), slice_predicate_get_to(slice), length, length);
+    return normalize_extent(slice_predicate_has_to(slice), slice_predicate_to(slice), length, length);
 }
 
 static int_fast32_t normalize_extent(bool specified, int_fast32_t given, int_fast32_t fallback, int_fast32_t limit)

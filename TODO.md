@@ -17,7 +17,6 @@ LICENSE file for more details.
 
 ### global
 
-* fix parser api
 * fix loader api
 * connect front & back ends
 * cut alpha release tag
@@ -45,8 +44,7 @@ LICENSE file for more details.
 
 #### Enhancements:
 
-* does jsonpath\_mem.c:parser\_free function really work?
-* simplify api function names - remove `get`
+* split jsonpath.h into model, parser and api headers
 * implement lexer
 * implement combinators
 * add full tracing

@@ -83,7 +83,7 @@ static void step_parser(parser_context *context);
 static void abbreviated_relative_path(parser_context *context);
 static void name_test(parser_context *context);
 static void wildcard_name(parser_context *context);
-static void step_predicate(parser_context *context);
+static void step_predicate_parser(parser_context *context);
 static void wildcard_predicate(parser_context *context);
 static void subscript_predicate(parser_context *context);
 static void slice_predicate(parser_context *context);
@@ -372,7 +372,7 @@ static void step_parser(parser_context *context)
 
     if(JSONPATH_SUCCESS == context->result.code && has_more_input(context))
     {
-        step_predicate(context);
+        step_predicate_parser(context);
     }
 
     if(ERR_UNEXPECTED_VALUE == context->result.code && '[' == context->result.expected_char)
@@ -564,7 +564,7 @@ static void name(parser_context *context, step *name_step)
         return;                                                    \
     }
 
-static void step_predicate(parser_context *context)
+static void step_predicate_parser(parser_context *context)
 {
     enter_state(context, ST_PREDICATE);
 

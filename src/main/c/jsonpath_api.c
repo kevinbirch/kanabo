@@ -46,7 +46,7 @@ bool path_iterate(const jsonpath * restrict path, path_iterator iterator, void *
 {
     PRECOND_NONNULL_ELSE_FALSE(path, iterator);
 
-    for(size_t i = 0; i < path_get_length(path); i++)
+    for(size_t i = 0; i < path_length(path); i++)
     {
         if(!iterator(path->steps[i], context))
         {
@@ -56,7 +56,7 @@ bool path_iterate(const jsonpath * restrict path, path_iterator iterator, void *
     return true;
 }
 
-enum path_kind path_get_kind(const jsonpath * restrict path)
+enum path_kind path_kind(const jsonpath * restrict path)
 {
     if(NULL == path)
     {
@@ -66,13 +66,13 @@ enum path_kind path_get_kind(const jsonpath * restrict path)
     return path->kind;
 }
 
-size_t path_get_length(const jsonpath * restrict path)
+size_t path_length(const jsonpath * restrict path)
 {
     PRECOND_NONNULL_ELSE_ZERO(path);
     return path->length;
 }
 
-step *path_get_step(const jsonpath * restrict path, size_t index)
+step *path_get(const jsonpath * restrict path, size_t index)
 {
     PRECOND_NONNULL_ELSE_NULL(path);
     PRECOND_NONNULL_ELSE_NULL(path->steps);
@@ -80,7 +80,7 @@ step *path_get_step(const jsonpath * restrict path, size_t index)
     return path->steps[index];
 }
 
-enum step_kind step_get_kind(const step * restrict value)
+enum step_kind step_kind(const step * restrict value)
 {
     if(NULL == value)
     {
@@ -90,7 +90,7 @@ enum step_kind step_get_kind(const step * restrict value)
     return value->kind;
 }
 
-enum test_kind step_get_test_kind(const step * restrict value)
+enum test_kind step_test_kind(const step * restrict value)
 {
     if(NULL == value)
     {
@@ -100,7 +100,7 @@ enum test_kind step_get_test_kind(const step * restrict value)
     return value->test.kind;
 }
 
-enum type_test_kind type_test_step_get_type(const step * restrict value)
+enum type_test_kind type_test_step_kind(const step * restrict value)
 {
     if(NULL == value || NAME_TEST == value->test.kind)
     {
@@ -110,14 +110,14 @@ enum type_test_kind type_test_step_get_type(const step * restrict value)
     return value->test.type;
 }
 
-uint8_t *name_test_step_get_name(const step * restrict value)
+uint8_t *name_test_step_name(const step * restrict value)
 {
     PRECOND_NONNULL_ELSE_NULL(value);
     PRECOND_ELSE_NULL(NAME_TEST == value->test.kind);
     return value->test.name.value;
 }
 
-size_t name_test_step_get_length(const step * restrict value)
+size_t name_test_step_length(const step * restrict value)
 {
     PRECOND_NONNULL_ELSE_ZERO(value);
     PRECOND_ELSE_ZERO(NAME_TEST == value->test.kind);
@@ -130,14 +130,14 @@ bool step_has_predicate(const step * restrict value)
     return NULL != value->predicate;
 }
 
-predicate *step_get_predicate(const step * restrict value)
+predicate *step_predicate(const step * restrict value)
 {
     PRECOND_NONNULL_ELSE_NULL(value);
     PRECOND_NONNULL_ELSE_NULL(value->predicate);
     return value->predicate;
 }
 
-enum predicate_kind predicate_get_kind(const predicate * restrict value)
+enum predicate_kind predicate_kind(const predicate * restrict value)
 {
     if(NULL == value)
     {
@@ -147,33 +147,34 @@ enum predicate_kind predicate_get_kind(const predicate * restrict value)
     return value->kind;
 }
 
-size_t subscript_predicate_get_index(const predicate * restrict value)
+size_t subscript_predicate_index(const predicate * restrict value)
 {
     PRECOND_NONNULL_ELSE_ZERO(value);
     PRECOND_ELSE_ZERO(SUBSCRIPT == value->kind);
     return value->subscript.index;
 }
 
-int_fast32_t slice_predicate_get_to(const predicate * restrict value)
+int_fast32_t slice_predicate_to(const predicate * restrict value)
 {
     PRECOND_NONNULL_ELSE_ZERO(value);
     PRECOND_ELSE_ZERO(SLICE == value->kind);
     return value->slice.to;
 }
 
-int_fast32_t slice_predicate_get_from(const predicate * restrict value)
+int_fast32_t slice_predicate_from(const predicate * restrict value)
 {
     PRECOND_NONNULL_ELSE_ZERO(value);
     PRECOND_ELSE_ZERO(SLICE == value->kind);
     return value->slice.from;
 }
 
-int_fast32_t slice_predicate_get_step(const predicate * restrict value)
+int_fast32_t slice_predicate_step(const predicate * restrict value)
 {
     PRECOND_NONNULL_ELSE_ZERO(value);
     PRECOND_ELSE_ZERO(SLICE == value->kind);
     return value->slice.step;
 }
+
 bool slice_predicate_has_to(const predicate * restrict value)
 {
     return slice_predicate_has(value, SLICE_TO);
@@ -196,7 +197,7 @@ static bool slice_predicate_has(const predicate * restrict value, enum slice_spe
     return value->slice.specified & specifier;
 }
 
-jsonpath *join_predicate_get_left(const predicate * restrict value)
+jsonpath *join_predicate_left(const predicate * restrict value)
 {
     if(NULL == value || JOIN != value->kind)
     {
@@ -206,7 +207,7 @@ jsonpath *join_predicate_get_left(const predicate * restrict value)
     return value->join.left;
 }
 
-jsonpath *join_predicate_get_right(const predicate * restrict value)
+jsonpath *join_predicate_right(const predicate * restrict value)
 {
     if(NULL == value || JOIN != value->kind)
     {

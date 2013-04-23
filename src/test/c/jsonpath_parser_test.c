@@ -38,8 +38,8 @@
 #include "test.h"
 #include "jsonpath.h"
 
-#define assert_path_length(PATH, EXPECTED) assert_int_eq((EXPECTED), path_get_length((PATH)))
-#define assert_path_kind(PATH, EXPECTED) assert_int_eq((EXPECTED), path_get_kind((PATH)))
+#define assert_path_length(PATH, EXPECTED) assert_int_eq((EXPECTED), path_length((PATH)))
+#define assert_path_kind(PATH, EXPECTED) assert_int_eq((EXPECTED), path_kind((PATH)))
 
 #define assert_parser_success(EXPRESSION, CONTEXT, PATH, EXPECTED_KIND, EXPECTED_LENGTH) \
     do                                                                  \
@@ -73,20 +73,20 @@
         assert_int_eq((EXPECTED_POSITION), (CONTEXT)->cursor);          \
     } while(0)
 
-#define assert_step_kind(STEP, EXPECTED_KIND) assert_int_eq(EXPECTED_KIND, step_get_kind(STEP))
-#define assert_test_kind(STEP, EXPECTED_KIND) assert_int_eq(EXPECTED_KIND, step_get_test_kind(STEP))
+#define assert_step_kind(STEP, EXPECTED_KIND) assert_int_eq(EXPECTED_KIND, step_kind(STEP))
+#define assert_test_kind(STEP, EXPECTED_KIND) assert_int_eq(EXPECTED_KIND, step_test_kind(STEP))
 
 #define assert_step(PATH, INDEX, EXPECTED_STEP_KIND, EXPECTED_TEST_KIND) \
-    assert_step_kind(path_get_step((PATH), INDEX), EXPECTED_STEP_KIND);  \
-    assert_test_kind(path_get_step((PATH), INDEX), EXPECTED_TEST_KIND)
+    assert_step_kind(path_get((PATH), INDEX), EXPECTED_STEP_KIND);  \
+    assert_test_kind(path_get((PATH), INDEX), EXPECTED_TEST_KIND)
 
-#define assert_name_length(STEP, NAME) assert_int_eq(strlen(NAME), name_test_step_get_length(STEP))
+#define assert_name_length(STEP, NAME) assert_int_eq(strlen(NAME), name_test_step_length(STEP))
 #define assert_name(STEP, NAME)                                         \
     assert_name_length(STEP, NAME);                                     \
-    assert_buf_eq(NAME, strlen(NAME), name_test_step_get_name(STEP), name_test_step_get_length(STEP))
+    assert_buf_eq(NAME, strlen(NAME), name_test_step_name(STEP), name_test_step_length(STEP))
 
 #define assert_no_predicate(PATH, INDEX)                             \
-    assert_false(step_has_predicate(path_get_step((PATH), INDEX)));  \
+    assert_false(step_has_predicate(path_get((PATH), INDEX)));  \
     assert_null((PATH)->steps[INDEX]->predicate)
 
 #define assert_root_step(PATH)                  \
@@ -95,7 +95,7 @@
 
 #define assert_name_step(PATH,INDEX, NAME, EXPECTED_STEP_KIND)      \
     assert_step((PATH), INDEX, EXPECTED_STEP_KIND, NAME_TEST);      \
-    assert_name(path_get_step((PATH), INDEX), NAME)
+    assert_name(path_get((PATH), INDEX), NAME)
 #define assert_single_name_step(PATH, INDEX, NAME) assert_name_step((PATH), INDEX, NAME, SINGLE)
 #define assert_recursive_name_step(PATH, INDEX, NAME) assert_name_step((PATH), INDEX, NAME, RECURSIVE)
 
@@ -103,40 +103,40 @@
 #define assert_single_wildcard_step(PATH, INDEX) assert_wildcard_step((PATH), INDEX, SINGLE)
 #define assert_recursive_wildcard_step(PATH, INDEX) assert_wildcard_step((PATH), INDEX, RECURSIVE)
 
-#define assert_type_kind(STEP, EXPECTED) assert_int_eq(EXPECTED, type_test_step_get_type(STEP))
+#define assert_type_kind(STEP, EXPECTED) assert_int_eq(EXPECTED, type_test_step_kind(STEP))
 
 #define assert_type_step(PATH, INDEX, EXPECTED_TYPE_KIND, EXPECTED_STEP_KIND) \
     assert_step((PATH), INDEX, EXPECTED_STEP_KIND, TYPE_TEST);            \
-    assert_type_kind(path_get_step((PATH), INDEX), EXPECTED_TYPE_KIND)
+    assert_type_kind(path_get((PATH), INDEX), EXPECTED_TYPE_KIND)
 
 #define assert_single_type_step(PATH, INDEX, EXPECTED_TYPE_KIND)    \
     assert_type_step((PATH), INDEX, EXPECTED_TYPE_KIND, SINGLE)
 #define assert_recursive_type_step(PATH, INDEX, EXPECTED_TYPE_KIND) \
     assert_type_step((PATH), INDEX, EXPECTED_TYPE_KIND, RECURSIVE)
 
-#define assert_predicate_kind(PREDICATE, EXPECTED) assert_int_eq(EXPECTED, predicate_get_kind(PREDICATE))
+#define assert_predicate_kind(PREDICATE, EXPECTED) assert_int_eq(EXPECTED, predicate_kind(PREDICATE))
 
 #define assert_predicate(PATH, PATH_INDEX, EXPECTED_PREDICATE_KIND)     \
-    assert_true(step_has_predicate(path_get_step((PATH), PATH_INDEX))); \
+    assert_true(step_has_predicate(path_get((PATH), PATH_INDEX))); \
     assert_not_null((PATH)->steps[PATH_INDEX]->predicate);              \
-    assert_not_null(step_get_predicate(path_get_step((PATH), PATH_INDEX))); \
-    assert_predicate_kind(step_get_predicate(path_get_step((PATH), PATH_INDEX)), EXPECTED_PREDICATE_KIND)
+    assert_not_null(step_predicate(path_get((PATH), PATH_INDEX))); \
+    assert_predicate_kind(step_predicate(path_get((PATH), PATH_INDEX)), EXPECTED_PREDICATE_KIND)
 
 #define assert_wildcard_predicate(PATH, PATH_INDEX) assert_predicate((PATH), PATH_INDEX, WILDCARD)
 
-#define assert_subscript_index(PREDICATE, VALUE) assert_int_eq(VALUE, subscript_predicate_get_index(PREDICATE))
+#define assert_subscript_index(PREDICATE, VALUE) assert_int_eq(VALUE, subscript_predicate_index(PREDICATE))
 #define assert_subscript_predicate(PATH, PATH_INDEX, INDEX_VALUE)       \
     assert_predicate((PATH), PATH_INDEX, SUBSCRIPT);                    \
-    assert_subscript_index(step_get_predicate(path_get_step((PATH), PATH_INDEX)), INDEX_VALUE);
+    assert_subscript_index(step_predicate(path_get((PATH), PATH_INDEX)), INDEX_VALUE);
 
-#define assert_slice_from(PREDICATE, VALUE) assert_int_eq(VALUE, slice_predicate_get_from(PREDICATE))
-#define assert_slice_to(PREDICATE, VALUE) assert_int_eq(VALUE, slice_predicate_get_to(PREDICATE))
-#define assert_slice_step(PREDICATE, VALUE) assert_int_eq(VALUE, slice_predicate_get_step(PREDICATE))
+#define assert_slice_from(PREDICATE, VALUE) assert_int_eq(VALUE, slice_predicate_from(PREDICATE))
+#define assert_slice_to(PREDICATE, VALUE) assert_int_eq(VALUE, slice_predicate_to(PREDICATE))
+#define assert_slice_step(PREDICATE, VALUE) assert_int_eq(VALUE, slice_predicate_step(PREDICATE))
 #define assert_slice_predicate(PATH, PATH_INDEX, FROM_VALUE, TO_VALUE, STEP_VALUE) \
     assert_predicate(path, PATH_INDEX, SLICE);                          \
-    assert_slice_from(step_get_predicate(path_get_step((PATH), PATH_INDEX)), FROM_VALUE); \
-    assert_slice_to(step_get_predicate(path_get_step((PATH), PATH_INDEX)), TO_VALUE); \
-    assert_slice_step(step_get_predicate(path_get_step(((PATH)), PATH_INDEX)), STEP_VALUE)
+    assert_slice_from(step_predicate(path_get((PATH), PATH_INDEX)), FROM_VALUE); \
+    assert_slice_to(step_predicate(path_get((PATH), PATH_INDEX)), TO_VALUE); \
+    assert_slice_step(step_predicate(path_get(((PATH)), PATH_INDEX)), STEP_VALUE)
 
 static bool count(step *each, void *context);
 static bool fail_count(step *each, void *context);
@@ -1235,7 +1235,7 @@ START_TEST (bad_path_input)
     assert_path_length(NULL, 0);
     assert_errno(EINVAL);
     reset_errno();
-    assert_null(path_get_step(NULL, 0));
+    assert_null(path_get(NULL, 0));
     assert_errno(EINVAL);
     
     reset_errno();
@@ -1248,7 +1248,7 @@ START_TEST (bad_path_input)
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 1);
 
     reset_errno();
-    assert_null(path_get_step(path, 1));
+    assert_null(path_get(path, 1));
     assert_errno(EINVAL);
 
     path_free(path);
@@ -1275,7 +1275,7 @@ START_TEST (bad_step_input)
     assert_errno(EINVAL);
 
     reset_errno();
-    assert_null(step_get_predicate(NULL));
+    assert_null(step_predicate(NULL));
     assert_errno(EINVAL);
     
     reset_errno();
@@ -1288,20 +1288,20 @@ START_TEST (bad_step_input)
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
 
     reset_errno();
-    assert_type_kind(path_get_step(path, 1), -1);
+    assert_type_kind(path_get(path, 1), -1);
     assert_errno(EINVAL);
 
-    step *step2 = path_get_step(path, 2);
+    step *step2 = path_get(path, 2);
     reset_errno();
-    assert_int_eq(0, name_test_step_get_length(step2));
-    assert_errno(EINVAL);
-
-    reset_errno();
-    assert_null(name_test_step_get_name(step2));
+    assert_int_eq(0, name_test_step_length(step2));
     assert_errno(EINVAL);
 
     reset_errno();
-    assert_null(step_get_predicate(step2));
+    assert_null(name_test_step_name(step2));
+    assert_errno(EINVAL);
+
+    reset_errno();
+    assert_null(step_predicate(step2));
     assert_errno(EINVAL);
 
     path_free(path);
@@ -1332,11 +1332,11 @@ START_TEST (bad_predicate_input)
     assert_errno(EINVAL);
 
     reset_errno();
-    assert_null(join_predicate_get_left(NULL));
+    assert_null(join_predicate_left(NULL));
     assert_errno(EINVAL);
 
     reset_errno();
-    assert_null(join_predicate_get_right(NULL));
+    assert_null(join_predicate_right(NULL));
     assert_errno(EINVAL);
 
     reset_errno();
@@ -1348,26 +1348,26 @@ START_TEST (bad_predicate_input)
     jsonpath *path = parse(context);
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
 
-    predicate *subscript = step_get_predicate(path_get_step(path, 1));
+    predicate *subscript = step_predicate(path_get(path, 1));
     reset_errno();
-    assert_int_eq(0, slice_predicate_get_to(subscript));
+    assert_int_eq(0, slice_predicate_to(subscript));
     assert_errno(EINVAL);
     reset_errno();
-    assert_int_eq(0, slice_predicate_get_from(subscript));
+    assert_int_eq(0, slice_predicate_from(subscript));
     assert_errno(EINVAL);
     reset_errno();
-    assert_int_eq(0, slice_predicate_get_step(subscript));
+    assert_int_eq(0, slice_predicate_step(subscript));
     assert_errno(EINVAL);
 
-    predicate *wildcard = step_get_predicate(path_get_step(path, 2));
+    predicate *wildcard = step_predicate(path_get(path, 2));
     reset_errno();
-    assert_int_eq(0, subscript_predicate_get_index(wildcard));
+    assert_int_eq(0, subscript_predicate_index(wildcard));
     assert_errno(EINVAL);
     reset_errno();
-    assert_null(join_predicate_get_left(wildcard));
+    assert_null(join_predicate_left(wildcard));
     assert_errno(EINVAL);
     reset_errno();
-    assert_null(join_predicate_get_right(wildcard));
+    assert_null(join_predicate_right(wildcard));
     assert_errno(EINVAL);
 
     path_free(path);

@@ -95,7 +95,7 @@ static void predicate_free(predicate *value)
     {
         return;
     }
-    if(JOIN == predicate_get_kind(value))
+    if(JOIN == predicate_kind(value))
     {
         path_free(value->join.left);
         path_free(value->join.right);
