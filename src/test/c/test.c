@@ -46,8 +46,6 @@ static void init_logging(void);
 
 int main(int argc, char **argv)
 {
-#pragma unused(argc, argv)
-
     init_logging();
 
     SRunner *runner = srunner_create(master_suite());
@@ -56,9 +54,20 @@ int main(int argc, char **argv)
     srunner_add_suite(runner, model_suite());
     srunner_add_suite(runner, nodelist_suite());
     srunner_add_suite(runner, evaluator_suite());
-    
-    srunner_run_all(runner, CK_NORMAL);
-    
+
+    switch(argc)
+    {
+        case 1:
+            srunner_run_all(runner, CK_NORMAL);
+            break;
+        case 2:
+            srunner_run(runner, argv[1], NULL, CK_NORMAL);
+            break;
+        case 3:
+            srunner_run(runner, argv[1], argv[2], CK_NORMAL);
+            break;
+    }
+
     int failures = srunner_ntests_failed(runner);
     srunner_free(runner);
     

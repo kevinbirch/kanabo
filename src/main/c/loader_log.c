@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- *
+ * 
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -38,59 +38,66 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "jsonpath.h"
+#include "loader.h"
 #include "conditions.h"
 
-static const char * const MESSAGES[] = 
+static const char * const MESSAGES[] =
 {
     "Success.",
-    "Expression argument was NULL.",
-    "Expression length was 0.",
+    "Input argument was NULL.",
+    "Input argument was zero length.",
     "Unable to allocate memory.",
-    "Not a JSONPath expression.",
-    "Premature end of input after position %d.",
-    "At position %d: unexpected character '%c', was expecting '%c' instead.",
-    "At position %d: empty predicate.",
-    "At position %d: missing closing predicate delimiter `]' before end of step.",
-    "At position %d: unsupported predicate found.",
-    "At position %d: extra characters after valid predicate definition.",
-    "At position %d: expected a name character, but found '%c' instead.",
-    "At position %d: expected a node type test.",
-    "At position %d: expected an integer.",
-    "At position %d: invalid number.",
-    "At position %d: slice step value must be non-zero."
+    "An error occured reading the input: %s at %zd.",
+    "An error occured scanning the input: %s at line %ld, column %ld.",
+    "An error occured parsing the input: %s at line %ld, column %ld.",
+    "An unexpected error has occured."
 };
 
-char *parser_status_message(const parser_context * restrict context)
+loader_status_code interpret_yaml_error(yaml_parser_t *parser);
+
+loader_status_code interpret_yaml_error(yaml_parser_t *parser)
+{
+    switch (parser->error)
+    {
+        case YAML_NO_ERROR:
+            return LOADER_SUCCESS;
+        case YAML_MEMORY_ERROR:
+            return ERR_LOADER_OUT_OF_MEMORY;
+        case YAML_READER_ERROR:
+            return ERR_READER_FAILED;
+        case YAML_SCANNER_ERROR:
+            return ERR_SCANNER_FAILED;
+        case YAML_PARSER_ERROR:
+            return ERR_PARSER_FAILED;
+        default:
+            return ERR_OTHER;
+    }
+}
+
+char *loader_status_message(const loader_context * restrict context)
 {
     PRECOND_NONNULL_ELSE_NULL(context);
-    char *message = NULL;
+    PRECOND_NONNULL_ELSE_NULL(context->parser);
     
-    switch(context->result.code)
+    char *message = NULL;
+    yaml_parser_t *parser = context->parser;
+    switch (context->code)
     {
-        case ERR_PREMATURE_END_OF_INPUT:
-            asprintf(&message, MESSAGES[context->result.code], context->cursor);
+        case ERR_READER_FAILED:
+            asprintf(&message, MESSAGES[context->code], parser->problem, parser->problem_offset);
+            break;	
+        case ERR_SCANNER_FAILED:
+                asprintf(&message, MESSAGES[context->code],
+                         parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
             break;
-        case ERR_EXPECTED_NODE_TYPE_TEST:
-        case ERR_EMPTY_PREDICATE:
-        case ERR_UNBALANCED_PRED_DELIM:
-        case ERR_EXTRA_JUNK_AFTER_PREDICATE:
-        case ERR_UNSUPPORTED_PRED_TYPE:
-        case ERR_EXPECTED_INTEGER:
-        case ERR_INVALID_NUMBER:
-            asprintf(&message, MESSAGES[context->result.code], context->cursor + 1);
-            break;
-        case ERR_UNEXPECTED_VALUE:
-            asprintf(&message, MESSAGES[context->result.code], context->cursor + 1, context->result.actual_char, context->result.expected_char);
-            break;
-        case ERR_EXPECTED_NAME_CHAR:
-            asprintf(&message, MESSAGES[context->result.code], context->cursor + 1, context->result.actual_char);
-            break;
+        case ERR_PARSER_FAILED:
+            asprintf(&message, MESSAGES[context->code],
+                     parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
+            break;	
         default:
-            message = strdup(MESSAGES[context->result.code]);
+            message = strdup(MESSAGES[context->code]);
             break;
     }
 
     return message;
 }
-

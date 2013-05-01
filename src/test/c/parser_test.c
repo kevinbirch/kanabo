@@ -1228,10 +1228,6 @@ static bool fail_count(step *each, void *context)
 START_TEST (bad_path_input)
 {
     reset_errno();
-    assert_path_kind(NULL, -1);
-    assert_errno(EINVAL);
-    
-    reset_errno();
     assert_path_length(NULL, 0);
     assert_errno(EINVAL);
     reset_errno();
@@ -1259,18 +1255,6 @@ END_TEST
 START_TEST (bad_step_input)
 {
     reset_errno();
-    assert_step_kind(NULL, -1);
-    assert_errno(EINVAL);
-
-    reset_errno();
-    assert_test_kind(NULL, -1);
-    assert_errno(EINVAL);
-
-    reset_errno();
-    assert_type_kind(NULL, -1);
-    assert_errno(EINVAL);
-    
-    reset_errno();
     assert_false(step_has_predicate(NULL));
     assert_errno(EINVAL);
 
@@ -1286,10 +1270,6 @@ START_TEST (bad_step_input)
 
     jsonpath *path = parse(context);
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
-
-    reset_errno();
-    assert_type_kind(path_get(path, 1), -1);
-    assert_errno(EINVAL);
 
     step *step2 = path_get(path, 2);
     reset_errno();
@@ -1311,10 +1291,6 @@ END_TEST
 
 START_TEST (bad_predicate_input)
 {
-    reset_errno();
-    assert_predicate_kind(NULL, -1);
-    assert_errno(EINVAL);
-
     reset_errno();
     assert_subscript_index(NULL, 0);
     assert_errno(EINVAL);

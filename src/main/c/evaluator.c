@@ -58,11 +58,11 @@ static bool evaluate_recursive_step(evaluator_context *context);
 
 static inline bool evaluate_test(const char * restrict name, evaluator_context *context, nodelist_map_function function);
 
-static bool apply_wildcard_test(node *each, void *context, nodelist *target);
-static bool apply_type_test(node *each, void *context, nodelist *target);
-static bool apply_name_test(node *each, void *context, nodelist *target);
+static bool apply_wildcard_test(node *each, void *argument, nodelist *target);
+static bool apply_type_test(node *each, void *argument, nodelist *target);
+static bool apply_name_test(node *each, void *argument, nodelist *target);
 
-static bool evaluate_predicate(node *value, evaluator_context *context, nodelist *target);
+static bool apply_predicate(node *value, void *argument, nodelist *target);
 static bool apply_wildcard_predicate(node *value, evaluator_context *context, nodelist *target);
 static bool apply_subscript_predicate(node *value, evaluator_context *context, nodelist *target);
 static bool apply_slice_predicate(node *value, evaluator_context *context, nodelist *target);
@@ -80,27 +80,77 @@ static int_fast32_t normalize_extent(bool specified, int_fast32_t actual, int_fa
 #define evaluator_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
 #define evaluator_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
 
-#define trace_string(FORMAT, ...) log_string(TRACE, component_name, FORMAT, ##__VA_ARGS__)
+#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 
 #define current_step(CONTEXT) path_get((CONTEXT)->path, (CONTEXT)->current_step)
 
 evaluator_context *make_evaluator(const document_model *model, const jsonpath *path)
 {
-    PRECOND_NONNULL_ELSE_NULL(model, path);
     evaluator_debug("creating evaluator context");
-    evaluator_context *result = (evaluator_context *)calloc(1, sizeof(evaluator_context));
-    if(NULL == result)
+    evaluator_context *context = (evaluator_context *)calloc(1, sizeof(evaluator_context));
+    if(NULL == context)
     {
-        evaluator_debug("uh oh! something went wrong");
+        evaluator_debug("uh oh! out of memory, can't allocate the evaluator context");
         return NULL;
     }
-    result->model = model;
-    result->path = path;
+    if(NULL == model)
+    {
+        evaluator_debug("model is null");
+        errno = EINVAL;
+        context->code = ERR_MODEL_IS_NULL;
+        return context;
+    }
+    if(NULL == path)
+    {
+        evaluator_debug("path is null");
+        errno = EINVAL;
+        context->code = ERR_PATH_IS_NULL;
+        return context;
+    }
+    if(NULL == model_get_document(model, 0))
+    {
+        evaluator_debug("document is null");
+        errno = EINVAL;
+        context->code = ERR_NO_DOCUMENT_IN_MODEL;
+        return context;
+    }
+    if(NULL == model_get_document_root(model, 0))
+    {
+        evaluator_debug("document root is null");
+        errno = EINVAL;
+        context->code = ERR_NO_ROOT_IN_DOCUMENT;
+        return context;
+    }
+    if(ABSOLUTE_PATH != path_kind(path))
+    {
+        evaluator_debug("path is not absolute");
+        errno = EINVAL;
+        context->code = ERR_PATH_IS_NOT_ABSOLUTE;
+        return context;
+    }
+    if(0 == path_length(path))
+    {
+        evaluator_debug("path is empty");
+        errno = EINVAL;
+        context->code = ERR_PATH_IS_EMPTY;
+        return context;
+    }
 
-    return result;
+    nodelist *list = make_nodelist();
+    if(NULL == list)
+    {
+        evaluator_debug("uh oh! out of memory, can't allocate the result nodelist");
+        context->code = ERR_EVALUATOR_OUT_OF_MEMORY;
+        return context;
+    }
+    context->list = list;
+    context->model = model;
+    context->path = path;
+
+    return context;
 }
 
-enum evaluator_status_code evaluator_status(evaluator_context *context)
+enum evaluator_status_code evaluator_status(const evaluator_context * restrict context)
 {
     return context->code;
 }
@@ -112,58 +162,25 @@ void evaluator_free(evaluator_context *context)
     {
         return;
     }
+    context->model = NULL;
+    context->path = NULL;
+    context->list = NULL;
+
     free(context);
 }
 
 nodelist *evaluate(evaluator_context *context)
 {
     PRECOND_NONNULL_ELSE_NULL(context);
-    if(NULL == context->model)
-    {
-        evaluator_trace("model is null");
-        context->code = ERR_MODEL_IS_NULL;
-        return NULL;
-    }
-    if(NULL == context->path)
-    {
-        evaluator_trace("path is null");
-        context->code = ERR_PATH_IS_NULL;
-        return NULL;
-    }
-    if(NULL == model_get_document(context->model, 0))
-    {
-        evaluator_trace("document is null");
-        context->code = ERR_NO_DOCUMENT_IN_MODEL;
-        return NULL;
-    }
-    if(NULL == model_get_document_root(context->model, 0))
-    {
-        evaluator_trace("document root is null");
-        context->code = ERR_NO_ROOT_IN_DOCUMENT;
-        return NULL;
-    }
-    if(ABSOLUTE_PATH != path_kind(context->path))
-    {
-        evaluator_trace("path is not absolute");
-        context->code = ERR_PATH_IS_NOT_ABSOLUTE;
-        return NULL;
-    }
-    if(0 == path_length(context->path))
-    {
-        evaluator_trace("path is empty");
-        context->code = ERR_PATH_IS_EMPTY;
-        return NULL;
-    }
+    PRECOND_NONNULL_ELSE_NULL(context->list);
+    PRECOND_NONNULL_ELSE_NULL(context->model);
+    PRECOND_NONNULL_ELSE_NULL(context->path);
+    PRECOND_NONNULL_ELSE_NULL(model_get_document(context->model, 0));
+    PRECOND_NONNULL_ELSE_NULL(model_get_document_root(context->model, 0));
+    PRECOND_ELSE_NULL(ABSOLUTE_PATH == path_kind(context->path));
+    PRECOND_ELSE_NULL(0 != path_length(context->path));
 
-    nodelist *list = make_nodelist();
-    if(NULL == list)
-    {
-        evaluator_trace("can't make nodelist");
-        context->code = ERR_EVALUATOR_OUT_OF_MEMORY;
-        return NULL;
-    }
-    nodelist_add(list, model_get_document(context->model, 0));
-    context->result = list;
+    nodelist_add(context->list, model_get_document(context->model, 0));
     
     return evaluate_steps(context);
 }
@@ -175,13 +192,13 @@ static nodelist *evaluate_steps(evaluator_context *context)
     if(!path_iterate(context->path, evaluate_step, context))
     {
         evaluator_debug("aborted, step: %d, code: %d (%s)", context->current_step, context->code, evaluator_status_message(context));
-        nodelist_free(context->result);
-        context->result = NULL;
+        nodelist_free(context->list);
+        context->list = NULL;
         return NULL;
     }
 
-    evaluator_debug("done, found %d matching nodes", nodelist_length(context->result));
-    return context->result;
+    evaluator_debug("done, found %d matching nodes", nodelist_length(context->list));
+    return context->list;
 }
 
 static bool evaluate_step(step* each, void *context)
@@ -212,15 +229,15 @@ static bool evaluate_step(step* each, void *context)
 static bool evaluate_root_step(evaluator_context *context)
 {
     evaluator_trace("evaluating root step");
-    node *document = nodelist_get(context->result, 0);
+    node *document = nodelist_get(context->list, 0);
     node *root = document_get_root(document);
     evaluator_trace("root test: adding root node (%p) from document (%p)", root, document);
-    return nodelist_set(context->result, root, 0);
+    return nodelist_set(context->list, root, 0);
 }
 
 static bool evaluate_recursive_step(evaluator_context *context)
 {
-    evaluator_trace("evaluating recursive step across %zd nodes", nodelist_length(context->result));
+    evaluator_trace("evaluating recursive step across %zd nodes", nodelist_length(context->list));
 
     // xxx - implement me!
     evaluator_trace("recurisve step: uh oh! not implemented yet, aborting...");
@@ -231,38 +248,43 @@ static bool evaluate_recursive_step(evaluator_context *context)
 static bool evaluate_single_step(evaluator_context *context)
 {
     bool result = false;
-    evaluator_trace("evaluating single step across %zd nodes", nodelist_length(context->result));
+    evaluator_trace("evaluating single step across %zd nodes", nodelist_length(context->list));
     switch(step_test_kind(current_step(context)))
     {
         case WILDCARD_TEST:
-            result = evaluate_test("wildcard", context, apply_wildcard_test);
+            result = evaluate_test("wildcard test", context, apply_wildcard_test);
             break;
         case TYPE_TEST:
-            result = evaluate_test("type", context, apply_type_test);
+            result = evaluate_test("type test", context, apply_type_test);
             break;
         case NAME_TEST:
-            result = evaluate_test("name", context, apply_name_test);
+            result = evaluate_test("name test", context, apply_name_test);
             break;
     }
+    if(result && step_has_predicate(current_step(context)))
+    {
+        result = evaluate_test("predicate", context, apply_predicate);
+    }
+
     return result;
 }
 
 static inline bool evaluate_test(const char * restrict name, evaluator_context *context, nodelist_map_function function)
 {
-    evaluator_trace("evaluating %s test across %zd nodes", name, nodelist_length(context->result));
-    nodelist *result = nodelist_map(context->result, function, context);
-    evaluator_trace("%s test: test %s completed", name, NULL == result ? "was not" : "was");
-    evaluator_trace("%s test: added %zd nodes", name, nodelist_length(result));
-    return NULL == result ? false : (nodelist_free(context->result), context->result = result, true);
+    evaluator_trace("evaluating %s across %zd nodes", name, nodelist_length(context->list));
+    nodelist *result = nodelist_map(context->list, function, context);
+    evaluator_trace("%s: %s", name, NULL == result ? "failed" : "completed");
+    evaluator_trace("%s: added %zd nodes", name, nodelist_length(result));
+    return NULL == result ? false : (nodelist_free(context->list), context->list = result, true);
 }
 
-static bool apply_wildcard_test(node *each, void *context, nodelist *target)
+static bool apply_wildcard_test(node *each, void *argument, nodelist *target)
 {
     switch(node_get_kind(each))
     {
         case MAPPING:
             evaluator_trace("wildcard test: adding %zd mapping values (%p)", node_get_size(each), each);
-            return iterate_mapping(each, add_values_to_nodelist_map_iterator, &(meta_context){(evaluator_context *)context, target});
+            return iterate_mapping(each, add_values_to_nodelist_map_iterator, &(meta_context){(evaluator_context *)argument, target});
         case SEQUENCE:
             evaluator_trace("wildcard test: adding %zd sequence (%p) items", node_get_size(each), each);
             return iterate_sequence(each, add_to_nodelist_sequence_iterator, target);
@@ -271,42 +293,42 @@ static bool apply_wildcard_test(node *each, void *context, nodelist *target)
             return nodelist_add(target, each);
         case DOCUMENT:
             evaluator_trace("wildcard test: uh-oh! found a document node somehow (%p), aborting...", each);
-            ((evaluator_context *)context)->code = ERR_UNEXPECTED_DOCUMENT_NODE;
+            ((evaluator_context *)argument)->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             return false;
     }
 }
 
-static bool apply_type_test(node *each, void *context, nodelist *target)
+static bool apply_type_test(node *each, void *argument, nodelist *target)
 {
-    bool result = false;
-    switch(type_test_step_kind(current_step((evaluator_context *)context)))
+    bool match = false;
+    switch(type_test_step_kind(current_step((evaluator_context *)argument)))
     {
         case OBJECT_TEST:
             evaluator_trace("type test: testing for an object (%d)", MAPPING);
-            result = MAPPING == node_get_kind(each);
+            match = MAPPING == node_get_kind(each);
             break;
         case ARRAY_TEST:
             evaluator_trace("type test: testing for an array (%d)", SEQUENCE);
-            result = SEQUENCE == node_get_kind(each);
+            match = SEQUENCE == node_get_kind(each);
             break;
         case STRING_TEST:
             evaluator_trace("type test: testing for a string (%d)", SCALAR_STRING);
-            result = SCALAR == node_get_kind(each) && SCALAR_STRING == scalar_get_kind(each);
+            match = SCALAR == node_get_kind(each) && SCALAR_STRING == scalar_get_kind(each);
             break;
         case NUMBER_TEST:
             evaluator_trace("type test: testing for a number (%d)", SCALAR_NUMBER);
-            result = SCALAR == node_get_kind(each) && SCALAR_NUMBER == scalar_get_kind(each);
+            match = SCALAR == node_get_kind(each) && SCALAR_NUMBER == scalar_get_kind(each);
             break;
         case BOOLEAN_TEST:
             evaluator_trace("type test: testing for a boolean (%d)", SCALAR_BOOLEAN);
-            result = SCALAR == node_get_kind(each) && SCALAR_BOOLEAN == scalar_get_kind(each);
+            match = SCALAR == node_get_kind(each) && SCALAR_BOOLEAN == scalar_get_kind(each);
             break;
         case NULL_TEST:
             evaluator_trace("type test: testing for a null (%d)", SCALAR_NULL);
-            result = SCALAR == node_get_kind(each) && SCALAR_NULL == scalar_get_kind(each);
+            match = SCALAR == node_get_kind(each) && SCALAR_NULL == scalar_get_kind(each);
             break;
     }
-    if(result)
+    if(match)
     {        
         evaluator_trace("type test: match! adding node (%p)", each);
         return nodelist_add(target, each);
@@ -318,9 +340,9 @@ static bool apply_type_test(node *each, void *context, nodelist *target)
     }
 }
 
-static bool apply_name_test(node *each, void *context, nodelist *target)
+static bool apply_name_test(node *each, void *argument, nodelist *target)
 {
-    step *context_step = current_step((evaluator_context *)context);
+    step *context_step = current_step((evaluator_context *)argument);
     trace_string("name test: using key '%s'", name_test_step_name(context_step), name_test_step_length(context_step));
 
     if(MAPPING != node_get_kind(each))
@@ -334,38 +356,27 @@ static bool apply_name_test(node *each, void *context, nodelist *target)
         evaluator_trace("name test: key not found in mapping, dropping (%p)", each);
         return true;
     }
-    if(step_has_predicate(context_step))
-    {
-        evaluator_trace("name test: match! evaluating predicate");
-        bool result = evaluate_predicate(value, (evaluator_context *)context, target);
-        evaluator_trace("name test: predicate %s completed", result ? "was" : "was not");
-        evaluator_trace("name test: (predicate) added %zd nodes", nodelist_length(target));
-        return result;
-    }
-    else
-    {
-        evaluator_trace("name test: match! adding node (%p)", value);
-        return nodelist_add(target, value);
-    }
+    evaluator_trace("name test: match! adding node (%p)", value);
+    return nodelist_add(target, value);
 }
 
-static bool evaluate_predicate(node *value, evaluator_context *context, nodelist *target)
+static bool apply_predicate(node *each, void *argument, nodelist *target)
 {
-    predicate *context_predicate = step_predicate(current_step(context));
-    switch(predicate_kind(context_predicate))
+    evaluator_context *context = (evaluator_context *)argument;
+    switch(predicate_kind(step_predicate(current_step(context))))
     {
         case WILDCARD:
-            evaluator_trace("name test: evaluating wildcard predicate");
-            return apply_wildcard_predicate(value, context, target);
+            evaluator_trace("evaluating wildcard predicate");
+            return apply_wildcard_predicate(each, context, target);
         case SUBSCRIPT:
-            evaluator_trace("name test: evaluating subscript predicate");
-            return apply_subscript_predicate(value, context, target);
+            evaluator_trace("evaluating subscript predicate");
+            return apply_subscript_predicate(each, context, target);
         case SLICE:
-            evaluator_trace("name test: evaluating slice predicate");
-            return apply_slice_predicate(value, context, target);
+            evaluator_trace("evaluating slice predicate");
+            return apply_slice_predicate(each, context, target);
         case JOIN:
-            evaluator_trace("name test: evaluating join predicate");
-            return apply_join_predicate(value, context, target);
+            evaluator_trace("evaluating join predicate");
+            return apply_join_predicate(each, context, target);
     }
 }
 

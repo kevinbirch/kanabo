@@ -38,36 +38,60 @@
 #pragma once
 
 #include <stdio.h>
+#include <yaml.h>
 
 #include "model.h"
 
 enum loader_status_code
 {
     LOADER_SUCCESS = 0,
-    ERR_INVALID_ARGUMENTS,
-    ERR_NO_MEMORY,
-    ERR_READER_FAILED,
-    ERR_SCANNER_FAILED,
-    ERR_PARSER_FAILED,
+    ERR_INPUT_IS_NULL,         // the input argument given was NULL
+    ERR_INPUT_SIZE_IS_ZERO,    // input length was 0
+    ERR_LOADER_OUT_OF_MEMORY,  // unable to allocate memory
+    ERR_READER_FAILED,         // unable to read from the input
+    ERR_SCANNER_FAILED,        // unable to lexically analyze the input
+    ERR_PARSER_FAILED,         // unable to parse the input
     ERR_OTHER
 };
 
 typedef enum loader_status_code loader_status_code;
 
-struct loader_result
+struct item
 {
-    loader_status_code code;
-    char *message;
-    bool dynamic_message;
-    size_t position;
-    size_t line;
+    node        *this;
+    struct item *next;
 };
 
-typedef struct loader_result loader_result;
+struct excursion
+{
+    size_t            length;
+    struct item      *car;
+    struct excursion *next;
+};
 
-loader_result *load_model_from_string(const unsigned char *input, size_t size, document_model * restrict model);
-loader_result *load_model_from_file(FILE * restrict input, document_model * restrict model);
+struct loader_context
+{
+    yaml_parser_t     *parser;
+    document_model    *model;
+    struct excursion  *excursions;
+    
+    size_t             length;
+    struct item       *head;
+    struct item       *last;
 
-void free_loader_result(loader_result *result);
+    loader_status_code code;
+};
+
+typedef struct loader_context loader_context;
+
+loader_context *make_string_loader(const unsigned char *input, size_t size);
+loader_context *make_file_loader(FILE * restrict input);
+enum loader_status_code loader_status(const loader_context * restrict context);
+
+void loader_free(loader_context *context);
+
+document_model *load(loader_context *context);
+
+char *loader_status_message(const loader_context * restrict context);
 
 

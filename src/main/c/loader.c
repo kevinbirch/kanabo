@@ -37,306 +37,349 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include <math.h>
 #include <errno.h>
-
-#include <yaml.h>
+#include <math.h>             /* for floor() */
+#include <stdio.h>            /* for fileno() */
+#include <sys/stat.h>         /* for fstat() */
 
 #include "loader.h"
+#include "log.h"
+#include "conditions.h"
 
-struct cell
+typedef bool (*collector)(node *each, void *context);
+
+struct mapping_context
 {
-    node *this;
-    struct cell *next;
+    node *key;
+    node *mapping;
 };
 
-struct excursion
-{
-    size_t length;
-    struct excursion *next;
-};
+extern loader_status_code interpret_yaml_error(yaml_parser_t *parser);
 
-struct context
-{
-    struct excursion *excursions;
-    
-    size_t depth;
-    struct cell *top;
-    struct cell *stack;
-};
+static loader_context *make_loader(void);
 
-typedef struct context document_context;
+static document_model *build_model(loader_context *context);
+static void event_loop(loader_context *context);
+static bool dispatch_event(yaml_event_t *event, loader_context *context);
 
-struct source
+static bool add_scalar(loader_context *context, yaml_event_t *event);
+static bool add_node(loader_context *context, node *value);
+
+static bool save_excursion(loader_context *context);
+static bool unwind_excursion(loader_context *loader, collector function, void *context);
+
+static bool unwind_sequence(loader_context *context);
+static bool unwind_mapping(loader_context *context);
+static bool unwind_document(loader_context *context);
+static bool unwind_model(loader_context *context);
+
+static bool collect_sequence(node *each, void *context);
+static bool collect_mapping(node *each, void *context);
+
+static node *pop_context(loader_context *context);
+static node *pop_node(loader_context *context, struct item **prev);
+
+#define component_name "loader"
+
+#define loader_info(FORMAT, ...)  log_info(component_name, FORMAT, ##__VA_ARGS__)
+#define loader_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
+#define loader_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
+
+#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
+
+loader_context *make_string_loader(const unsigned char *input, size_t size)
 {
-    enum
+    loader_debug("creating string loader context");
+    loader_context *context = make_loader();
+    if(NULL == context || LOADER_SUCCESS != context->code)
     {
-        STRING_INPUT,
-        FILE_INPUT
-    } kind;
-
-    union
-    {
-        struct
-        {
-            const unsigned char *string;
-            size_t size;
-        };
-        FILE *file;
-    };
-};
-
-typedef struct source source;
-
-static loader_result *load_model_from_source(const source * restrict input, document_model * restrict model);
-static void prepare_parser_source(yaml_parser_t *parser, const source * restrict input);
-static loader_result *build_model(yaml_parser_t *parser, document_model * restrict model, loader_result * restrict result);
-
-static bool dispatch_event(yaml_event_t *event, document_context *context, loader_result * restrict result);
-
-static bool push_scalar(document_context *context, yaml_event_t *event);
-static bool push_context(document_context *context, node *value);
-static node *pop_context(document_context *context);
-static void abort_context(document_context *context);
-
-static bool save_excursion(document_context *context);
-static size_t unwind_excursion(document_context *context);
-
-static bool unwind_sequence(document_context *context);
-static bool unwind_mapping(document_context *context);
-static bool unwind_document(document_context *context);
-static bool unwind_model(document_context *context, document_model *model);
-
-static inline enum node_kind context_kind(document_context *context);
-static inline node *context_top(document_context *context);
-
-static inline loader_result *invalid_input(void);
-static inline loader_result *memory_exhausted(loader_result *result);
-static inline loader_result *success(loader_result *result);
-static loader_result *parser_error(yaml_parser_t *parser, loader_result *result);
-
-loader_result *load_model_from_string(const unsigned char *string, size_t size, document_model * restrict model)
-{
-    if(NULL == model || NULL == string || 0 == size)
-    {        
-        return invalid_input();
+        return context;
     }
-    
-    source input;
-    input.kind = STRING_INPUT;
-    input.string = string;
-    input.size = size;
-    
-    return load_model_from_source(&input, model);
+    if(NULL == input)
+    {
+        loader_debug("input is null");
+        context->code = ERR_INPUT_IS_NULL;
+        errno = EINVAL;
+        return context;
+    }
+    if(0 == size)
+    {
+        loader_debug("input is empty");
+        context->code = ERR_INPUT_SIZE_IS_ZERO;
+        errno = EINVAL;
+        return context;
+    }
+
+    yaml_parser_set_input_string(context->parser, input, size);
+
+    return context;
 }
 
-loader_result *load_model_from_file(FILE * restrict file, document_model * restrict model)
+loader_context *make_file_loader(FILE * restrict input)
 {
-    if(NULL == model || NULL == file)
-    {        
-        return invalid_input();
+    loader_debug("creating file loader context");
+    loader_context *context = make_loader();
+    if(NULL == context || LOADER_SUCCESS != context->code)
+    {
+        return context;
     }
-    
-    source input;
-    input.kind = FILE_INPUT;
-    input.file = file;
-    
-    return load_model_from_source(&input, model);
+    if(NULL == input)
+    {
+        loader_debug("input is null");
+        context->code = ERR_INPUT_IS_NULL;
+        errno = EINVAL;
+        return context;
+    }
+    struct stat file_info;
+    if(-1 == fstat(fileno(input), &file_info))
+    {
+        loader_debug("fstat failed on input file");
+        context->code = ERR_READER_FAILED;
+        errno = EINVAL;
+        return context;
+    }
+    if(feof(input) || 0 == file_info.st_size)
+    {
+        loader_debug("input is empty");
+        context->code = ERR_INPUT_SIZE_IS_ZERO;
+        errno = EINVAL;
+        return context;
+    }
+
+    yaml_parser_set_input_file(context->parser, input);
+    return context;
 }
 
-static loader_result *load_model_from_source(const source * restrict input, document_model * restrict model)
+static loader_context *make_loader(void)
 {
-    memset(model, 0, sizeof(document_model));
-    loader_result *result = (loader_result *)malloc(sizeof(loader_result));
-    if(NULL == result)
+    loader_context *context = (loader_context *)calloc(1, sizeof(loader_context));
+    if(NULL == context)
     {
+        loader_debug("uh oh! out of memory, can't allocate the loader context");
         return NULL;
     }
 
-    yaml_parser_t parser;    
-    memset(&parser, 0, sizeof(parser));
-
-    if(!yaml_parser_initialize(&parser))
+    yaml_parser_t *parser = (yaml_parser_t *)calloc(1, sizeof(yaml_parser_t));
+    if(NULL == parser)
     {
-        parser_error(&parser, result);
-        yaml_parser_delete(&parser);
-        return result;
+        loader_debug("uh oh! out of memory, can't allocate the yaml parser");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        return context;
+    }
+    document_model *model = make_model(1);
+    if(NULL == model)
+    {
+        loader_debug("uh oh! out of memory, can't allocate the document model");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        return context;
+    }
+    
+    if(!yaml_parser_initialize(parser))
+    {
+        loader_debug("uh oh! can't initialize the yaml parser");
+        context->code = interpret_yaml_error(parser);
+        return context;
     }
 
-    if(!model_init(model, 1))
-    {
-        yaml_parser_delete(&parser);
-        model_free(model);
-        return memory_exhausted(result);
-    }
+    context->parser = parser;
+    context->model = model;
+    context->excursions = NULL;
+    context->head = NULL;
+    context->last = NULL;
 
-    prepare_parser_source(&parser, input);
-    result = build_model(&parser, model, result);
-    
-    yaml_parser_delete(&parser);
-    
-    return result;
+    return context;
 }
 
-static void prepare_parser_source(yaml_parser_t *parser, const source * restrict input)
+enum loader_status_code loader_status(const loader_context * restrict context)
 {
-    switch(input->kind)
-    {
-        case STRING_INPUT:
-            yaml_parser_set_input_string(parser, input->string, input->size);
-            break;
-        case FILE_INPUT:
-            yaml_parser_set_input_file(parser, input->file);
-            break;
-    }
+    return context->code;
 }
 
-static loader_result *build_model(yaml_parser_t *parser, document_model * restrict model, loader_result * restrict result)
+void loader_free(loader_context *context)
 {
-    yaml_event_t event;
-    
-    memset(&event, 0, sizeof(event));
-
-    document_context context;
-    memset(&context, 0, sizeof(context));
-    
-    result = success(result);
-    bool done = false;
-    while(!done)
+    loader_debug("destroying loader context");
+    if(NULL == context)
     {
-        if (!yaml_parser_parse(parser, &event))
-        {
-            result = parser_error(parser, result);
-            break;
-        }
-
-        done = dispatch_event(&event, &context, result);
+        return;
     }
-
-    if(LOADER_SUCCESS == result->code)
+    yaml_parser_delete(context->parser);
+    context->parser = NULL;
+    for(struct excursion *entry = context->excursions; NULL != entry; entry = context->excursions)
     {
-        unwind_model(&context, model);
+        context->excursions = entry->next;
+        free(entry);
+    }
+    context->excursions = NULL;
+    for(struct item *entry = context->head; NULL != entry; entry = context->head)
+    {
+        context->head = entry->next;
+        free(entry);
+    }
+    context->head = NULL;
+    context->last = NULL;
+    context->model = NULL;
+
+    free(context);
+}
+
+document_model *load(loader_context *context)
+{
+    PRECOND_NONNULL_ELSE_NULL(context);
+    PRECOND_NONNULL_ELSE_NULL(context->parser);
+    PRECOND_NONNULL_ELSE_NULL(context->model);
+
+    loader_debug("starting load...");
+    return build_model(context);
+}
+
+static document_model *build_model(loader_context *context)
+{
+    event_loop(context);
+
+    if(LOADER_SUCCESS == context->code)
+    {
+        unwind_model(context);
+        loader_debug("done. found %zd documents.", model_get_document_count(context->model));
     }
     else
     {
-        model_free(model);
-        abort_context(&context);
+#ifdef USE_LOGGING
+        char *message = loader_status_message(context);
+        loader_debug("aborted. unable to create document model. status: %d (%s)", context->code, message);
+        free(message);
+#endif
+        model_free(context->model);
+        context->model = NULL;
     }
 
-    return result;
+    return context->model;
 }
 
-static bool dispatch_event(yaml_event_t *event, document_context *context, loader_result * restrict result)
+static void event_loop(loader_context *context)
+{
+    yaml_event_t event;    
+    memset(&event, 0, sizeof(event));
+
+    loader_trace("entering event loop...");
+    context->code = LOADER_SUCCESS;
+    for(bool done = false; !done; done = dispatch_event(&event, context))
+    {
+        if (!yaml_parser_parse(context->parser, &event))
+        {
+            context->code = interpret_yaml_error(context->parser);
+            break;
+        }
+    }
+    loader_trace("finished parsing");
+}
+
+static bool dispatch_event(yaml_event_t *event, loader_context *context)
 {
     bool done = false;
     
     switch(event->type)
     {
         case YAML_NO_EVENT:
+            loader_trace("received nop event");
             break;
             
         case YAML_STREAM_START_EVENT:
+            loader_trace("received stream start event");
             break;
                 
         case YAML_STREAM_END_EVENT:
+            loader_trace("received stream end event");
             done = true;
             break;
                 
         case YAML_DOCUMENT_START_EVENT:
+            loader_trace("received document start event");
             break;
 
         case YAML_DOCUMENT_END_EVENT:
-            if(!unwind_document(context))
-            {
-                result = memory_exhausted(result);
-                done = true;
-            }
+            loader_trace("received document end event");
+            done = unwind_document(context);
             break;
                 
         case YAML_ALIAS_EVENT:
+            loader_trace("received alias event");
             break;
                 
         case YAML_SCALAR_EVENT:
-            if(!push_scalar(context, event))
-            {
-                result = memory_exhausted(result);
-                done = true;
-            }
+            loader_trace("received scalar event");
+            done = add_scalar(context, event);
             break;                
 
         case YAML_SEQUENCE_START_EVENT:
-            if(!save_excursion(context))
-            {
-                result = memory_exhausted(result);
-                done = true;
-            }
+            loader_trace("received sequence start event");
+            done = save_excursion(context);
             break;                
                 
         case YAML_SEQUENCE_END_EVENT:
-            if(!unwind_sequence(context))
-            {
-                result = memory_exhausted(result);
-                done = true;
-            }
+            loader_trace("received sequence end event");
+            done = unwind_sequence(context);
             break;
             
         case YAML_MAPPING_START_EVENT:
-            if(!save_excursion(context))
-            {
-                result = memory_exhausted(result);
-                done = true;
-            }
+            loader_trace("received mapping start event");
+            done = save_excursion(context);
             break;
 
         case YAML_MAPPING_END_EVENT:
-            if(!unwind_mapping(context))
-            {
-                result = memory_exhausted(result);
-                done = true;
-            }
+            loader_trace("received mapping end event");
+            done = unwind_mapping(context);
             break;                
     }
 
     return done;
 }
 
-static bool save_excursion(document_context *context)
+static bool save_excursion(loader_context *context)
 {
-    struct excursion *excursion = malloc(sizeof(struct excursion));
+    struct excursion *excursion = calloc(1, sizeof(struct excursion));
     if(NULL == excursion)
     {
-        return false;
+        loader_debug("uh oh! couldn't create an excursion object, aborting...");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        return true;
     }
+    loader_trace("saving excursion (%p) from node: %p", excursion, NULL == context->last ? NULL : context->last->this);
     excursion->length = 0;
+    excursion->car = context->last;
 
     if(NULL == context->excursions)
     {
+        loader_trace("no previous excursion");
         context->excursions = excursion;
         excursion->next = NULL;
     }
     else
     {
+        loader_trace("previous excursion (%p) is depth: %zd", context->excursions, context->excursions->length);
         excursion->next = context->excursions;
         context->excursions = excursion;
     }
-    return true;
+    return false;
 }
 
-static bool push_scalar(document_context *context, yaml_event_t *event)
+static bool add_scalar(loader_context *context, yaml_event_t *event)
 {
     node *scalar = NULL;
     if(YAML_SINGLE_QUOTED_SCALAR_STYLE == event->data.scalar.style ||
        YAML_DOUBLE_QUOTED_SCALAR_STYLE == event->data.scalar.style)
     {
+        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
         scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_STRING);
     }
     else if(0 == memcmp("null", event->data.scalar.value, 4))
     {
+        loader_trace("found scalar null");
         scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_NULL);
     }
     else if(0 == memcmp("true", event->data.scalar.value, 4) ||
             0 == memcmp("false", event->data.scalar.value, 5))
     {
+        trace_string("found scalar boolean '%s'", event->data.scalar.value, event->data.scalar.length);
         scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_BOOLEAN);
     }
     else
@@ -346,328 +389,205 @@ static bool push_scalar(document_context *context, yaml_event_t *event)
         strtod((char *)event->data.scalar.value, &endptr);
         if(0 != errno || endptr == (char *)event->data.scalar.value)
         {
+            trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
             scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_STRING);
         }
         else
         {
+            trace_string("found scalar number '%s'", event->data.scalar.value, event->data.scalar.length);
             scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_NUMBER);
         }
     }
 
-    return push_context(context, scalar);
+    return add_node(context, scalar);
 }
 
-static bool push_context(document_context *context, node *value)
+static bool add_node(loader_context *context, node *value)
 {    
-    struct cell *current = (struct cell *)malloc(sizeof(struct cell));
+    loader_trace("adding node to cache");
+    struct item *current = (struct item *)calloc(1, sizeof(struct item));
     if(NULL == current)
     {
-        return false;
+        loader_debug("uh oh! couldn't create a node, aborting...");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        return true;
     }
     current->this = value;    
+    current->next = NULL;
 
-    if(NULL == context->stack)
+    if(NULL == context->head)
     {
-        context->depth = 0;
-
-        context->stack = current;
-        current->next = NULL;
-        context->top = current;
+        loader_trace("cache is empty, this will be the head node");
+        context->length = 0;
+        context->head = current;
     }
+    else
+    {
+        loader_trace("adding after %p", context->last->this);
+        context->last->next = current;
+    }
+    context->last = current;
+    context->length++;
 
-    context->depth++;
     if(NULL != context->excursions)
     {
         context->excursions->length++;
     }
-        
-    current->next = context->top;
-    context->top = current;
 
-    return true;
+    loader_trace("added node (%p), cache size: %zd, excursion length: %zd", value, context->length, NULL == context->excursions ? 0 : context->excursions->length);
+
+    return false;
 }
 
-static node *pop_context(document_context *context)
+static bool unwind_excursion(loader_context *loader, collector function, void *context)
 {
-    if(NULL == context || NULL == context->stack || NULL == context->top)
+    loader_trace("unwinding excursion of length: %zd", loader->excursions->length);
+    struct item **cursor = NULL == loader->excursions->car ? &loader->head : &loader->excursions->car->next;
+    while(NULL != *cursor)
     {
-        return NULL;
-    }
-    
-    struct cell *top = context->top;
-    node *result = top->this;
-    context->top = top->next;
-    context->depth--;
-
-    free(top);
-    
-    if(NULL == context->top)
-    {
-        context->stack = NULL;
-    }
-    
-    return result;
-}
-
-static void abort_context(document_context *context)
-{
-    node *top = pop_context(context);
-    while(NULL != top)
-    {
-        node_free(top);
-        top = pop_context(context);
-    }
-
-    size_t length = unwind_excursion(context);
-    while(0 != length)
-    {
-        length = unwind_excursion(context);
-    }
-}
-
-static size_t unwind_excursion(document_context *context)
-{
-    if(NULL == context || NULL == context->excursions)
-    {
-        return 0;
-    }
-    
-    struct excursion *top = context->excursions;
-    size_t result = top->length;
-    context->excursions = top->next;
-
-    free(top);
-    
-    return result;
-}
-
-static bool unwind_sequence(document_context *context)
-{
-    size_t count = unwind_excursion(context);
-    node *sequence = make_sequence_node(count);
-    if(NULL == sequence)
-    {
-        return false;
-    }
-    for(size_t i = 0; i < count; i++)
-    {
-        if(!sequence_add(sequence, pop_context(context)))
+        if(!function(pop_node(loader, cursor), context))
         {
-            node_free(sequence);
-            return false;
+            loader_debug("uh oh! excursion collector failed, aborting...");
+            return true;
         }
     }
-    node *temp;
-    for(size_t i = 0; i < floor((double)count / 2); i++)
+
+    loader->last = loader->excursions->car;
+    struct excursion *top = loader->excursions;
+    loader->excursions = loader->excursions->next;
+    free(top);
+    loader_trace("cache size now: %zd", loader->length);
+
+    return false;
+}
+
+static bool collect_sequence(node *each, void *context)
+{
+    node *sequence = (node *)context;
+    loader_trace("adding node (%p) to sequence (%p)", each, sequence);
+    return sequence_add(sequence, each);
+}
+
+static bool unwind_sequence(loader_context *context)
+{
+    node *sequence = make_sequence_node(context->excursions->length);
+    if(NULL == sequence)
     {
-        temp = sequence_get(sequence, i);
-        sequence_set(sequence, sequence_get(sequence, count - 1 - i), i);
-        sequence_set(sequence, temp, count - 1 - i);
+        loader_debug("uh oh! couldn't create a sequence node, aborting...");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        return true;
     }
-    push_context(context, sequence);
-    return true;
-}
-
-static bool unwind_mapping(document_context *context)
-{
-    size_t count = unwind_excursion(context) / 2;
-    node *mapping = make_mapping_node(count);
-    
-    node *key, *value;
-    for(size_t i = 0; i < count; i++)
+    loader_trace("unwinding sequence (%p)", sequence);
+    if(unwind_excursion(context, collect_sequence, sequence))
     {
-        value = pop_context(context);
-        key = pop_context(context);
-        mapping_put(mapping, key, value);
+        loader_debug("uh oh! couldn't build the sequence, aborting...");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        free(sequence);
+        return true;
     }
-
-    push_context(context, mapping);
-    return true;
+    add_node(context, sequence);
+    loader_trace("added sequence (%p) of length: %zd", sequence, node_get_size(sequence));
+    return false;
 }
 
-static bool unwind_document(document_context *context)
+static bool collect_mapping(node *each, void *context)
 {
-    node *root = pop_context(context);
-    node *document = make_document_node(root);
-    push_context(context, document);
-    return true;
-}
-
-static bool unwind_model(document_context *context, document_model *model)
-{
-    if(1 == context->depth)
+    struct mapping_context *argument = (struct mapping_context *)context;
+    if(NULL == argument->key)
     {
-        model_add(model, pop_context(context));
+        loader_trace("caching mapping key (%p) for next invocation", each);
+        argument->key = each;
+        return true;
     }
     else
     {
-        node **documents = (node **)malloc(sizeof(node *) * context->depth);
-        if(NULL == documents)
+        loader_trace("adding key (%p) and value (%p) to mapping (%p)", argument->key, each, argument->mapping);
+        bool result = mapping_put(argument->mapping, argument->key, each);
+        argument->key = NULL;
+        return result;
+    }
+}
+
+static bool unwind_mapping(loader_context *context)
+{
+    node *mapping = make_mapping_node(context->excursions->length / 2);
+    if(NULL == mapping)
+    {
+        loader_debug("uh oh! couldn't create a mapping node, aborting...");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        return true;
+    }
+    loader_trace("unwinding mapping (%p)", mapping);
+    if(unwind_excursion(context, collect_mapping, &(struct mapping_context){.key=NULL, .mapping=mapping}))
+    {
+        loader_debug("uh oh! couldn't build the mapping, aborting...");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        free(mapping);
+        return true;
+    }
+
+    add_node(context, mapping);
+    loader_trace("added mapping of length: %zd", node_get_size(mapping));
+    return false;
+}
+
+static bool unwind_document(loader_context *context)
+{
+    loader_trace("unwinding document");
+    node *root = pop_context(context);
+    node *document = make_document_node(root);
+    if(NULL == document)
+    {
+        loader_debug("uh oh! couldn't create new document node, aborting...");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        return true;
+    }
+    add_node(context, document);
+
+    return false;
+}
+
+static bool unwind_model(loader_context *context)
+{
+    loader_trace("unwinding model");
+    while(0 < context->length)
+    {
+        loader_trace("adding document node");
+        if(!model_add(context->model, pop_context(context)))
         {
-            return false;
+            loader_debug("uh oh! unable to add document to model, aborting...");
+            context->code = ERR_LOADER_OUT_OF_MEMORY;
+            return true;
         }
-
-        for(size_t i = 0; i < context->depth; i++)
-        {
-            documents[(context->depth - 1) - i] = pop_context(context);
-        }
-
-        for(size_t i = 0; i < context->depth; i++)
-        {
-            model_add(model, documents[i]);
-        }
-        free(documents);    
     }
-    return true;
+    return false;
 }
 
-static inline enum node_kind context_kind(document_context *context)
-{
-    return node_get_kind(context_top(context));
-}
+/* 
+ * Utility Functions
+ * =================
+ */
 
-static inline node *context_top(document_context *context)
+static node *pop_context(loader_context *context)
 {
-    return context->top->this;
-}
-
-static inline loader_result *invalid_input(void)
-{
-    loader_result *result = (loader_result *)malloc(sizeof(loader_result));
-    if(NULL == result)
-    {
-        return NULL;
-    }
-    result->code = ERR_INVALID_ARGUMENTS;
-    result->dynamic_message = false;
-    result->message = "Invalid arguments";
-    result->position = 0;
-    result->line = 0;
-
+    node *result = pop_node(context, &context->head);
+    loader_trace("popping node (%p) from head of cache", result);
     return result;
 }
 
-static inline loader_result *memory_exhausted(loader_result *result)
+static node *pop_node(loader_context *context, struct item **cursor)
 {
-    result->code = ERR_NO_MEMORY;
-    result->dynamic_message = false;
-    result->message = "Memory is exhausted";
-    result->position = 0;
-    result->line = 0;
+    node *result = (*cursor)->this;
+    loader_trace("extracting node (%p) from cache", result);
+
+    struct item *entry = *cursor;
+    *cursor = (*cursor)->next;
+    entry->next = NULL;
+    free(entry);
+    entry = NULL;
+
+    context->length--;
 
     return result;
 }
-
-static inline loader_result *success(loader_result *result)
-{
-    result->code = LOADER_SUCCESS;
-    result->dynamic_message = false;
-    result->message = "Success";
-    result->position = 0;
-    result->line = 0;
-
-    return result;
-}
-
-static loader_result *parser_error(yaml_parser_t *parser, loader_result *result)
-{
-    switch (parser->error)
-    {
-        case YAML_MEMORY_ERROR:
-            return memory_exhausted(result);
-	
-        case YAML_READER_ERROR:
-            result->code = ERR_READER_FAILED;
-            result->position = parser->problem_offset;
-            result->line = 0;
-            if (parser->problem_value != -1)
-            {
-                result->dynamic_message = true;
-                asprintf(&result->message, "Reader error: %s: #%X at %zd", parser->problem, parser->problem_value, parser->problem_offset);
-            }
-            else
-            {
-                result->dynamic_message = true;
-                asprintf(&result->message, "Reader error: %s at %zd", parser->problem, parser->problem_offset);
-            }
-            if(NULL == result->message)
-            {
-                result->dynamic_message = false;
-                result->message = "Reader error";
-            }
-            break;
-	
-        case YAML_SCANNER_ERROR:
-            result->code = ERR_SCANNER_FAILED;
-            result->position = parser->problem_offset;
-            result->line = parser->problem_mark.line+1;
-            if (parser->context)
-            {
-                result->dynamic_message = true;
-                asprintf(&result->message, "Scanner error: %s at line %ld, column %ld; %s at line %ld, column %ld",
-                         parser->context, parser->context_mark.line+1, parser->context_mark.column+1,
-                         parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
-            }
-            else
-            {
-                result->dynamic_message = true;
-                asprintf(&result->message, "Scanner error: %s at line %ld, column %ld",
-                         parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
-            }
-            if(NULL == result->message)
-            {
-                result->dynamic_message = false;
-                result->message = "Scanner error";
-            }
-            break;
-	
-        case YAML_PARSER_ERROR:
-            result->code = ERR_PARSER_FAILED;
-            result->position = parser->problem_offset;
-            result->line = parser->problem_mark.line+1;
-            if (parser->context)
-            {
-                result->dynamic_message = true;
-                asprintf(&result->message, "Parser error: %s at line %ld, column %ld; %s at line %ld, column %ld",
-                         parser->context, parser->context_mark.line+1, parser->context_mark.column+1,
-                         parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
-            }
-            else
-            {
-                result->dynamic_message = true;
-                asprintf(&result->message, "Parser error: %s at line %ld, column %ld",
-                         parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
-            }
-            if(NULL == result->message)
-            {
-                result->dynamic_message = false;
-                result->message = "Parser error";
-            }
-            break;
-	
-        default:
-            result->code = ERR_OTHER;
-            result->position = 0;
-            result->line = 0;
-            result->dynamic_message = false;
-            result->message = "Other error";
-            break;
-    }
-
-    return result;
-}
-
-void free_loader_result(loader_result *result)
-{
-    if(NULL == result)
-    {
-        return;
-    }
-    if(result->dynamic_message)
-    {
-        free(result->message);
-    }
-    free(result);
-}
-
 

@@ -83,12 +83,6 @@ size_t model_get_document_count(const document_model * restrict model)
 
 enum node_kind node_get_kind(const node * restrict value)
 {
-    if(NULL == value)
-    {
-        errno = EINVAL;
-        return (enum node_kind)-1;
-    }
-
     return value->tag.kind;
 }
 

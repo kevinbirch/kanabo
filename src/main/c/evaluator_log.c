@@ -36,6 +36,7 @@
  */
 
 #include "evaluator.h"
+#include "conditions.h"
 
 static const char * const MESSAGES[] =
 {
@@ -53,9 +54,7 @@ static const char * const MESSAGES[] =
 
 const char *evaluator_status_message(const evaluator_context * restrict context)
 {
-    if(NULL == context)
-    {
-        return NULL;
-    }
+    PRECOND_NONNULL_ELSE_NULL(context);
+
     return MESSAGES[context->code];
 }

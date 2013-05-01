@@ -1,116 +1,112 @@
-% KANABO(1) Kanabo Manual  
-% Kevin Birch <kmb@pobox.com>  
-% October 23, 2012
+% Program: kanabo(1)  
+% Product: Kanabo 1.0  
+% Title: Kanabo Manual  
+% Author: Kevin Birch <kmb@pobox.com>  
+% Date: 2012-10-23  
 
-# NAME
+## NAME
 
-kanabo - A tool to bludgeon JSON/YAML files from  shell scripts
+kanabo - bludgeon JSON/YAML files from shell scripts
 
-# SYNOPSIS
+## SYNOPSIS
 
-kanabo \[*OPTION*\]... --query *expression*  
-kanabo \[--shell *shell*\] --file *input-file* --interactive
+`kanabo` [`--format` <format>]  [`--file` <file>] `--query` <expression>  
+`kanabo` [`--format` <format>] `--interactive` `--file` <file>
 
-# DESCRIPTION
+## DESCRIPTION
 
-Kanabo is a utility to query and examine JSON and YAML files from
-shell scripts: the strong made stronger.
+Kanabo is a utility to query and examine JSON and YAML files from shell scripts:
+the strong made stronger.
 
-There are two modes of operation: single expression mode and
-interactive mode.  In the first, a single JSONPath or YPath query
-expression given as a parameter is evaluated and the result is printed
-to *stdout*.  In the second, newline separated query expressions will
-be read from *stdin* and the result of each printed to *stdout*.
+A single JSONPath expression can be evaluated against a document or a series of
+expressions can be evaluated interactively.  For the former, a single JSONPath
+<expression> is evaluated and the result is printed to *stdout*.  In the later,
+newline separated expressions are read from *stdin* and the result of each is
+printed to *stdout*.
 
-If no *input-file* is specified in single expression mode, then the
-input file is read from *stdin*.  The *input-file* is required to be
-specified in interactive mode, as *stdin* will be monitored for
-expressions to evaluate.
+If no <file> is specified in when evaluating a single <expression>, then the 
+<file> is read from *stdin*.  However, the <file> is required to be specified in
+second form, as *stdin* will be monitored for expressions to evaluate.
 
-# OPTIONS
+## OPTIONS
 
--f, \--file *input-file*
-:   Specify a file to read the JSON/YAML data from instead of
-    *stdin*.  This option is required when using **interactive** mode.
+These options control the document data source and the output format:
 
--s, \--shell *shell*
-:    Specify the output format for certain structures returned by
-     queries (such as associative arrays).  The value of *shell* can
-     either **bash** (Bash shell) or **zsh** (Z shell).  The default
-     is to use **bash**.   
+  * `-f`, `--file` <file>
+    Specify a file to read the JSON/YAML data from instead of *stdin*.  This
+    option is required when using the `--interactive` option.
 
--v, \--version
-:    Print the version information and exit
+  * `-o`, `--format` <format>
+    Specify the output format for values returned by queries.  The supported
+    values of <format> are: **bash** (Bash shell), **zsh** (Z shell), **json**
+    or **yaml**.  The default value is **bash**.
 
--w, \--no-warranty
-:    Print the no-warranty information and exit
+These options control expression evaluation.  Only one option is allowed:
 
--h, \--help
-:    Print the usage summary and exit
+  * `-Q`, `--query` <expression>
+    Evaluate a single JSONPath <expression> and print the result to *stdout*.
 
-# MODE CONTROL
+  * `-I`, `--interactive`
+    Evaluate expressions interactivly.  Newline separated query expressions will
+    be read from *stdin* and the result of each printed to *stdout*.  When using
+    this option, the `--file` option is also requred.
 
-The mode to use is controlled by specifying either of the following
-options.  Only one option is allowed.
+Miscellaneous options:
 
--Q, \--query *expression*
-:    Evaluate a single JSONPath or YPath expression given as *expression*
-     and print the result to *stdout*.
+  * `-v`, `--version`
+    Print the version information and exit.
 
--I, \--interactive
-:    Enter interactive mode.  Newline separated query expressions will
-     be read from *stdin* and the result of each printed to *stdout*.  The
-     *input-file* must also be specified.
+  * `-w`, `--no-warranty`
+    Print the no-warranty information and exit.
 
-# INTERACTIVE MODE
+  * `-h`, `--help`
+    Print the usage summary and exit.
+
+## INTERACTIVE EVALUATION
 
 details
 
-# EXAMPLES
+## EXAMPLES
 
 examples
 
-# NOTES
+## JSONPATH EXTENSIONS
 
 notes
 
-# CAVEATS
+## CAVEATS
 
-Some properly formatted YPath expressions may not be valid for some
-JSON input files due to the stricter nature of JSON.
+are there any?
 
-# SEE ALSO
+## SEE ALSO
 
-**jshon**(1)
-:    Home page <http://kmkeen.com/jshon>
+These references may be of interest to the user of this program:
 
-**jq**(1)
-:    Home page <http://stedolan.github.com/jq/>
+  * [JSONPath Query Langauge][jsonpath]
 
-JSONPath Query Langauge
-:    The defacto specification <http://goessner.net/articles/JsonPath>
+  * [GNU Bash shell][bash]
 
-YPath Query Language
-:    The defacto specification <http://www.pkmurphy.com.au/images/ypathspec.pdf>
+  * [Z shell][zsh]
 
-GNU Bash shell
-:    Home page <http://www.gnu.org/software/bash>
+  * [jshon(1)][jshon]
 
-Z shell
-:    Home page <http://zsh.sourceforge.net>
+  * [jq(1)][jq]
 
-Wikipedia
-:    Entry on kanabo <http://en.wikipedia.org/wiki/Kanabo>
+[jsonpath]: http://goessner.net/articles/JsonPath "The defacto specification"
+[bash]: http://www.gnu.org/software/bash
+[zsh]: http://zsh.sourceforge.net
+[jshon]: http://kmkeen.com/jshon "An alternative tool"
+[jq]: http://stedolan.github.com/jq/ "An alternative tool"
 
-# REPORTING BUGS
+## REPORTING BUGS
 
 Please report bugs using the project issue tracker <https://github.com/kevinbirch/kanabo/issues>.
 
-# COPYRIGHT
+## COPYRIGHT
 
 Copyright (c) 2012 **Kevin Birch**  <kmb@pobox.com>.  All rights reserved.
 
-# COPYING
+## COPYING
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of an MIT-style License as described in the LICENSE
@@ -121,7 +117,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 LICENSE section for more details.
 
-# LICENSE
+## LICENSE
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

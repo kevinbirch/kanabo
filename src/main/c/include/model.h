@@ -149,7 +149,6 @@ typedef bool (*mapping_iterator)(node *key, node *value, void *context);
 bool iterate_mapping(const node * restrict mapping, mapping_iterator iterator, void *context);
 
 document_model *make_model(size_t capacity);
-bool            model_init(document_model * restrict model, size_t capacity);
 
 node *make_document_node(node * root);
 node *make_sequence_node(size_t capacity);

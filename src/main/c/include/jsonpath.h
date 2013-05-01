@@ -201,13 +201,13 @@ enum state
 struct parser_context
 {
     const uint8_t *input;
-    size_t  length;
-    size_t  cursor;
+    size_t         length;
+    size_t         cursor;
     
-    jsonpath *path;
-    cell *steps;
+    jsonpath      *path;
+    cell          *steps;
 
-    enum state state;
+    enum state     state;
     enum step_kind current_step_kind;
 
     struct
@@ -222,7 +222,7 @@ typedef struct parser_context parser_context;
 
 // parser entry point
 parser_context *make_parser(const uint8_t *expression, size_t length);
-enum parser_status_code parser_status(parser_context *context);
+enum parser_status_code parser_status(const parser_context * restrict context);
 
 void parser_free(parser_context *context);
 

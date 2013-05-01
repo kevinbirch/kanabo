@@ -40,6 +40,8 @@
 
 #include "model.h"
 
+static bool model_init(document_model * restrict model, size_t capacity);
+
 static inline node *make_node(enum node_kind kind);
 
 static inline void sequence_free(node *sequence);
@@ -77,7 +79,7 @@ node *make_sequence_node(size_t capacity)
     {
         result->content.size = 0;
         result->content.sequence.capacity = capacity;
-        result->content.sequence.value = (node **)malloc(sizeof(node *) * capacity);
+        result->content.sequence.value = (node **)calloc(1, sizeof(node *) * capacity);
         if(NULL == result->content.sequence.value)
         {
             free(result);
@@ -102,7 +104,7 @@ node *make_mapping_node(size_t capacity)
     {
         result->content.size = 0;
         result->content.mapping.capacity = capacity;
-        result->content.mapping.value = (key_value_pair **)malloc(sizeof(key_value_pair *) * capacity);
+        result->content.mapping.value = (key_value_pair **)calloc(1, sizeof(key_value_pair *) * capacity);
         if(NULL == result->content.mapping.value)
         {
             free(result);
@@ -127,7 +129,7 @@ node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kin
     {
         result->content.size = length;
         result->content.scalar.kind = kind;
-        result->content.scalar.value = (uint8_t *)malloc(length);
+        result->content.scalar.value = (uint8_t *)calloc(1, length);
         if(NULL == result->content.scalar.value)
         {
             free(result);
@@ -142,7 +144,7 @@ node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kin
 
 static inline node *make_node(enum node_kind kind)
 {
-    node *result = (node *)malloc(sizeof(struct node));
+    node *result = (node *)calloc(1, sizeof(struct node));
     if(NULL != result)
     {
         result->tag.kind = kind;
@@ -230,7 +232,7 @@ static inline void mapping_free(node *mapping)
 
 document_model *make_model(size_t capacity)
 {
-    document_model *result = (document_model *)malloc(sizeof(document_model));
+    document_model *result = (document_model *)calloc(1, sizeof(document_model));
     bool initialized = false;
     if(NULL != result)
     {
@@ -240,7 +242,7 @@ document_model *make_model(size_t capacity)
     return NULL != result && initialized ? result : NULL;
 }
 
-bool model_init(document_model * restrict model, size_t capacity)
+static bool model_init(document_model * restrict model, size_t capacity)
 {
     if(NULL == model || 0 == capacity)
     {
@@ -250,7 +252,7 @@ bool model_init(document_model * restrict model, size_t capacity)
 
     bool result = true;
     model->size = 0;
-    model->documents = (node **)malloc(sizeof(node *) * capacity);
+    model->documents = (node **)calloc(1, sizeof(node *) * capacity);
     if(NULL == model->documents)
     {
         model->capacity = 0;

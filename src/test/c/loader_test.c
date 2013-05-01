@@ -60,7 +60,106 @@ static const unsigned char * const YAML = (unsigned char *)
     "\n"
     "five: 1.5\n";
 
-static void assert_model_state(loader_result *result, document_model *model);
+static void assert_model_state(loader_context *loader, document_model *model);
+
+#define assert_loader_failure(CONTEXT, EXPECTED_RESULT)                 \
+    do                                                                  \
+    {                                                                   \
+        assert_not_null((CONTEXT));                                     \
+        assert_int_eq((EXPECTED_RESULT), loader_status((CONTEXT)));     \
+        char *_assert_message = loader_status_message((CONTEXT));       \
+        assert_not_null(_assert_message);                               \
+        log_debug("loader test", "received expected failure message: '%s'", _assert_message); \
+        free(_assert_message);                                          \
+    } while(0)
+
+START_TEST (null_string_input)
+{
+    loader_context *loader = make_string_loader(NULL, 50);
+    assert_not_null(loader);
+    assert_errno(EINVAL);
+
+    assert_loader_failure(loader, ERR_INPUT_IS_NULL);
+
+    loader_free(loader);
+}
+END_TEST
+
+START_TEST (zero_string_input_length)
+{
+    loader_context *loader = make_string_loader((unsigned char *)"", 0);
+    assert_not_null(loader);
+    assert_errno(EINVAL);
+
+    assert_loader_failure(loader, ERR_INPUT_SIZE_IS_ZERO);
+
+    loader_free(loader);
+}
+END_TEST
+
+START_TEST (null_file_input)
+{
+    loader_context *loader = make_file_loader(NULL);
+    assert_not_null(loader);
+    assert_errno(EINVAL);
+
+    assert_loader_failure(loader, ERR_INPUT_IS_NULL);    
+
+    loader_free(loader);
+}
+END_TEST
+
+START_TEST (eof_file_input)
+{
+    FILE *input = tmpfile();
+    fseek(input, 0, SEEK_END);
+
+    loader_context *loader = make_file_loader(input);
+    assert_not_null(loader);
+    assert_errno(EINVAL);
+
+    assert_loader_failure(loader, ERR_INPUT_SIZE_IS_ZERO);    
+
+    fclose(input);
+    loader_free(loader);
+}
+END_TEST
+
+START_TEST (null_context)
+{
+    assert_null(load(NULL));
+    assert_errno(EINVAL);    
+}
+END_TEST
+
+START_TEST (null_context_parser)
+{
+    document_model *model = make_model(1);
+    loader_context *loader = (loader_context *)calloc(1, sizeof(loader_context));
+    loader->parser = NULL;
+    loader->model = model;
+
+    assert_null(load(loader));
+    assert_errno(EINVAL);    
+
+    model_free(model);
+    free(loader);
+}
+END_TEST
+
+START_TEST (null_context_model)
+{
+    yaml_parser_t parser;
+    loader_context *loader = (loader_context *)calloc(1, sizeof(loader_context));
+    loader->parser = &parser;
+    loader->model = NULL;
+
+    assert_null(load(loader));
+    assert_errno(EINVAL);    
+
+    free(loader);
+}
+END_TEST
 
 START_TEST (load_from_file)
 {
@@ -74,37 +173,43 @@ START_TEST (load_from_file)
 
     rewind(input);
 
-    document_model model;
-    loader_result *result = load_model_from_file(input, &model);
+    loader_context *loader = make_file_loader(input);    
+    assert_not_null(loader);
+    document_model *model = load(loader);
+    assert_not_null(model);
 
-    assert_model_state(result, &model);
+    assert_model_state(loader, model);
 
     fclose(input);
-    model_free(&model);
-    free_loader_result(result);
+    model_free(model);
+    loader_free(loader);
 }
 END_TEST
 
 START_TEST (load_from_string)
 {
-    document_model model;
     size_t yaml_size = strlen((char *)YAML);
-    loader_result *result = load_model_from_string(YAML, yaml_size, &model);
 
-    assert_model_state(result, &model);
-    model_free(&model);
-    free(result);
+    loader_context *loader = make_string_loader(YAML, yaml_size);
+    assert_not_null(loader);
+    document_model *model = load(loader);
+    assert_not_null(model);
+
+    assert_model_state(loader, model);
+
+    model_free(model);
+    loader_free(loader);
 }
 END_TEST
 
-static void assert_model_state(loader_result *result, document_model *model)
+static void assert_model_state(loader_context *loader, document_model *model)
 {
-    assert_int_eq(LOADER_SUCCESS, result->code);
+    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
     assert_not_null(model);
     assert_int_eq(1, model_get_document_count(model));
 
     node *root = model_get_document_root(model, 0);
-    assert_int_eq(0, errno);
+    assert_noerr();
     assert_not_null(root);
     
     assert_node_kind(root, MAPPING);
@@ -112,70 +217,83 @@ static void assert_model_state(loader_result *result, document_model *model)
     assert_not_null(mapping_get_all(root));
 
     node *one = mapping_get_value(root, "one");
-    assert_int_eq(0, errno);
+    assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
     node *one_0 = sequence_get(one, 0);
-    assert_int_eq(0, errno);
+    assert_noerr();
     assert_node_kind(one_0, SCALAR);
     assert_scalar_value(one_0, "foo1");
-    assert_int_eq(SCALAR_STRING, scalar_get_kind(one_0));
+    assert_scalar_kind(one_0, SCALAR_STRING);
     node *one_1 = sequence_get(one, 1);
-    assert_int_eq(0, errno);
+    assert_noerr();
     assert_node_kind(one_1, SCALAR);
     assert_scalar_value(one_1, "bar1");
-    assert_int_eq(SCALAR_STRING, scalar_get_kind(one_1));
+    assert_scalar_kind(one_1, SCALAR_STRING);
 
     node *two = mapping_get_value(root, "two");
-    assert_int_eq(0, errno);
+    assert_noerr();
     assert_not_null(two);
     assert_node_kind(two, SCALAR);
     assert_scalar_value(two, "foo2");
-    assert_int_eq(SCALAR_STRING, scalar_get_kind(two));
+    assert_scalar_kind(two, SCALAR_STRING);
 
     node *three = mapping_get_value(root, "three");
-    assert_int_eq(0, errno);
+    assert_noerr();
     assert_not_null(three);
     assert_node_kind(three, SCALAR);
     assert_scalar_value(three, "null");
-    assert_int_eq(SCALAR_NULL, scalar_get_kind(three));
+    assert_scalar_kind(three, SCALAR_NULL);
 
     node *four = mapping_get_value(root, "four");
-    assert_int_eq(0, errno);
+    assert_noerr();
     assert_not_null(four);
     assert_node_kind(four, SEQUENCE);
     node *four_0 = sequence_get(four, 0);
-    assert_int_eq(0, errno);
+    assert_noerr();
     assert_node_kind(four_0, SCALAR);
     assert_scalar_value(four_0, "true");
-    assert_int_eq(SCALAR_BOOLEAN, scalar_get_kind(four_0));
+    assert_scalar_kind(four_0, SCALAR_BOOLEAN);
     assert_true(scalar_boolean_is_true(four_0));
     assert_false(scalar_boolean_is_false(four_0));
     node *four_1 = sequence_get(four, 1);
-    assert_int_eq(0, errno);
+    assert_noerr();
     assert_node_kind(four_0, SCALAR);
     assert_scalar_value(four_1, "false");
-    assert_int_eq(SCALAR_BOOLEAN, scalar_get_kind(four_1));
+    assert_scalar_kind(four_1, SCALAR_BOOLEAN);
     assert_true(scalar_boolean_is_false(four_1));
     assert_false(scalar_boolean_is_true(four_1));
 
     node *five = mapping_get_value(root, "five");
-    assert_int_eq(0, errno);
+    assert_noerr();
     assert_not_null(five);
     assert_node_kind(five, SCALAR);
     assert_scalar_value(five, "1.5");
-    assert_int_eq(SCALAR_NUMBER, scalar_get_kind(five));
+    assert_scalar_kind(five, SCALAR_NUMBER);
 }
 
 Suite *loader_suite(void)
 {
-    TCase *basic = tcase_create("basic");
-    tcase_add_test(basic, load_from_file);
-    tcase_add_test(basic, load_from_string);
+    TCase *bad_input_case = tcase_create("bad input");
+    tcase_add_test(bad_input_case, null_string_input);
+    tcase_add_test(bad_input_case, zero_string_input_length);
+    tcase_add_test(bad_input_case, null_file_input);
+    tcase_add_test(bad_input_case, eof_file_input);
+    tcase_add_test(bad_input_case, null_context);
+    tcase_add_test(bad_input_case, null_context_parser);
+    tcase_add_test(bad_input_case, null_context_model);
+
+    TCase *file_case = tcase_create("file");
+    tcase_add_test(file_case, load_from_file);
+
+    TCase *string_case = tcase_create("string");
+    tcase_add_test(string_case, load_from_string);
 
     Suite *loader = suite_create("Loader");
-    suite_add_tcase(loader, basic);
+    suite_add_tcase(loader, bad_input_case);
+    suite_add_tcase(loader, file_case);
+    suite_add_tcase(loader, string_case);
     
     return loader;
 }

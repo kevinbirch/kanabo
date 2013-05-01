@@ -58,11 +58,6 @@ bool path_iterate(const jsonpath * restrict path, path_iterator iterator, void *
 
 enum path_kind path_kind(const jsonpath * restrict path)
 {
-    if(NULL == path)
-    {
-        errno = EINVAL;
-        return (enum path_kind)-1;
-    }
     return path->kind;
 }
 
@@ -82,31 +77,16 @@ step *path_get(const jsonpath * restrict path, size_t index)
 
 enum step_kind step_kind(const step * restrict value)
 {
-    if(NULL == value)
-    {
-        errno = EINVAL;
-        return (enum step_kind)-1;
-    }
     return value->kind;
 }
 
 enum test_kind step_test_kind(const step * restrict value)
 {
-    if(NULL == value)
-    {
-        errno = EINVAL;
-        return (enum test_kind)-1;
-    }
     return value->test.kind;
 }
 
 enum type_test_kind type_test_step_kind(const step * restrict value)
 {
-    if(NULL == value || NAME_TEST == value->test.kind)
-    {
-        errno = EINVAL;
-        return (enum type_test_kind)-1;
-    }
     return value->test.type;
 }
 
@@ -139,11 +119,6 @@ predicate *step_predicate(const step * restrict value)
 
 enum predicate_kind predicate_kind(const predicate * restrict value)
 {
-    if(NULL == value)
-    {
-        errno = EINVAL;
-        return (enum predicate_kind)-1;
-    }
     return value->kind;
 }
 

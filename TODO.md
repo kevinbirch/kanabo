@@ -17,23 +17,20 @@ LICENSE file for more details.
 
 ### global
 
-* fix loader api
 * connect front & back ends
 * cut alpha release tag
-* don't return -1 from enum return type functions
 * move struct decls into separate header file
-* secure coding
+* security
+  * https://www.securecoding.cert.org/confluence/display/seccode/CERT+C+Secure+Coding+Standard
   * https://www.securecoding.cert.org/confluence/display/seccode/MEM07-C.+Ensure+that+the+arguments+to+calloc%28%29%2C+when+multiplied%2C+do+not+wrap
   * https://www.securecoding.cert.org/confluence/display/seccode/MEM08-C.+Use+realloc%28%29+only+to+resize+dynamically+allocated+arrays
   * https://www.securecoding.cert.org/confluence/display/seccode/MEM09-C.+Do+not+assume+memory+allocation+functions+initialize+memory
-    * calloc's zero bits are not necessrily equivalent to NULL
-
 
 ### evaluator
 
 #### Enhancements:
 
-* move predicate eval to step level, to match grammar
+* document api with doxygen
 
 #### Features:
 
@@ -59,7 +56,8 @@ LICENSE file for more details.
 * clean up and extract common patterns
 * add more checks for end of input
 * add exit state function with output
-* should we allow an optional qualified path expression after the filter expression in the union expression production?
+* use peg to parse filter dsl?
+  * example - https://github.com/jgm/peg-markdown/
 
 #### Features:
 
@@ -72,13 +70,8 @@ LICENSE file for more details.
 
 #### Enhancements:
 
+* replace strtod testing with regex
 * document api with doxygen
-* use precondition helpers
-* add full tracing
-* make loader api return an enum instead of a struct
-  * expose input struct, add c'tor/d'tor
-  * fold current load functions into single loader from input struct
-  * expose methods to make error message from input struct
 
 #### Features:
 
@@ -91,6 +84,7 @@ LICENSE file for more details.
 
 #### Enhancements:
 
+* replace x\_get\_y with x\_y
 * add human readable names for enum types
 * document api with doxygen
 * use precondition helpers
@@ -140,7 +134,7 @@ LICENSE file for more details.
 
 #### Enhancements:
 
-* add command line single test run support
+* implement parameterized tests (some expression given to BEGIN_TEST that is inserted in the test boiler plate)
 * add more beautiful runner output
 * can ctest's style of test macros be used in check?
   * https://github.com/bvdberg/ctest

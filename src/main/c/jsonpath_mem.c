@@ -40,20 +40,6 @@
 void step_free(step *step);
 static void predicate_free(predicate *predicate);
 
-void parser_free(parser_context *context)
-{
-    if(NULL == context->steps)
-    {
-        return;
-    }
-    for(cell *entry = context->steps; NULL != entry; entry = context->steps)
-    {
-        context->steps = entry->next;
-        free(entry);
-    }
-    context->steps = NULL;
-}
-
 void path_free(jsonpath *path)
 {
     if(NULL == path || NULL == path->steps || 0 == path->length)

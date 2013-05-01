@@ -50,7 +50,7 @@ static int dispatch(int command, struct settings *settings);
 static FILE *open_input(struct settings *settings);
 static int interactive_mode(struct settings *settings);
 static int expression_mode(struct settings *settings);
-static int load_model(struct settings *settings, document_model *model);
+static document_model *load_model(struct settings *settings);
 
 int main(const int argc, char * const *argv)
 {
@@ -99,51 +99,53 @@ static int dispatch(int command, struct settings *settings)
 
 static int interactive_mode(struct settings *settings)
 {
-    document_model model;
-
-    int result = load_model(settings, &model);
-    if(result)
+    document_model *model = load_model(settings);
+    if(NULL == model)
     {
-        return result;
+        return -1;
     }
     
     fprintf(stdout, "interactive mode\n");
+    model_free(model);
     return 0;
 }
 
 static int expression_mode(struct settings *settings)
 {
-    document_model model;
-
-    int result = load_model(settings, &model);
-    if(result)
+    document_model *model = load_model(settings);
+    if(NULL == model)
     {
-        return result;
+        return -1;
     }
     
     fprintf(stdout, "evaluating expression: \"%s\"\n", settings->expression);
+    model_free(model);
     return 0;
 }
 
-static int load_model(struct settings *settings, document_model *model)
+static document_model *load_model(struct settings *settings)
 {
     FILE *input = open_input(settings);
     if(NULL == input)
     {
         perror(settings->program_name);
-        return errno;
+        return NULL;
     }
     
-    int status = EXIT_SUCCESS;
-    loader_result *result = load_model_from_file(input, model);
-    if(result->code)
+    loader_context *loader = make_file_loader(input);    
+    document_model *model = load(loader);
+    
+    if(loader_status(loader))
     {
-        fprintf(stderr, "%s", result->message);
-        status = result->code;
+        char *message = loader_status_message(loader);
+        fprintf(stderr, "%s", message);
+        free(message);
+        model_free(model);
+        model = NULL;
     }
 
-    free_loader_result(result);
-    return status;
+    loader_free(loader);
+    return model;
 }
 
 static FILE *open_input(struct settings *settings)

@@ -255,9 +255,11 @@ announce-compile-sources:
 
 compile: process-resources announce-compile-sources $(OBJECTS)
 
-process-objects: compile $(LIBRARY_TARGET)
+process-objects: compile
 
-target: process-objects $(TARGET)
+library: process-objects $(LIBRARY_TARGET)
+
+target: library $(TARGET)
 
 announce-test-phase:
 	@echo ""
@@ -283,9 +285,11 @@ endif
 
 test-compile: process-test-resources announce-compile-test-sources $(TEST_OBJECTS)
 
-process-test-objects: test-compile $(TEST_PROGRAM_TARGET)
+process-test-objects: test-compile
 
-test: process-test-objects
+test-target: library process-test-objects $(TEST_PROGRAM_TARGET)
+
+test: test-target
 ifeq ($(strip $(SKIP_TESTS)),)
 	@echo ""
 	@echo " -- Executing test harness"
@@ -319,6 +323,6 @@ verify: test announce-install-phase
 install: verify
 	$(error "Not implemented yet")
 
-.PHONY: all check help clean create-buid-directories announce-build initialize announce-compile-phase generate-sources process-sources generate-resources process-resources announce-compile-sources compile process-objects announce-test-phase generate-test-sources process-test-sources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM)
+.PHONY: all check help clean create-buid-directories announce-build initialize announce-compile-phase generate-sources process-sources generate-resources process-resources announce-compile-sources compile process-objects target announce-test-phase generate-test-sources process-test-sources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM)
 
 

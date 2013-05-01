@@ -50,7 +50,7 @@ nodelist *make_nodelist(void)
 
 nodelist *make_nodelist_with_capacity(size_t capacity)
 {
-    nodelist *result = (nodelist *)malloc(sizeof(nodelist));
+    nodelist *result = (nodelist *)calloc(1, sizeof(nodelist));
     if(NULL == result)
     {
         return NULL;
@@ -215,7 +215,7 @@ static bool allocate(nodelist * restrict list, size_t capacity)
 {
     list->length = 0;
     list->capacity = capacity;
-    list->nodes = (node **)malloc(sizeof(node *) * capacity);
+    list->nodes = (node **)calloc(1, sizeof(node *) * capacity);
     if(NULL == list->nodes)
     {
         return false;
