@@ -75,6 +75,10 @@ The following output formats are supported:
   
   * [YAML][yaml]
 
+## JSONPATH
+
+an introduction to jsonpath
+
 ## INTERACTIVE EVALUATION
 
 details
