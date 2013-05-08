@@ -85,33 +85,30 @@ CFLAGS := $(CFLAGS) -g
 endif
 
 # automation helper functions
-source_to_target = $(foreach s, $(1), $(2)/$(basename $(notdir $(s))).$(3))
+source_to_target = $(foreach s, $(1), $(2)/$(basename $(s)).$(3))
 source_to_object = $(call source_to_target,$(1),$(2),o)
 source_to_depend = $(call source_to_target,$(1),$(2),d)
-# xxx - need to preserve subpaths below source dir
-
-find_source_files = $(shell find $(1) -type f \( -name '*.c' -or -name '*.C' \))
-make_vpath = $(shell find $(1) -type d | tr '\n' :)
+find_source_files = $(shell cd $(1) && find . -type f \( -name '*.c' -or -name '*.C' \) | sed 's|\./||')
 
 ## Project test source compiler settings
 TEST_CFLAGS := -I$(TEST_INCLUDE_DIR) $(CFLAGS)
-TEST_LDLIBS := $(addprefix -l, $(DEPENDENCIES)) $(addprefix -l, $(TEST_DEPENDENCIES))
+TEST_LDLIBS := $(LDLIBS) $(addprefix -l, $(TEST_DEPENDENCIES))
 
 ## Project source file locations
 SOURCES := $(call find_source_files,$(SOURCE_DIR))
 OBJECTS := $(call source_to_object,$(SOURCES),$(OBJECT_DIR))
-PROGRAM_SOURCES ?= $(shell grep -l -E '(int|void)\s+main' $(SOURCES))
+PROGRAM_SOURCES ?= $(shell grep -l -E '(int|void)\s+main' $(addprefix $(SOURCE_DIR)/,$(SOURCES)) | sed 's|$(SOURCE_DIR)/||')
 PROGRAM_OBJECTS := $(call source_to_object,$(PROGRAM_SOURCES),$(OBJECT_DIR))
 LIBRARY_OBJECTS := $(filter-out $(PROGRAM_OBJECTS),$(OBJECTS))
-vpath %.c $(call make_vpath,$(SOURCE_DIR))
+vpath %.c $(SOURCE_DIR)
 vpath %.h $(INCLUDE_DIR)
 DEPENDS := $(call source_to_depend,$(SOURCES),$(GENERATED_DEPEND_DIR))
 
 ## Project test source file locations
 ifeq ($(strip $(SKIP_TESTS)),)
-vpath %.c $(call make_vpath,$(TEST_SOURCE_DIR))
 TEST_SOURCES := $(call find_source_files,$(TEST_SOURCE_DIR))
 TEST_OBJECTS := $(call source_to_object,$(TEST_SOURCES),$(TEST_OBJECT_DIR))
+vpath %.c $(TEST_SOURCE_DIR)
 vpath %.h $(TEST_INCLUDE_DIR)
 TEST_DEPENDS := $(call source_to_depend,$(TEST_SOURCES),$(GENERATED_TEST_DEPEND_DIR))
 endif
@@ -150,6 +147,7 @@ $(GENERATED_DEPEND_DIR):
 	@mkdir -p $(GENERATED_DEPEND_DIR)
 
 $(GENERATED_DEPEND_DIR)/%.d: %.c | $(GENERATED_DEPEND_DIR)
+	@mkdir -p $(dir $@)
 	@$(CC) -MM -MG -MT '$(OBJECT_DIR)/$(*F).o $@' $(CFLAGS) $(CDEFS) $< > $@
 
 $(GENERATED_TEST_DEPEND_DIR):
@@ -164,14 +162,12 @@ $(OBJECT_DIR):
 $(TEST_OBJECT_DIR):
 	@mkdir -p $(TEST_OBJECT_DIR)
 
-# This taget can be used for ad-hoc builds of single objects
-%.o: %.c | $(OBJECT_DIR)
-	$(CC) $(CFLAGS) $(CDEFS) -c $< -o $(OBJECT_DIR)/$@
-
 $(OBJECT_DIR)/%.o: %.c | $(OBJECT_DIR)
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CDEFS) -c $< -o $@
 
 $(TEST_OBJECT_DIR)/%.o: %.c  | $(TEST_OBJECT_DIR)
+	@mkdir -p $(dir $@)
 	$(CC) $(TEST_CFLAGS) $(CDEFS) -c $< -o $@
 
 $(LIBRARY_TARGET): $(LIBRARY_OBJECTS)
