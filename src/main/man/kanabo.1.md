@@ -6,7 +6,7 @@ Date: 2012-10-23
 
 ## NAME
 
-kanabo - bludgeon JSON/YAML files from shell scripts
+kanabo - query JSON/YAML files from shell scripts with JSONPath
 
 ## SYNOPSIS
 
@@ -15,8 +15,9 @@ kanabo - bludgeon JSON/YAML files from shell scripts
 
 ## DESCRIPTION
 
-Kanabo is a utility to query and examine JSON and YAML files from shell scripts:
-the strong made stronger.
+Kanabo is a utility to bludgeon JSON and YAML files from shell scripts: the 
+strong made stronger.  Using [JSONPath][jsonpath], JSON or YAML files can be 
+queried and examined just as XPath is used for XML files.
 
 A single JSONPath expression can be evaluated against a document or a series of
 expressions can be evaluated interactively.  For the former, a single JSONPath
@@ -62,49 +63,125 @@ Miscellaneous options:
   * `-h`, `--help`
     Print the usage summary and exit.
 
+## OUTPUT FORMATS
+
+The following output formats are supported:
+
+  * [Bash][bash]
+  
+  * [Zsh][zsh]
+  
+  * [JSON][json]
+  
+  * [YAML][yaml]
+
 ## INTERACTIVE EVALUATION
 
 details
 
 ## EXAMPLES
 
-examples
+Given the following JSON document:
+
+```json
+{
+  "store":
+  {
+    "book":
+    [ 
+      {
+        "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      {
+        "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      {
+        "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      { 
+        "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      },
+      {
+        "category": "fiction",
+        "author": "夏目漱石 (NATSUME Sōseki)",
+        "title": "吾輩は猫である",
+        "isbn": "978-0-8048-3265-6",
+        "price": 13.29
+      }
+    ],
+    "bicycle":
+    {
+      "color": "red",
+      "price": 19.95
+    }
+  }
+}
+```
+
+This table demonstrates various JSONPath expressions and the results.  N.B. that the above JSON could have also been formatted as the equilvilent YAML document for the exact same results below.
+
+| Expression                    | Result                                         |
+| ----------------------------- | ---------------------------------------------- |
+| `$.store.book[*].author`      | The authors of all books in the store          |
+| `$..author`                   | All authors                                    |
+| `$.store.*`                   | All items in the store (5 books and a bicycle) |
+| `$.store..price`              | The prices of everything in the store          |
+| `$..book[2]`                  | The third book                                 |
+| `$..book[-1:]`                | The last book in order                         |
+| `$..book[0,1]`, `$..book[:2]`	| The first two books                            |
+| `$..book[?(@.isbn)]`          | All books with an isbn number                  |
+| `$..book[?(@.price < 10)]`    | All books with a price less than 10            |
+| `$..*`                        | All nodes of the JSON document                 |
+
 
 ## JSONPATH EXTENSIONS
 
-notes
+The dialect of JSONPath implemented by this program adds some features over those listed in the [defacto specifcation][jsonpath].  The following additional features are supported:
+
+* Predicates can be applied to any step type, not just names (e.g. `$..array[][1]` - the second items of all arrays).
+* Node type tests can filter nodes by their type (string, number, boolean, null, array, object).
+* Step names can be quoted (e.g. `$.store.'home appliances'.blender`).
 
 ## CAVEATS
 
-are there any?
+The dialect of JSONPath implemented by this program drops some features listed in the [defacto specifcation][jsonpath].  The following features defined in the specification are not and never will wbe supported:
+
+* *Bracket* Notation (e.g. `$\['store'\]\['book'\]\[0\]\['title'\]` instead of `$store.book\[0\].title`).
+* Script Expressions (e.g. `$..book\[(@.length-1)\]`)
+
+Bracket expressions provide no demonstrable semantic benefit over the dot notation, and hurts readability.  Script expressions are a very dangerous notion (see [Occupy Babel](http://www.cs.dartmouth.edu/~sergey/langsec/occupy/)), and static compiled languages are not amenable to evaluating expressions of the implementation language at runtime anway.
 
 ## SEE ALSO
 
 These references may be of interest to the user of this program:
 
   * [JSONPath Query Langauge][jsonpath]
-
   * [GNU Bash shell][bash]
-
   * [Z shell][zsh]
-
   * [jshon(1)][jshon]
-
   * [jq(1)][jq]
-
-[jsonpath]: http://goessner.net/articles/JsonPath "The defacto specification"
-[bash]: http://www.gnu.org/software/bash
-[zsh]: http://zsh.sourceforge.net
-[jshon]: http://kmkeen.com/jshon "An alternative tool"
-[jq]: http://stedolan.github.com/jq/ "An alternative tool"
 
 ## REPORTING BUGS
 
-Please report bugs using the project issue tracker <https://github.com/kevinbirch/kanabo/issues>.
+Please report bugs using the project issue tracker: <https://github.com/kevinbirch/kanabo/issues>.
 
 ## COPYRIGHT
 
-Copyright (c) 2012 **Kevin Birch**  <kmb@pobox.com>.  All rights reserved.
+Copyright (c) 2012 **Kevin Birch** <kmb@pobox.com>.  All rights reserved.
 
 ## COPYING
 
@@ -137,4 +214,10 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+[jsonpath]: http://goessner.net/articles/JsonPath "The defacto specification"
+[bash]: http://www.gnu.org/software/bash
+[zsh]: http://zsh.sourceforge.net
+[jshon]: http://kmkeen.com/jshon "An alternative tool"
+[jq]: http://stedolan.github.com/jq/ "An alternative tool"
 

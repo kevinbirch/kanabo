@@ -107,7 +107,6 @@ predicate expression
     | slice
     | union
     | filter
-    | script
     ;
 
 wildcard
@@ -266,13 +265,5 @@ hex lower
 
 hex upper
     = "A" | "B" | "C" | "D" | "E" | "F"
-    ;
-
-script
-    = "(", script expression, ")"
-    ;
-
-script expression
-    = ? implementation defined, ouside the scope of this grammar ?
     ;
 
