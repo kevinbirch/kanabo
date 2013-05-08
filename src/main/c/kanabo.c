@@ -176,7 +176,7 @@ static document_model *load_model(const struct settings * restrict settings)
     if(loader_status(loader))
     {
         char *message = loader_status_message(loader);
-        fprintf(stderr, "%s: %s\n", settings->program_name, message);
+        fprintf(stderr, "%s: while loading the data - %s\n", settings->program_name, message);
         free(message);
         close_input(settings, input);
         loader_free(loader);
@@ -187,7 +187,7 @@ static document_model *load_model(const struct settings * restrict settings)
     if(loader_status(loader))
     {
         char *message = loader_status_message(loader);
-        fprintf(stderr, "%s: %s\n", settings->program_name, message);
+        fprintf(stderr, "%s: while loading the data - %s\n", settings->program_name, message);
         free(message);
         model_free(model);
         model = NULL;
@@ -210,7 +210,7 @@ static jsonpath *parse_expression(const struct settings * restrict settings)
     if(parser_status(parser))
     {
         char *message = parser_status_message(parser);
-        fprintf(stderr, "%s: %s\n", settings->program_name, message);
+        fprintf(stderr, "%s: while parsing the jsonpath expression - %s\n", settings->program_name, message);
         free(message);
         parser_free(parser);
         return NULL;
@@ -220,7 +220,7 @@ static jsonpath *parse_expression(const struct settings * restrict settings)
     if(parser_status(parser))
     {
         char *message = parser_status_message(parser);
-        fprintf(stderr, "%s: %s\n", settings->program_name, message);
+        fprintf(stderr, "%s: while parsing the jsonpath expression - %s\n", settings->program_name, message);
         free(message);
         path_free(path);
         path = NULL;
@@ -243,7 +243,7 @@ static nodelist *evaluate_expression(const struct settings * restrict settings, 
     if(evaluator_status(evaluator))
     {
         const char *message = evaluator_status_message(evaluator);
-        fprintf(stderr, "%s: %s\n", settings->program_name, message);
+        fprintf(stderr, "%s: while evaluating the jsonpath expression - %s\n", settings->program_name, message);
         evaluator_free(evaluator);
         return NULL;
     }
@@ -252,7 +252,7 @@ static nodelist *evaluate_expression(const struct settings * restrict settings, 
     if(evaluator_status(evaluator))
     {
         const char *message = evaluator_status_message(evaluator);
-        fprintf(stderr, "%s: %s\n", settings->program_name, message);
+        fprintf(stderr, "%s: while evaluating the jsonpath expression - %s\n", settings->program_name, message);
         nodelist_free(list);
         list = NULL;
     }
