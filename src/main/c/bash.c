@@ -68,29 +68,30 @@ static bool emit_node(node *each, void *context)
 {
 #pragma unused(context)
 
+    bool result = true;
     switch(node_get_kind(each))
     {
         case DOCUMENT:
             log_trace("bash", "emitting document");
-            emit_node(document_get_root(each), NULL);
+            result = emit_node(document_get_root(each), NULL);
             break;
         case SCALAR:
-            emit_scalar(each);
-            fprintf(stdout, "\n");
+            result = emit_scalar(each);
+            EMIT("\n");
             break;
         case SEQUENCE:
             log_trace("bash", "emitting seqence");
-            iterate_sequence(each, emit_sequence_item, NULL);
-            fprintf(stdout, "\n");
+            result = iterate_sequence(each, emit_sequence_item, NULL);
+            EMIT("\n");
             break;
         case MAPPING:
             log_trace("bash", "emitting mapping");
-            iterate_mapping(each, emit_mapping_item, NULL);
-            fprintf(stdout, "\n");
+            result = iterate_mapping(each, emit_mapping_item, NULL);
+            EMIT("\n");
             break;
     }
 
-    return true;
+    return result;
 }
 
 static bool emit_scalar(const node * restrict each)
