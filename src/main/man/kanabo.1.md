@@ -1,8 +1,8 @@
-% Program: kanabo(1)  
-% Product: Kanabo 1.0  
-% Title: Kanabo Manual  
-% Author: Kevin Birch <kmb@pobox.com>  
-% Date: 2012-10-23  
+Program: kanabo(1)  
+Product: Kanabo 1.0  
+Title: Kanabo Manual  
+Author: Kevin Birch <kmb@pobox.com>  
+Date: 2012-10-23  
 
 ## NAME
 

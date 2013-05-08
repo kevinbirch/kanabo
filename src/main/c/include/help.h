@@ -38,12 +38,12 @@
 #pragma once
 
 static const char * const HELP =
-    "kanabo [*OPTION*]... --query *expression*\n"
-    "kanabo [--shell *shell*] --file *input-file* --interactive\n"
+    "usage: kanabo [--format <format>] [--file <file>] --query <expression>\n"
+    "       kanabo [--format <format>] --interactive --file <file>\n"
     "\n"
     "OPTIONS:\n"
-    "-f, --file *input-file*    Specify a file to read the JSON/YAML data from instead of *stdin*. This is requred for interactive mode.\n"
-    "-s, --shell *shell*        Specify the output format for queries (`bash' and `zsh' are supported).\n"
+    "-f, --file <input-file>    Specify a file to read the JSON/YAML data from instead of *stdin*. This is requred for interactive mode.\n"
+    "-s, --format <format>      Specify the output format for queries (`bash', `zsh', `json' and `yaml' are supported).\n"
     "\n"
     "STANDALONE OPTIONS:\n"
     "-v, --version              Print the version information and exit.\n"
