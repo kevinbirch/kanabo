@@ -10,8 +10,8 @@ kanabo - query JSON/YAML files from shell scripts with JSONPath
 
 ## SYNOPSIS
 
-`kanabo` [`--format` <format>]  [`--file` <file>] `--query` <expression>  
-`kanabo` [`--format` <format>] `--interactive` `--file` <file>
+`kanabo` [`--format` \<format\>]  [`--file` \<file\>] `--query` \<expression\>  
+`kanabo` [`--format` \<format\>] `--interactive` `--file` \<file\>
 
 ## DESCRIPTION
 
@@ -21,31 +21,31 @@ queried and examined just as XPath is used for XML files.
 
 A single JSONPath expression can be evaluated against a document or a series of
 expressions can be evaluated interactively.  For the former, a single JSONPath
-<expression> is evaluated and the result is printed to *stdout*.  In the later,
+\<expression\> is evaluated and the result is printed to *stdout*.  In the later,
 newline separated expressions are read from *stdin* and the result of each is
 printed to *stdout*.
 
-If no <file> is specified in when evaluating a single <expression>, then the 
-<file> is read from *stdin*.  However, the <file> is required to be specified in
+If no \<file\> is specified in when evaluating a single \<expression\>, then the 
+\<file\> is read from *stdin*.  However, the \<file\> is required to be specified in
 second form, as *stdin* will be monitored for expressions to evaluate.
 
 ## OPTIONS
 
 These options control the document data source and the output format:
 
-  * `-f`, `--file` <file>
+  * `-f`, `--file` \<file\>
     Specify a file to read the JSON/YAML data from instead of *stdin*.  This
     option is required when using the `--interactive` option.
 
-  * `-o`, `--format` <format>
+  * `-o`, `--format` \<format\>
     Specify the output format for values returned by queries.  The supported
-    values of <format> are: **bash** (Bash shell), **zsh** (Z shell), **json**
+    values of \<format\> are: **bash** (Bash shell), **zsh** (Z shell), **json**
     or **yaml**.  The default value is **bash**.
 
 These options control expression evaluation.  Only one option is allowed:
 
-  * `-Q`, `--query` <expression>
-    Evaluate a single JSONPath <expression> and print the result to *stdout*.
+  * `-Q`, `--query` \<expression\>
+    Evaluate a single JSONPath \<expression\> and print the result to *stdout*.
 
   * `-I`, `--interactive`
     Evaluate expressions interactivly.  Newline separated query expressions will
@@ -148,7 +148,7 @@ This table demonstrates various JSONPath expressions and the results.  N.B. that
 | `$..book[-1:]`                | The last book in order                         |
 | `$..book[0,1]`, `$..book[:2]`	| The first two books                            |
 | `$..book[?(@.isbn)]`          | All books with an isbn number                  |
-| `$..book[?(@.price < 10)]`    | All books with a price less than 10            |
+| `$..book[?(@.price \< 10)]`    | All books with a price less than 10            |
 | `$..*`                        | All nodes of the JSON document                 |
 
 
@@ -181,7 +181,7 @@ These references may be of interest to the user of this program:
 
 ## REPORTING BUGS
 
-Please report bugs using the project issue tracker: <https://github.com/kevinbirch/kanabo/issues>.
+Please report bugs using the project issue tracker: *https://github.com/kevinbirch/kanabo/issues*.
 
 ## COPYRIGHT
 
@@ -224,4 +224,5 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 [zsh]: http://zsh.sourceforge.net
 [jshon]: http://kmkeen.com/jshon "An alternative tool"
 [jq]: http://stedolan.github.com/jq/ "An alternative tool"
-
+[json]: http://json.org
+[yaml]: http://yaml.org
