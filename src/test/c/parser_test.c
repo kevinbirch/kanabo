@@ -289,10 +289,8 @@ START_TEST (quoted_empty_step)
     jsonpath *path = parse(context);
     
     assert_parser_failure(expression, context, path, ERR_EXPECTED_NAME_CHAR, 7);
-    fprintf(stderr, "blargle 1\n");
     
     parser_free(context);
-    fprintf(stderr, "blargle 2\n");
     path_free(path);
 }
 END_TEST

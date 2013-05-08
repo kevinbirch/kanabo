@@ -72,7 +72,7 @@ static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *co
 static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *step);
 static int_fast32_t normalize_from(predicate *predicate, node *value);
 static int_fast32_t normalize_to(predicate *predicate, node *value);
-static int_fast32_t normalize_extent(bool specified, int_fast32_t actual, int_fast32_t fallback, int_fast32_t length);
+static int_fast32_t normalize_extent(bool specified_p, int_fast32_t actual, int_fast32_t fallback, int_fast32_t length);
 
 #define component_name "evaluator"
 
@@ -516,9 +516,9 @@ static int_fast32_t normalize_to(predicate *slice, node *value)
     return normalize_extent(slice_predicate_has_to(slice), slice_predicate_to(slice), length, length);
 }
 
-static int_fast32_t normalize_extent(bool specified, int_fast32_t given, int_fast32_t fallback, int_fast32_t limit)
+static int_fast32_t normalize_extent(bool specified_p, int_fast32_t given, int_fast32_t fallback, int_fast32_t limit)
 {
-    if(!specified)
+    if(!specified_p)
     {
         evaluator_trace("slice predicate: (normalizer) no value specified, defaulting to %d", fallback);
         return fallback;

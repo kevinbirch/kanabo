@@ -26,6 +26,13 @@
         <isbn>0-395-19395-8</isbn>
         <price>22.99</price>
     </book>
+    <book>
+        <category>fiction</category>
+        <author>夏目漱石 (NATSUME Sōseki)</author>
+        <title>吾輩は猫である</title>
+        <isbn>978-0-8048-3265-6</isbn>
+        <price>13.29</price>
+    </book>
     <bicycle>
         <color>red</color>
         <price>19.95</price>

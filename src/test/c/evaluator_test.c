@@ -517,7 +517,7 @@ START_TEST (wildcard)
     evaluator_free(evaluator);
     path_free(path);
 
-    assert_nodelist_length(list, 5);
+    assert_nodelist_length(list, 6);
 
     assert_node_kind(nodelist_get(list, 0), MAPPING);
     assert_node_kind(nodelist_get(list, 1), MAPPING);
@@ -587,7 +587,7 @@ START_TEST (array_test)
     node *value = nodelist_get(list, 0);
     assert_not_null(value);
     assert_node_kind(value, SEQUENCE);
-    assert_node_size(value, 4);
+    assert_node_size(value, 5);
 
     nodelist_free(list);
 }
@@ -613,7 +613,7 @@ START_TEST (number_test)
     evaluator_free(evaluator);
     path_free(path);
 
-    assert_nodelist_length(list, 4);
+    assert_nodelist_length(list, 5);
 
     assert_scalar_value(nodelist_get(list, 0), "8.95");
     assert_scalar_value(nodelist_get(list, 1), "12.99");
@@ -653,7 +653,7 @@ START_TEST (wildcard_predicate)
     evaluator_free(evaluator);
     path_free(path);
 
-    assert_nodelist_length(list, 4);
+    assert_nodelist_length(list, 5);
 
     assert_node_kind(nodelist_get(list, 0), SCALAR);
     assert_node_kind(nodelist_get(list, 1), SCALAR);
@@ -876,7 +876,7 @@ START_TEST (slice_predicate_negative_from)
     node *author = mapping_get_value(book, "author");
     assert_noerr();
     assert_not_null(author);
-    assert_scalar_value(author, "J. R. R. Tolkien");
+    assert_scalar_value(author, "夏目漱石 (NATSUME Sōseki)");
 
     nodelist_free(list);
 }
@@ -902,7 +902,7 @@ START_TEST (slice_predicate_copy)
     evaluator_free(evaluator);
     path_free(path);
 
-    assert_nodelist_length(list, 4);
+    assert_nodelist_length(list, 5);
 
     reset_errno();
     assert_scalar_value(mapping_get_value(nodelist_get(list, 0), "author"), "Nigel Rees");
@@ -941,19 +941,22 @@ START_TEST (slice_predicate_reverse)
     evaluator_free(evaluator);
     path_free(path);
 
-    assert_nodelist_length(list, 4);
+    assert_nodelist_length(list, 5);
 
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 0), "author"), "J. R. R. Tolkien");
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 0), "author"), "夏目漱石 (NATSUME Sōseki)");
     assert_noerr();
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 1), "author"), "Herman Melville");
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 1), "author"), "J. R. R. Tolkien");
     assert_noerr();
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 2), "author"), "Evelyn Waugh");
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 2), "author"), "Herman Melville");
     assert_noerr();
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 3), "author"), "Nigel Rees");
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 3), "author"), "Evelyn Waugh");
+    assert_noerr();
+    reset_errno();
+    assert_scalar_value(mapping_get_value(nodelist_get(list, 4), "author"), "Nigel Rees");
     assert_noerr();
 
     nodelist_free(list);

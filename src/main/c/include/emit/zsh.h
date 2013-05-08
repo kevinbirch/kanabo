@@ -37,6 +37,8 @@
 
 #pragma once
 
-void emit_bash(void);
+#include "nodelist.h"
+#include "options.h"
 
+void emit_zsh(const nodelist * restrict list, const struct settings * restrict settings);
 

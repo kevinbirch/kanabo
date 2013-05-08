@@ -37,9 +37,9 @@
 
 #include <stdio.h>
 
-#include "zsh.h"
+#include "emit/zsh.h"
 
-int emit_zsh(void)
+void emit_zsh(const nodelist * restrict list, const struct settings * restrict settings)
 {
-    return 0;
+#pragma unused(list, settings)
 }

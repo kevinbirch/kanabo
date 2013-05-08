@@ -35,40 +35,11 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <check.h>
+#include <stdio.h>
 
-#include "test.h"
-#include "log.h"
+#include "emit/json.h"
 
-int main(int argc, char **argv)
+void emit_json(const nodelist * restrict list, const struct settings * restrict settings)
 {
-    enable_logging();
-    set_log_level_from_env();
-
-    SRunner *runner = srunner_create(master_suite());
-    srunner_add_suite(runner, loader_suite());
-    srunner_add_suite(runner, jsonpath_suite());
-    srunner_add_suite(runner, model_suite());
-    srunner_add_suite(runner, nodelist_suite());
-    srunner_add_suite(runner, evaluator_suite());
-
-    switch(argc)
-    {
-        case 1:
-            srunner_run_all(runner, CK_NORMAL);
-            break;
-        case 2:
-            srunner_run(runner, argv[1], NULL, CK_NORMAL);
-            break;
-        case 3:
-            srunner_run(runner, argv[1], argv[2], CK_NORMAL);
-            break;
-    }
-
-    int failures = srunner_ntests_failed(runner);
-    srunner_free(runner);
-    
-    return 0 == failures ? EXIT_SUCCESS : EXIT_FAILURE;
+#pragma unused(list, settings)
 }

@@ -36,9 +36,153 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 
-#include "bash.h"
+#include "emit/bash.h"
+#include "log.h"
 
-void emit_bash(void)
+static bool emit_node(node *value, void *context);
+static bool emit_scalar(const node * restrict each);
+static bool emit_quoted_scalar(const node * restrict each);
+static bool emit_raw_scalar(const node * restrict each);
+static bool emit_sequence_item(node *each, void *context);
+static bool emit_mapping_item(node *key, node *value, void *context);
+static bool scalar_contains_space(const node * restrict each);
+
+#define EMIT(STR) if(-1 == fprintf(stdout, (STR)))                      \
+    {                                                                   \
+        log_error("bash", "uh oh! couldn't emit literal %s", (STR));    \
+        return false;                                                   \
+    }    
+
+void emit_bash(const nodelist * restrict list, const struct settings * restrict settings)
 {
+    log_trace("bash", "emitting...");
+    if(!nodelist_iterate(list, emit_node, NULL))
+    {
+        perror(settings->program_name);
+    }
+}
+
+static bool emit_node(node *each, void *context)
+{
+#pragma unused(context)
+
+    switch(node_get_kind(each))
+    {
+        case DOCUMENT:
+            log_trace("bash", "emitting document");
+            emit_node(document_get_root(each), NULL);
+            break;
+        case SCALAR:
+            emit_scalar(each);
+            fprintf(stdout, "\n");
+            break;
+        case SEQUENCE:
+            log_trace("bash", "emitting seqence");
+            iterate_sequence(each, emit_sequence_item, NULL);
+            fprintf(stdout, "\n");
+            break;
+        case MAPPING:
+            log_trace("bash", "emitting mapping");
+            iterate_mapping(each, emit_mapping_item, NULL);
+            fprintf(stdout, "\n");
+            break;
+    }
+
+    return true;
+}
+
+static bool emit_scalar(const node * restrict each)
+{
+    if(SCALAR_STRING == scalar_get_kind(each) && scalar_contains_space(each))
+    {
+        log_trace("bash", "emitting quoted scalar");
+        return emit_quoted_scalar(each);
+    }
+    else
+    {
+        log_trace("bash", "emitting raw scalar");
+        return emit_raw_scalar(each);
+    }
+}
+
+static bool emit_quoted_scalar(const node * restrict each)
+{
+    EMIT("'");
+    if(!emit_raw_scalar(each))
+    {
+        log_error("bash", "uh oh! couldn't emit quoted scalar");
+        return false;
+    }
+    EMIT("'");
+
+    return true;
+}
+
+static bool emit_raw_scalar(const node * restrict each)
+{
+    return fwrite(scalar_get_value(each), node_get_size(each), 1, stdout);
+}
+
+static bool emit_sequence_item(node *each, void *context)
+{
+#pragma unused(context)
+    if(SCALAR == node_get_kind(each))
+    {
+        log_trace("bash", "emitting sequence item");
+        if(!emit_scalar(each))
+        {
+            return false;
+        }
+        EMIT(" ");
+    }
+    else
+    {
+        log_trace("bash", "skipping sequence item");
+    }
+
+    return true;
+}
+
+static bool emit_mapping_item(node *key, node *value, void *context)
+{
+#pragma unused(context)
+    if(SCALAR == node_get_kind(value))
+    {
+        log_trace("bash", "emitting mapping item");
+        EMIT("[");
+        if(!emit_scalar(key))
+        {
+            log_error("bash", "uh oh! couldn't emit mapping key");
+            return false;
+        }
+        EMIT("]=");
+        if(!emit_scalar(value))
+        {
+            log_error("bash", "uh oh! couldn't emit mapping value");
+            return false;
+        }
+        EMIT(" ");
+    }
+    else
+    {
+        log_trace("bash", "skipping mapping item");
+    }
+
+    return true;
+}
+
+static bool scalar_contains_space(const node * restrict each)
+{
+    uint8_t *value = scalar_get_value(each);
+    for(size_t i = 0; i < node_get_size(each); i++)
+    {
+        if(isspace(*(value + i)))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }

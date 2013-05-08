@@ -35,5 +35,10 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include "bash.h"
-#include "zsh.h"
+#pragma once
+
+#include "nodelist.h"
+#include "options.h"
+
+void emit_yaml(const nodelist * restrict list, const struct settings * restrict settings);
+

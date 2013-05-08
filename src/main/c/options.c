@@ -102,11 +102,11 @@ cmd process_options(const int argc, char * const *argv, struct settings * restri
                 break;
             case 'I':
                 ENSURE_COMMAND_ORTHOGONALITY(-1 != command);
-                command = ENTER_INTERACTIVE;
+                command = INTERACTIVE_MODE;
                 break;
             case 'Q':
                 ENSURE_COMMAND_ORTHOGONALITY(-1 != command);
-                command = EVAL_PATH;
+                command = EXPRESSION_MODE;
                 settings->expression = optarg;
                 break;
             case 's':
@@ -136,7 +136,7 @@ cmd process_options(const int argc, char * const *argv, struct settings * restri
         fprintf(stderr, "%s: either `--query <expression>' or `--interactive' must be specified.\n", settings->program_name);
         command = SHOW_HELP;
     }
-    else if(ENTER_INTERACTIVE == command && NULL == settings->input_file_name)
+    else if(INTERACTIVE_MODE == command && NULL == settings->input_file_name)
     {
         command = SHOW_HELP;
     }
@@ -153,6 +153,14 @@ static inline int32_t process_emit_mode(const char * restrict argument)
     else if(strncmp("zsh", argument, 3) == 0)
     {
         return ZSH;
+    }
+    else if(strncmp("json", argument, 4) == 0)
+    {
+        return JSON;
+    }
+    else if(strncmp("yaml", argument, 4) == 0)
+    {
+        return YAML;
     }
     else
     {

@@ -88,6 +88,7 @@ endif
 source_to_target = $(foreach s, $(1), $(2)/$(basename $(notdir $(s))).$(3))
 source_to_object = $(call source_to_target,$(1),$(2),o)
 source_to_depend = $(call source_to_target,$(1),$(2),d)
+# xxx - need to preserve subpaths below source dir
 
 find_source_files = $(shell find $(1) -type f \( -name '*.c' -or -name '*.C' \))
 make_vpath = $(shell find $(1) -type d | tr '\n' :)

@@ -44,13 +44,24 @@
 #include "help.h"
 #include "options.h"
 #include "loader.h"
-#include "shell.h"
+#include "jsonpath.h"
+#include "evaluator.h"
+#include "emit.h"
+#include "log.h"
 
-static int dispatch(int command, struct settings *settings);
-static FILE *open_input(struct settings *settings);
-static int interactive_mode(struct settings *settings);
-static int expression_mode(struct settings *settings);
-static document_model *load_model(struct settings *settings);
+static int dispatch(int command, const struct settings * restrict settings);
+
+static int interactive_mode(const struct settings * restrict settings);
+static int expression_mode(const struct settings * restrict settings);
+
+static document_model *load_model(const struct settings * restrict settings);
+static jsonpath *parse_expression(const struct settings * restrict settings);
+static nodelist *evaluate_expression(const struct settings * restrict settings, const document_model *model, const jsonpath *path);
+
+static FILE *open_input(const struct settings * restrict settings);
+static void close_input(const struct settings * restrict settings, FILE *input);
+
+static emit_function get_emitter(const struct settings * restrict settings);
 
 int main(const int argc, char * const *argv)
 {
@@ -60,6 +71,9 @@ int main(const int argc, char * const *argv)
         return EXIT_FAILURE;
     }
 
+    enable_logging();
+    set_log_level_from_env();
+
     struct settings settings;
     memset(&settings, 0, sizeof(settings));
     cmd command = process_options(argc, argv, &settings);
@@ -67,7 +81,7 @@ int main(const int argc, char * const *argv)
     return dispatch(command, &settings);
 }
 
-static int dispatch(int command, struct settings *settings)
+static int dispatch(int command, const struct settings * restrict settings)
 {
     int result = 0;
     
@@ -82,49 +96,70 @@ static int dispatch(int command, struct settings *settings)
         case SHOW_WARRANTY:
             fprintf(stdout, "%s", NO_WARRANTY);
             break;
-        case ENTER_INTERACTIVE:
+        case INTERACTIVE_MODE:
             result = interactive_mode(settings);
             break;
-        case EVAL_PATH:
+        case EXPRESSION_MODE:
             result = expression_mode(settings);
-            break;
-        default:
-            fprintf(stderr, "panic: unknown command state! this should not happen.\n");
-            result = -1;
             break;
     }
 
     return result;
 }
 
-static int interactive_mode(struct settings *settings)
+static int interactive_mode(const struct settings * restrict settings)
 {
     document_model *model = load_model(settings);
     if(NULL == model)
     {
-        return -1;
+        return EXIT_FAILURE;
     }
     
-    fprintf(stdout, "interactive mode\n");
+    log_debug("kanabo", "interactive mode");
     model_free(model);
-    return 0;
+
+    return EXIT_SUCCESS;
 }
 
-static int expression_mode(struct settings *settings)
+static int expression_mode(const struct settings * restrict settings)
 {
+    log_debug("kanabo", "evaluating expression: \"%s\"", settings->expression)
     document_model *model = load_model(settings);
     if(NULL == model)
     {
-        return -1;
+        return EXIT_FAILURE;
     }
     
-    fprintf(stdout, "evaluating expression: \"%s\"\n", settings->expression);
+    jsonpath *path = parse_expression(settings);
+    if(NULL == path)
+    {
+        return EXIT_FAILURE;
+    }
+
+    nodelist *list = evaluate_expression(settings, model, path);
+    if(NULL == list)
+    {
+        return EXIT_FAILURE;
+    }
+
+    emit_function emit = get_emitter(settings);
+    if(NULL == emit)
+    {
+        return EXIT_FAILURE;
+    }
+
+    emit(list, settings);
+
     model_free(model);
-    return 0;
+    path_free(path);
+    nodelist_free(list);
+
+    return EXIT_SUCCESS;
 }
 
-static document_model *load_model(struct settings *settings)
+static document_model *load_model(const struct settings * restrict settings)
 {
+    log_trace("kanabo", "loading model")
     FILE *input = open_input(settings);
     if(NULL == input)
     {
@@ -132,31 +167,149 @@ static document_model *load_model(struct settings *settings)
         return NULL;
     }
     
-    loader_context *loader = make_file_loader(input);    
-    document_model *model = load(loader);
-    
+    loader_context *loader = make_file_loader(input);
+    if(NULL == loader)
+    {
+        perror(settings->program_name);
+        return NULL;
+    }
     if(loader_status(loader))
     {
         char *message = loader_status_message(loader);
-        fprintf(stderr, "%s", message);
+        fprintf(stderr, "%s: %s\n", settings->program_name, message);
+        free(message);
+        close_input(settings, input);
+        loader_free(loader);
+        return NULL;
+    }
+
+    document_model *model = load(loader);    
+    if(loader_status(loader))
+    {
+        char *message = loader_status_message(loader);
+        fprintf(stderr, "%s: %s\n", settings->program_name, message);
         free(message);
         model_free(model);
         model = NULL;
     }
 
+    close_input(settings, input);
     loader_free(loader);
     return model;
 }
 
-static FILE *open_input(struct settings *settings)
+static jsonpath *parse_expression(const struct settings * restrict settings)
+{
+    log_trace("kanabo", "parsing expression")
+    parser_context *parser = make_parser((uint8_t *)settings->expression, strlen(settings->expression));
+    if(NULL == parser)
+    {
+        perror(settings->program_name);
+        return NULL;
+    }
+    if(parser_status(parser))
+    {
+        char *message = parser_status_message(parser);
+        fprintf(stderr, "%s: %s\n", settings->program_name, message);
+        free(message);
+        parser_free(parser);
+        return NULL;
+    }
+
+    jsonpath *path = parse(parser);
+    if(parser_status(parser))
+    {
+        char *message = parser_status_message(parser);
+        fprintf(stderr, "%s: %s\n", settings->program_name, message);
+        free(message);
+        path_free(path);
+        path = NULL;
+    }
+
+    parser_free(parser);
+    return path;
+}
+
+static nodelist *evaluate_expression(const struct settings * restrict settings, const document_model *model, const jsonpath *path)
+{
+    log_trace("kanabo", "evaluating expression")
+    evaluator_context *evaluator = make_evaluator(model, path);
+    if(NULL == evaluator)
+    {
+        fprintf(stderr, "%s: an internal error has occured.\n", settings->program_name);
+        perror(settings->program_name);
+        return NULL;
+    }
+    if(evaluator_status(evaluator))
+    {
+        const char *message = evaluator_status_message(evaluator);
+        fprintf(stderr, "%s: %s\n", settings->program_name, message);
+        evaluator_free(evaluator);
+        return NULL;
+    }
+
+    nodelist *list = evaluate(evaluator);
+    if(evaluator_status(evaluator))
+    {
+        const char *message = evaluator_status_message(evaluator);
+        fprintf(stderr, "%s: %s\n", settings->program_name, message);
+        nodelist_free(list);
+        list = NULL;
+    }
+    
+    evaluator_free(evaluator);
+    return list;
+}
+
+static FILE *open_input(const struct settings * restrict settings)
 {
     if(NULL == settings->input_file_name)
     {
+        log_debug("kanabo", "reading from stdin");
         return stdin;
     }
     else
     {
+        log_debug("kanabo", "reading from file: '%s'", settings->input_file_name);
         return fopen(settings->input_file_name, "r");
     }
 }
 
+static void close_input(const struct settings * restrict settings, FILE *input)
+{
+    if(NULL != settings->input_file_name)
+    {
+        log_trace("kanabo", "closing input file");
+        errno = 0;
+        if(fclose(input))
+        {
+            perror(settings->program_name);
+        }
+    }
+}
+
+static emit_function get_emitter(const struct settings * restrict settings)
+{
+    emit_function result = NULL;
+    switch(settings->emit_mode)
+    {
+        case BASH:
+            log_debug("kanabo", "using bash emitter");
+            result = emit_bash;
+            break;
+        case ZSH:
+            log_debug("kanabo", "using zsh emitter");
+            result = emit_zsh;
+            break;
+        case JSON:
+            log_debug("kanabo", "using json emitter");
+            result = emit_json;
+            break;
+        case YAML:
+            log_debug("kanabo", "using yaml emitter");
+            result = emit_yaml;
+            break;
+    }
+
+    return result;
+}

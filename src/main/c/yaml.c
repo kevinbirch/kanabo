@@ -35,7 +35,11 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include <stdio.h>
 
-int emit_zsh(void);
+#include "emit/yaml.h"
 
+void emit_yaml(const nodelist * restrict list, const struct settings * restrict settings)
+{
+#pragma unused(list, settings)
+}

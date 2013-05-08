@@ -56,23 +56,25 @@ enum emit_mode
 {
     BASH,
     ZSH,
+    JSON,
+    YAML
 };
 
 struct settings
 {
-    const char *program_name;
+    const char     *program_name;
     enum emit_mode  emit_mode;
-    const char *expression;
-    const char *input_file_name;
+    const char     *expression;
+    const char     *input_file_name;
 };
 
-enum
+enum command
 {
     SHOW_VERSION,
     SHOW_WARRANTY,
     SHOW_HELP,
-    ENTER_INTERACTIVE,
-    EVAL_PATH
+    INTERACTIVE_MODE,
+    EXPRESSION_MODE
 };
 
 typedef int cmd;

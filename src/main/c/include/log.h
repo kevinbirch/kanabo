@@ -53,6 +53,7 @@ enum log_level
 void enable_logging(void);
 void disable_logging(void);
 void set_log_level(enum log_level level);
+void set_log_level_from_env(void);
 
 #define log_error(COMPONENT, FORMAT, ...)  logger(ERROR, COMPONENT, FORMAT, ##__VA_ARGS__);
 #define log_warn(COMPONENT, FORMAT, ...)   logger(WARNING, COMPONENT, FORMAT, ##__VA_ARGS__);
@@ -77,6 +78,7 @@ void logger(enum log_level level, const char * restrict component, const char * 
 #define enable_logging()
 #define disable_logging()
 #define set_log_level(...)
+#define set_log_level_from_env()
 
 #define log_error(...)
 #define log_warn(...)

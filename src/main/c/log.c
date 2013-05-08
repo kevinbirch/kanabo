@@ -35,6 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -73,6 +74,39 @@ void disable_logging(void)
 void set_log_level(enum log_level level)
 {
     LOG_LEVEL = level;
+}
+
+void set_log_level_from_env(void)
+{
+    char *level = getenv("KANABO_LOG_LEVEL");
+    if(NULL == level)
+    {
+        set_log_level(INFO);
+    }
+    else if(0 == memcmp("ERROR", level, 5))
+    {
+        set_log_level(ERROR);
+    }
+    else if(0 == memcmp("WARNING", level, 7))
+    {
+        set_log_level(WARNING);
+    }
+    else if(0 == memcmp("INFO", level, 4))
+    {
+        set_log_level(INFO);
+    }
+    else if(0 == memcmp("DEBUG", level, 5))
+    {
+        set_log_level(DEBUG);
+    }
+    else if(0 == memcmp("TRACE", level, 5))
+    {
+        set_log_level(TRACE);
+    }
+    else
+    {
+        set_log_level(INFO);
+    }
 }
 
 #define ensure_log_enabled(LEVEL) if(!LOGGING_ENABLED || LOG_LEVEL < LEVEL) return

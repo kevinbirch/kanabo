@@ -24,6 +24,13 @@ store:
       title: "The Lord of the Rings"
       isbn: "0-395-19395-8"
       price: 22.99
+
+    - category: fiction
+      author: "夏目漱石 (NATSUME Sōseki)"
+      title: "吾輩は猫である"
+      isbn: "978-0-8048-3265-6"
+      price: 13.29
+
   bicycle:
     color: "red"
     price: 19.95

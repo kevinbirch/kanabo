@@ -17,7 +17,6 @@ LICENSE file for more details.
 
 ### global
 
-* connect front & back ends
 * cut alpha release tag
 * move struct decls into separate header file
 * security
@@ -123,12 +122,6 @@ LICENSE file for more details.
 * add install phase impl
 * add site phase impl
 * extract as its own project
-
-### path languages
-
-* finish jsonpath parser
-* extract as project, add as submodule
-* ypath support
 
 ### unit testing
 
