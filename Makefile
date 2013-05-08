@@ -37,6 +37,14 @@
 
 include project.mk
 
+CC = cc
+AR = ar
+RM = rm -f
+DIFF = diff
+TAR = tar
+FIND = find
+INSTALL = install
+
 ## Defaults for project settings
 VERSION ?= 1.0.0-SNAPSHOT
 PACKAGING ?= program
@@ -44,6 +52,13 @@ DEPENDENCIES ?=
 TEST_DEPENDENCIES ?=
 EXTRA_INCLUDES ?=
 CFLAGS ?=
+
+PREFIX ?= $(HOME)
+BINDIR = bin
+MANDIR = share/man/man1
+DESTDIR = $(PREFIX)
+PROGRAM_DESTDIR = $(DESTDIR)/$(BINDIR)
+MANUAL_DESTDIR = $(DESTDIR)/$(MANDIR)
 
 ## Defaults for project source directories
 SOURCE_DIR  ?= src/main/c
@@ -88,7 +103,7 @@ endif
 source_to_target = $(foreach s, $(1), $(2)/$(basename $(s)).$(3))
 source_to_object = $(call source_to_target,$(1),$(2),o)
 source_to_depend = $(call source_to_target,$(1),$(2),d)
-find_source_files = $(shell cd $(1) && find . -type f \( -name '*.c' -or -name '*.C' \) | sed 's|\./||')
+find_source_files = $(shell cd $(1) && $(FIND) . -type f \( -name '*.c' -or -name '*.C' \) | sed 's|\./||')
 
 ## Project test source compiler settings
 TEST_CFLAGS := -I$(TEST_INCLUDE_DIR) $(CFLAGS)
@@ -200,7 +215,7 @@ endif
 clean:
 	@echo ""
 	@echo " Deleting directory `pwd`/$(TARGET_DIR)"
-	@rm -rf $(TARGET_DIR)
+	@$(RM) -r $(TARGET_DIR)
 
 validate:
 ifeq ($(strip $(GROUP_ID)),)
@@ -307,7 +322,6 @@ announce-package-phase:
 prepare-package: test announce-package-phase
 
 package: prepare-package
-	$(error "Not implemented yet")
 
 announce-install-phase:
 	@echo ""
@@ -315,10 +329,11 @@ announce-install-phase:
 	@echo " Install phase"
 	@echo "------------------------------------------------------------------------"
 
-verify: test announce-install-phase
+verify: package announce-install-phase
 
 install: verify
-	$(error "Not implemented yet")
+	$(INSTALL) -d -m 755 $(PROGRAM_DESTDIR)
+	$(INSTALL) $(TARGET) $(PROGRAM_DESTDIR)
 
 .PHONY: all check help clean create-buid-directories announce-build initialize announce-compile-phase generate-sources process-sources generate-resources process-resources announce-compile-sources compile process-objects target announce-test-phase generate-test-sources process-test-sources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM)
 
