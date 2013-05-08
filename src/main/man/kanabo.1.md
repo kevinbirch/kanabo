@@ -75,13 +75,13 @@ The following output formats are supported:
   
   * [YAML][yaml]
 
-## JSONPATH
-
-an introduction to jsonpath
-
 ## INTERACTIVE EVALUATION
 
 details
+
+## JSONPATH
+
+an introduction to jsonpath
 
 ## EXAMPLES
 
@@ -165,7 +165,7 @@ The dialect of JSONPath implemented by this program adds some features over thos
 The dialect of JSONPath implemented by this program drops some features listed in the [defacto specifcation][jsonpath].  The following features defined in the specification are not and never will wbe supported:
 
 * *Bracket* Notation (e.g. `$\['store'\]\['book'\]\[0\]\['title'\]` instead of `$store.book\[0\].title`).
-* Script Expressions (e.g. `$..book\[(@.length-1)\]`)
+* Script Expressions (e.g. `$..book\[(@.length - 1)\]`)
 
 Bracket expressions provide no demonstrable semantic benefit over the dot notation, and hurts readability.  Script expressions are a very dangerous notion (see [Occupy Babel](http://www.cs.dartmouth.edu/~sergey/langsec/occupy/)), and static compiled languages are not amenable to evaluating expressions of the implementation language at runtime anway.
 
