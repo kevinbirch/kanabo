@@ -42,4 +42,5 @@
 void emit_yaml(const nodelist * restrict list, const struct settings * restrict settings)
 {
 #pragma unused(list, settings)
+    fprintf(stdout, "sorry, not implemented yet.\n");
 }
