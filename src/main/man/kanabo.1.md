@@ -176,9 +176,9 @@ These references may be of interest to the user of this program:
   * [JSONPath Query Langauge][jsonpath]
   * [GNU Bash shell][bash]
   * [Z shell][zsh]
-  * [jshon(1)](http://kmkeen.com/jshon)
-  * [jq(1)](http://stedolan.github.com/jq/)
-  * [JSON.h](https://github.com/dominictarr/JSON.sh)
+  * [jshon](http://kmkeen.com/jshon)
+  * [jq](http://stedolan.github.com/jq/)
+  * [JSON.sh](https://github.com/dominictarr/JSON.sh)
   * [jsawk](https://github.com/micha/jsawk)
   * [jsonpipe](https://github.com/zacharyvoase/jsonpipe)
   * [jsontool](http://trentm.com/json/)
