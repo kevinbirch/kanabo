@@ -67,13 +67,30 @@ Miscellaneous options:
 
 The following output formats are supported:
 
-  * [Bash][bash]
+  * [Bash][bash]  
+    Each result from the query will be printed on a separate line, with object key value pairs formatted for Bash.  Any string values with embedded whitepace will be wrapped with single quotes.
+
+    ```bash
+    $ kanabo --query '$.store.book.*' --format bash < inventory.yaml
+    [category]=reference [author]='Nigel Rees' [title]='Sayings of the Century' [price]=8.95 
+    [category]=fiction [author]='Evelyn Waugh' [title]='Sword of Honour' [price]=12.99 
+    [category]=fiction [author]='Herman Melville' [title]='Moby Dick' [isbn]=0-553-21311-3 [price]=8.99 
+    [category]=fiction [author]='J. R. R. Tolkien' [title]='The Lord of the Rings' [isbn]=0-395-19395-8 [price]=22.99 
+    [category]=fiction [author]='夏目漱石 (NATSUME Sōseki)' [title]=吾輩は猫である [isbn]=978-0-8048-3265-6 [price]=13.29 
+    ```
+
+  * [Zsh][zsh]  
   
-  * [Zsh][zsh]
-  
-  * [JSON][json]
-  
-  * [YAML][yaml]
+  * [JSON][json]  
+    The result of the query will be printed as unformatted JSON.
+
+    ```bash
+    $ kanabo --query '$.store.book.*' --format bash < inventory.yaml
+    [{"category":"reference","author":"Nigel Rees","title":"Sayings of the Century","price":8.95},{"category":"fiction","author":"Evelyn Waugh","title":"Sword of Honour","price":12.99},{"category":"fiction","author":"Herman Melville","title":"Moby Dick","isbn":"0-553-21311-3","price":8.99},{"category":"fiction","author":"J. R. R. Tolkien","title":"The Lord of the Rings","isbn":"0-395-19395-8","price":22.99},{"category":"fiction","author":"夏目漱石 (NATSUME Sōseki)","title":"吾輩は猫である","isbn":"978-0-8048-3265-6","price":13.29}]
+
+    ```
+
+  * [YAML][yaml]  
 
 ## INTERACTIVE EVALUATION
 
