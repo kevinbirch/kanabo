@@ -57,7 +57,7 @@ static struct option options[] =
     {"query",       required_argument, NULL, 'Q'}, // evaluate given expression and exit
     // optional arguments:
     {"file",        required_argument, NULL, 'f'}, // read input from file instead of stdin (required for interactive mode)
-    {"shell",       required_argument, NULL, 's'}, // emit expressions for the given shell (the default is Bash)
+    {"format",       required_argument, NULL, 'o'}, // emit expressions for the given shell (the default is Bash)
     {0, 0, 0, 0}
 };
 
@@ -81,7 +81,7 @@ cmd process_options(const int argc, char * const *argv, struct settings * restri
     settings->expression = NULL;
     settings->input_file_name = NULL;
 
-    while(!done && (opt = getopt_long(argc, argv, "vwhIQ:s:f:", options, NULL)) != -1)
+    while(!done && (opt = getopt_long(argc, argv, "vwhIQ:o:f:", options, NULL)) != -1)
     {
         switch(opt)
         {
@@ -109,11 +109,11 @@ cmd process_options(const int argc, char * const *argv, struct settings * restri
                 command = EXPRESSION_MODE;
                 settings->expression = optarg;
                 break;
-            case 's':
+            case 'o':
                 mode = process_emit_mode(optarg);
                 if(-1 == mode)
                 {
-                    fprintf(stderr, "%s: unsupported shell mode `%s'\n", settings->program_name, optarg);
+                    fprintf(stderr, "%s: unsupported output format `%s'\n", settings->program_name, optarg);
                     command = SHOW_HELP;
                     done = true;
                 }

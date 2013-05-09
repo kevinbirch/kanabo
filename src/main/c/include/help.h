@@ -43,7 +43,7 @@ static const char * const HELP =
     "\n"
     "OPTIONS:\n"
     "-f, --file <input-file>    Specify a file to read the JSON/YAML data from instead of *stdin*. This is requred for interactive mode.\n"
-    "-s, --format <format>      Specify the output format for queries (`bash', `zsh', `json' and `yaml' are supported).\n"
+    "-o, --format <format>      Specify the output format for queries (`bash', `zsh', `json' and `yaml' are supported).\n"
     "\n"
     "STANDALONE OPTIONS:\n"
     "-v, --version              Print the version information and exit.\n"
