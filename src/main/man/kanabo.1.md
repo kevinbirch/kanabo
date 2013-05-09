@@ -148,7 +148,7 @@ This table demonstrates various JSONPath expressions and the results.  N.B. that
 | `$..book[-1:]`                | The last book in order                         |
 | `$..book[0,1]`, `$..book[:2]`	| The first two books                            |
 | `$..book[?(@.isbn)]`          | All books with an isbn number                  |
-| `$..book[?(@.price \< 10)]`    | All books with a price less than 10            |
+| `$..book[?(@.price < 10)]`    | All books with a price less than 10            |
 | `$..*`                        | All nodes of the JSON document                 |
 
 
@@ -164,8 +164,8 @@ The dialect of JSONPath implemented by this program adds some features over thos
 
 The dialect of JSONPath implemented by this program drops some features listed in the [defacto specifcation][jsonpath].  The following features defined in the specification are not and never will wbe supported:
 
-* *Bracket* Notation (e.g. `$\['store'\]\['book'\]\[0\]\['title'\]` instead of `$store.book\[0\].title`).
-* Script Expressions (e.g. `$..book\[(@.length - 1)\]`)
+* *Bracket* Notation (e.g. `$['store']['book'][0]['title']` instead of `$store.book[0].title`).
+* Script Expressions (e.g. `$..book[(@.length - 1)]`)
 
 Bracket expressions provide no demonstrable semantic benefit over the dot notation, and hurts readability.  Script expressions are a very dangerous notion (see [Occupy Babel](http://www.cs.dartmouth.edu/~sergey/langsec/occupy/)), and static compiled languages are not amenable to evaluating expressions of the implementation language at runtime anway.
 
@@ -176,8 +176,13 @@ These references may be of interest to the user of this program:
   * [JSONPath Query Langauge][jsonpath]
   * [GNU Bash shell][bash]
   * [Z shell][zsh]
-  * [jshon(1)][jshon]
-  * [jq(1)][jq]
+  * [jshon(1)](http://kmkeen.com/jshon)
+  * [jq(1)](http://stedolan.github.com/jq/)
+  * [JSON.h](https://github.com/dominictarr/JSON.sh)
+  * [jsawk](https://github.com/micha/jsawk)
+  * [jsonpipe](https://github.com/zacharyvoase/jsonpipe)
+  * [jsontool](http://trentm.com/json/)
+  * [ticktick](https://github.com/kristopolous/TickTick)
 
 ## REPORTING BUGS
 
@@ -222,7 +227,5 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 [jsonpath]: http://goessner.net/articles/JsonPath "The defacto specification"
 [bash]: http://www.gnu.org/software/bash
 [zsh]: http://zsh.sourceforge.net
-[jshon]: http://kmkeen.com/jshon "An alternative tool"
-[jq]: http://stedolan.github.com/jq/ "An alternative tool"
 [json]: http://json.org
 [yaml]: http://yaml.org

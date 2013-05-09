@@ -92,21 +92,6 @@ LICENSE file for more details.
 * expand scalar nodes to include json subtypes
 * give nodes a pointer back to their owning document?
 
-#### Features:
-
-* add tree walker api
-* add printing visitor
-  * for printing scalar node values:
-```
-    char *format;
-    int ret = asprintf(&format, "scalar: '%%.%zds'\n", event->data.scalar.length);
-    if(-1 != ret)
-    {
-        printf(format, event->data.scalar.value);
-    }
-    free(format);
-```
-
 ### makefile
 
 #### Enhancements:
@@ -116,10 +101,6 @@ LICENSE file for more details.
 #### Features:
 
 * add version header generation support
-* add submodule build support
-  * subpaths under $source-root should be preserved, e.g. $src/jsonpath/parser.c -> $target/objects/jsonpath/parser.o
-* add package phase impl
-* add install phase impl
 * add site phase impl
 * extract as its own project
 
@@ -137,6 +118,13 @@ LICENSE file for more details.
 
 * add site target
 * http://tinytree.info
+
+### documentation
+
+* discussions
+  * http://stackoverflow.com/questions/10766732/reading-associative-arrays-from-file
+  * http://wiki.bash-hackers.org/syntax/keywords/coproc
+  
 
 [home]: https://github.com/kevinbirch/kanabo "project home"
 [license]: http://www.opensource.org/licenses/ncsa
