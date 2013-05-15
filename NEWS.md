@@ -17,7 +17,7 @@ LICENSE file for more details.
 
 This is the history of visble changes for [金棒][home] (kanabō) 
 
-**23 October 2012:** 1.0.0-SNAPSHOT
+**23 October 2012:** 0.1.0-SNAPSHOT
 
 - Project is started
 

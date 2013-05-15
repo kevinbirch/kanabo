@@ -61,6 +61,70 @@ static const char * const MESSAGES[] =
     "At position %d: slice step value must be non-zero."
 };
 
+static const char * const PATH_KIND_NAMES[] =
+{
+    "absolute path",
+    "relative path"
+};
+
+static const char * const STEP_KIND_NAMES[] =
+{
+    "root step",
+    "single step",
+    "recursive step"
+};
+
+static const char * const TEST_KIND_NAMES[] =
+{
+    "wildcard test",
+    "name test",
+    "type test"
+};
+
+static const char * const PREDICATE_KIND_NAMES[] =
+{
+    "wildcard predicate",
+    "subscript predicate",
+    "slice predicate",
+    "join predicate"
+};
+
+static const char * const TYPE_TEST_KIND_NAMES[] =
+{
+    "object test",
+    "array test",
+    "string test",
+    "number test",
+    "boolean test",
+    "null test"
+};
+
+
+const char *path_kind_name(enum path_kind value)
+{
+    return PATH_KIND_NAMES[value];
+}
+
+const char *step_kind_name(enum step_kind value)
+{
+    return STEP_KIND_NAMES[value];
+}
+
+const char *test_kind_name(enum test_kind value)
+{
+    return TEST_KIND_NAMES[value];
+}
+
+const char *type_test_kind_name(enum type_test_kind value)
+{
+    return TYPE_TEST_KIND_NAMES[value];
+}
+
+const char *predicate_kind_name(enum predicate_kind value)
+{
+    return PREDICATE_KIND_NAMES[value];
+}
+
 char *parser_status_message(const parser_context * restrict context)
 {
     PRECOND_NONNULL_ELSE_NULL(context);
