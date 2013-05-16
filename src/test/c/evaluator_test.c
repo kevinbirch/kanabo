@@ -466,6 +466,70 @@ START_TEST (single_name_step)
 }
 END_TEST
 
+START_TEST (simple_recursive_step)
+{
+    char *expression = "$..author";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 5);
+
+    assert_node_kind(nodelist_get(list, 0), SCALAR);
+    assert_node_kind(nodelist_get(list, 1), SCALAR);
+    assert_node_kind(nodelist_get(list, 2), SCALAR);
+    assert_node_kind(nodelist_get(list, 3), SCALAR);
+
+    nodelist_free(list);
+}
+END_TEST
+
+START_TEST (compound_recursive_step)
+{
+    char * expression = "$.store..price";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 6);
+
+    assert_scalar_value(nodelist_get(list, 0), "8.95");
+    assert_scalar_value(nodelist_get(list, 1), "12.99");
+    assert_scalar_value(nodelist_get(list, 2), "8.99");
+    assert_scalar_value(nodelist_get(list, 3), "22.99");
+    assert_scalar_value(nodelist_get(list, 4), "13.29");
+    assert_scalar_value(nodelist_get(list, 5), "19.95");
+    
+    nodelist_free(list);
+}
+END_TEST
+
 START_TEST (long_path)
 {
     char *expression = "$.store.bicycle.color";
@@ -524,6 +588,34 @@ START_TEST (wildcard)
     assert_node_kind(nodelist_get(list, 2), MAPPING);
     assert_node_kind(nodelist_get(list, 3), MAPPING);
     assert_node_kind(nodelist_get(list, 4), MAPPING);
+
+    nodelist_free(list);
+}
+END_TEST
+
+START_TEST (recursive_wildcard)
+{
+    char *expression = "$..*";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 34);
+
+    assert_node_kind(nodelist_get(list, 0), MAPPING);
 
     nodelist_free(list);
 }
@@ -760,9 +852,93 @@ START_TEST (subscript_predicate)
 }
 END_TEST
 
+START_TEST (recursive_subscript_predicate)
+{
+    char *expression = "$..book[2]";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 1);
+
+    reset_errno();
+    node *mapping = nodelist_get(list, 0);
+    assert_node_kind(mapping, MAPPING);
+    assert_noerr();
+    reset_errno();
+    node *author = mapping_get_value(mapping, "author");
+    assert_noerr();
+    assert_not_null(author);
+    assert_scalar_value(author, "Herman Melville");
+
+    nodelist_free(list);
+}
+END_TEST
+
 START_TEST (slice_predicate)
 {
     char *expression = "$.store.book[:2]";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 2);
+
+    reset_errno();
+    node *book = nodelist_get(list, 0);
+    assert_noerr();
+    assert_node_kind(book, MAPPING);
+
+    reset_errno();
+    node *author = mapping_get_value(book, "author");
+    assert_noerr();
+    assert_not_null(author);
+    assert_scalar_value(author, "Nigel Rees");
+
+    reset_errno();
+    book = nodelist_get(list, 1);
+    assert_noerr();
+    assert_node_kind(book, MAPPING);
+
+    reset_errno();
+    author = mapping_get_value(book, "author");
+    assert_noerr();
+    assert_not_null(author);
+    assert_scalar_value(author, "Evelyn Waugh");
+
+    nodelist_free(list);
+}
+END_TEST
+
+START_TEST (recursive_slice_predicate)
+{
+    char *expression = "$..book[:2]";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
 
@@ -848,6 +1024,43 @@ END_TEST
 START_TEST (slice_predicate_negative_from)
 {
     char *expression = "$.store.book[-1:]";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 1);
+
+    reset_errno();
+    node *book = nodelist_get(list, 0);
+    assert_noerr();
+    assert_node_kind(book, MAPPING);
+
+    reset_errno();
+    node *author = mapping_get_value(book, "author");
+    assert_noerr();
+    assert_not_null(author);
+    assert_scalar_value(author, "夏目漱石 (NATSUME Sōseki)");
+
+    nodelist_free(list);
+}
+END_TEST
+
+START_TEST (recursive_slice_predicate_negative_from)
+{
+    char *expression = "$..book[-1:]";
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
 
@@ -982,7 +1195,7 @@ Suite *evaluator_suite(void)
     tcase_add_test(bad_input_case, empty_context_path);
 
     TCase *basic_case = tcase_create("basic");
-    tcase_add_checked_fixture(basic_case, evaluator_setup, evaluator_teardown);
+    tcase_add_unchecked_fixture(basic_case, evaluator_setup, evaluator_teardown);
     tcase_add_test(basic_case, dollar_only);
     tcase_add_test(basic_case, single_name_step);
     tcase_add_test(basic_case, long_path);
@@ -992,21 +1205,32 @@ Suite *evaluator_suite(void)
     tcase_add_test(basic_case, number_test);
 
     TCase *predicate_case = tcase_create("predicate");
-    tcase_add_checked_fixture(predicate_case, evaluator_setup, evaluator_teardown);
+    tcase_add_unchecked_fixture(predicate_case, evaluator_setup, evaluator_teardown);
     tcase_add_test(predicate_case, wildcard_predicate);
     tcase_add_test(predicate_case, wildcard_predicate_on_mapping);
     tcase_add_test(predicate_case, wildcard_predicate_on_scalar);
     tcase_add_test(predicate_case, subscript_predicate);
     tcase_add_test(predicate_case, slice_predicate);
+    tcase_add_test(predicate_case, subscript_predicate);
     tcase_add_test(predicate_case, slice_predicate_with_step);
     tcase_add_test(predicate_case, slice_predicate_negative_from);
     tcase_add_test(predicate_case, slice_predicate_copy);
     tcase_add_test(predicate_case, slice_predicate_reverse);
 
+    TCase *recursive_case = tcase_create("recursive");
+    tcase_add_unchecked_fixture(recursive_case, evaluator_setup, evaluator_teardown);
+    tcase_add_test(recursive_case, simple_recursive_step);
+    tcase_add_test(recursive_case, compound_recursive_step);
+    tcase_add_test(recursive_case, recursive_slice_predicate);
+    tcase_add_test(recursive_case, recursive_subscript_predicate);
+    tcase_add_test(recursive_case, recursive_slice_predicate_negative_from);
+    tcase_add_test(recursive_case, recursive_wildcard);
+    
     Suite *evaluator = suite_create("Evaluator");
     suite_add_tcase(evaluator, bad_input_case);
     suite_add_tcase(evaluator, basic_case);
     suite_add_tcase(evaluator, predicate_case);
+    suite_add_tcase(evaluator, recursive_case);
 
     return evaluator;
 }

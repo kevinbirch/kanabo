@@ -38,7 +38,7 @@
 #include "test.h"
 #include "jsonpath.h"
 
-#define assert_path_length(PATH, EXPECTED) assert_int_eq((EXPECTED), path_length((PATH)))
+#define assert_path_length(PATH, EXPECTED) assert_uint_eq((EXPECTED), path_length((PATH)))
 #define assert_path_kind(PATH, EXPECTED) assert_int_eq((EXPECTED), path_kind((PATH)))
 
 #define assert_parser_success(EXPRESSION, CONTEXT, PATH, EXPECTED_KIND, EXPECTED_LENGTH) \
@@ -53,7 +53,7 @@
             free(_assert_message);                                      \
         }                                                               \
         assert_int_eq(JSONPATH_SUCCESS, parser_status((CONTEXT)));      \
-        assert_int_ne(0, (CONTEXT)->cursor);                            \
+        assert_uint_ne(0, (CONTEXT)->cursor);                           \
         assert_path_kind((PATH), (EXPECTED_KIND));                      \
         assert_not_null((PATH)->steps);                                 \
         assert_null((CONTEXT)->steps);                                  \
@@ -70,7 +70,7 @@
         assert_not_null(_assert_message);                               \
         log_debug("parser test", "for expression: '%s', received expected failure message: '%s'", (EXPRESSION), _assert_message); \
         free(_assert_message);                                          \
-        assert_int_eq((EXPECTED_POSITION), (CONTEXT)->cursor);          \
+        assert_uint_eq((EXPECTED_POSITION), (CONTEXT)->cursor);         \
     } while(0)
 
 #define assert_step_kind(STEP, EXPECTED_KIND) assert_int_eq(EXPECTED_KIND, step_kind(STEP))
@@ -80,7 +80,7 @@
     assert_step_kind(path_get((PATH), INDEX), EXPECTED_STEP_KIND);  \
     assert_test_kind(path_get((PATH), INDEX), EXPECTED_TEST_KIND)
 
-#define assert_name_length(STEP, NAME) assert_int_eq(strlen(NAME), name_test_step_length(STEP))
+#define assert_name_length(STEP, NAME) assert_uint_eq(strlen(NAME), name_test_step_length(STEP))
 #define assert_name(STEP, NAME)                                         \
     assert_name_length(STEP, NAME);                                     \
     assert_buf_eq(NAME, strlen(NAME), name_test_step_name(STEP), name_test_step_length(STEP))
@@ -124,7 +124,7 @@
 
 #define assert_wildcard_predicate(PATH, PATH_INDEX) assert_predicate((PATH), PATH_INDEX, WILDCARD)
 
-#define assert_subscript_index(PREDICATE, VALUE) assert_int_eq(VALUE, subscript_predicate_index(PREDICATE))
+#define assert_subscript_index(PREDICATE, VALUE) assert_uint_eq(VALUE, subscript_predicate_index(PREDICATE))
 #define assert_subscript_predicate(PATH, PATH_INDEX, INDEX_VALUE)       \
     assert_predicate((PATH), PATH_INDEX, SUBSCRIPT);                    \
     assert_subscript_index(step_predicate(path_get((PATH), PATH_INDEX)), INDEX_VALUE);
@@ -1176,7 +1176,7 @@ START_TEST (iteration)
 
     unsigned long counter = 0;
     assert_true(path_iterate(path, count, &counter));
-    assert_int_eq(3, counter);
+    assert_uint_eq(3, counter);
 
     path_free(path);
     parser_free(context);
@@ -1204,7 +1204,7 @@ START_TEST (fail_iteration)
 
     unsigned long counter = 0;
     assert_false(path_iterate(path, fail_count, &counter));
-    assert_int_eq(1, counter);
+    assert_uint_eq(1, counter);
 
     path_free(path);
     parser_free(context);
@@ -1271,7 +1271,7 @@ START_TEST (bad_step_input)
 
     step *step2 = path_get(path, 2);
     reset_errno();
-    assert_int_eq(0, name_test_step_length(step2));
+    assert_uint_eq(0, name_test_step_length(step2));
     assert_errno(EINVAL);
 
     reset_errno();
@@ -1335,7 +1335,7 @@ START_TEST (bad_predicate_input)
 
     predicate *wildcard = step_predicate(path_get(path, 2));
     reset_errno();
-    assert_int_eq(0, subscript_predicate_index(wildcard));
+    assert_uint_eq(0, subscript_predicate_index(wildcard));
     assert_errno(EINVAL);
     reset_errno();
     assert_null(join_predicate_left(wildcard));

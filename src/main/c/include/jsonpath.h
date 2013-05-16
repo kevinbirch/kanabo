@@ -236,20 +236,25 @@ typedef bool (*path_iterator)(step *each, void *context);
 bool path_iterate(const jsonpath * restrict path, path_iterator iterator, void *context);
 
 enum path_kind path_kind(const jsonpath * restrict path);
+const char *   path_kind_name(enum path_kind value);
 size_t         path_length(const jsonpath * restrict path);
 step *         path_get(const jsonpath * restrict path, size_t index);
 
 enum step_kind step_kind(const step * restrict value);
+const char *   step_kind_name(enum step_kind value);
 enum test_kind step_test_kind(const step * restrict value);
+const char *   test_kind_name(enum test_kind value);
 
 enum type_test_kind type_test_step_kind(const step * restrict value);
-uint8_t            *name_test_step_name(const step * restrict value);
+const char *        type_test_kind_name(enum type_test_kind value);
+uint8_t *           name_test_step_name(const step * restrict value);
 size_t              name_test_step_length(const step * restrict value);
 
 bool       step_has_predicate(const step * restrict value);
 predicate *step_predicate(const step * restrict value);
 
 enum predicate_kind predicate_kind(const predicate * restrict value);
+const char *        predicate_kind_name(enum predicate_kind value);
 size_t              subscript_predicate_index(const predicate * restrict value);
 
 int_fast32_t        slice_predicate_to(const predicate * restrict value);
@@ -259,6 +264,6 @@ bool                slice_predicate_has_to(const predicate * restrict value);
 bool                slice_predicate_has_from(const predicate * restrict value);
 bool                slice_predicate_has_step(const predicate * restrict value);
 
-jsonpath           *join_predicate_left(const predicate * restrict value);
-jsonpath           *join_predicate_right(const predicate * restrict value);
+jsonpath *          join_predicate_left(const predicate * restrict value);
+jsonpath *          join_predicate_right(const predicate * restrict value);
 

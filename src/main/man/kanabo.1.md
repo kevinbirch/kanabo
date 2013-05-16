@@ -87,7 +87,6 @@ The following output formats are supported:
     ```bash
     $ kanabo --query '$.store.book.*' --format bash < inventory.yaml
     [{"category":"reference","author":"Nigel Rees","title":"Sayings of the Century","price":8.95},{"category":"fiction","author":"Evelyn Waugh","title":"Sword of Honour","price":12.99},{"category":"fiction","author":"Herman Melville","title":"Moby Dick","isbn":"0-553-21311-3","price":8.99},{"category":"fiction","author":"J. R. R. Tolkien","title":"The Lord of the Rings","isbn":"0-395-19395-8","price":22.99},{"category":"fiction","author":"夏目漱石 (NATSUME Sōseki)","title":"吾輩は猫である","isbn":"978-0-8048-3265-6","price":13.29}]
-
     ```
 
   * [YAML][yaml]  
@@ -98,7 +97,24 @@ details
 
 ## JSONPATH
 
-an introduction to jsonpath
+A JSONPath expression is composed of a series of steps beginning with a `$` and separated by a `.`. The result of evaluating an expression is a list of nodes from the original document.
+
+The dialect of JSONPath implemented by this program differs in some ways from the [defacto specifcation][jsonpath]:
+
+  * Extensions
+    The following additional features are supported:
+    
+    * Predicates can be applied to any step type, not just names (e.g. `$..array()[1]` - the second item of all array elements in the document).
+    * Node type tests can filter nodes by their type (string, number, boolean, null, array, object).
+    * Step names can be quoted (e.g. `$.store.'home appliances'.blender`).
+
+  * Caveats
+    The following features defined in the specification are not and never will wbe supported:
+    
+    * *Bracket* Notation (e.g. `$['store']['book'][0]['title']` instead of `$store.book[0].title`).
+    * Script Expressions (e.g. `$..book[(@.length - 1)]`)
+
+Bracket expressions provide no demonstrable semantic benefit over the dot notation, and hurts readability.  Script expressions are a very dangerous notion (see [Occupy Babel](http://www.cs.dartmouth.edu/~sergey/langsec/occupy/)), and static compiled languages are not amenable to evaluating expressions of the implementation language at runtime anway.
 
 ## EXAMPLES
 
@@ -168,23 +184,6 @@ This table demonstrates various JSONPath expressions and the results.  N.B. that
 | `$..book[?(@.price < 10)]`    | All books with a price less than 10            |
 | `$..*`                        | All nodes of the JSON document                 |
 
-
-## JSONPATH EXTENSIONS
-
-The dialect of JSONPath implemented by this program adds some features over those listed in the [defacto specifcation][jsonpath].  The following additional features are supported:
-
-* Predicates can be applied to any step type, not just names (e.g. `$..array[][1]` - the second items of all arrays).
-* Node type tests can filter nodes by their type (string, number, boolean, null, array, object).
-* Step names can be quoted (e.g. `$.store.'home appliances'.blender`).
-
-## CAVEATS
-
-The dialect of JSONPath implemented by this program drops some features listed in the [defacto specifcation][jsonpath].  The following features defined in the specification are not and never will wbe supported:
-
-* *Bracket* Notation (e.g. `$['store']['book'][0]['title']` instead of `$store.book[0].title`).
-* Script Expressions (e.g. `$..book[(@.length - 1)]`)
-
-Bracket expressions provide no demonstrable semantic benefit over the dot notation, and hurts readability.  Script expressions are a very dangerous notion (see [Occupy Babel](http://www.cs.dartmouth.edu/~sergey/langsec/occupy/)), and static compiled languages are not amenable to evaluating expressions of the implementation language at runtime anway.
 
 ## SEE ALSO
 

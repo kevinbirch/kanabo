@@ -41,7 +41,7 @@
 
 // model assertions
 #define assert_node_kind(NODE, EXPECTED)      assert_int_eq((EXPECTED), node_get_kind((NODE)))
-#define assert_node_size(NODE, EXPECTED)      assert_int_eq((EXPECTED), node_get_size((NODE)))
+#define assert_node_size(NODE, EXPECTED)      assert_uint_eq((EXPECTED), node_get_size((NODE)))
 
 #define assert_node_equals(X, Y)              assert_true(node_equals((X), (Y)))
 
