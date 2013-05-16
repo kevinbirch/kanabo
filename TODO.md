@@ -33,6 +33,18 @@ LICENSE file for more details.
 #### Features:
 
 * implement recurisve step
+  ```
+  for each current match
+    apply step test
+    if node is sequence
+      for each item
+        apply test
+        recurse
+    if node is object
+      for each value
+        apply test
+        recurse
+  ```
 * implement union predicates
 
 ### parser
