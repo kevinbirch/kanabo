@@ -45,11 +45,11 @@ static const char * const MESSAGES[] =
     "Path argument is NULL",
     "Document node in model argument is NULL",
     "Root node of document in model argument is NULL",
-    "Path argument is not an absolute path",
-    "Path argument has no steps",
+    "Not an absolute path",
+    "Path has no steps",
     "Out of memory",
     "Found a document node embedded in the tree",
-    "The path argument is not supported",
+    "The path is not supported",
 };
 
 const char *evaluator_status_message(const evaluator_context * restrict context)
