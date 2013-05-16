@@ -17,7 +17,6 @@ LICENSE file for more details.
 
 ### global
 
-* cut alpha release tag
 * move struct decls into separate header file
 * security
   * https://www.securecoding.cert.org/confluence/display/seccode/CERT+C+Secure+Coding+Standard
@@ -37,6 +36,8 @@ LICENSE file for more details.
 * implement union predicates
 
 ### parser
+
+* bug: `$...store` should not be accepted
 
 #### Enhancements:
 
@@ -70,6 +71,7 @@ LICENSE file for more details.
 #### Enhancements:
 
 * replace strtod testing with regex
+  * `-?(?:0|(?:[1-9](?:\d)*))(?:\.\d+)?(?:[eE][+-]?\d+)`
 * document api with doxygen
 
 #### Features:
