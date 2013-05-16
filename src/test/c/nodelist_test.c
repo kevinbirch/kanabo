@@ -329,7 +329,7 @@ START_TEST (iteration)
     reset_errno();
     assert_true(nodelist_iterate(list, check_nodelist, &count));
     assert_noerr();
-    assert_int_eq(2, count);
+    assert_uint_eq(2, count);
 }
 END_TEST
 
@@ -347,7 +347,7 @@ START_TEST (fail_iteration)
     reset_errno();
     assert_false(nodelist_iterate(list, fail_nodelist, &count));
     assert_noerr();
-    assert_int_eq(1, count);
+    assert_uint_eq(1, count);
 }
 END_TEST
 
@@ -375,7 +375,7 @@ START_TEST (map)
     nodelist *result = nodelist_map(list, transform, &count);
     assert_noerr();
     assert_not_null(result);
-    assert_int_eq(2, count);
+    assert_uint_eq(2, count);
     assert_nodelist_length(result, 2);
 
     node *zero = nodelist_get(result, 0);
@@ -411,7 +411,7 @@ START_TEST (fail_map)
     assert_null(result);
     assert_not_null(list);
     assert_noerr();
-    assert_int_eq(1, count);
+    assert_uint_eq(1, count);
 }
 END_TEST
 

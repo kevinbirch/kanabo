@@ -56,13 +56,14 @@ static bool evaluate_root_step(evaluator_context *context);
 static bool evaluate_single_step(evaluator_context *context);
 static bool evaluate_recursive_step(evaluator_context *context);
 static bool evaluate_predicate(evaluator_context *context);
-static bool evaluate_nodelist(evaluator_context *context, const char *name, const char *test, nodelist_map_function function);
+static inline bool evaluate_nodelist(evaluator_context *context, const char *name, const char *test, nodelist_map_function function);
 
 static bool apply_node_test(node *each, void *argument, nodelist *target);
 static bool apply_recursive_node_test(node *each, void *argument, nodelist *target);
-static bool apply_recursive_test_sequence_iterator(node *each, void *context);
-static bool apply_recursive_test_map_iterator(node *key, node *value, void *context);
-static bool apply_wildcard_test(node *each, void *argument, nodelist *target);
+static bool recursive_test_sequence_iterator(node *each, void *context);
+static bool recursive_test_map_iterator(node *key, node *value, void *context);
+static bool apply_greedy_wildcard_test(node *each, void *argument, nodelist *target);
+static bool apply_recursive_wildcard_test(node *each, void *argument, nodelist *target);
 static bool apply_type_test(node *each, void *argument, nodelist *target);
 static bool apply_name_test(node *each, void *argument, nodelist *target);
 
@@ -165,7 +166,7 @@ static bool evaluate_predicate(evaluator_context *context)
     return evaluate_nodelist(context, "predicate", predicate_kind_name(predicate_kind(step_predicate(current_step(context)))), apply_predicate);
 }
 
-static bool evaluate_nodelist(evaluator_context *context, const char *name, const char *test, nodelist_map_function function)
+static inline bool evaluate_nodelist(evaluator_context *context, const char *name, const char *test, nodelist_map_function function)
 {
     evaluator_trace("evaluating %s across %zd nodes", name, nodelist_length(context->list));
     nodelist *result = nodelist_map(context->list, function, context);
@@ -184,11 +185,11 @@ static bool apply_recursive_node_test(node *each, void *argument, nodelist *targ
         {
             case MAPPING:
                 evaluator_trace("recursive step: processing %zd mapping values (%p)", node_get_size(each), each);
-                result = iterate_mapping(each, apply_recursive_test_map_iterator, &(meta_context){context, target});
+                result = iterate_mapping(each, recursive_test_map_iterator, &(meta_context){context, target});
                 break;
             case SEQUENCE:
                 evaluator_trace("recursive step: processing %zd sequence items (%p)", node_get_size(each), each);
-                result = iterate_sequence(each, apply_recursive_test_sequence_iterator, &(meta_context){context, target});
+                result = iterate_sequence(each, recursive_test_sequence_iterator, &(meta_context){context, target});
                 break;
             case SCALAR:
                 evaluator_trace("recursive step: found scalar, recursion finished on this path (%p)", each);
@@ -205,13 +206,13 @@ static bool apply_recursive_node_test(node *each, void *argument, nodelist *targ
     return result;
 }
 
-static bool apply_recursive_test_sequence_iterator(node *each, void *context)
+static bool recursive_test_sequence_iterator(node *each, void *context)
 {
     meta_context *iterator_context = (meta_context *)context;
     return apply_recursive_node_test(each, iterator_context->context, iterator_context->target);
 }
 
-static bool apply_recursive_test_map_iterator(node *key, node *value, void *context)
+static bool recursive_test_map_iterator(node *key, node *value, void *context)
 {
 #pragma unused(key)
     meta_context *iterator_context = (meta_context *)context;
@@ -225,7 +226,7 @@ static bool apply_node_test(node *each, void *argument, nodelist *target)
     switch(step_test_kind(current_step(context)))
     {
         case WILDCARD_TEST:
-            result = apply_wildcard_test(each, argument, target);
+            result = RECURSIVE == step_kind(current_step(context)) ? apply_recursive_wildcard_test(each, argument, target) : apply_greedy_wildcard_test(each, argument, target);
             break;
         case TYPE_TEST:
             result = apply_type_test(each, argument, target);
@@ -237,7 +238,7 @@ static bool apply_node_test(node *each, void *argument, nodelist *target)
     return result;
 }
 
-static bool apply_wildcard_test(node *each, void *argument, nodelist *target)
+static bool apply_greedy_wildcard_test(node *each, void *argument, nodelist *target)
 {
     evaluator_context *context = (evaluator_context *)argument;
     bool result = false;
@@ -260,6 +261,33 @@ static bool apply_wildcard_test(node *each, void *argument, nodelist *target)
             context->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             break;
     }
+    return result;
+}
+
+static bool apply_recursive_wildcard_test(node *each, void *argument, nodelist *target)
+{
+    evaluator_context *context = (evaluator_context *)argument;
+    bool result = false;
+    switch(node_get_kind(each))
+    {
+        case MAPPING:
+            evaluator_trace("recurisve wildcard test: adding mapping node (%p)", each);
+            result = nodelist_add(target, each) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
+            break;
+        case SEQUENCE:
+            evaluator_trace("recurisve wildcard test: adding sequence node (%p)", each);
+            result = nodelist_add(target, each) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
+            break;
+        case SCALAR:
+            trace_string("recurisve wildcard test: adding scalar: '%s' (%p)", scalar_get_value(each), node_get_size(each), each);
+            result = nodelist_add(target, each) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
+            break;
+        case DOCUMENT:
+            evaluator_trace("recurisve wildcard test: uh-oh! found a document node somehow (%p), aborting...", each);
+            context->code = ERR_UNEXPECTED_DOCUMENT_NODE;
+            break;
+    }
+    return result;
 }
 
 static bool apply_type_test(node *each, void *argument, nodelist *target)
@@ -329,41 +357,52 @@ static bool apply_name_test(node *each, void *argument, nodelist *target)
 static bool apply_predicate(node *each, void *argument, nodelist *target)
 {
     evaluator_context *context = (evaluator_context *)argument;
+    bool result = false;
     switch(predicate_kind(step_predicate(current_step(context))))
     {
         case WILDCARD:
             evaluator_trace("evaluating wildcard predicate");
-            return apply_wildcard_predicate(each, context, target);
+            result = apply_wildcard_predicate(each, context, target);
+            break;
         case SUBSCRIPT:
             evaluator_trace("evaluating subscript predicate");
-            return apply_subscript_predicate(each, context, target);
+            result = apply_subscript_predicate(each, context, target);
+            break;
         case SLICE:
             evaluator_trace("evaluating slice predicate");
-            return apply_slice_predicate(each, context, target);
+            result = apply_slice_predicate(each, context, target);
+            break;
         case JOIN:
             evaluator_trace("evaluating join predicate");
-            return apply_join_predicate(each, context, target);
+            result = apply_join_predicate(each, context, target);
+            break;
     }
+    return result;
 }
 
 static bool apply_wildcard_predicate(node *value, evaluator_context *context, nodelist *target)
 {
+    bool result = false;
     switch(node_get_kind(value))
     {
         case SCALAR:
             trace_string("wildcard predicate: adding scalar '%s' (%p)", scalar_get_value(value), node_get_size(value), value);
-            return nodelist_add(target, value) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
+            result = nodelist_add(target, value) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
+            break;
         case MAPPING:
             evaluator_trace("wildcard predicate: adding mapping (%p)", value);
-            return nodelist_add(target, value) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
+            result = nodelist_add(target, value) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
+            break;
         case SEQUENCE:
             evaluator_trace("wildcard predicate: adding %zd sequence (%p) items", node_get_size(value), value);
-            return iterate_sequence(value, add_to_nodelist_sequence_iterator, target) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
+            result = iterate_sequence(value, add_to_nodelist_sequence_iterator, target) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
+            break;
         case DOCUMENT:
             evaluator_trace("wildcard predicate: uh-oh! found a document node somehow (%p), aborting...", value);
             context->code = ERR_UNEXPECTED_DOCUMENT_NODE;
-            return false;
+            break;
     }
+    return result;
 }
 
 static bool apply_subscript_predicate(node *value, evaluator_context *context, nodelist *target)
@@ -392,11 +431,11 @@ static bool apply_slice_predicate(node *value, evaluator_context *context, nodel
     }
 
     predicate *slice = step_predicate(current_step(context));
-    int_fast32_t from = 0, to = 0, step = 0;
-    normalize_interval(value, slice, &from, &to, &step);
-    evaluator_trace("slice predicate: using normalized interval [%d:%d:%d]", from, to, step);
+    int_fast32_t from = 0, to = 0, extent = 0;
+    normalize_interval(value, slice, &from, &to, &extent);
+    evaluator_trace("slice predicate: using normalized interval [%d:%d:%d]", from, to, extent);
 
-    for(int_fast32_t i = from; 0 > step ? i >= to : i < to; i += step)
+    for(int_fast32_t i = from; 0 > extent ? i >= to : i < to; i += extent)
     {
         node *selected = sequence_get(value, (size_t)i);
         if(NULL == selected || !nodelist_add(target, selected))
@@ -454,18 +493,18 @@ static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *co
     return result;
 }
 
-static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *step)
+static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *extent)
 {
-    char *from_fmt = NULL, *to_fmt = NULL, *step_fmt = NULL;
+    char *from_fmt = NULL, *to_fmt = NULL, *extent_fmt = NULL;
     evaluator_trace("slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items",
                     slice_predicate_has_from(slice) ? (asprintf(&from_fmt, "%d", slice_predicate_from(slice)), from_fmt) : "_",
                     slice_predicate_has_to(slice) ? (asprintf(&to_fmt, "%d", slice_predicate_to(slice)), to_fmt) : "_",
-                    slice_predicate_has_step(slice) ? (asprintf(&step_fmt, "%d", slice_predicate_step(slice)), step_fmt) : "_",
+                    slice_predicate_has_step(slice) ? (asprintf(&extent_fmt, "%d", slice_predicate_step(slice)), extent_fmt) : "_",
                     value, node_get_size(value));
-    free(from_fmt); free(to_fmt); free(step_fmt);
-    *step = slice_predicate_has_step(slice) ? slice_predicate_step(slice) : 1;
-    *from = 0 > *step ? normalize_to(slice, value) - 1 : normalize_from(slice, value);
-    *to   = 0 > *step ? normalize_from(slice, value) : normalize_to(slice, value);
+    free(from_fmt); free(to_fmt); free(extent_fmt);
+    *extent = slice_predicate_has_step(slice) ? slice_predicate_step(slice) : 1;
+    *from = 0 > *extent ? normalize_to(slice, value) - 1 : normalize_from(slice, value);
+    *to   = 0 > *extent ? normalize_from(slice, value) : normalize_to(slice, value);
 }
 
 static int_fast32_t normalize_from(predicate *slice, node *value)

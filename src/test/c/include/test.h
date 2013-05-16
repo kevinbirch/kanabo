@@ -50,6 +50,13 @@
 #define assert_int_gt(X, Y)  ck_assert_int_gt(X, Y)
 #define assert_int_ge(X, Y)  ck_assert_int_ge(X, Y)
 
+#define assert_uint_eq(X, Y)  ck_assert_uint_eq(X, Y)
+#define assert_uint_ne(X, Y)  ck_assert_uint_ne(X, Y)
+#define assert_uint_lt(X, Y)  ck_assert_uint_lt(X, Y)
+#define assert_uint_le(X, Y)  ck_assert_uint_le(X, Y)
+#define assert_uint_gt(X, Y)  ck_assert_uint_gt(X, Y)
+#define assert_uint_ge(X, Y)  ck_assert_uint_ge(X, Y)
+
 #define assert_ptr_eq(X, Y)  ck_assert_msg((X) == (Y), "Assertion '" #X " == " #Y "' failed: "#X"==%p, "#Y"==%p", (X), (Y))
 
 #define assert_null(X)              ck_assert_msg((X) == NULL, "Assertion '"#X" == NULL' failed")

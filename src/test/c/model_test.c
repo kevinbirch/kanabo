@@ -75,7 +75,7 @@ START_TEST (null_model)
     assert_errno(EINVAL);
 
     reset_errno();
-    assert_int_eq(0, model_get_document_count(NULL));
+    assert_uint_eq(0, model_get_document_count(NULL));
     assert_errno(EINVAL);
 }
 END_TEST
@@ -87,7 +87,7 @@ START_TEST (null_node)
     assert_errno(EINVAL);
 
     reset_errno();
-    assert_int_eq(0, node_get_name_length(NULL));
+    assert_uint_eq(0, node_get_name_length(NULL));
     assert_errno(EINVAL);
 
     reset_errno();
@@ -234,7 +234,7 @@ void model_teardown(void)
 {
     model_free(model);
     assert_null(model->documents);
-    assert_int_eq(0, model->size);
+    assert_uint_eq(0, model->size);
 }
 
 START_TEST (constructors)
@@ -268,8 +268,8 @@ START_TEST (constructors)
     assert_noerr();
     assert_not_null(v);
     assert_not_null(v->content.sequence.value);
-    assert_int_eq(1, v->content.sequence.capacity);
-    assert_int_eq(0, v->content.size);
+    assert_uint_eq(1, v->content.sequence.capacity);
+    assert_uint_eq(0, v->content.size);
     node_free(v);
     
     reset_errno();
@@ -281,8 +281,8 @@ START_TEST (constructors)
     assert_noerr();
     assert_not_null(m);
     assert_not_null(m->content.mapping.value);
-    assert_int_eq(1, m->content.mapping.capacity);
-    assert_int_eq(0, m->content.size);
+    assert_uint_eq(1, m->content.mapping.capacity);
+    assert_uint_eq(0, m->content.size);
     node_free(m);
 }
 END_TEST
@@ -292,7 +292,7 @@ START_TEST (document)
     reset_errno();
     size_t c = model_get_document_count(model);
     assert_noerr();
-    assert_int_eq(1, c);
+    assert_uint_eq(1, c);
     
     reset_errno();
     node *d = model_get_document(model, 0);
@@ -334,12 +334,12 @@ START_TEST (nodes)
     reset_errno();
     size_t l = node_get_name_length(r);
     assert_noerr();
-    assert_int_eq(0, l);
+    assert_uint_eq(0, l);
 
     reset_errno();
     size_t s = node_get_size(r);
     assert_noerr();
-    assert_int_eq(4, s);
+    assert_uint_eq(4, s);
 }
 END_TEST
 
@@ -436,8 +436,8 @@ START_TEST (sequence)
     node *xyz = make_sequence_node(2);
     assert_noerr();
     assert_not_null(xyz);
-    assert_int_eq(0, xyz->content.size);
-    assert_int_eq(2, xyz->content.sequence.capacity);
+    assert_uint_eq(0, xyz->content.size);
+    assert_uint_eq(2, xyz->content.sequence.capacity);
 
     reset_errno();
     sequence_add(xyz, x);
@@ -448,8 +448,8 @@ START_TEST (sequence)
     reset_errno();
     sequence_add(xyz, z);
     assert_noerr();
-    assert_int_eq(3, xyz->content.size);
-    assert_int_eq(5, xyz->content.sequence.capacity);
+    assert_uint_eq(3, xyz->content.size);
+    assert_uint_eq(5, xyz->content.sequence.capacity);
     assert_ptr_eq(x, sequence_get(xyz, 0));
     assert_ptr_eq(y, sequence_get(xyz, 1));
     assert_ptr_eq(z, sequence_get(xyz, 2));
@@ -532,7 +532,7 @@ START_TEST (sequence_iteration)
     reset_errno();
     assert_true(iterate_sequence(s, check_sequence, &count));
     assert_noerr();
-    assert_int_eq(2, count);
+    assert_uint_eq(2, count);
 }
 END_TEST
 
@@ -563,7 +563,7 @@ START_TEST (fail_sequence_iteration)
     reset_errno();
     assert_false(iterate_sequence(s, fail_sequence, &count));
     assert_noerr();
-    assert_int_eq(1, count);
+    assert_uint_eq(1, count);
 }
 END_TEST
 
@@ -594,7 +594,7 @@ START_TEST (mapping_iteration)
     reset_errno();
     size_t count = 0;
     assert_true(iterate_mapping(r, check_mapping, &count));
-    assert_int_eq(4, count);
+    assert_uint_eq(4, count);
 }
 END_TEST
 
@@ -620,7 +620,7 @@ START_TEST (fail_mapping_iteration)
     reset_errno();
     assert_false(iterate_mapping(r, fail_mapping, &count));
     assert_noerr();
-    assert_int_eq(2, count);
+    assert_uint_eq(2, count);
 }
 END_TEST
 

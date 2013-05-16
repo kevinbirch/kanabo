@@ -613,7 +613,7 @@ START_TEST (recursive_wildcard)
     evaluator_free(evaluator);
     path_free(path);
 
-    assert_nodelist_length(list, 1);
+    assert_nodelist_length(list, 34);
 
     assert_node_kind(nodelist_get(list, 0), MAPPING);
 

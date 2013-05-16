@@ -681,7 +681,7 @@ static void slice_predicate(parser_context *context)
 
     int_fast32_t from = INT_FAST32_MIN;
     int_fast32_t to = INT_FAST32_MAX;
-    int_fast32_t step = 1;
+    int_fast32_t extent = 1;
     predicate *pred = add_predicate(context, SLICE);
 
     if(!look_for(context, ":"))
@@ -741,19 +741,19 @@ static void slice_predicate(parser_context *context)
         if(isdigit(get_char(context)) || '-' == get_char(context) || '+' == get_char(context))
         {
             parser_trace("slice: parsing step value...");
-            step = signed_integer(context);
+            extent = signed_integer(context);
             if(JSONPATH_SUCCESS != context->result.code)
             {
                 parser_trace("slice: uh oh! couldn't parse step value, aborting...");
                 return;
             }
-            if(0 == step)
+            if(0 == extent)
             {
                 parser_trace("slice: uh oh! couldn't parse step value, aborting...");
                 context->result.code = ERR_STEP_CANNOT_BE_ZERO;
                 return;
             }
-            parser_trace("slice: found step value: %d", step);
+            parser_trace("slice: found step value: %d", extent);
             pred->slice.specified |= SLICE_STEP;
         }
         else
@@ -766,7 +766,7 @@ static void slice_predicate(parser_context *context)
     context->result.code = JSONPATH_SUCCESS;
     pred->slice.from = from;
     pred->slice.to = to;
-    pred->slice.step = step;
+    pred->slice.step = extent;
 }
 
 static int_fast32_t signed_integer(parser_context *context)

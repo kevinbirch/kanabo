@@ -167,7 +167,7 @@ START_TEST (load_from_file)
 
     FILE *input = tmpfile();
     size_t written = fwrite(YAML, sizeof(char), yaml_size, input);
-    assert_int_eq(written, yaml_size);
+    assert_uint_eq(written, yaml_size);
     int ret = fflush(input);
     assert_int_eq(0, ret);
 
@@ -206,7 +206,7 @@ static void assert_model_state(loader_context *loader, document_model *model)
 {
     assert_int_eq(LOADER_SUCCESS, loader_status(loader));
     assert_not_null(model);
-    assert_int_eq(1, model_get_document_count(model));
+    assert_uint_eq(1, model_get_document_count(model));
 
     node *root = model_get_document_root(model, 0);
     assert_noerr();
