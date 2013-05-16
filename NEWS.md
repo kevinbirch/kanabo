@@ -17,7 +17,22 @@ LICENSE file for more details.
 
 This is the history of visble changes for [金棒][home] (kanabō) 
 
-**23 October 2012:** 0.1.0-SNAPSHOT
+**15 May 2013:** 0.2.0
+
+- Implement recursive step support
+
+**8 May 2013:** 0.1.1
+
+- Bug Fix: Update CLI options to match documentation and help
+
+**8 May 2013:** 0.1.0
+
+- First alpha release
+- Most major features implemented
+- Output support for Bash and JSON
+- Install target
+
+**23 October 2012:** 0.0.0
 
 - Project is started
 
