@@ -40,6 +40,7 @@
 #ifdef USE_LOGGING
 
 #include <stdio.h>
+#include <string.h>
 
 enum log_level
 {

@@ -38,9 +38,63 @@
 #include <errno.h>
 
 #include "jsonpath.h"
+#include "jsonpath/private.h"
 #include "conditions.h"
 
 static bool slice_predicate_has(const predicate * restrict value, enum slice_specifiers specifier);
+
+static void step_free(step *step);
+static void predicate_free(predicate *predicate);
+
+void path_free(jsonpath *path)
+{
+    if(NULL == path || NULL == path->steps || 0 == path->length)
+    {
+        return;
+    }
+    for(size_t i = 0; i < path->length; i++)
+    {
+        step_free(path->steps[i]);
+    }
+    free(path->steps);
+}
+
+void step_free(step *value)
+{
+    if(NULL == value)
+    {
+        return;
+    }
+    if(NAME_TEST == value->test.kind)
+    {
+        if(NULL != value->test.name.value)
+        {
+            free(value->test.name.value);
+            value->test.name.value = NULL;
+            value->test.name.length = 0;
+        }
+    }
+    if(NULL != value->predicate)
+    {
+        predicate_free(value->predicate);
+    }
+    free(value);
+}
+
+static void predicate_free(predicate *value)
+{
+    if(NULL == value)
+    {
+        return;
+    }
+    if(JOIN == predicate_kind(value))
+    {
+        path_free(value->join.left);
+        path_free(value->join.right);
+    }
+
+    free(value);
+}
 
 bool path_iterate(const jsonpath * restrict path, path_iterator iterator, void *context)
 {

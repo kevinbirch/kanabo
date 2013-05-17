@@ -41,105 +41,49 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// jsonpath model entities
+
+enum path_kind
+{
+    ABSOLUTE_PATH,
+    RELATIVE_PATH
+};
+
 typedef struct jsonpath jsonpath;
 
-enum slice_specifiers
+enum step_kind
 {
-    SLICE_FROM = 1,
-    SLICE_TO   = 2,
-    SLICE_STEP = 4
+    ROOT,
+    SINGLE,
+    RECURSIVE
 };
 
-struct predicate
+enum test_kind
 {
-    enum predicate_kind
-    {
-        WILDCARD,
-        SUBSCRIPT,
-        SLICE,
-        JOIN
-    } kind;
-    
-    union
-    {
-        struct
-        {
-            size_t index;
-        } subscript;
-        
-        struct
-        {
-            uint8_t      specified;
-            int_fast32_t from;
-            int_fast32_t to;
-            int_fast32_t step;
-        } slice;
-        
-        struct
-        {
-            jsonpath *left;
-            jsonpath *right;
-        } join;
-    };
+    WILDCARD_TEST,
+    NAME_TEST,
+    TYPE_TEST
 };
 
-typedef struct predicate predicate;
-
-struct step
+enum type_test_kind
 {
-    enum step_kind
-    {
-        ROOT,
-        SINGLE,
-        RECURSIVE
-    } kind;
-    
-    struct
-    {
-        enum test_kind
-        {
-            WILDCARD_TEST,
-            NAME_TEST,
-            TYPE_TEST
-        } kind;
-
-        union
-        {
-            struct
-            {
-                uint8_t *value;
-                size_t  length;
-            } name;
-        
-            enum type_test_kind
-            {
-                OBJECT_TEST,
-                ARRAY_TEST,
-                STRING_TEST,
-                NUMBER_TEST,
-                BOOLEAN_TEST,
-                NULL_TEST,
-            } type;
-        };
-    } test;    
-
-    predicate *predicate;
+    OBJECT_TEST,
+    ARRAY_TEST,
+    STRING_TEST,
+    NUMBER_TEST,
+    BOOLEAN_TEST,
+    NULL_TEST,
 };
-
 typedef struct step step;
 
-struct jsonpath
+enum predicate_kind
 {
-    enum path_kind
-    {
-        ABSOLUTE_PATH,
-        RELATIVE_PATH
-    } kind;
-  
-    size_t length;
-    step **steps;
-
+    WILDCARD,
+    SUBSCRIPT,
+    SLICE,
+    JOIN
 };
+typedef struct predicate predicate;
 
 enum parser_status_code
 {
@@ -163,66 +107,11 @@ enum parser_status_code
 
 typedef enum parser_status_code parser_status_code;
 
-struct cell
-{
-    step *step;
-    struct cell *next;
-};
-
-typedef struct cell cell;
-
-enum state
-{
-    ST_START = 0,
-    ST_ABSOLUTE_PATH,
-    ST_QUALIFIED_PATH,
-    ST_RELATIVE_PATH,
-    ST_ABBREVIATED_RELATIVE_PATH,
-    ST_STEP,
-    ST_NAME_TEST,
-    ST_WILDCARD_NAME_TEST,
-    ST_NAME,
-    ST_NODE_TYPE_TEST,
-    ST_JSON_OBJECT_TYPE_TEST,
-    ST_JSON_ARRAY_TYPE_TEST,
-    ST_JSON_STRING_TYPE_TEST,
-    ST_JSON_NUMBER_TYPE_TEST,
-    ST_JSON_BOOLEAN_TYPE_TEST,
-    ST_JSON_NULL_TYPE_TEST,
-    ST_PREDICATE,
-    ST_WILDCARD_PREDICATE,
-    ST_SUBSCRIPT_PREDICATE,
-    ST_SLICE_PREDICATE,
-    ST_JOIN_PREDICATE,
-    ST_FILTER_PREDICATE,
-    ST_SCRIPT_PREDICATE
-};
-
-struct parser_context
-{
-    const uint8_t *input;
-    size_t         length;
-    size_t         cursor;
-    
-    jsonpath      *path;
-    cell          *steps;
-
-    enum state     state;
-    enum step_kind current_step_kind;
-
-    struct
-    {
-        parser_status_code code;
-        uint8_t expected_char;
-        uint8_t actual_char;
-    } result;
-};
-
 typedef struct parser_context parser_context;
 
-// parser entry point
+// jsonpath parser api
 parser_context *make_parser(const uint8_t *expression, size_t length);
-enum parser_status_code parser_status(const parser_context * restrict context);
+parser_status_code parser_status(const parser_context * restrict context);
 
 void parser_free(parser_context *context);
 
@@ -232,6 +121,7 @@ void path_free(jsonpath *path);
 char *parser_status_message(const parser_context * restrict context);
 
 // jsonpath model api
+
 typedef bool (*path_iterator)(step *each, void *context);
 bool path_iterate(const jsonpath * restrict path, path_iterator iterator, void *context);
 

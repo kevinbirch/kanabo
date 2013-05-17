@@ -44,6 +44,7 @@
 #include <errno.h>
 
 #include "jsonpath.h"
+#include "jsonpath/private.h"
 #include "conditions.h"
 #include "log.h"
 
@@ -114,7 +115,6 @@ static step *make_root_step(void);
 static inline step *make_step(enum step_kind step_kind, enum test_kind test_kind);
 
 // state management
-static bool unwind_context(parser_context *context);
 static bool push_step(parser_context *context, step *step);
 static step *pop_step(parser_context *context);
 static inline void enter_state(parser_context *context, enum state state);
@@ -123,117 +123,14 @@ static predicate *add_predicate(parser_context *context, enum predicate_kind kin
 // error handlers
 static inline void unexpected_value(parser_context *context, uint8_t expected);
 
-extern void step_free(step *step);
-
-#define component_name "parser"
-
-#define parser_info(FORMAT, ...)  log_info(component_name, FORMAT, ##__VA_ARGS__)
-#define parser_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
-#define parser_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
-
-#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
-#define debug_string(FORMAT, VALUE, LENGTH, ...) log_string(DEBUG, component_name, FORMAT, VALUE, LENGTH##__VA_ARGS__)
-
-parser_context *make_parser(const uint8_t *expression, size_t length)
+bool parse_expression(parser_context *context)
 {
-    parser_debug("creating parser context");
-    parser_context *context = (parser_context *)calloc(1, sizeof(parser_context));
-    if(NULL == context)
-    {
-        parser_debug("uh oh! out of memory, can't allocate the parser context");
-        return NULL;
-    }
-    if(NULL == expression)
-    {
-        parser_debug("expression is null");
-        context->result.code = ERR_NULL_EXPRESSION;
-        errno = EINVAL;
-        return context;
-    }
-    if(0 == length)
-    {
-        parser_debug("expression is empty");
-        context->result.code = ERR_ZERO_LENGTH;
-        errno = EINVAL;
-        return context;
-    }
-    jsonpath *path = (jsonpath *)calloc(1, sizeof(jsonpath));
-    if(NULL == path)
-    {
-        parser_debug("uh oh! out of memory, can't allocate the result nodelist");
-        context->result.code = ERR_PARSER_OUT_OF_MEMORY;
-        return context;
-    }
-
-    context->steps = NULL;
-    context->path = path;    
-    context->input = expression;
-    context->length = length;
-    context->cursor = 0;
-    context->state = ST_START;
-    context->path->kind = RELATIVE_PATH;
-    context->result.code = JSONPATH_SUCCESS;
-    context->result.expected_char = 0;
-    context->result.actual_char = 0;
-
-    return context;
-}
-
-enum parser_status_code parser_status(const parser_context * restrict context)
-{
-    return context->result.code;
-}
-
-void parser_free(parser_context *context)
-{
-    parser_debug("destroying parser context");
-    if(NULL == context)
-    {
-        return;
-    }
-    for(cell *entry = context->steps; NULL != entry; entry = context->steps)
-    {
-        context->steps = entry->next;
-        free(entry);
-    }
-    context->steps = NULL;
-    context->path = NULL;
-    context->input = NULL;
-
-    free(context);
-}
-
-jsonpath *parse(parser_context *context)
-{
-    PRECOND_NONNULL_ELSE_NULL(context);
-    PRECOND_NONNULL_ELSE_NULL(context->path);
-    PRECOND_NONNULL_ELSE_NULL(context->input);
-    PRECOND_ELSE_NULL(0 != context->length);
-
-    debug_string("parsing expression: '%s'", context->input, context->length);
     path(context);
-
-    if(JSONPATH_SUCCESS == context->result.code && unwind_context(context))
+    if(JSONPATH_SUCCESS != context->result.code)
     {
-        parser_debug("done. found %zd steps.", context->path->length);
-        return context->path;
+        return false;
     }
-    else
-    {
-        context->result.actual_char = context->input[context->cursor];        
-#ifdef USE_LOGGING
-        char *message = parser_status_message(context);
-        parser_debug("aborted. unable to create jsonpath model. status: %d (%s)", context->result.code, message);
-        free(message);
-#endif
-        path_free(context->path);
-        context->path = NULL;
-        return NULL;
-    }
-}
 
-static bool unwind_context(parser_context *context)
-{
     context->path->steps = (step **)calloc(1, sizeof(step *) * context->path->length);
     if(NULL == context->path->steps)
     {

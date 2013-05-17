@@ -39,6 +39,7 @@
 #include <string.h>
 
 #include "jsonpath.h"
+#include "jsonpath/private.h"
 #include "conditions.h"
 
 static const char * const MESSAGES[] = 

@@ -41,6 +41,9 @@
 
 #include "evaluator.h"
 #include "evaluator/private.h"
+#undef component_name
+#include "jsonpath/private.h"
+#undef component_name
 #include "loader.h"
 #include "test.h"
 #include "test_model.h"
