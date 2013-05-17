@@ -90,7 +90,7 @@ name
     ;
 
 quoted name character
-    = ? any unicode character except '"' (unlesss it is quoted with a '\') ?
+    = ? any unicode character except ''' (single quote), unlesss it is quoted with a '\' (backslash) ?
     ;
 
 name character

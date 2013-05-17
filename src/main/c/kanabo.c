@@ -83,7 +83,7 @@ int main(const int argc, char * const *argv)
 
 static int dispatch(int command, const struct settings * restrict settings)
 {
-    int result = 0;
+    int result = EXIT_SUCCESS;
     
     switch(command)
     {

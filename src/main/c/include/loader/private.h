@@ -37,35 +37,44 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <yaml.h>
+#include <errno.h>
 
-#include "model.h"
+#include "log.h"
 
-enum loader_status_code
+struct cell
 {
-    LOADER_SUCCESS = 0,
-    ERR_INPUT_IS_NULL,         // the input argument given was NULL
-    ERR_INPUT_SIZE_IS_ZERO,    // input length was 0
-    ERR_LOADER_OUT_OF_MEMORY,  // unable to allocate memory
-    ERR_READER_FAILED,         // unable to read from the input
-    ERR_SCANNER_FAILED,        // unable to lexically analyze the input
-    ERR_PARSER_FAILED,         // unable to parse the input
-    ERR_OTHER
+    node        *this;
+    struct cell *next;
 };
 
-typedef enum loader_status_code loader_status_code;
+struct excursion
+{
+    size_t            length;
+    struct cell      *car;
+    struct excursion *next;
+};
 
-typedef struct loader_context loader_context;
+struct loader_context
+{
+    yaml_parser_t     *parser;
+    document_model    *model;
+    struct excursion  *excursions;
+    
+    size_t             length;
+    struct cell       *head;
+    struct cell       *last;
 
-loader_context *make_string_loader(const unsigned char *input, size_t size);
-loader_context *make_file_loader(FILE * restrict input);
-loader_status_code loader_status(const loader_context * restrict context);
+    loader_status_code code;
+};
 
-void loader_free(loader_context *context);
+document_model *build_model(loader_context *context);
+loader_status_code interpret_yaml_error(yaml_parser_t *parser);
 
-document_model *load(loader_context *context);
+#define component_name "loader"
 
-char *loader_status_message(const loader_context * restrict context);
+#define loader_info(FORMAT, ...)  log_info(component_name, FORMAT, ##__VA_ARGS__)
+#define loader_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
+#define loader_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
 
+#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 

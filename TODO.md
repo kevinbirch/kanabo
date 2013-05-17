@@ -33,14 +33,15 @@ LICENSE file for more details.
 #### Features:
 
 * implement union predicates
+* implement filter predicates
 
 ### parser
 
 * bug: `$...store` should not be accepted
+* bug: '.' should be allowed in a quoted name
 
 #### Enhancements:
 
-* ensure '.' is support in a quoted name test
 * split jsonpath.h into model, parser and api headers
 * implement lexer
 * implement combinators
@@ -56,15 +57,14 @@ LICENSE file for more details.
 * clean up and extract common patterns
 * add more checks for end of input
 * add exit state function with output
-* use peg to parse filter dsl?
-  * example - https://github.com/jgm/peg-markdown/
 
 #### Features:
 
 * union support
   * allow array indices
   * allow more than two items
-* filter support
+* filter predicate support
+* YAML anchor/alias syntax support?
 
 ### loader
 

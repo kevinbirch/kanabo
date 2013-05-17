@@ -42,6 +42,7 @@
 #include <check.h>
 
 #include "loader.h"
+#include "loader/private.h"
 #include "test.h"
 #include "test_model.h"
 

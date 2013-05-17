@@ -39,6 +39,7 @@
 #include <string.h>
 
 #include "loader.h"
+#include "loader/private.h"
 #include "conditions.h"
 
 static const char * const MESSAGES[] =

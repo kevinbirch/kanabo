@@ -37,14 +37,10 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include <errno.h>
 #include <math.h>             /* for floor() */
-#include <stdio.h>            /* for fileno() */
-#include <sys/stat.h>         /* for fstat() */
 
 #include "loader.h"
-#include "log.h"
-#include "conditions.h"
+#include "loader/private.h"
 
 typedef bool (*collector)(node *each, void *context);
 
@@ -54,11 +50,6 @@ struct mapping_context
     node *mapping;
 };
 
-extern loader_status_code interpret_yaml_error(yaml_parser_t *parser);
-
-static loader_context *make_loader(void);
-
-static document_model *build_model(loader_context *context);
 static void event_loop(loader_context *context);
 static bool dispatch_event(yaml_event_t *event, loader_context *context);
 
@@ -77,162 +68,9 @@ static bool collect_sequence(node *each, void *context);
 static bool collect_mapping(node *each, void *context);
 
 static node *pop_context(loader_context *context);
-static node *pop_node(loader_context *context, struct item **prev);
+static node *pop_node(loader_context *context, struct cell **prev);
 
-#define component_name "loader"
-
-#define loader_info(FORMAT, ...)  log_info(component_name, FORMAT, ##__VA_ARGS__)
-#define loader_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
-#define loader_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
-
-#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
-
-loader_context *make_string_loader(const unsigned char *input, size_t size)
-{
-    loader_debug("creating string loader context");
-    loader_context *context = make_loader();
-    if(NULL == context || LOADER_SUCCESS != context->code)
-    {
-        return context;
-    }
-    if(NULL == input)
-    {
-        loader_debug("input is null");
-        context->code = ERR_INPUT_IS_NULL;
-        errno = EINVAL;
-        return context;
-    }
-    if(0 == size)
-    {
-        loader_debug("input is empty");
-        context->code = ERR_INPUT_SIZE_IS_ZERO;
-        errno = EINVAL;
-        return context;
-    }
-
-    yaml_parser_set_input_string(context->parser, input, size);
-
-    return context;
-}
-
-loader_context *make_file_loader(FILE * restrict input)
-{
-    loader_debug("creating file loader context");
-    loader_context *context = make_loader();
-    if(NULL == context || LOADER_SUCCESS != context->code)
-    {
-        return context;
-    }
-    if(NULL == input)
-    {
-        loader_debug("input is null");
-        context->code = ERR_INPUT_IS_NULL;
-        errno = EINVAL;
-        return context;
-    }
-    struct stat file_info;
-    if(-1 == fstat(fileno(input), &file_info))
-    {
-        loader_debug("fstat failed on input file");
-        context->code = ERR_READER_FAILED;
-        errno = EINVAL;
-        return context;
-    }
-    if(feof(input) || 0 == file_info.st_size)
-    {
-        loader_debug("input is empty");
-        context->code = ERR_INPUT_SIZE_IS_ZERO;
-        errno = EINVAL;
-        return context;
-    }
-
-    yaml_parser_set_input_file(context->parser, input);
-    return context;
-}
-
-static loader_context *make_loader(void)
-{
-    loader_context *context = (loader_context *)calloc(1, sizeof(loader_context));
-    if(NULL == context)
-    {
-        loader_debug("uh oh! out of memory, can't allocate the loader context");
-        return NULL;
-    }
-
-    yaml_parser_t *parser = (yaml_parser_t *)calloc(1, sizeof(yaml_parser_t));
-    if(NULL == parser)
-    {
-        loader_debug("uh oh! out of memory, can't allocate the yaml parser");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return context;
-    }
-    document_model *model = make_model(1);
-    if(NULL == model)
-    {
-        loader_debug("uh oh! out of memory, can't allocate the document model");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return context;
-    }
-    
-    if(!yaml_parser_initialize(parser))
-    {
-        loader_debug("uh oh! can't initialize the yaml parser");
-        context->code = interpret_yaml_error(parser);
-        return context;
-    }
-
-    context->parser = parser;
-    context->model = model;
-    context->excursions = NULL;
-    context->head = NULL;
-    context->last = NULL;
-
-    return context;
-}
-
-enum loader_status_code loader_status(const loader_context * restrict context)
-{
-    return context->code;
-}
-
-void loader_free(loader_context *context)
-{
-    loader_debug("destroying loader context");
-    if(NULL == context)
-    {
-        return;
-    }
-    yaml_parser_delete(context->parser);
-    context->parser = NULL;
-    for(struct excursion *entry = context->excursions; NULL != entry; entry = context->excursions)
-    {
-        context->excursions = entry->next;
-        free(entry);
-    }
-    context->excursions = NULL;
-    for(struct item *entry = context->head; NULL != entry; entry = context->head)
-    {
-        context->head = entry->next;
-        free(entry);
-    }
-    context->head = NULL;
-    context->last = NULL;
-    context->model = NULL;
-
-    free(context);
-}
-
-document_model *load(loader_context *context)
-{
-    PRECOND_NONNULL_ELSE_NULL(context);
-    PRECOND_NONNULL_ELSE_NULL(context->parser);
-    PRECOND_NONNULL_ELSE_NULL(context->model);
-
-    loader_debug("starting load...");
-    return build_model(context);
-}
-
-static document_model *build_model(loader_context *context)
+document_model *build_model(loader_context *context)
 {
     event_loop(context);
 
@@ -405,7 +243,7 @@ static bool add_scalar(loader_context *context, yaml_event_t *event)
 static bool add_node(loader_context *context, node *value)
 {    
     loader_trace("adding node to cache");
-    struct item *current = (struct item *)calloc(1, sizeof(struct item));
+    struct cell *current = (struct cell *)calloc(1, sizeof(struct cell));
     if(NULL == current)
     {
         loader_debug("uh oh! couldn't create a node, aborting...");
@@ -439,35 +277,6 @@ static bool add_node(loader_context *context, node *value)
     return false;
 }
 
-static bool unwind_excursion(loader_context *loader, collector function, void *context)
-{
-    loader_trace("unwinding excursion of length: %zd", loader->excursions->length);
-    struct item **cursor = NULL == loader->excursions->car ? &loader->head : &loader->excursions->car->next;
-    while(NULL != *cursor)
-    {
-        if(!function(pop_node(loader, cursor), context))
-        {
-            loader_debug("uh oh! excursion collector failed, aborting...");
-            return true;
-        }
-    }
-
-    loader->last = loader->excursions->car;
-    struct excursion *top = loader->excursions;
-    loader->excursions = loader->excursions->next;
-    free(top);
-    loader_trace("cache size now: %zd", loader->length);
-
-    return false;
-}
-
-static bool collect_sequence(node *each, void *context)
-{
-    node *sequence = (node *)context;
-    loader_trace("adding node (%p) to sequence (%p)", each, sequence);
-    return sequence_add(sequence, each);
-}
-
 static bool unwind_sequence(loader_context *context)
 {
     node *sequence = make_sequence_node(context->excursions->length);
@@ -488,24 +297,6 @@ static bool unwind_sequence(loader_context *context)
     add_node(context, sequence);
     loader_trace("added sequence (%p) of length: %zd", sequence, node_get_size(sequence));
     return false;
-}
-
-static bool collect_mapping(node *each, void *context)
-{
-    struct mapping_context *argument = (struct mapping_context *)context;
-    if(NULL == argument->key)
-    {
-        loader_trace("caching mapping key (%p) for next invocation", each);
-        argument->key = each;
-        return true;
-    }
-    else
-    {
-        loader_trace("adding key (%p) and value (%p) to mapping (%p)", argument->key, each, argument->mapping);
-        bool result = mapping_put(argument->mapping, argument->key, each);
-        argument->key = NULL;
-        return result;
-    }
 }
 
 static bool unwind_mapping(loader_context *context)
@@ -568,6 +359,53 @@ static bool unwind_model(loader_context *context)
  * =================
  */
 
+static bool collect_sequence(node *each, void *context)
+{
+    node *sequence = (node *)context;
+    loader_trace("adding node (%p) to sequence (%p)", each, sequence);
+    return sequence_add(sequence, each);
+}
+
+static bool collect_mapping(node *each, void *context)
+{
+    struct mapping_context *argument = (struct mapping_context *)context;
+    if(NULL == argument->key)
+    {
+        loader_trace("caching mapping key (%p) for next invocation", each);
+        argument->key = each;
+        return true;
+    }
+    else
+    {
+        loader_trace("adding key (%p) and value (%p) to mapping (%p)", argument->key, each, argument->mapping);
+        bool result = mapping_put(argument->mapping, argument->key, each);
+        argument->key = NULL;
+        return result;
+    }
+}
+
+static bool unwind_excursion(loader_context *loader, collector function, void *context)
+{
+    loader_trace("unwinding excursion of length: %zd", loader->excursions->length);
+    struct cell **cursor = NULL == loader->excursions->car ? &loader->head : &loader->excursions->car->next;
+    while(NULL != *cursor)
+    {
+        if(!function(pop_node(loader, cursor), context))
+        {
+            loader_debug("uh oh! excursion collector failed, aborting...");
+            return true;
+        }
+    }
+
+    loader->last = loader->excursions->car;
+    struct excursion *top = loader->excursions;
+    loader->excursions = loader->excursions->next;
+    free(top);
+    loader_trace("cache size now: %zd", loader->length);
+
+    return false;
+}
+
 static node *pop_context(loader_context *context)
 {
     node *result = pop_node(context, &context->head);
@@ -575,12 +413,12 @@ static node *pop_context(loader_context *context)
     return result;
 }
 
-static node *pop_node(loader_context *context, struct item **cursor)
+static node *pop_node(loader_context *context, struct cell **cursor)
 {
     node *result = (*cursor)->this;
     loader_trace("extracting node (%p) from cache", result);
 
-    struct item *entry = *cursor;
+    struct cell *entry = *cursor;
     *cursor = (*cursor)->next;
     entry->next = NULL;
     free(entry);
