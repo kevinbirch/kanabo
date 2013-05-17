@@ -38,8 +38,8 @@
 #include <errno.h>
 
 #include "evaluator.h"
-#include "log.h"
-#include "evaluator/logging.h"
+#include "evaluator/private.h"
+#include "log.h"           
 
 evaluator_context *make_evaluator(const document_model *model, const jsonpath *path)
 {

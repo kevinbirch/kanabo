@@ -38,8 +38,8 @@
 #include <string.h>
 
 #include "evaluator.h"
+#include "evaluator/private.h"
 #include "log.h"
-#include "evaluator/logging.h"
 #include "conditions.h"
 
 struct meta_context

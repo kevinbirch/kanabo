@@ -40,6 +40,7 @@
 #include <check.h>
 
 #include "evaluator.h"
+#include "evaluator/private.h"
 #include "loader.h"
 #include "test.h"
 #include "test_model.h"

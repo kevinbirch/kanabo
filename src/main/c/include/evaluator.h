@@ -55,15 +55,6 @@ enum evaluator_status_code
     ERR_UNSUPPORTED_PATH,          // the jsonpath provided is not supported
 };
 
-struct evaluator_context
-{
-    enum evaluator_status_code code;
-    size_t                     current_step;
-    const document_model      *model;
-    const jsonpath            *path;
-    nodelist                  *list;
-};
-
 typedef struct evaluator_context evaluator_context;
 
 evaluator_context *make_evaluator(const document_model *model, const jsonpath *path);

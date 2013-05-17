@@ -36,6 +36,7 @@
  */
 
 #include "evaluator.h"
+#include "evaluator/private.h"
 #include "conditions.h"
 
 static const char * const MESSAGES[] =

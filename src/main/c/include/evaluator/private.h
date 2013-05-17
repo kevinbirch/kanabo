@@ -35,6 +35,17 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#pragma once
+
+struct evaluator_context
+{
+    enum evaluator_status_code code;
+    size_t                     current_step;
+    const document_model      *model;
+    const jsonpath            *path;
+    nodelist                  *list;
+};
+
 #define component_name "evaluator"
 
 #define evaluator_info(FORMAT, ...)  log_info(component_name, FORMAT, ##__VA_ARGS__)
