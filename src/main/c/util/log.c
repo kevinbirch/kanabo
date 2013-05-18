@@ -58,8 +58,7 @@ static const char * const LEVELS[] =
 static bool LOGGING_ENABLED = false;
 static enum log_level LOG_LEVEL = ERROR;
 
-void vlogger(enum log_level level, const char * restrict component, const char * restrict format, va_list args);
-bool print_prelude(enum log_level level, const char * restrict component);
+int print_prelude(enum log_level level, const char * restrict component);
 
 void enable_logging(void)
 {
@@ -109,43 +108,41 @@ void set_log_level_from_env(void)
     }
 }
 
-#define ensure_log_enabled(LEVEL) if(!LOGGING_ENABLED || LOG_LEVEL < LEVEL) return
+#define ensure_log_enabled(LEVEL) if(!LOGGING_ENABLED || LOG_LEVEL < LEVEL) return 0
 
-void logger(enum log_level level, const char * restrict component, const char * restrict format, ...)
+int logger(enum log_level level, const char * restrict component, const char * restrict format, ...)
 {
     ensure_log_enabled(level);
     va_list args;
     va_start(args, format);
-    vlogger(level, component, format, args);
+    int result = vlogger(level, component, format, args);
     va_end(args);
+    return result;
 }
 
-void vlogger(enum log_level level, const char * restrict component, const char * restrict format, va_list args)
+int vlogger(enum log_level level, const char * restrict component, const char * restrict format, va_list args)
 {
     ensure_log_enabled(level);
-    if(!print_prelude(level, component))
+    int result = print_prelude(level, component);
+    if(!result)
     {
-        return;
+        return result;
     }
-    vfprintf(stderr, format, args);
+    result += vfprintf(stderr, format, args);
     if('\n' != format[strlen(format) - 1])
     {
-        fprintf(stderr, "\n");
+        result += fprintf(stderr, "\n");
     }
+    return result;
 }
 
-bool print_prelude(enum log_level level, const char * restrict component)
+int print_prelude(enum log_level level, const char * restrict component)
 {
     time_t now = time(NULL);
     struct tm now_tm;
     localtime_r(&now, &now_tm);
-    int result = fprintf(stderr, "%d-%d-%d %02d:%02d:%02d %s %s - ", now_tm.tm_year + 1900, now_tm.tm_mon + 1, now_tm.tm_mday, 
-                         now_tm.tm_hour, now_tm.tm_min, now_tm.tm_sec, LEVELS[level], component);
-    if(-1 == result)
-    {
-        return false;
-    }
-    return true;
+    return fprintf(stderr, "%d-%d-%d %02d:%02d:%02d %s %s - ", now_tm.tm_year + 1900, now_tm.tm_mon + 1, now_tm.tm_mday, 
+                   now_tm.tm_hour, now_tm.tm_min, now_tm.tm_sec, LEVELS[level], component);
 }
 
 #endif

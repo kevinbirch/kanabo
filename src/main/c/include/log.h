@@ -37,6 +37,9 @@
 
 #pragma once
 
+#define _STRINGIFY(VALUE) #VALUE
+#define S(VALUE) _STRINGIFY(VALUE)
+
 #ifdef USE_LOGGING
 
 #include <stdio.h>
@@ -56,11 +59,11 @@ void disable_logging(void);
 void set_log_level(enum log_level level);
 void set_log_level_from_env(void);
 
-#define log_error(COMPONENT, FORMAT, ...)  logger(ERROR, COMPONENT, FORMAT, ##__VA_ARGS__);
-#define log_warn(COMPONENT, FORMAT, ...)   logger(WARNING, COMPONENT, FORMAT, ##__VA_ARGS__);
-#define log_info(COMPONENT, FORMAT, ...)   logger(INFO, COMPONENT, FORMAT, ##__VA_ARGS__);
-#define log_debug(COMPONENT, FORMAT, ...)  logger(DEBUG, COMPONENT, FORMAT, ##__VA_ARGS__);
-#define log_trace(COMPONENT, FORMAT, ...)  logger(TRACE, COMPONENT, FORMAT, ##__VA_ARGS__);
+#define log_error(COMPONENT, FORMAT, ...)  logger(ERROR, COMPONENT, FORMAT, ##__VA_ARGS__)
+#define log_warn(COMPONENT, FORMAT, ...)   logger(WARNING, COMPONENT, FORMAT, ##__VA_ARGS__)
+#define log_info(COMPONENT, FORMAT, ...)   logger(INFO, COMPONENT, FORMAT, ##__VA_ARGS__)
+#define log_debug(COMPONENT, FORMAT, ...)  logger(DEBUG, COMPONENT, FORMAT, ##__VA_ARGS__)
+#define log_trace(COMPONENT, FORMAT, ...)  logger(TRACE, COMPONENT, FORMAT, ##__VA_ARGS__)
 
 #define log_string(LEVEL, COMP, FORMAT, VALUE, LENGTH, ...)             \
     do {                                                                \
@@ -72,7 +75,8 @@ void set_log_level_from_env(void);
     logger(LEVEL, COMP, FORMAT, _log_string, ##__VA_ARGS__);            \
     } while(0)
 
-void logger(enum log_level level, const char * restrict component, const char * restrict format, ...);
+int logger(enum log_level level, const char * restrict component, const char * restrict format, ...);
+int vlogger(enum log_level level, const char * restrict component, const char * restrict format, va_list args);
 
 #else
 

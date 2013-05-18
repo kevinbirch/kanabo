@@ -123,7 +123,7 @@ static int interactive_mode(const struct settings * restrict settings)
 
 static int expression_mode(const struct settings * restrict settings)
 {
-    log_debug("kanabo", "evaluating expression: \"%s\"", settings->expression)
+    log_debug("kanabo", "evaluating expression: \"%s\"", settings->expression);
     document_model *model = load_model(settings);
     if(NULL == model)
     {
@@ -159,7 +159,7 @@ static int expression_mode(const struct settings * restrict settings)
 
 static document_model *load_model(const struct settings * restrict settings)
 {
-    log_trace("kanabo", "loading model")
+    log_trace("kanabo", "loading model");
     FILE *input = open_input(settings);
     if(NULL == input)
     {
@@ -200,7 +200,7 @@ static document_model *load_model(const struct settings * restrict settings)
 
 static jsonpath *parse_expression(const struct settings * restrict settings)
 {
-    log_trace("kanabo", "parsing expression")
+    log_trace("kanabo", "parsing expression");
     parser_context *parser = make_parser((uint8_t *)settings->expression, strlen(settings->expression));
     if(NULL == parser)
     {
@@ -232,7 +232,7 @@ static jsonpath *parse_expression(const struct settings * restrict settings)
 
 static nodelist *evaluate_expression(const struct settings * restrict settings, const document_model *model, const jsonpath *path)
 {
-    log_trace("kanabo", "evaluating expression")
+    log_trace("kanabo", "evaluating expression");
     evaluator_context *evaluator = make_evaluator(model, path);
     if(NULL == evaluator)
     {
