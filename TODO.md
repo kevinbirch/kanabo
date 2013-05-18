@@ -32,6 +32,7 @@ LICENSE file for more details.
 
 #### Features:
 
+* negative subscript values
 * implement union predicates
 * implement filter predicates
 
@@ -60,6 +61,7 @@ LICENSE file for more details.
 
 #### Features:
 
+* negative subscript values
 * union support
   * allow array indices
   * allow more than two items
