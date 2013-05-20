@@ -49,7 +49,7 @@ bool emit_sequence_item(node *each, void *context);
 
 #define EMIT(STR) if(-1 == fprintf(stdout, (STR)))                      \
     {                                                                   \
-        log_error("bash", "uh oh! couldn't emit literal %s", (STR));    \
+        log_error("shell", "uh oh! couldn't emit literal %s", (STR));    \
         return false;                                                   \
     }    
 
