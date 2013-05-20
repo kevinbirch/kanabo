@@ -35,46 +35,105 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <stdio.h>
+#include <ctype.h>
 
-#include "emit/zsh.h"
 #include "emit/shell.h"
 #include "log.h"
 
-static bool emit_mapping_item(node *key, node *value, void *context);
+static bool scalar_contains_space(const node * restrict each);
 
-void emit_zsh(const nodelist * restrict list, const struct settings * restrict settings)
+bool emit_node(node *each, void *context)
 {
-    log_trace("zsh", "emitting...");
-    if(!nodelist_iterate(list, emit_node, emit_mapping_item))
+    mapping_iterator emit_mapping_item = (mapping_iterator)context;
+
+    bool result = true;
+    switch(node_get_kind(each))
     {
-        perror(settings->program_name);
+        case DOCUMENT:
+            log_trace("shell", "emitting document");
+            result = emit_node(document_get_root(each), NULL);
+            break;
+        case SCALAR:
+            result = emit_scalar(each);
+            EMIT("\n");
+            break;
+        case SEQUENCE:
+            log_trace("shell", "emitting seqence");
+            result = iterate_sequence(each, emit_sequence_item, NULL);
+            EMIT("\n");
+            break;
+        case MAPPING:
+            log_trace("shell", "emitting mapping");
+            result = iterate_mapping(each, emit_mapping_item, NULL);
+            EMIT("\n");
+            break;
+    }
+
+    return result;
+}
+
+bool emit_scalar(const node * restrict each)
+{
+    if(SCALAR_STRING == scalar_get_kind(each) && scalar_contains_space(each))
+    {
+        log_trace("shell", "emitting quoted scalar");
+        return emit_quoted_scalar(each);
+    }
+    else
+    {
+        log_trace("shell", "emitting raw scalar");
+        return emit_raw_scalar(each);
     }
 }
 
-static bool emit_mapping_item(node *key, node *value, void *context)
+bool emit_quoted_scalar(const node * restrict each)
+{
+    EMIT("'");
+    if(!emit_raw_scalar(each))
+    {
+        log_error("shell", "uh oh! couldn't emit quoted scalar");
+        return false;
+    }
+    EMIT("'");
+
+    return true;
+}
+
+bool emit_raw_scalar(const node * restrict each)
+{
+    return fwrite(scalar_get_value(each), node_get_size(each), 1, stdout);
+}
+
+bool emit_sequence_item(node *each, void *context)
 {
 #pragma unused(context)
-    if(SCALAR == node_get_kind(value))
+    if(SCALAR == node_get_kind(each))
     {
-        log_trace("zsh", "emitting mapping item");
-        if(!emit_scalar(key))
+        log_trace("shell", "emitting sequence item");
+        if(!emit_scalar(each))
         {
-            log_error("zsh", "uh oh! couldn't emit mapping key");
-            return false;
-        }
-        EMIT(" ");
-        if(!emit_scalar(value))
-        {
-            log_error("zsh", "uh oh! couldn't emit mapping value");
             return false;
         }
         EMIT(" ");
     }
     else
     {
-        log_trace("zsh", "skipping mapping item");
+        log_trace("shell", "skipping sequence item");
     }
 
     return true;
+}
+
+bool scalar_contains_space(const node * restrict each)
+{
+    uint8_t *value = scalar_get_value(each);
+    for(size_t i = 0; i < node_get_size(each); i++)
+    {
+        if(isspace(*(value + i)))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }

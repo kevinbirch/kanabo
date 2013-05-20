@@ -35,46 +35,22 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <stdio.h>
+#pragma once
 
-#include "emit/zsh.h"
-#include "emit/shell.h"
-#include "log.h"
+#include <stdbool.h>
 
-static bool emit_mapping_item(node *key, node *value, void *context);
+#include "model.h"
 
-void emit_zsh(const nodelist * restrict list, const struct settings * restrict settings)
-{
-    log_trace("zsh", "emitting...");
-    if(!nodelist_iterate(list, emit_node, emit_mapping_item))
-    {
-        perror(settings->program_name);
-    }
-}
+bool emit_node(node *value, void *context);
+bool emit_scalar(const node * restrict each);
+bool emit_quoted_scalar(const node * restrict each);
+bool emit_raw_scalar(const node * restrict each);
+bool emit_sequence_item(node *each, void *context);
 
-static bool emit_mapping_item(node *key, node *value, void *context)
-{
-#pragma unused(context)
-    if(SCALAR == node_get_kind(value))
-    {
-        log_trace("zsh", "emitting mapping item");
-        if(!emit_scalar(key))
-        {
-            log_error("zsh", "uh oh! couldn't emit mapping key");
-            return false;
-        }
-        EMIT(" ");
-        if(!emit_scalar(value))
-        {
-            log_error("zsh", "uh oh! couldn't emit mapping value");
-            return false;
-        }
-        EMIT(" ");
-    }
-    else
-    {
-        log_trace("zsh", "skipping mapping item");
-    }
+#define EMIT(STR) if(-1 == fprintf(stdout, (STR)))                      \
+    {                                                                   \
+        log_error("bash", "uh oh! couldn't emit literal %s", (STR));    \
+        return false;                                                   \
+    }    
 
-    return true;
-}
+
