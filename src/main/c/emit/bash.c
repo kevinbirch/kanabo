@@ -46,7 +46,13 @@ static bool emit_mapping_item(node *key, node *value, void *context);
 void emit_bash(const nodelist * restrict list, const struct settings * restrict settings)
 {
     log_trace("bash", "emitting...");
-    if(!nodelist_iterate(list, emit_node, emit_mapping_item))
+    emit_context context = 
+        {
+            .emit_mapping_item = emit_mapping_item,
+            .wrap_collections = true
+        };
+    
+    if(!nodelist_iterate(list, emit_node, &context))
     {
         perror(settings->program_name);
     }

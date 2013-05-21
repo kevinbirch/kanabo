@@ -42,9 +42,14 @@
 
 static bool scalar_contains_space(const node * restrict each);
 
-bool emit_node(node *each, void *context)
+#define MAYBE_EMIT(STR) if(context->wrap_collections)   \
+    {                                                   \
+        EMIT((STR));                                    \
+    }
+
+bool emit_node(node *each, void *argument)
 {
-    mapping_iterator emit_mapping_item = (mapping_iterator)context;
+    emit_context *context = (emit_context *)argument;
 
     bool result = true;
     switch(node_get_kind(each))
@@ -59,16 +64,16 @@ bool emit_node(node *each, void *context)
             break;
         case SEQUENCE:
             log_trace("shell", "emitting seqence");
-            EMIT("(");
+            MAYBE_EMIT("(");            
             result = iterate_sequence(each, emit_sequence_item, NULL);
-            EMIT(")");
+            MAYBE_EMIT(")");
             EMIT("\n");
             break;
         case MAPPING:
             log_trace("shell", "emitting mapping");
-            EMIT("(");
-            result = iterate_mapping(each, emit_mapping_item, NULL);
-            EMIT(")");
+            MAYBE_EMIT("(");            
+            result = iterate_mapping(each, context->emit_mapping_item, NULL);
+            MAYBE_EMIT(")");
             EMIT("\n");
             break;
     }
