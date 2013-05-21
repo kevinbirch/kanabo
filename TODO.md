@@ -70,6 +70,8 @@ LICENSE file for more details.
 
 ### loader
 
+* bug: check for yaml type tags: http://yaml.org/type/index.html
+
 #### Enhancements:
 
 * replace strtod testing with regex
