@@ -48,9 +48,9 @@ These options control expression evaluation.  Only one option is allowed:
     Evaluate a single JSONPath \<expression\> and print the result to *stdout*.
 
   * `-i`, `--interactive`
-    Evaluate expressions interactivly.  Newline separated query expressions will
+    Evaluate expressions interactively.  Newline separated query expressions will
     be read from *stdin* and the result of each printed to *stdout*.  When using
-    this option, the `--file` option is also requred.
+    this option, the `--file` option is also required.
 
 Miscellaneous options:
 
@@ -70,7 +70,7 @@ The following output formats are supported:
   * [Bash][bash]  
     Each result from the query will be printed on a separate line, with object
     key value pairs formatted for Bash.  Sequences will be printed as space
-    separated lists.  Any string values with embedded whitepace will be wrapped
+    separated lists.  Any string values with embedded whitespace will be wrapped
     with single quotes.
 
     ```bash
@@ -84,8 +84,8 @@ The following output formats are supported:
 
   * [Zsh][zsh]  
     Each result from the query will be printed on a separate line, with object
-    key value pairs and sequences both printed as lists.  Any string values with
-    embedded whitepace will be wrapped with single quotes.
+    key value pairs and sequences both printed as space separated lists.  Any 
+    string values with embedded whitespace will be wrapped with single quotes.
   
     ```sh
     $ kanabo --query '$.store.book.*' --output zsh < inventory.json
@@ -149,7 +149,7 @@ separated by a `.`. The result of evaluating an expression is a list of nodes
 from the original document.
 
 The dialect of JSONPath implemented by this program differs in some ways from
-the [defacto specifcation][jsonpath]:
+the [de facto specification][jsonpath]:
 
   * Predicates can be applied to any step type, not just name tests (e.g. 
     `$..array()[1]` - the second item of all array elements in the document).
@@ -219,7 +219,7 @@ Given the following JSON document:
 ```
 
 This table demonstrates various JSONPath expressions and the results.  N.B. that
-the above JSON could have also been formatted as the equilvilent YAML document
+the above JSON could have also been formatted as the equivalent YAML document
 for the exact same results below.
 
 | Expression                    | Result                                         |
@@ -240,7 +240,7 @@ for the exact same results below.
 
 These references may be of interest to the user of this program:
 
-  * [JSONPath Query Langauge][jsonpath]
+  * [JSONPath Query Language][jsonpath]
   * [GNU Bash shell][bash]
   * [Z shell][zsh]
   * [jshon](http://kmkeen.com/jshon)
@@ -291,7 +291,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-[jsonpath]: http://goessner.net/articles/JsonPath "The defacto specification"
+[jsonpath]: http://goessner.net/articles/JsonPath "The de facto specification"
 [bash]: http://www.gnu.org/software/bash
 [zsh]: http://zsh.sourceforge.net
 [json]: http://json.org
