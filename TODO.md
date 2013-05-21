@@ -17,7 +17,6 @@ LICENSE file for more details.
 
 ### global
 
-* change `Q` option to `q`, same with `I`
 * security
   * https://www.securecoding.cert.org/confluence/display/seccode/CERT+C+Secure+Coding+Standard
   * https://www.securecoding.cert.org/confluence/display/seccode/MEM07-C.+Ensure+that+the+arguments+to+calloc%28%29%2C+when+multiplied%2C+do+not+wrap
