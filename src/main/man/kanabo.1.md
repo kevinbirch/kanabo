@@ -68,7 +68,10 @@ Miscellaneous options:
 The following output formats are supported:
 
   * [Bash][bash]  
-    Each result from the query will be printed on a separate line, with object key value pairs formatted for Bash.  Sequences will be printed as space separated lists.  Any string values with embedded whitepace will be wrapped with single quotes.
+    Each result from the query will be printed on a separate line, with object
+    key value pairs formatted for Bash.  Sequences will be printed as space
+    separated lists.  Any string values with embedded whitepace will be wrapped
+    with single quotes.
 
     ```bash
     $ kanabo --query '$.store.book.*' --output bash < inventory.json
@@ -80,7 +83,9 @@ The following output formats are supported:
     ```
 
   * [Zsh][zsh]  
-    Each result from the query will be printed on a separate line, with object key value pairs and sequences both printed as lists.  Any string values with embedded whitepace will be wrapped with single quotes.
+    Each result from the query will be printed on a separate line, with object
+    key value pairs and sequences both printed as lists.  Any string values with
+    embedded whitepace will be wrapped with single quotes.
   
     ```sh
     $ kanabo --query '$.store.book.*' --output zsh < inventory.json
@@ -107,24 +112,26 @@ details
 
 ## JSONPATH
 
-A JSONPath expression is composed of a series of steps beginning with a `$` and separated by a `.`. The result of evaluating an expression is a list of nodes from the original document.
+A JSONPath expression is composed of a series of steps beginning with a `$` and
+separated by a `.`. The result of evaluating an expression is a list of nodes
+from the original document.
 
-The dialect of JSONPath implemented by this program differs in some ways from the [defacto specifcation][jsonpath]:
+The dialect of JSONPath implemented by this program differs in some ways from
+the [defacto specifcation][jsonpath]:
 
-  * Extensions
-    The following additional features are supported:
-    
-    * Predicates can be applied to any step type, not just names (e.g. `$..array()[1]` - the second item of all array elements in the document).
-    * Node type tests can filter nodes by their type (string, number, boolean, null, array, object).
-    * Step names can be quoted (e.g. `$.store.'home appliances'.blender`).
-
-  * Caveats
-    The following features defined in the specification are not and never will wbe supported:
-    
-    * *Bracket* Notation (e.g. `$['store']['book'][0]['title']` instead of `$store.book[0].title`).
-    * Script Expressions (e.g. `$..book[(@.length - 1)]`)
-
-Bracket expressions provide no demonstrable semantic benefit over the dot notation, and hurts readability.  Script expressions are a very dangerous notion (see [Occupy Babel](http://www.cs.dartmouth.edu/~sergey/langsec/occupy/)), and static compiled languages are not amenable to evaluating expressions of the implementation language at runtime anway.
+  * Predicates can be applied to any step type, not just name tests (e.g. 
+    `$..array()[1]` - the second item of all array elements in the document).
+  * Node type tests can filter nodes by their type (string, number, boolean,
+    null, array, object).
+  * Step names can be quoted (e.g. `$.store.'home.appliances'.blender` to escape
+    the embedded `.`).
+  * Bracket otation (e.g. `$['store']['book'][0]['title']` instead of 
+    `$store.book[0].title`) is not supported.  Bracket expressions provide no
+    demonstrable semantic benefit over the dot notation, and hurts readability.
+  * Script Expressions (e.g. `$..book[(@.length - 1)]`) are not supported.
+    Script expressions are a very dangerous notion (see 
+    [Occupy Babel](http://www.cs.dartmouth.edu/~sergey/langsec/occupy/)).  Use
+    filter expressions instead.
 
 ## EXAMPLES
 
@@ -179,7 +186,9 @@ Given the following JSON document:
 }
 ```
 
-This table demonstrates various JSONPath expressions and the results.  N.B. that the above JSON could have also been formatted as the equilvilent YAML document for the exact same results below.
+This table demonstrates various JSONPath expressions and the results.  N.B. that
+the above JSON could have also been formatted as the equilvilent YAML document
+for the exact same results below.
 
 | Expression                    | Result                                         |
 | ----------------------------- | ---------------------------------------------- |
