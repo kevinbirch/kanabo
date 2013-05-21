@@ -119,7 +119,7 @@ The first line opens a new file descriptor (number 3) for reading, and connects 
 An example of the Zsh output format would be:
 
 ```sh
-$ kanabo -q '$.store.book[1]'-o zsh < path/to/input.json
+$ kanabo -q '$.store.book[1]' -o zsh < path/to/input.json
 category fiction author 'Evelyn Waugh' title 'Sword of Honour' price 12.99
 ```
 
