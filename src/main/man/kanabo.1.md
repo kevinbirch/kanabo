@@ -99,13 +99,45 @@ The following output formats are supported:
   * [JSON][json]  
     The result of the query will be printed as unformatted JSON.
 
-    ```bash
-    $ kanabo --query '$.store.book.*' --format bash < inventory.yaml
+    ```sh
+    $ kanabo --query '$.store.book.*' --output json < inventory.yaml
     [{"category":"reference","author":"Nigel Rees","title":"Sayings of the Century","price":8.95},{"category":"fiction","author":"Evelyn Waugh","title":"Sword of Honour","price":12.99},{"category":"fiction","author":"Herman Melville","title":"Moby Dick","isbn":"0-553-21311-3","price":8.99},{"category":"fiction","author":"J. R. R. Tolkien","title":"The Lord of the Rings","isbn":"0-395-19395-8","price":22.99},{"category":"fiction","author":"夏目漱石 (NATSUME Sōseki)","title":"吾輩は猫である","isbn":"978-0-8048-3265-6","price":13.29}]
     ```
 
   * [YAML][yaml]  
+    The result of the query will be printed as formatted YAML.
 
+    ```sh
+    $ kanabo --query '$.store.book[1]' --output yaml < inventory.yaml
+    - category: reference
+      author: "Nigel Rees"
+      title: "Sayings of the Century"
+      price: 8.95
+
+    - category: fiction
+      author: "Evelyn Waugh"
+      title: "Sword of Honour"
+      price: 12.99
+
+    - category: fiction
+      author: "Herman Melville"
+      title: "Moby Dick"
+      isbn: "0-553-21311-3"
+      price: 8.99
+
+    - category: fiction
+      author: "J. R. R. Tolkien"
+      title: "The Lord of the Rings"
+      isbn: "0-395-19395-8"
+      price: 22.99
+
+    - category: fiction
+      author: "夏目漱石 (NATSUME Sōseki)"
+      title: "吾輩は猫である"
+      isbn: "978-0-8048-3265-6"
+      price: 13.29
+    ```
+ 
 ## INTERACTIVE EVALUATION
 
 details
@@ -125,9 +157,9 @@ the [defacto specifcation][jsonpath]:
     null, array, object).
   * Step names can be quoted (e.g. `$.store.'home.appliances'.blender` to escape
     the embedded `.`).
-  * Bracket otation (e.g. `$['store']['book'][0]['title']` instead of 
-    `$store.book[0].title`) is not supported.  Bracket expressions provide no
-    demonstrable semantic benefit over the dot notation, and hurts readability.
+  * Bracket notation (e.g. `$['store']['book'][0]['title']` instead of
+    `$store.book[0].title`) is not supported.  Bracket notation provides no
+    semantic benefit over the dot notation and hurts readability.
   * Script Expressions (e.g. `$..book[(@.length - 1)]`) are not supported.
     Script expressions are a very dangerous notion (see 
     [Occupy Babel](http://www.cs.dartmouth.edu/~sergey/langsec/occupy/)).  Use

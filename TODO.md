@@ -126,6 +126,10 @@ LICENSE file for more details.
 
 ### documentation
 
+* man page
+  * more jsonpath details
+  * interactive mode
+  * 3rd parth review
 * discussions
   * http://stackoverflow.com/questions/10766732/reading-associative-arrays-from-file
   * http://wiki.bash-hackers.org/syntax/keywords/coproc
