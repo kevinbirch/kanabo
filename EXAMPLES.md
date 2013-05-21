@@ -104,7 +104,7 @@ $ kanabo -q '$.store.book[1]' -o bash < path/to/input.json
 
 To produce the above output using the Zsh shell and the Zsh output format, use this script:
 
-```shell
+```sh
 exec 3< <(kanabo -o zsh -f $1 -q '$.store.book.*')
 typeset -A book
 while read -r -u 3 line
@@ -118,7 +118,7 @@ The first line opens a new file descriptor (number 3) for reading, and connects 
 
 An example of the Zsh output format would be:
 
-```shell
+```sh
 $ kanabo -q '$.store.book[1]'-o zsh < path/to/input.json
 category fiction author 'Evelyn Waugh' title 'Sword of Honour' price 12.99
 ```
