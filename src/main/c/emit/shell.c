@@ -59,12 +59,16 @@ bool emit_node(node *each, void *context)
             break;
         case SEQUENCE:
             log_trace("shell", "emitting seqence");
+            EMIT("(");
             result = iterate_sequence(each, emit_sequence_item, NULL);
+            EMIT(")");
             EMIT("\n");
             break;
         case MAPPING:
             log_trace("shell", "emitting mapping");
+            EMIT("(");
             result = iterate_mapping(each, emit_mapping_item, NULL);
+            EMIT(")");
             EMIT("\n");
             break;
     }

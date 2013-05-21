@@ -17,7 +17,7 @@ LICENSE file for more details.
 
 ### global
 
-* move struct decls into separate header file
+* change `Q` option to `q`, same with `I`
 * security
   * https://www.securecoding.cert.org/confluence/display/seccode/CERT+C+Secure+Coding+Standard
   * https://www.securecoding.cert.org/confluence/display/seccode/MEM07-C.+Ensure+that+the+arguments+to+calloc%28%29%2C+when+multiplied%2C+do+not+wrap
