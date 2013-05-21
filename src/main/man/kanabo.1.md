@@ -10,8 +10,8 @@ kanabo - query JSON/YAML files from shell scripts with JSONPath
 
 ## SYNOPSIS
 
-`kanabo` [`--format` \<format\>]  [`--file` \<file\>] `--query` \<expression\>  
-`kanabo` [`--format` \<format\>] `--interactive` `--file` \<file\>
+`kanabo` [`--output` \<format\>]  [`--file` \<file\>] `--query` \<expression\>  
+`kanabo` [`--output` \<format\>] `--interactive` `--file` \<file\>
 
 ## DESCRIPTION
 
@@ -37,17 +37,17 @@ These options control the document data source and the output format:
     Specify a file to read the JSON/YAML data from instead of *stdin*.  This
     option is required when using the `--interactive` option.
 
-  * `-o`, `--format` \<format\>
+  * `-o`, `--output` \<format\>
     Specify the output format for values returned by queries.  The supported
     values of \<format\> are: **bash** (Bash shell), **zsh** (Z shell), **json**
     or **yaml**.  The default value is **bash**.
 
 These options control expression evaluation.  Only one option is allowed:
 
-  * `-Q`, `--query` \<expression\>
+  * `-q`, `--query` \<expression\>
     Evaluate a single JSONPath \<expression\> and print the result to *stdout*.
 
-  * `-I`, `--interactive`
+  * `-i`, `--interactive`
     Evaluate expressions interactivly.  Newline separated query expressions will
     be read from *stdin* and the result of each printed to *stdout*.  When using
     this option, the `--file` option is also requred.
@@ -68,10 +68,10 @@ Miscellaneous options:
 The following output formats are supported:
 
   * [Bash][bash]  
-    Each result from the query will be printed on a separate line, with object key value pairs formatted for Bash.  Any string values with embedded whitepace will be wrapped with single quotes.
+    Each result from the query will be printed on a separate line, with object key value pairs formatted for Bash.  Sequences will be printed as space separated lists.  Any string values with embedded whitepace will be wrapped with single quotes.
 
     ```bash
-    $ kanabo --query '$.store.book.*' --format bash < inventory.yaml
+    $ kanabo --query '$.store.book.*' --output bash < inventory.json
     [category]=reference [author]='Nigel Rees' [title]='Sayings of the Century' [price]=8.95 
     [category]=fiction [author]='Evelyn Waugh' [title]='Sword of Honour' [price]=12.99 
     [category]=fiction [author]='Herman Melville' [title]='Moby Dick' [isbn]=0-553-21311-3 [price]=8.99 
@@ -80,7 +80,17 @@ The following output formats are supported:
     ```
 
   * [Zsh][zsh]  
+    Each result from the query will be printed on a separate line, with object key value pairs and sequences both printed as lists.  Any string values with embedded whitepace will be wrapped with single quotes.
   
+    ```sh
+    $ kanabo --query '$.store.book.*' --output zsh < inventory.json
+    category reference author 'Nigel Rees' title 'Sayings of the Century' price 8.95
+    category fiction author 'Evelyn Waugh' title 'Sword of Honour' price 12.99
+    category fiction author 'Herman Melville' title 'Moby Dick' isbn 0-553-21311-3 price 8.99
+    category fiction author 'J. R. R. Tolkien' title 'The Lord of the Rings' isbn 0-395-19395-8 price 22.99
+    category fiction author '夏目漱石 (NATSUME Sōseki)' title 吾輩は猫である isbn 978-0-8048-3265-6 price 13.29
+    ```
+
   * [JSON][json]  
     The result of the query will be printed as unformatted JSON.
 
