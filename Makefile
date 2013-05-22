@@ -46,19 +46,13 @@ FIND = find
 INSTALL = install
 
 ## Defaults for project settings
-VERSION ?= 1.0.0-SNAPSHOT
-PACKAGING ?= program
+version ?= 1.0.0-SNAPSHOT
+artifact ?= program
+build ?= debug
+INCLUDES ?=
+CFLAGS ?=
 DEPENDENCIES ?=
 TEST_DEPENDENCIES ?=
-EXTRA_INCLUDES ?=
-CFLAGS ?=
-
-PREFIX ?= $(HOME)
-BINDIR = bin
-MANDIR = share/man/man1
-DESTDIR = $(PREFIX)
-PROGRAM_DESTDIR = $(DESTDIR)/$(BINDIR)
-MANUAL_DESTDIR = $(DESTDIR)/$(MANDIR)
 
 ## Defaults for project source directories
 SOURCE_DIR  ?= src/main/c
@@ -80,24 +74,78 @@ GENERATED_TEST_SOURCE_DIR ?= $(TARGET_DIR)/generated-test-sources
 GENERATED_TEST_DEPEND_DIR ?= $(TARGET_DIR)/generated-test-sources/depend
 
 ## Project target artifact settings
-PROGRAM_NAME ?= $(ARTIFACT_ID)
+PROGRAM_NAME ?= $(package)
 PROGRAM_TARGET = $(TARGET_DIR)/$(PROGRAM_NAME)
-LIBRARY_NAME_BASE ?= $(ARTIFACT_ID)
+LIBRARY_NAME_BASE ?= $(package)
 LIBRARY_NAME ?= lib$(LIBRARY_NAME_BASE).a
 LIBRARY_TARGET = $(TARGET_DIR)/$(LIBRARY_NAME)
-ifeq ($(strip $(SKIP_TESTS)),)
-TEST_PROGRAM = $(ARTIFACT_ID)_test
+ifeq ($(strip $(skip_tests)),)
+TEST_PROGRAM = $(package)_test
 TEST_PROGRAM_TARGET = $(TARGET_DIR)/$(TEST_PROGRAM)
 endif
 
-## Project source compiler settings
-INCLUDES := $(addprefix -I, $(EXTRA_INCLUDES))
-CFLAGS := -I$(INCLUDE_DIR) $(INCLUDES) $(CFLAGS)
-LDLIBS := $(addprefix -l, $(DEPENDENCIES))
-
-ifeq ($(BUILD_DEBUG),yes)
-CFLAGS := $(CFLAGS) -g
+ifeq ($(build),debug)
+debug_CFLAGS := $(debug_CFLAGS) -g
 endif
+
+## Project installation directories (according to GNU conventions)
+srcdir = $(SOURCE_DIR)
+prefix ?= /usr/local
+
+exec_prefix = $(prefix)
+bindir = $(exec_prefix)/bin
+sbindir = $(exec_prefix)/sbin
+libexecdir = $(exec_prefix)/libexec
+libdir = $(exec_prefix)/lib
+package_libexecdir = $(libexecdir)/$(package)/$(version)
+
+datarootdir = $(prefix)/share
+datadir = $(datarootdir)
+package_datadir = $(datadir)/$(package)
+lispdir = $(datarootdir)/emacs/site-lisp
+localedir = $(datarootdir)/locale
+
+mandir = $(datarootdir)/man
+man1dir = $(mandir)/man1
+man2dir = $(mandir)/man2
+man3dir = $(mandir)/man3
+man4dir = $(mandir)/man4
+man5dir = $(mandir)/man5
+man6dir = $(mandir)/man6
+man7dir = $(mandir)/man7
+
+man1ext = .1
+man2ext = .2
+man3ext = .3
+man4ext = .4
+man5ext = .5
+man6ext = .6
+man6ext = .7
+manext = $(man1ext)
+
+sysconfdir = $(prefix)/etc
+
+sharedstatedir = $(prefix)/com
+localstatedir = $(prefix)/var
+logdir = $(localstatedir)/log
+package_logdir = $(logdir)/$(package)
+rundir = $(localstatedir)/run
+package_rundir = $(rundir)/$(package)
+tmpdir = $(localstatedir)/tmp
+
+includedir = $(prefix)/include
+oldincludedir =
+
+docdir = $(datarootdir)/doc/$(package)
+infodir = $(datarootdir)/info
+htmldir = $(docdir)
+dvidir = $(docdir)
+pdfdir = $(docdir)
+psdir = $(docdir)
+
+## Project source compiler settings
+CFLAGS := -I$(INCLUDE_DIR) $(INCLUDES) $(CFLAGS) $($(build)_CFLAGS)
+LDLIBS := $(addprefix -l, $(DEPENDENCIES))
 
 # automation helper functions
 source_to_target = $(foreach s, $(1), $(2)/$(basename $(s)).$(3))
@@ -106,7 +154,7 @@ source_to_depend = $(call source_to_target,$(1),$(2),d)
 find_source_files = $(shell cd $(1) && $(FIND) . -type f \( -name '*.c' -or -name '*.C' \) | sed 's|\./||')
 
 ## Project test source compiler settings
-TEST_CFLAGS := -I$(TEST_INCLUDE_DIR) $(CFLAGS)
+TEST_CFLAGS := -I$(TEST_INCLUDE_DIR) $(CFLAGS) $(TEST_CFLAGS)
 TEST_LDLIBS := $(LDLIBS) $(addprefix -l, $(TEST_DEPENDENCIES))
 
 ## Project source file locations
@@ -120,7 +168,7 @@ vpath %.h $(INCLUDE_DIR)
 DEPENDS := $(call source_to_depend,$(SOURCES),$(GENERATED_DEPEND_DIR))
 
 ## Project test source file locations
-ifeq ($(strip $(SKIP_TESTS)),)
+ifeq ($(strip $(skip_tests)),)
 TEST_SOURCES := $(call find_source_files,$(TEST_SOURCE_DIR))
 TEST_OBJECTS := $(call source_to_object,$(TEST_SOURCES),$(TEST_OBJECT_DIR))
 vpath %.c $(TEST_SOURCE_DIR)
@@ -152,7 +200,7 @@ ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPENDS)
 endif
 
-ifeq ($(strip $(SKIP_TESTS)),)
+ifeq ($(strip $(skip_tests)),)
 ifneq ($(MAKECMDGOALS),clean)
 -include $(TEST_DEPENDS)
 endif
@@ -201,7 +249,7 @@ $(PROGRAM_TARGET): $(LIBRARY_TARGET) $(PROGRAM_OBJECTS)
 
 $(PROGRAM_NAME): $(PROGRAM_TARGET)
 
-ifeq ($(strip $(SKIP_TESTS)),)
+ifeq ($(strip $(skip_tests)),)
 $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	@echo ""
 	@echo " -- Building test harness $(TEST_PROGRAM_TARGET)"
@@ -218,23 +266,23 @@ clean:
 	@$(RM) -r $(TARGET_DIR)
 
 validate:
-ifeq ($(strip $(GROUP_ID)),)
-	$(error "Please set a value for GROUP_ID in project.mk")
+ifeq ($(strip $(owner)),)
+	$(error "Please set a value for 'owner' in project.mk")
 endif
-ifeq ($(strip $(ARTIFACT_ID)),)
-	$(error "Please set a value for ARTIFACT_ID in project.mk")
+ifeq ($(strip $(package)),)
+	$(error "Please set a value for 'package' in project.mk")
 endif
-ifeq ($(PACKAGING),program)
+ifeq ($(artifact),program)
 TARGET = $(PROGRAM_TARGET)
-else ifeq ($(PACKAGING),library)
+else ifeq ($(artifact),library)
 TARGET = $(LIBRARY_TARGET)
 else
-$(error "Unsupported value of PACKAGING: $(PACKAGING)")
+$(error "Unsupported value of 'artifact': $(artifact)")
 endif
 
 announce-build:
 	@echo ""
-	@echo " Buidling $(GROUP_ID):$(ARTIFACT_ID):$(VERSION)"
+	@echo " Buidling $(owner):$(package):$(version)"
 
 create-build-directories:
 	@mkdir -p $(OBJECT_DIR)
@@ -289,7 +337,7 @@ process-test-resources: generate-test-resources
 	@if [ -d $(TEST_RESOURCE_DIR) ]; then echo ""; echo " -- Copying test resources"; echo "------------------------------------------------------------------------"; cp -r $(TEST_RESOURCE_DIR)/* $(TARGET_DIR); fi
 
 announce-compile-test-sources:
-ifeq ($(strip $(SKIP_TESTS)),)
+ifeq ($(strip $(skip_tests)),)
 	@echo ""
 	@echo " -- Compiling test sources"
 	@echo "------------------------------------------------------------------------"
@@ -302,7 +350,7 @@ process-test-objects: test-compile
 test-target: library process-test-objects $(TEST_PROGRAM_TARGET)
 
 test: test-target
-ifeq ($(strip $(SKIP_TESTS)),)
+ifeq ($(strip $(skip_tests)),)
 	@echo ""
 	@echo " -- Executing test harness"
 	@echo "------------------------------------------------------------------------"
@@ -332,8 +380,8 @@ announce-install-phase:
 verify: package announce-install-phase
 
 install: verify
-	$(INSTALL) -d -m 755 $(PROGRAM_DESTDIR)
-	$(INSTALL) $(TARGET) $(PROGRAM_DESTDIR)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
+	$(INSTALL) $(TARGET) $(DESTDIR)$(bindir)
 
 .PHONY: all check help clean create-buid-directories announce-build initialize announce-compile-phase generate-sources process-sources generate-resources process-resources announce-compile-sources compile process-objects target announce-test-phase generate-test-sources process-test-sources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM)
 
