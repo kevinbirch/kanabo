@@ -42,8 +42,15 @@ artifact = program
 build = debug
 
 DEPENDENCIES = yaml
-CFLAGS = -std=c11 -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-gnu -O2
 TEST_DEPENDENCIES = check
-
+CFLAGS = -std=c11 -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-gnu -O2
 debug_CFLAGS = -DUSE_LOGGING
 
+VERSION_H = $(GENERATED_HEADERS_DIR)/version.h
+
+$(VERSION_H): $(GENERATED_HEADERS_DIR)
+	@echo "Generating $(VERSION_H)"
+	@build/generate_version_header $(version) $(VERSION_H)
+
+version-header: $(VERSION_H)
+GENERATE_SOURCES_HOOKS = version-header

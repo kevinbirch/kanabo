@@ -37,6 +37,7 @@
 
 include project.mk
 
+## Defaults for common shell commands
 CC = cc
 AR = ar
 RM = rm -f
@@ -54,6 +55,16 @@ CFLAGS ?=
 DEPENDENCIES ?=
 TEST_DEPENDENCIES ?=
 
+## Defaults for lifecycle hooks
+GENERATE_SOURCES_HOOKS ?=
+PROCESS_SOURCES_HOOKS ?=
+GENERATE_RESOURCES_HOOKS ?=
+PROCESS_SOURCES_HOOKS ?=
+GENERATE_TEST_SOURCES_HOOKS ?=
+PROCESS_TEST_SOURCES_HOOKS ?=
+GENERATE_TEST_RESOURCES_HOOKS ?=
+PROCESS_TEST_SOURCES_HOOKS ?=
+
 ## Defaults for project source directories
 SOURCE_DIR  ?= src/main/c
 INCLUDE_DIR ?= $(SOURCE_DIR)/include
@@ -69,7 +80,8 @@ TARGET_DIR  ?= target
 OBJECT_DIR  ?= $(TARGET_DIR)/objects
 TEST_OBJECT_DIR  ?= $(TARGET_DIR)/test-objects
 GENERATED_SOURCE_DIR ?= $(TARGET_DIR)/generated-sources
-GENERATED_DEPEND_DIR ?= $(TARGET_DIR)/generated-sources/depend
+GENERATED_HEADERS_DIR ?= $(GENERATED_SOURCE_DIR)/include
+GENERATED_DEPEND_DIR ?= $(GENERATED_SOURCE_DIR)/depend
 GENERATED_TEST_SOURCE_DIR ?= $(TARGET_DIR)/generated-test-sources
 GENERATED_TEST_DEPEND_DIR ?= $(TARGET_DIR)/generated-test-sources/depend
 
@@ -90,13 +102,20 @@ endif
 
 ## Project installation directories (according to GNU conventions)
 srcdir = $(SOURCE_DIR)
+mansrcdir = $(srcdir)/man
+infosrcdir = $(srcdir)/info
+htmlsrcdir = $(srcdir)/html
+pdfsrcdir = $(srcdir)/pdf
+pssrcdir = $(srcdir)/ps
+dvisrcdir = $(srcdir)/dvi
+
 prefix ?= /usr/local
 
 exec_prefix = $(prefix)
 bindir = $(exec_prefix)/bin
 sbindir = $(exec_prefix)/sbin
 libexecdir = $(exec_prefix)/libexec
-libdir = $(exec_prefix)/lib
+Libdir = $(exec_prefix)/lib
 package_libexecdir = $(libexecdir)/$(package)/$(version)
 
 datarootdir = $(prefix)/share
@@ -144,10 +163,12 @@ pdfdir = $(docdir)
 psdir = $(docdir)
 
 ## Project source compiler settings
+DEPENDENCY_VADLIDATIONS := $(addprefix dependency/,$(DEPENDENCIES) $(TEST_DEPENDENCIES))
+INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR)
 CFLAGS := -I$(INCLUDE_DIR) $(INCLUDES) $(CFLAGS) $($(build)_CFLAGS)
 LDLIBS := $(addprefix -l, $(DEPENDENCIES))
 
-# automation helper functions
+## Automation helper functions
 source_to_target = $(foreach s, $(1), $(2)/$(basename $(s)).$(3))
 source_to_object = $(call source_to_target,$(1),$(2),o)
 source_to_depend = $(call source_to_target,$(1),$(2),d)
@@ -178,10 +199,10 @@ endif
 
 vpath %.a $(TARGET_DIR)
 
-# compatibility target
+# Compatibility target
 all: help
 
-# compatibility target
+# Compatibility target
 check: test
 
 help:
@@ -196,15 +217,23 @@ help:
 	@echo "package  - collect the target artifacts info a distributable bundle"
 	@echo "install  - install the target artifacts onto the local system"
 
+# N.B. - the dependency makefiles should not be implicity generated on the first run
 ifneq ($(MAKECMDGOALS),clean)
+ifeq ($(strip $(shell if [ -d $(GENERATED_DEPEND_DIR) ]; then echo "true"; fi)),true)
 -include $(DEPENDS)
+endif
 endif
 
 ifeq ($(strip $(skip_tests)),)
+ifeq ($(strip $(shell if [ -d $(GENERATED_TEST_DEPEND_DIR) ]; then echo "true"; fi)),true)
 ifneq ($(MAKECMDGOALS),clean)
 -include $(TEST_DEPENDS)
 endif
 endif
+endif
+
+$(GENERATED_HEADERS_DIR):
+	@mkdir -p $(GENERATED_HEADERS_DIR)
 
 $(GENERATED_DEPEND_DIR):
 	@mkdir -p $(GENERATED_DEPEND_DIR)
@@ -290,7 +319,7 @@ create-build-directories:
 	@mkdir -p $(GENERATED_DEPEND_DIR)
 	@mkdir -p $(GENERATED_TEST_DEPEND_DIR)
 
-initialize: validate announce-build create-build-directories
+initialize: validate $(VALIDATION_HOOKS) announce-build create-build-directories
 
 announce-compile-phase:
 	@echo ""
@@ -298,15 +327,28 @@ announce-compile-phase:
 	@echo " Compile phase"
 	@echo "------------------------------------------------------------------------"
 
-# xxx - add some way to generate the version.h file
-generate-sources: initialize announce-compile-phase $(DEPENDS)
+announce-generate-sources:
+ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
+	@echo ""
+	@echo " -- Generating sources"
+	@echo "------------------------------------------------------------------------"
+endif
 
-process-sources: generate-sources
+generate-sources: initialize announce-compile-phase announce-generate-sources $(GENERATE_SOURCES_HOOKS) $(DEPENDS)
 
-generate-resources: process-sources
+process-sources: generate-sources $(PROCESS_SOURCES_HOOKS)
 
-process-resources: generate-resources
-	@if [ -d $(RESOURCE_DIR) ]; then echo ""; echo " -- Copying resources..."; echo "------------------------------------------------------------------------"; cp -r $(RESOURCE_DIR)/* $(TARGET_DIR); fi
+generate-resources: process-sources $(GENERATE_RESOURCES_HOOKS)
+
+process-resources: count = $(shell if [ -d $(RESOURCE_DIR) ]; then ls $(RESOURCE_DIR) | wc -l; fi)
+process-resources: generate-resources $(PROCESS_RESOURCES_HOOKS)
+ifeq ($(shell if [ -d $(RESOURCE_DIR) ]; then echo "true"; fi),true)
+	@echo ""
+	@echo " -- Copying resources..."
+	@echo "------------------------------------------------------------------------"
+	@echo "Copying $(strip $(count)) files to $(TARGET_DIR)"
+	@cp -r $(RESOURCE_DIR)/* $(TARGET_DIR)
+endif
 
 announce-compile-sources:
 	@echo ""
@@ -327,14 +369,21 @@ announce-test-phase:
 	@echo " Test phase"
 	@echo "------------------------------------------------------------------------"
 
-generate-test-sources: target announce-test-phase
+generate-test-sources: target announce-test-phase $(GENERATE_TEST_SOURCES_HOOKS)
 
-process-test-sources: generate-test-sources
+process-test-sources: generate-test-sources $(PROCESS_TEST_SOURCES_HOOKS)
 
-generate-test-resources: process-test-sources
+generate-test-resources: process-test-sources $(GENERATE_TEST_RESOURCES_HOOKS)
 
-process-test-resources: generate-test-resources
-	@if [ -d $(TEST_RESOURCE_DIR) ]; then echo ""; echo " -- Copying test resources"; echo "------------------------------------------------------------------------"; cp -r $(TEST_RESOURCE_DIR)/* $(TARGET_DIR); fi
+process-test-resources: count = $(shell if [ -d $(TEST_RESOURCE_DIR) ]; then ls $(TEST_RESOURCE_DIR) | wc -l; fi)
+process-test-resources: generate-test-resources $(PROCESS_TEST_RESOURCES_HOOKS)
+ifeq ($(shell if [ -d $(TEST_RESOURCE_DIR) ]; then echo "true"; fi),true)
+	@echo ""
+	@echo " -- Copying test resources..."
+	@echo "------------------------------------------------------------------------"
+	@echo "Copying $(strip $(count)) files to $(TARGET_DIR)"
+	@cp -r $(TEST_RESOURCE_DIR)/* $(TARGET_DIR)
+endif
 
 announce-compile-test-sources:
 ifeq ($(strip $(skip_tests)),)
@@ -383,6 +432,4 @@ install: verify
 	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
 	$(INSTALL) $(TARGET) $(DESTDIR)$(bindir)
 
-.PHONY: all check help clean create-buid-directories announce-build initialize announce-compile-phase generate-sources process-sources generate-resources process-resources announce-compile-sources compile process-objects target announce-test-phase generate-test-sources process-test-sources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM)
-
-
+.PHONY: all check help clean create-buid-directories announce-build initialize announce-compile-phase generate-sources process-sources generate-resources process-resources announce-compile-sources compile process-objects target announce-test-phase generate-test-sources process-test-sources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(VALIDATION_HOOKS) $(DEPENDENCY_VADLIDATIONS)

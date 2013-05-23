@@ -105,9 +105,7 @@ LICENSE file for more details.
 
 #### Features:
 
-* add version header generation support
 * add site phase impl
-* extract as its own project
 
 ### unit testing
 

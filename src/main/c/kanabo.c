@@ -48,6 +48,7 @@
 #include "evaluator.h"
 #include "emit.h"
 #include "log.h"
+#include "version.h"
 
 static int dispatch(int command, const struct settings * restrict settings);
 
@@ -91,7 +92,7 @@ static int dispatch(int command, const struct settings * restrict settings)
             fprintf(stdout, "%s", HELP);
             break;
         case SHOW_VERSION:
-            fprintf(stdout, "version information\n");
+            fprintf(stdout, "kanabo version %s\n", VERSION);
             break;
         case SHOW_WARRANTY:
             fprintf(stdout, "%s", NO_WARRANTY);

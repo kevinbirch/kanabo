@@ -8,8 +8,6 @@ class Kanabo < Formula
   depends_on 'libyaml'
 
   def install
-    system "make", "PREFIX=#{prefix}",
-                   "CC=#{ENV.cc}",
-                   "install"
+    system "make", "prefix=#{prefix}", "CC=#{ENV.cc}", "install"
   end
 end
