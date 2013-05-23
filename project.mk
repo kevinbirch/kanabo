@@ -52,5 +52,5 @@ $(VERSION_H): $(GENERATED_HEADERS_DIR)
 	@echo "Generating $(VERSION_H)"
 	@build/generate_version_header $(version) $(VERSION_H)
 
-version-header: $(VERSION_H)
-GENERATE_SOURCES_HOOKS = version-header
+generate-headers: $(VERSION_H)
+GENERATE_SOURCES_HOOKS = generate-headers
