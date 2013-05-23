@@ -1,25 +1,14 @@
 #!/usr/bin/env bash
 
-if [ 2 -ne $# ]; then
-    echo "usage: $(basename $0) <version> <filename>"
+if [ $# -lt 2 ]; then
+    echo "usage: $(basename $0) <filename> <name=value> [name=value]..."
     exit 1
 fi
 
-VERSION=$1
-FILENAME=$2
+FILENAME=$1
+shift
 
 mkdir -p $(dirname $FILENAME)
-
-case $VERSION in
-    *-SNAPSHOT) is_snapshot=true;;
-    *) is_snapshot=false;;
-esac
-
-base_version=${VERSION%-SNAPSHOT}
-
-IFS=$'.'
-read -r major_version minor_version point_version <<< "${base_version}"
-unset IFS
 
 cat >$FILENAME <<EOF
 /*
@@ -61,20 +50,15 @@ cat >$FILENAME <<EOF
 
 #pragma once
 
-#include <stdbool.h>
-
-static const char * const VERSION = "${VERSION}";
-static const unsigned int MAJOR_VERSION = ${major_version};
-static const unsigned int MINOR_VERSION = ${minor_version};
-static const unsigned int POINT_VERSION = ${point_version};
-static const bool IS_SNAPSHOT = ${is_snapshot};
-
-static const char * const BUILD_DATE = "$(date)";
-static const unsigned long BUILD_TIMESTAMP = $(date "+%s");
-static const char * const BUILD_HOSTNAME = "$(hostname -s)";
-static const char * const BUILD_HOST_ARCHITECHTURE = "$(uname -m)";
-static const char * const BUILD_HOST_OS = "$(uname -s)";
-static const char * const BUILD_HOST_OS_VERSION = "$(uname -r)";
-
-
 EOF
+
+IFS='='
+while [ $# -ne 0 ]; do
+    read -r key value <<< "${1}"
+    echo "static const char * const ${key} = \"${value}\";" >> $FILENAME
+    shift
+done
+unset IFS
+
+echo >> $FILENAME
+echo >> $FILENAME
