@@ -115,7 +115,7 @@ exec_prefix = $(prefix)
 bindir = $(exec_prefix)/bin
 sbindir = $(exec_prefix)/sbin
 libexecdir = $(exec_prefix)/libexec
-Libdir = $(exec_prefix)/lib
+libdir = $(exec_prefix)/lib
 package_libexecdir = $(libexecdir)/$(package)/$(version)
 
 datarootdir = $(prefix)/share
@@ -163,7 +163,7 @@ pdfdir = $(docdir)
 psdir = $(docdir)
 
 ## Project source compiler settings
-DEPENDENCY_VADLIDATIONS := $(addprefix dependency/,$(DEPENDENCIES) $(TEST_DEPENDENCIES))
+DEPENDENCY_VALIDATIONS := $(addprefix dependency/,$(DEPENDENCIES) $(TEST_DEPENDENCIES))
 INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR)
 CFLAGS := -I$(INCLUDE_DIR) $(INCLUDES) $(CFLAGS) $($(build)_CFLAGS)
 LDLIBS := $(addprefix -l, $(DEPENDENCIES))
@@ -199,6 +199,31 @@ endif
 
 vpath %.a $(TARGET_DIR)
 
+## Define the build target type
+ifeq ($(artifact),program)
+TARGET = $(PROGRAM_TARGET)
+else ifeq ($(artifact),library)
+TARGET = $(LIBRARY_TARGET)
+else
+$(error "Unsupported value of 'artifact': $(artifact)")
+endif
+
+## Include generated dependency rules
+# N.B. - the dependency makefiles should not be implicity generated on the first run
+ifneq ($(MAKECMDGOALS),clean)
+ifeq ($(strip $(shell if [ -d $(GENERATED_DEPEND_DIR) ]; then echo "true"; fi)),true)
+-include $(DEPENDS)
+endif
+endif
+
+ifeq ($(strip $(skip_tests)),)
+ifeq ($(strip $(shell if [ -d $(GENERATED_TEST_DEPEND_DIR) ]; then echo "true"; fi)),true)
+ifneq ($(MAKECMDGOALS),clean)
+-include $(TEST_DEPENDS)
+endif
+endif
+endif
+
 # Compatibility target
 all: help
 
@@ -217,19 +242,16 @@ help:
 	@echo "package  - collect the target artifacts info a distributable bundle"
 	@echo "install  - install the target artifacts onto the local system"
 
-# N.B. - the dependency makefiles should not be implicity generated on the first run
-ifneq ($(MAKECMDGOALS),clean)
-ifeq ($(strip $(shell if [ -d $(GENERATED_DEPEND_DIR) ]; then echo "true"; fi)),true)
--include $(DEPENDS)
-endif
-endif
-
-ifeq ($(strip $(skip_tests)),)
-ifeq ($(strip $(shell if [ -d $(GENERATED_TEST_DEPEND_DIR) ]; then echo "true"; fi)),true)
-ifneq ($(MAKECMDGOALS),clean)
--include $(TEST_DEPENDS)
-endif
-endif
+# dependency/%: in=/tmp/build-dependency-test.c
+dependency/%: in:=$(shell mktemp -t dependencyXXXXXX).c
+dependency/%:
+ifeq ($(strip $(DEPENDENCY_HELPER)),)
+	@$(RM) $(in)
+	@echo "#include <$(@F).h>" > $(in); echo "int main(void) {return 0;}" >> $(in); \
+	$(CC) $(in) -l$(@F) -o `mktemp -t objXXXXXX`; \
+	if [ "0" != "$$?" ]; then echo "build: *** The dependency \"$(@F)\" was not found."; exit 1; fi
+else
+	$(DEPENDENCY_HELPER) $(@F)
 endif
 
 $(GENERATED_HEADERS_DIR):
@@ -286,7 +308,6 @@ $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	$(CC) -o $(TEST_PROGRAM_TARGET) $(TEST_LDLIBS) -L$(TARGET_DIR) -l$(LIBRARY_NAME_BASE) $(TEST_OBJECTS)
 
 $(TEST_PROGRAM): $(TEST_PROGRAM_TARGET)
-
 endif
 
 clean:
@@ -301,13 +322,8 @@ endif
 ifeq ($(strip $(package)),)
 	$(error "Please set a value for 'package' in project.mk")
 endif
-ifeq ($(artifact),program)
-TARGET = $(PROGRAM_TARGET)
-else ifeq ($(artifact),library)
-TARGET = $(LIBRARY_TARGET)
-else
-$(error "Unsupported value of 'artifact': $(artifact)")
-endif
+
+ensure-dependencies: $(DEPENDENCY_VALIDATIONS)
 
 announce-build:
 	@echo ""
@@ -319,7 +335,7 @@ create-build-directories:
 	@mkdir -p $(GENERATED_DEPEND_DIR)
 	@mkdir -p $(GENERATED_TEST_DEPEND_DIR)
 
-initialize: validate $(VALIDATION_HOOKS) announce-build create-build-directories
+initialize: validate ensure-dependencies announce-build create-build-directories
 
 announce-compile-phase:
 	@echo ""

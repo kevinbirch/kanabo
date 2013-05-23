@@ -47,10 +47,15 @@ CFLAGS = -std=c11 -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k 
 debug_CFLAGS = -DUSE_LOGGING
 
 VERSION_H = $(GENERATED_HEADERS_DIR)/version.h
+CONFIG_H = $(GENERATED_HEADERS_DIR)/config.h
 
 $(VERSION_H): $(GENERATED_HEADERS_DIR)
 	@echo "Generating $(VERSION_H)"
 	@build/generate_version_header $(version) $(VERSION_H)
 
-generate-headers: $(VERSION_H)
+$(CONFIG_H): $(GENERATED_HEADERS_DIR)
+	@echo "Generating $(CONFIG_H)"
+	@build/generate_config_header $(CONFIG_H) PREFX=$(prefix) LIBEXECDIR=$(package_libexecdir) DATADIR=$(package_datadir) LOGDIR=$(package_logdir) RUNDIR=$(package_rundir) MANDIR=$(man1dir) HTMLDIR=$(htmldir) INFODIR=$(infodir)
+
+generate-headers: $(VERSION_H) $(CONFIG_H)
 GENERATE_SOURCES_HOOKS = generate-headers

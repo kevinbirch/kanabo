@@ -99,10 +99,6 @@ LICENSE file for more details.
 
 ### makefile
 
-#### Enhancements:
-
-* add check for check.h header existence
-
 #### Features:
 
 * add site phase impl
