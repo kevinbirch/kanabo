@@ -231,18 +231,22 @@ all: help
 check: test
 
 help:
-	@echo "usage: make <goal>"
-	@echo ""
-	@echo "The value of <goal> can be one of: clean compile target test package install"
-	@echo ""
-	@echo "clean    - remove all build artifacts"
-	@echo "compile  - build object files"
-	@echo "target   - build the target library or program"
-	@echo "test     - build and run the test harness"
-	@echo "package  - collect the target artifacts info a distributable bundle"
-	@echo "install  - install the target artifacts onto the local system"
+	@echo "usage: make <goal>"; \
+	echo ""; \
+	echo "The value of <goal> can be one of:"; \
+	echo ""; \
+	echo "clean    - remove all build artifacts"; \
+	echo "compile  - build object files"; \
+	echo "target   - build the target library or program"; \
+	echo "test     - build and run the test harness"; \
+	echo "package  - collect the target artifacts info a distributable bundle"; \
+	echo "install  - install the target artifacts onto the local system"
 
-# dependency/%: in=/tmp/build-dependency-test.c
+## Suport Emacs flymake syntax checker
+check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS)
+	$(CC) $(CFLAGS) $(CDEFS) -fsyntax-only $(CHK_SOURCES)
+
+## Confirm the avialability of one library dependency
 dependency/%: in:=$(shell mktemp -t dependencyXXXXXX).c
 dependency/%:
 ifeq ($(strip $(DEPENDENCY_HELPER)),)
@@ -254,6 +258,7 @@ else
 	$(DEPENDENCY_HELPER) $(@F)
 endif
 
+## Generate depened rule files
 $(GENERATED_HEADERS_DIR):
 	@mkdir -p $(GENERATED_HEADERS_DIR)
 
@@ -270,6 +275,7 @@ $(GENERATED_TEST_DEPEND_DIR):
 $(GENERATED_TEST_DEPEND_DIR)/%.d: %.c | $(GENERATED_TEST_DEPEND_DIR)
 	@$(CC) -MM -MG -MT '$(TEST_OBJECT_DIR)/$(*F).o $@' $(TEST_CFLAGS) $(CDEFS) $< > $@
 
+## Main build rules
 $(OBJECT_DIR):
 	@mkdir -p $(OBJECT_DIR)
 
