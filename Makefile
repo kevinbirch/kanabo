@@ -244,7 +244,7 @@ help:
 
 ## Suport Emacs flymake syntax checker
 check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS)
-	$(CC) $(CFLAGS) $(CDEFS) -fsyntax-only $(CHK_SOURCES)
+	$(CC) $(TEST_CFLAGS) $(CDEFS) -fsyntax-only $(CHK_SOURCES)
 
 ## Confirm the avialability of one library dependency
 dependency/%: in:=$(shell mktemp -t dependencyXXXXXX).c
