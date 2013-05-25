@@ -37,13 +37,23 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <execinfo.h>
 #include <check.h>
 
 #include "test.h"
 #include "log.h"
 
+void handle_segv(int signal);
+
 int main(int argc, char **argv)
 {
+    sig_t handler = signal(SIGSEGV, handle_segv);
+    if(SIG_ERR == handler)
+    {
+        perror(NULL);
+        exit(EXIT_FAILURE);
+    }
     enable_logging();
     set_log_level_from_env();
 
@@ -71,4 +81,20 @@ int main(int argc, char **argv)
     srunner_free(runner);
     
     return 0 == failures ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
+void handle_segv(int sigval)
+{
+    void *stack[20];
+    int depth;
+    
+    if(SIGSEGV == sigval)
+    {
+        depth = backtrace(stack, 20);
+        fprintf(stderr, "Backtrace follows (most recent first):\n");
+        backtrace_symbols_fd(stack, depth, fileno(stderr));
+        signal(SIGSEGV, SIG_DFL);
+    }
+    
+    raise(sigval);
 }

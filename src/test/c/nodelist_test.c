@@ -461,6 +461,7 @@ Suite *nodelist_suite(void)
     tcase_add_test(iterate_case, fail_map);
 
     Suite *nodelist_suite = suite_create("Nodelist");
+    suite_add_tcase(nodelist_suite, bad_input_case);
     suite_add_tcase(nodelist_suite, basic_case);
     suite_add_tcase(nodelist_suite, mutate_case);
     suite_add_tcase(nodelist_suite, iterate_case);
