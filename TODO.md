@@ -22,6 +22,7 @@ LICENSE file for more details.
   * https://www.securecoding.cert.org/confluence/display/seccode/MEM07-C.+Ensure+that+the+arguments+to+calloc%28%29%2C+when+multiplied%2C+do+not+wrap
   * https://www.securecoding.cert.org/confluence/display/seccode/MEM08-C.+Use+realloc%28%29+only+to+resize+dynamically+allocated+arrays
   * https://www.securecoding.cert.org/confluence/display/seccode/MEM09-C.+Do+not+assume+memory+allocation+functions+initialize+memory
+* add completions for currently loaded model to linenoise
 
 ### evaluator
 
