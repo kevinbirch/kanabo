@@ -49,18 +49,21 @@
 #include "emit.h"
 #include "log.h"
 #include "version.h"
+#include "linenoise.h"
 
-static int dispatch(int command, const struct settings * restrict settings);
+static int dispatch(enum command cmd, const struct settings * restrict settings);
 
 static int interactive_mode(const struct settings * restrict settings);
 static int expression_mode(const struct settings * restrict settings);
+static int apply_expression(const struct settings * restrict settings, document_model *model, const char * restrict expression);
 
 static document_model *load_model(const struct settings * restrict settings);
-static jsonpath *parse_expression(const struct settings * restrict settings);
+static jsonpath *parse_expression(const struct settings * restrict settings, const char * restrict expression);
 static nodelist *evaluate_expression(const struct settings * restrict settings, const document_model *model, const jsonpath *path);
 
 static FILE *open_input(const struct settings * restrict settings);
 static void close_input(const struct settings * restrict settings, FILE *input);
+static void error(const char * restrict prelude, const char * restrict message, const struct settings * restrict settings);
 
 static emit_function get_emitter(const struct settings * restrict settings);
 
@@ -77,22 +80,22 @@ int main(const int argc, char * const *argv)
 
     struct settings settings;
     memset(&settings, 0, sizeof(settings));
-    cmd command = process_options(argc, argv, &settings);
+    enum command cmd = process_options(argc, argv, &settings);
 
-    return dispatch(command, &settings);
+    return dispatch(cmd, &settings);
 }
 
-static int dispatch(int command, const struct settings * restrict settings)
+static int dispatch(enum command cmd, const struct settings * restrict settings)
 {
     int result = EXIT_SUCCESS;
     
-    switch(command)
+    switch(cmd)
     {
         case SHOW_HELP:
             fprintf(stdout, "%s", HELP);
             break;
         case SHOW_VERSION:
-            fprintf(stdout, "kanabo version %s\n", VERSION);
+            fprintf(stdout, "kanabo %s\n", VERSION);
             break;
         case SHOW_WARRANTY:
             fprintf(stdout, "%s", NO_WARRANTY);
@@ -115,8 +118,32 @@ static int interactive_mode(const struct settings * restrict settings)
     {
         return EXIT_FAILURE;
     }
+    char *prompt = NULL;
     
-    log_debug("kanabo", "interactive mode");
+    if(isatty(fileno(stdin)))
+    {
+        prompt = ">> ";
+        fprintf(stdout, "kanabo %s (built: %s)\n", VERSION, BUILD_DATE);
+        fprintf(stdout, "[%s] on %s\n", BUILD_COMPILER, BUILD_HOSTNAME);
+    }
+
+    char *input;
+    while(true)
+    {
+        input = linenoise(prompt);
+        if(NULL == input)
+        {
+            break;
+        }
+        if('\0' == input[0])
+        {
+            free(input);
+            continue;
+        }
+        linenoiseHistoryAdd(input);
+        apply_expression(settings, model, input);
+        free(input);
+    }
     model_free(model);
 
     return EXIT_SUCCESS;
@@ -131,7 +158,15 @@ static int expression_mode(const struct settings * restrict settings)
         return EXIT_FAILURE;
     }
     
-    jsonpath *path = parse_expression(settings);
+    int result = apply_expression(settings, model, settings->expression);
+    model_free(model);
+
+    return result;
+}
+
+static int apply_expression(const struct settings * restrict settings, document_model *model, const char * restrict expression)
+{
+    jsonpath *path = parse_expression(settings, expression);
     if(NULL == path)
     {
         return EXIT_FAILURE;
@@ -140,18 +175,20 @@ static int expression_mode(const struct settings * restrict settings)
     nodelist *list = evaluate_expression(settings, model, path);
     if(NULL == list)
     {
+        path_free(path);
         return EXIT_FAILURE;
     }
 
     emit_function emit = get_emitter(settings);
     if(NULL == emit)
     {
+        path_free(path);
+        nodelist_free(list);
         return EXIT_FAILURE;
     }
 
     emit(list, settings);
 
-    model_free(model);
     path_free(path);
     nodelist_free(list);
 
@@ -177,7 +214,7 @@ static document_model *load_model(const struct settings * restrict settings)
     if(loader_status(loader))
     {
         char *message = loader_status_message(loader);
-        fprintf(stderr, "%s: while loading the data - %s\n", settings->program_name, message);
+        error("while loading the data", message, settings);
         free(message);
         close_input(settings, input);
         loader_free(loader);
@@ -188,7 +225,7 @@ static document_model *load_model(const struct settings * restrict settings)
     if(loader_status(loader))
     {
         char *message = loader_status_message(loader);
-        fprintf(stderr, "%s: while loading the data - %s\n", settings->program_name, message);
+        error("while loading the data", message, settings);
         free(message);
         model_free(model);
         model = NULL;
@@ -199,10 +236,10 @@ static document_model *load_model(const struct settings * restrict settings)
     return model;
 }
 
-static jsonpath *parse_expression(const struct settings * restrict settings)
+static jsonpath *parse_expression(const struct settings * restrict settings, const char * restrict expression)
 {
     log_trace("kanabo", "parsing expression");
-    parser_context *parser = make_parser((uint8_t *)settings->expression, strlen(settings->expression));
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
     if(NULL == parser)
     {
         perror(settings->program_name);
@@ -211,7 +248,7 @@ static jsonpath *parse_expression(const struct settings * restrict settings)
     if(parser_status(parser))
     {
         char *message = parser_status_message(parser);
-        fprintf(stderr, "%s: while parsing the jsonpath expression - %s\n", settings->program_name, message);
+        error("while parsing the jsonpath expression", message, settings);
         free(message);
         parser_free(parser);
         return NULL;
@@ -221,7 +258,7 @@ static jsonpath *parse_expression(const struct settings * restrict settings)
     if(parser_status(parser))
     {
         char *message = parser_status_message(parser);
-        fprintf(stderr, "%s: while parsing the jsonpath expression - %s\n", settings->program_name, message);
+        error("while parsing the jsonpath expression", message, settings);
         free(message);
         path_free(path);
         path = NULL;
@@ -244,7 +281,7 @@ static nodelist *evaluate_expression(const struct settings * restrict settings, 
     if(evaluator_status(evaluator))
     {
         const char *message = evaluator_status_message(evaluator);
-        fprintf(stderr, "%s: while evaluating the jsonpath expression - %s\n", settings->program_name, message);
+        error("while evaluating the jsonpath expression", message, settings);
         evaluator_free(evaluator);
         return NULL;
     }
@@ -253,7 +290,7 @@ static nodelist *evaluate_expression(const struct settings * restrict settings, 
     if(evaluator_status(evaluator))
     {
         const char *message = evaluator_status_message(evaluator);
-        fprintf(stderr, "%s: while evaluating the jsonpath expression - %s\n", settings->program_name, message);
+        error("while evaluating the jsonpath expression", message, settings);
         nodelist_free(list);
         list = NULL;
     }
@@ -286,6 +323,18 @@ static void close_input(const struct settings * restrict settings, FILE *input)
         {
             perror(settings->program_name);
         }
+    }
+}
+
+static void error(const char * restrict prelude, const char * restrict message, const struct settings * restrict settings)
+{
+    if(INTERACTIVE_MODE == settings->command)
+    {
+        fprintf(stderr, "%s\n", message);
+    }
+    else
+    {
+        fprintf(stderr, "%s: %s - %s\n", settings->program_name, prelude, message);
     }
 }
 

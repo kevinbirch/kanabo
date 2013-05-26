@@ -64,18 +64,18 @@ static struct option options[] =
 #define ENSURE_COMMAND_ORTHOGONALITY(test) \
     if((test))                             \
     {                                      \
-        command = SHOW_HELP;               \
+        settings->command = SHOW_HELP;     \
         done = true;                       \
         break;                             \
     }
 
-cmd process_options(const int argc, char * const *argv, struct settings * restrict settings)
+enum command process_options(const int argc, char * const *argv, struct settings * restrict settings)
 {
     int opt;
-    int command = -1;
     int32_t mode = -1;
     bool done = false;
-
+    bool interaction_decided = false;
+    
     settings->program_name = process_program_name(argv[0]);
     settings->emit_mode = BASH;
     settings->expression = NULL;
@@ -87,34 +87,36 @@ cmd process_options(const int argc, char * const *argv, struct settings * restri
         {
             case 'v':
                 ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
-                command = SHOW_VERSION;
+                settings->command = SHOW_VERSION;
                 done = true;
                 break;
             case 'h':
                 ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
-                command = SHOW_HELP;
+                settings->command = SHOW_HELP;
                 done = true;
                 break;
             case 'w':
                 ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
-                command = SHOW_WARRANTY;
+                settings->command = SHOW_WARRANTY;
                 done = true;
                 break;
             case 'i':
-                ENSURE_COMMAND_ORTHOGONALITY(-1 != command);
-                command = INTERACTIVE_MODE;
+                ENSURE_COMMAND_ORTHOGONALITY(interaction_decided);
+                settings->command = INTERACTIVE_MODE;
+                interaction_decided = true;
                 break;
             case 'q':
-                ENSURE_COMMAND_ORTHOGONALITY(-1 != command);
-                command = EXPRESSION_MODE;
+                ENSURE_COMMAND_ORTHOGONALITY(interaction_decided);
+                settings->command = EXPRESSION_MODE;
                 settings->expression = optarg;
+                interaction_decided = true;
                 break;
             case 'o':
                 mode = process_emit_mode(optarg);
                 if(-1 == mode)
                 {
                     fprintf(stderr, "%s: unsupported output format `%s'\n", settings->program_name, optarg);
-                    command = SHOW_HELP;
+                    settings->command = SHOW_HELP;
                     done = true;
                 }
                 settings->emit_mode = (enum emit_mode)mode;
@@ -125,23 +127,24 @@ cmd process_options(const int argc, char * const *argv, struct settings * restri
             case ':':
             case '?':
             default:
-                command = SHOW_HELP;
+                settings->command = SHOW_HELP;
                 done = true;
                 break;
         }
     }
 
-    if(-1 == command)
+    if(!interaction_decided)
     {
         fprintf(stderr, "%s: either `--query <expression>' or `--interactive' must be specified.\n", settings->program_name);
-        command = SHOW_HELP;
+        settings->command = SHOW_HELP;
     }
-    else if(INTERACTIVE_MODE == command && NULL == settings->input_file_name)
+    else if(INTERACTIVE_MODE == settings->command && NULL == settings->input_file_name)
     {
-        command = SHOW_HELP;
+        fprintf(stderr, "%s: using `--interactive' requires `--file <filename>' must also be specified.\n", settings->program_name);
+        settings->command = SHOW_HELP;
     }
-    
-    return command;
+
+    return settings->command;
 }
 
 static inline int32_t process_emit_mode(const char * restrict argument)

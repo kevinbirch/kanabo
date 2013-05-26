@@ -39,33 +39,12 @@
 
 #include <getopt.h>
 
-struct section
-{
-    char *name;
-    char *description;
-    int *options;
-};
-
-struct help
-{
-    char *option;
-    char *description;
-};
-
 enum emit_mode
 {
     BASH,
     ZSH,
     JSON,
     YAML
-};
-
-struct settings
-{
-    const char     *program_name;
-    enum emit_mode  emit_mode;
-    const char     *expression;
-    const char     *input_file_name;
 };
 
 enum command
@@ -77,7 +56,14 @@ enum command
     EXPRESSION_MODE
 };
 
-typedef int cmd;
+struct settings
+{
+    const char     *program_name;
+    enum emit_mode  emit_mode;
+    const char     *expression;
+    const char     *input_file_name;
+    enum command    command;
+};
 
-cmd process_options(const int argc, char * const *argv, struct settings * restrict settings);
+enum command process_options(const int argc, char * const *argv, struct settings * restrict settings);
 

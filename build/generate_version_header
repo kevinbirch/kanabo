@@ -63,12 +63,14 @@ cat >$FILENAME <<EOF
 
 #include <stdbool.h>
 
+static const char * const COPYRIGHT = "Copyright (c) $(date "+%Y") Kevin Birch <kmb@pobox.com>.  All rights reserved.";
 static const char * const VERSION = "${VERSION}";
 static const unsigned int MAJOR_VERSION = ${major_version};
 static const unsigned int MINOR_VERSION = ${minor_version};
 static const unsigned int POINT_VERSION = ${point_version};
 static const bool IS_SNAPSHOT = ${is_snapshot};
 
+static const char * const BUILD_COMPILER = "$(${CC} --version | head -1)";
 static const char * const BUILD_DATE = "$(date)";
 static const unsigned long BUILD_TIMESTAMP = $(date "+%s");
 static const char * const BUILD_HOSTNAME = "$(hostname -s)";

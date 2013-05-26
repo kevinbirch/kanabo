@@ -51,7 +51,7 @@ CONFIG_H = $(GENERATED_HEADERS_DIR)/config.h
 
 $(VERSION_H): $(GENERATED_HEADERS_DIR)
 	@echo "Generating $(VERSION_H)"
-	@build/generate_version_header $(version) $(VERSION_H)
+	@CC=$(CC) build/generate_version_header $(version) $(VERSION_H)
 
 $(CONFIG_H): $(GENERATED_HEADERS_DIR)
 	@echo "Generating $(CONFIG_H)"
