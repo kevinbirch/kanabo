@@ -35,8 +35,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.**
 
 linenoise.{c,h} are taken from https://github.com/antirez/linenoise
 
-Copyright (c) 2010, Salvatore Sanfilippo <antirez at gmail dot com>
-Copyright (c) 2010, Pieter Noordhuis <pcnoordhuis at gmail dot com>
+Copyright (c) 2010, Salvatore Sanfilippo <antirez at gmail dot com>  
+Copyright (c) 2010, Pieter Noordhuis <pcnoordhuis at gmail dot com>  
 
 All rights reserved.
 
