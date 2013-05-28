@@ -2,8 +2,8 @@
 
 TAX_RATE=0.08875
 
-# start kanabo as a coprocess, in interactive mode loading the file from the 1st argument
-coproc kanabo { target/kanabo -f $1 -i ;}
+# start kanabo as a named coprocess, in interactive mode loading the file from the 1st argument
+coproc kanabo { kanabo -f $1 -i ;}
 
 # create an empty array to hold the bookstore menu items
 choices=()
