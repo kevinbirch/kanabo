@@ -116,7 +116,6 @@ bool emit_raw_scalar(const node * restrict each)
 
 bool emit_sequence_item(node *each, void *context __attribute__((unused)))
 {
-#pragma unused(context)
     if(SCALAR == node_get_kind(each))
     {
         log_trace("shell", "emitting sequence item");

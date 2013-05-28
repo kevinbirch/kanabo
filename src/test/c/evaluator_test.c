@@ -730,7 +730,6 @@ END_TEST
 
 bool scalar_true(node *each, void *context __attribute__((unused)))
 {
-#pragma unused(context)
 
     return SCALAR == node_get_kind(each) &&
         SCALAR_BOOLEAN == scalar_get_kind(each) &&

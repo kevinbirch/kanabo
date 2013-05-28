@@ -225,7 +225,6 @@ static bool recursive_test_sequence_iterator(node *each, void *context)
 
 static bool recursive_test_map_iterator(node *key __attribute__((unused)), node *value, void *context)
 {
-#pragma unused(key)
     meta_context *iterator_context = (meta_context *)context;
     return apply_recursive_node_test(value, iterator_context->context, iterator_context->target);
 }
@@ -469,7 +468,6 @@ static bool apply_slice_predicate(node *value, evaluator_context *context, nodel
 
 static bool apply_join_predicate(node *value __attribute__((unused)), evaluator_context *context, nodelist *target __attribute__((unused)))
 {
-#pragma unused(value, target)
     evaluator_trace("join predicate: evaluating axes (_, _)");
 
     // xxx - implement me!
@@ -485,7 +483,6 @@ static bool apply_join_predicate(node *value __attribute__((unused)), evaluator_
 
 static bool add_values_to_nodelist_map_iterator(node *key __attribute__((unused)), node *value, void *context)
 {
-#pragma unused(key)
     meta_context *iterator_context = (meta_context *)context;
     bool result = false;
     switch(node_get_kind(value))

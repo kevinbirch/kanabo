@@ -569,8 +569,6 @@ END_TEST
 
 bool fail_sequence(node *each __attribute((unused)), void *context)
 {
-#pragma unused(each)
-
     size_t *count = (size_t *)context;
     if(0 < *count)
     {

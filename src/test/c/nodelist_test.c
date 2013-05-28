@@ -362,8 +362,6 @@ END_TEST
 
 bool fail_nodelist(node *each __attribute__((unused)), void *context)
 {
-#pragma unused(each)
-
     size_t *count = (size_t *)context;
     if(0 < *count)
     {
@@ -427,8 +425,6 @@ END_TEST
 
 bool fail_transform(node *each __attribute__((unused)), void *context, nodelist *target)
 {
-#pragma unused(each)
-
     size_t *count = (size_t *)context;
     if(0 < *count)
     {

@@ -1239,7 +1239,6 @@ END_TEST
 
 static bool count(step *each __attribute__((unused)), void *context)
 {
-#pragma unused(each)
     unsigned long *counter = (unsigned long *)context;
     (*counter)++;
     return true;
@@ -1268,7 +1267,6 @@ END_TEST
 
 static bool fail_count(step *each __attribute__((unused)), void *context)
 {
-#pragma unused(each)
     unsigned long *counter = (unsigned long *)context;
     if(0 == *counter)
     {

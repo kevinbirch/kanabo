@@ -74,7 +74,6 @@ void emit_json(const nodelist * restrict list, const struct settings * restrict 
 
 static bool emit_node(node *each, void *context __attribute__((unused)))
 {
-#pragma unused(context)
     bool result = true;
     size_t sequence_count = 0;
     size_t mapping_count = 0;
