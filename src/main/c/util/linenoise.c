@@ -137,7 +137,6 @@ struct linenoiseState {
 };
 
 static void linenoiseAtExit(void);
-int linenoiseHistoryAdd(const char *line);
 static void refreshLine(struct linenoiseState *l);
 static int linenoiseEditInsert(struct linenoiseState *l, char c);
 static void linenoiseEditMoveLeft(struct linenoiseState *l);

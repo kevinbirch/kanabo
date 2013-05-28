@@ -54,8 +54,6 @@ static const char * const MESSAGES[] =
     "An unexpected error has occured."
 };
 
-loader_status_code interpret_yaml_error(yaml_parser_t *parser);
-
 loader_status_code interpret_yaml_error(yaml_parser_t *parser)
 {
     switch (parser->error)
