@@ -32,7 +32,7 @@ do
     read -ru ${kanabo[0]} price
     echo
     # bash doesn't support floating point arithmetic, so we use bc
-    echo "Thank you, with tax your total comes to: \$$(bc <<< "scale = 2; (${price} * ${TAX_RATE} + ${price}) / 1")"
+    printf "Thank you, with tax your total comes to: \$%.2f\n" $(bc <<< "${price} * ${TAX_RATE} + ${price}")
     break
 done
 
