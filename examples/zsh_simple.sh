@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-exec 3< <(target/kanabo -o zsh -f $1 -q '$.store.book.*')
+exec 3< <(kanabo -o zsh -f $1 -q '$.store.book.*')
 
 typeset -A book
 while read -r -u 3 line

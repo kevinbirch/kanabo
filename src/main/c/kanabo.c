@@ -142,6 +142,11 @@ static int interactive_mode(const struct settings * restrict settings)
         }
         linenoiseHistoryAdd(input);
         apply_expression(settings, model, input);
+        if(!isatty(fileno(stdin)))
+        {
+            fprintf(stdout, "EOD\n");
+            fflush(stdout);
+        }
         free(input);
     }
     model_free(model);

@@ -77,6 +77,7 @@ bool emit_node(node *each, void *argument)
             EMIT("\n");
             break;
     }
+    fflush(stdout);
 
     return result;
 }

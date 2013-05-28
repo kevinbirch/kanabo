@@ -69,6 +69,7 @@ void emit_json(const nodelist * restrict list, const struct settings * restrict 
     }
     QEMIT("]");
     QEMIT("\n");
+    fflush(stdout);
 }
 
 static bool emit_node(node *each, void *context)

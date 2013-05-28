@@ -56,6 +56,7 @@ void emit_bash(const nodelist * restrict list, const struct settings * restrict 
     {
         perror(settings->program_name);
     }
+    fflush(stdout);
 }
 
 static bool emit_mapping_item(node *key, node *value, void *context)
