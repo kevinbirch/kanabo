@@ -176,7 +176,7 @@ find_source_files = $(shell cd $(1) && $(FIND) . -type f \( -name '*.c' -or -nam
 
 ## Project test source compiler settings
 TEST_CFLAGS := -I$(TEST_INCLUDE_DIR) $(CFLAGS) $(TEST_CFLAGS)
-TEST_LDLIBS := $(LDLIBS) $(addprefix -l, $(TEST_DEPENDENCIES))
+TEST_LDLIBS := $(addprefix -l, $(TEST_DEPENDENCIES)) $(LDLIBS)
 
 ## Project source file locations
 SOURCES := $(call find_source_files,$(SOURCE_DIR))
@@ -312,7 +312,7 @@ $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	@echo ""
 	@echo " -- Building test harness $(TEST_PROGRAM_TARGET)"
 	@echo "------------------------------------------------------------------------"
-	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDLIBS) $(LDLIBS) -o $(TEST_PROGRAM_TARGET)
+	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDLIBS) -o $(TEST_PROGRAM_TARGET)
 
 $(TEST_PROGRAM): $(TEST_PROGRAM_TARGET)
 endif
