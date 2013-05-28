@@ -145,6 +145,7 @@ static bool fail_count(step *each, void *context);
 START_TEST (null_expression)
 {
     char *expression = NULL;
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, 50);
     assert_not_null(context);
     assert_errno(EINVAL);
@@ -157,6 +158,7 @@ END_TEST
 START_TEST (zero_length)
 {
     char *expression = "";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, 0);
     assert_not_null(context);
     assert_errno(EINVAL);
@@ -223,6 +225,7 @@ END_TEST
 START_TEST (missing_step_test)
 {
     char *expression = "$.";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, 2);
     assert_not_null(context);
     assert_noerr();
@@ -238,6 +241,7 @@ END_TEST
 START_TEST (missing_recursive_step_test)
 {
     char *expression = "$..";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, 3);
     assert_not_null(context);
     assert_noerr();
@@ -253,6 +257,7 @@ END_TEST
 START_TEST (missing_dot)
 {
     char *expression = "$x";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, 2);
     assert_not_null(context);
     assert_noerr();
@@ -268,6 +273,7 @@ END_TEST
 START_TEST (relative_path_begins_with_dot)
 {
     char *expression = ".x";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, 2);
     assert_not_null(context);
     assert_noerr();
@@ -283,6 +289,7 @@ END_TEST
 START_TEST (quoted_empty_step)
 {
     char *expression = "$.foo.''.bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -299,6 +306,7 @@ END_TEST
 START_TEST (empty_predicate)
 {
     char *expression = "$.foo[].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -314,6 +322,7 @@ END_TEST
 START_TEST (extra_junk_in_predicate)
 {
     char *expression = "$.foo[ * quux].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -329,6 +338,7 @@ END_TEST
 START_TEST (whitespace_predicate)
 {
     char *expression = "$.foo[ \t ].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -344,6 +354,7 @@ END_TEST
 START_TEST (bogus_predicate)
 {
     char *expression = "$.foo[asdf].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -359,6 +370,7 @@ END_TEST
 START_TEST (bogus_type_test_name)
 {
     char *expression = "$.foo.monkey()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -374,6 +386,7 @@ END_TEST
 START_TEST (bogus_type_test_name_oblong)
 {
     char *expression = "$.foo.oblong()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -389,6 +402,7 @@ END_TEST
 START_TEST (bogus_type_test_name_alloy)
 {
     char *expression = "$.foo.alloy()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -404,6 +418,7 @@ END_TEST
 START_TEST (bogus_type_test_name_strong)
 {
     char *expression = "$.foo.strong()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -419,6 +434,7 @@ END_TEST
 START_TEST (bogus_type_test_name_numbered)
 {
     char *expression = "$.foo.numbered()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -434,6 +450,7 @@ END_TEST
 START_TEST (bogus_type_test_name_booger)
 {
     char *expression = "$.foo.booger()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -449,6 +466,7 @@ END_TEST
 START_TEST (bogus_type_test_name_narl)
 {
     char *expression = "$.foo.narl()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -464,6 +482,7 @@ END_TEST
 START_TEST (empty_type_test_name)
 {
     char *expression = "$.foo.()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -479,6 +498,7 @@ END_TEST
 START_TEST (dollar_only)
 {
     char *expression = "$";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, 1);
     assert_not_null(context);
     assert_noerr();
@@ -496,6 +516,7 @@ END_TEST
 START_TEST (absolute_single_step)
 {
     char *expression = "$.foo";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, 5);
     assert_not_null(context);
     assert_noerr();
@@ -515,6 +536,7 @@ END_TEST
 START_TEST (absolute_recursive_step)
 {
     char *expression = "$..foo";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, 6);
     assert_not_null(context);
     assert_noerr();
@@ -534,6 +556,7 @@ END_TEST
 START_TEST (absolute_multi_step)
 {
     char *expression = "$.foo.baz..yobble.thingum";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -559,6 +582,7 @@ END_TEST
 START_TEST (relative_multi_step)
 {
     char *expression = "foo.bar..baz";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -581,6 +605,7 @@ END_TEST
 START_TEST (quoted_multi_step)
 {
     char *expression = "$.foo.'happy fun ball'.bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -604,6 +629,7 @@ END_TEST
 START_TEST (wildcard)
 {
     char *expression = "$.foo.*";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -625,6 +651,7 @@ END_TEST
 START_TEST (recursive_wildcard)
 {
     char *expression = "$.foo..*";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -646,6 +673,7 @@ END_TEST
 START_TEST (wildcard_with_subscript_predicate)
 {
     char *expression = "$.foo.* [0]";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -667,6 +695,7 @@ END_TEST
 START_TEST (whitespace)
 {
     char *expression = "  $ \r\n. foo \n.\n. \t'happy fun ball' . \t string()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -690,6 +719,7 @@ END_TEST
 START_TEST (type_test_missing_closing_paren)
 {
     char *expression = "$.foo.null(";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -711,6 +741,7 @@ END_TEST
 START_TEST (recursive_type_test)
 {
     char *expression = "$.foo..string()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -732,6 +763,7 @@ END_TEST
 START_TEST (object_type_test)
 {
     char *expression = "$.foo.object()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -753,6 +785,7 @@ END_TEST
 START_TEST (array_type_test)
 {
     char *expression = "$.foo.array()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -774,6 +807,7 @@ END_TEST
 START_TEST (string_type_test)
 {
     char *expression = "$.foo.string()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -795,6 +829,7 @@ END_TEST
 START_TEST (number_type_test)
 {
     char *expression = "$.foo.number()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -816,6 +851,7 @@ END_TEST
 START_TEST (boolean_type_test)
 {
     char *expression = "$.foo.boolean()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -837,6 +873,7 @@ END_TEST
 START_TEST (null_type_test)
 {
     char *expression = "$.foo.null()";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -858,6 +895,7 @@ END_TEST
 START_TEST (wildcard_predicate)
 {
     char *expression = "$.store.book[*].author";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -881,6 +919,7 @@ END_TEST
 START_TEST (wildcard_predicate_with_whitespace)
 {
     char *expression = "$.foo  [\t*\n]  .bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -902,6 +941,7 @@ END_TEST
 START_TEST (subscript_predicate)
 {
     char *expression = "$.foo[42].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -923,6 +963,7 @@ END_TEST
 START_TEST (subscript_predicate_with_whitespace)
 {
     char *expression = "$.foo  [\t42\r]\n.bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -944,6 +985,7 @@ END_TEST
 START_TEST (type_test_with_subscript_predicate)
 {
     char *expression = "$.foo.array()[0]";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -965,6 +1007,7 @@ END_TEST
 START_TEST (negative_subscript_predicate)
 {
     char *expression = "$.foo[ -3].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -981,6 +1024,7 @@ END_TEST
 START_TEST (slice_predicate_form1)
 {
     char *expression = "$.foo[:-3].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -1002,6 +1046,7 @@ END_TEST
 START_TEST (slice_predicate_form1_with_step)
 {
     char *expression = "$.foo[:-3:2].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -1023,6 +1068,7 @@ END_TEST
 START_TEST (slice_predicate_form2)
 {
     char *expression = "$.foo[-3:].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -1044,6 +1090,7 @@ END_TEST
 START_TEST (slice_predicate_form2_with_step)
 {
     char *expression = "$.foo[-1::2].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -1065,6 +1112,7 @@ END_TEST
 START_TEST (slice_predicate_form3)
 {
     char *expression = "$.foo[3:5].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -1086,6 +1134,7 @@ END_TEST
 START_TEST (slice_predicate_form3_with_step)
 {
     char *expression = "$.foo[1:4:2].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -1107,6 +1156,7 @@ END_TEST
 START_TEST (slice_predicate_with_whitespace)
 {
     char *expression = "$.foo  [\t1\t:\t5\r:\n3\t]\n.bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -1128,6 +1178,7 @@ END_TEST
 START_TEST (negative_step_slice_predicate)
 {
     char *expression = "$.foo[1:3:-3].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -1149,6 +1200,7 @@ END_TEST
 START_TEST (zero_step_slice_predicate)
 {
     char *expression = "$.foo[::0].bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -1167,6 +1219,7 @@ END_TEST
 START_TEST (iteration)
 {
     char *expression = "$.foo.bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -1184,7 +1237,7 @@ START_TEST (iteration)
 }
 END_TEST
 
-static bool count(step *each, void *context)
+static bool count(step *each __attribute__((unused)), void *context)
 {
 #pragma unused(each)
     unsigned long *counter = (unsigned long *)context;
@@ -1195,6 +1248,7 @@ static bool count(step *each, void *context)
 START_TEST (fail_iteration)
 {
     char *expression = "$.foo.bar";
+    reset_errno();
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
@@ -1212,7 +1266,7 @@ START_TEST (fail_iteration)
 }
 END_TEST
 
-static bool fail_count(step *each, void *context)
+static bool fail_count(step *each __attribute__((unused)), void *context)
 {
 #pragma unused(each)
     unsigned long *counter = (unsigned long *)context;
@@ -1334,15 +1388,15 @@ START_TEST (bad_predicate_input)
     assert_int_eq(0, slice_predicate_step(subscript));
     assert_errno(EINVAL);
 
-    predicate *wildcard = step_predicate(path_get(path, 2));
+    predicate *wildcard_pred = step_predicate(path_get(path, 2));
     reset_errno();
-    assert_uint_eq(0, subscript_predicate_index(wildcard));
+    assert_uint_eq(0, subscript_predicate_index(wildcard_pred));
     assert_errno(EINVAL);
     reset_errno();
-    assert_null(join_predicate_left(wildcard));
+    assert_null(join_predicate_left(wildcard_pred));
     assert_errno(EINVAL);
     reset_errno();
-    assert_null(join_predicate_right(wildcard));
+    assert_null(join_predicate_right(wildcard_pred));
     assert_errno(EINVAL);
 
     path_free(path);
@@ -1423,12 +1477,12 @@ Suite *jsonpath_suite(void)
     tcase_add_test(api_case, iteration);
     tcase_add_test(api_case, fail_iteration);
 
-    Suite *jsonpath_suite = suite_create("JSONPath");
-    suite_add_tcase(jsonpath_suite, bad_input_case);
-    suite_add_tcase(jsonpath_suite, basic_case);
-    suite_add_tcase(jsonpath_suite, node_type_case);
-    suite_add_tcase(jsonpath_suite, predicate_case);
-    suite_add_tcase(jsonpath_suite, api_case);
+    Suite *suite = suite_create("JSONPath");
+    suite_add_tcase(suite, bad_input_case);
+    suite_add_tcase(suite, basic_case);
+    suite_add_tcase(suite, node_type_case);
+    suite_add_tcase(suite, predicate_case);
+    suite_add_tcase(suite, api_case);
 
-    return jsonpath_suite;
+    return suite;
 }

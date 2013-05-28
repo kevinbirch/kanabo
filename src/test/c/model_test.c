@@ -567,7 +567,7 @@ START_TEST (fail_sequence_iteration)
 }
 END_TEST
 
-bool fail_sequence(node *each, void *context)
+bool fail_sequence(node *each __attribute((unused)), void *context)
 {
 #pragma unused(each)
 
@@ -667,10 +667,10 @@ Suite *model_suite(void)
     tcase_add_test(iteration, fail_sequence_iteration);
     tcase_add_test(iteration, fail_mapping_iteration);
 
-    Suite *model_suite = suite_create("Model");
-    suite_add_tcase(model_suite, bad_input);
-    suite_add_tcase(model_suite, basic);
-    suite_add_tcase(model_suite, iteration);
+    Suite *suite = suite_create("Model");
+    suite_add_tcase(suite, bad_input);
+    suite_add_tcase(suite, basic);
+    suite_add_tcase(suite, iteration);
     
-    return model_suite;
+    return suite;
 }

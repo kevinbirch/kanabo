@@ -35,6 +35,9 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#define _GNU_SOURCE
+#define _POSIX_C_SOURCE 200809L
+
 #include <string.h>
 
 #include "evaluator.h"
@@ -213,7 +216,7 @@ static bool recursive_test_sequence_iterator(node *each, void *context)
     return apply_recursive_node_test(each, iterator_context->context, iterator_context->target);
 }
 
-static bool recursive_test_map_iterator(node *key, node *value, void *context)
+static bool recursive_test_map_iterator(node *key __attribute__((unused)), node *value, void *context)
 {
 #pragma unused(key)
     meta_context *iterator_context = (meta_context *)context;
@@ -457,7 +460,7 @@ static bool apply_slice_predicate(node *value, evaluator_context *context, nodel
     return true;
 }
 
-static bool apply_join_predicate(node *value, evaluator_context *context, nodelist *target)
+static bool apply_join_predicate(node *value __attribute__((unused)), evaluator_context *context, nodelist *target __attribute__((unused)))
 {
 #pragma unused(value, target)
     evaluator_trace("join predicate: evaluating axes (_, _)");
@@ -473,7 +476,7 @@ static bool apply_join_predicate(node *value, evaluator_context *context, nodeli
  * =================
  */
 
-static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context)
+static bool add_values_to_nodelist_map_iterator(node *key __attribute__((unused)), node *value, void *context)
 {
 #pragma unused(key)
     meta_context *iterator_context = (meta_context *)context;
@@ -504,10 +507,11 @@ static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *co
 static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *increment)
 {
     char *from_fmt = NULL, *to_fmt = NULL, *increment_fmt = NULL;
+    int from_result = 0, to_result = 0, inc_result = 0;
     evaluator_trace("slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items",
-                    slice_predicate_has_from(slice) ? (asprintf(&from_fmt, "%d", slice_predicate_from(slice)), from_fmt) : "_",
-                    slice_predicate_has_to(slice) ? (asprintf(&to_fmt, "%d", slice_predicate_to(slice)), to_fmt) : "_",
-                    slice_predicate_has_step(slice) ? (asprintf(&increment_fmt, "%d", slice_predicate_step(slice)), increment_fmt) : "_",
+                    slice_predicate_has_from(slice) ? (from_result = asprintf(&from_fmt, "%zd", slice_predicate_from(slice)), -1 == from_result ? "?" : from_fmt) : "_",
+                    slice_predicate_has_to(slice) ? (to_result = asprintf(&to_fmt, "%zd", slice_predicate_to(slice)), -1 == to_result ? "?" : to_fmt) : "_",
+                    slice_predicate_has_step(slice) ? (inc_result = asprintf(&increment_fmt, "%zd", slice_predicate_step(slice)), -1 == inc_result ? "?" : increment_fmt) : "_",
                     value, node_get_size(value));
     free(from_fmt); free(to_fmt); free(increment_fmt);
     *increment = slice_predicate_has_step(slice) ? slice_predicate_step(slice) : 1;

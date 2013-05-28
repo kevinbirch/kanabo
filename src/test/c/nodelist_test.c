@@ -35,6 +35,8 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#define _GNU_SOURCE
+
 #include <errno.h>
 #include <check.h>
 
@@ -351,7 +353,7 @@ START_TEST (fail_iteration)
 }
 END_TEST
 
-bool fail_nodelist(node *each, void *context)
+bool fail_nodelist(node *each __attribute__((unused)), void *context)
 {
 #pragma unused(each)
 
@@ -399,7 +401,8 @@ bool transform(node *each, void *context, nodelist *target)
     size_t *count = (size_t *)context;
     (*count)++;
     char *value;
-    asprintf(&value, "%zd", *count);
+    int result = asprintf(&value, "%zd", *count);
+    assert_int_ne(-1, result);
     return nodelist_add(target, make_scalar_number(value));
 }
 
@@ -415,7 +418,7 @@ START_TEST (fail_map)
 }
 END_TEST
 
-bool fail_transform(node *each, void *context, nodelist *target)
+bool fail_transform(node *each __attribute__((unused)), void *context, nodelist *target)
 {
 #pragma unused(each)
 
@@ -460,12 +463,12 @@ Suite *nodelist_suite(void)
     tcase_add_test(iterate_case, map);
     tcase_add_test(iterate_case, fail_map);
 
-    Suite *nodelist_suite = suite_create("Nodelist");
-    suite_add_tcase(nodelist_suite, bad_input_case);
-    suite_add_tcase(nodelist_suite, basic_case);
-    suite_add_tcase(nodelist_suite, mutate_case);
-    suite_add_tcase(nodelist_suite, iterate_case);
+    Suite *suite = suite_create("Nodelist");
+    suite_add_tcase(suite, bad_input_case);
+    suite_add_tcase(suite, basic_case);
+    suite_add_tcase(suite, mutate_case);
+    suite_add_tcase(suite, iterate_case);
 
-    return nodelist_suite;
+    return suite;
 }
 

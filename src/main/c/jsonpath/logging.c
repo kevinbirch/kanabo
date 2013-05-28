@@ -35,6 +35,8 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <string.h>
 
@@ -130,11 +132,12 @@ char *parser_status_message(const parser_context * restrict context)
 {
     PRECOND_NONNULL_ELSE_NULL(context);
     char *message = NULL;
+    int result = 0;
     
     switch(context->result.code)
     {
         case ERR_PREMATURE_END_OF_INPUT:
-            asprintf(&message, MESSAGES[context->result.code], context->cursor);
+            result = asprintf(&message, MESSAGES[context->result.code], context->cursor);
             break;
         case ERR_EXPECTED_NODE_TYPE_TEST:
         case ERR_EMPTY_PREDICATE:
@@ -143,17 +146,21 @@ char *parser_status_message(const parser_context * restrict context)
         case ERR_UNSUPPORTED_PRED_TYPE:
         case ERR_EXPECTED_INTEGER:
         case ERR_INVALID_NUMBER:
-            asprintf(&message, MESSAGES[context->result.code], context->cursor + 1);
+            result = asprintf(&message, MESSAGES[context->result.code], context->cursor + 1);
             break;
         case ERR_UNEXPECTED_VALUE:
-            asprintf(&message, MESSAGES[context->result.code], context->cursor + 1, context->result.actual_char, context->result.expected_char);
+            result = asprintf(&message, MESSAGES[context->result.code], context->cursor + 1, context->result.actual_char, context->result.expected_char);
             break;
         case ERR_EXPECTED_NAME_CHAR:
-            asprintf(&message, MESSAGES[context->result.code], context->cursor + 1, context->result.actual_char);
+            result = asprintf(&message, MESSAGES[context->result.code], context->cursor + 1, context->result.actual_char);
             break;
         default:
             message = strdup(MESSAGES[context->result.code]);
             break;
+    }
+    if(-1 == result)
+    {
+        message = NULL;
     }
 
     return message;

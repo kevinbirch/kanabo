@@ -207,6 +207,7 @@ END_TEST
 
 START_TEST (null_context)
 {
+    reset_errno();
     assert_null(evaluate(NULL));
     assert_errno(EINVAL);    
 }
@@ -219,6 +220,7 @@ START_TEST (null_context_model)
     evaluator->path = NULL;
     evaluator->list = NULL;
 
+    reset_errno();
     assert_null(evaluate(evaluator));
     assert_errno(EINVAL);
 
@@ -234,6 +236,7 @@ START_TEST (null_context_path)
     evaluator->path = NULL;
     evaluator->list = NULL;
 
+    reset_errno();
     assert_null(evaluate(evaluator));
     assert_errno(EINVAL);
 
@@ -252,6 +255,7 @@ START_TEST (null_context_list)
     evaluator->path = path;
     evaluator->list = NULL;
 
+    reset_errno();
     assert_null(evaluate(evaluator));
     assert_errno(EINVAL);
 
@@ -278,6 +282,7 @@ START_TEST (null_context_document)
     evaluator->path = path;
     evaluator->list = make_nodelist();
 
+    reset_errno();
     assert_null(evaluate(evaluator));
     assert_errno(EINVAL);
 
@@ -314,6 +319,7 @@ START_TEST (null_context_document_root)
     evaluator->path = path;
     evaluator->list = make_nodelist();
 
+    reset_errno();
     assert_null(evaluate(evaluator));
     assert_errno(EINVAL);
 
@@ -345,6 +351,7 @@ START_TEST (relative_context_path)
     evaluator->path = path;
     evaluator->list = make_nodelist();
 
+    reset_errno();
     assert_null(evaluate(evaluator));
     assert_errno(EINVAL);
 
@@ -373,6 +380,7 @@ START_TEST (empty_context_path)
     evaluator->path = path;
     evaluator->list = make_nodelist();
 
+    reset_errno();
     assert_null(evaluate(evaluator));
     assert_errno(EINVAL);
 
@@ -720,7 +728,7 @@ START_TEST (number_test)
 }
 END_TEST
 
-bool scalar_true(node *each, void *context)
+bool scalar_true(node *each, void *context __attribute__((unused)))
 {
 #pragma unused(context)
 

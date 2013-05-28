@@ -35,6 +35,9 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#define _GNU_SOURCE
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <string.h>
 
@@ -79,23 +82,26 @@ char *loader_status_message(const loader_context * restrict context)
     PRECOND_NONNULL_ELSE_NULL(context->parser);
     
     char *message = NULL;
+    int result = 0;
     yaml_parser_t *parser = context->parser;
     switch (context->code)
     {
         case ERR_READER_FAILED:
-            asprintf(&message, MESSAGES[context->code], parser->problem, parser->problem_offset);
+            result = asprintf(&message, MESSAGES[context->code], parser->problem, parser->problem_offset);
             break;	
         case ERR_SCANNER_FAILED:
-                asprintf(&message, MESSAGES[context->code],
-                         parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
+            result = asprintf(&message, MESSAGES[context->code], parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
             break;
         case ERR_PARSER_FAILED:
-            asprintf(&message, MESSAGES[context->code],
-                     parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
+            result = asprintf(&message, MESSAGES[context->code], parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
             break;	
         default:
             message = strdup(MESSAGES[context->code]);
             break;
+    }
+    if(-1 == result)
+    {
+        message = NULL;
     }
 
     return message;

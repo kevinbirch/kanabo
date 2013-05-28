@@ -114,7 +114,7 @@ bool emit_raw_scalar(const node * restrict each)
     return fwrite(scalar_get_value(each), node_get_size(each), 1, stdout);
 }
 
-bool emit_sequence_item(node *each, void *context)
+bool emit_sequence_item(node *each, void *context __attribute__((unused)))
 {
 #pragma unused(context)
     if(SCALAR == node_get_kind(each))

@@ -792,15 +792,15 @@ static step *make_root_step(void)
     return make_step(ROOT, NAME_TEST);
 }
 
-static inline step *make_step(enum step_kind step_kind, enum test_kind test_kind)
+static inline step *make_step(enum step_kind step_kind_value, enum test_kind test_kind_value)
 {
     step *result = (step *)calloc(1, sizeof(step));
     if(NULL == result)
     {
         return NULL;
     }
-    result->kind = step_kind;
-    result->test.kind = test_kind;
+    result->kind = step_kind_value;
+    result->test.kind = test_kind_value;
     result->test.name.value = NULL;
     result->test.name.length = 0;
     result->predicate = NULL;

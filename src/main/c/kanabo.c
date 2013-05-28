@@ -35,8 +35,11 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/errno.h>
 #include <string.h>
 

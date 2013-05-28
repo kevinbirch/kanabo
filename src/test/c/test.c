@@ -35,6 +35,8 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
@@ -46,10 +48,13 @@
 
 void handle_segv(int signal);
 
+#ifdef CHECK_0_9_8
+int main(int argc, char **argv __attribute__((unused)))
+#else
 int main(int argc, char **argv)
+#endif
 {
-    sig_t handler = signal(SIGSEGV, handle_segv);
-    if(SIG_ERR == handler)
+    if(SIG_ERR == signal(SIGSEGV, handle_segv))
     {
         perror(NULL);
         exit(EXIT_FAILURE);
@@ -69,12 +74,14 @@ int main(int argc, char **argv)
         case 1:
             srunner_run_all(runner, CK_NORMAL);
             break;
+#ifndef CHECK_0_9_8
         case 2:
             srunner_run(runner, argv[1], NULL, CK_NORMAL);
             break;
         case 3:
             srunner_run(runner, argv[1], argv[2], CK_NORMAL);
             break;
+#endif
     }
 
     int failures = srunner_ntests_failed(runner);

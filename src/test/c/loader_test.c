@@ -76,6 +76,7 @@ static void assert_model_state(loader_context *loader, document_model *model);
 
 START_TEST (null_string_input)
 {
+    reset_errno();
     loader_context *loader = make_string_loader(NULL, 50);
     assert_not_null(loader);
     assert_errno(EINVAL);
@@ -88,6 +89,7 @@ END_TEST
 
 START_TEST (zero_string_input_length)
 {
+    reset_errno();
     loader_context *loader = make_string_loader((unsigned char *)"", 0);
     assert_not_null(loader);
     assert_errno(EINVAL);
@@ -100,6 +102,7 @@ END_TEST
 
 START_TEST (null_file_input)
 {
+    reset_errno();
     loader_context *loader = make_file_loader(NULL);
     assert_not_null(loader);
     assert_errno(EINVAL);
@@ -115,6 +118,7 @@ START_TEST (eof_file_input)
     FILE *input = tmpfile();
     fseek(input, 0, SEEK_END);
 
+    reset_errno();
     loader_context *loader = make_file_loader(input);
     assert_not_null(loader);
     assert_errno(EINVAL);
@@ -128,6 +132,7 @@ END_TEST
 
 START_TEST (null_context)
 {
+    reset_errno();
     assert_null(load(NULL));
     assert_errno(EINVAL);    
 }
@@ -140,6 +145,7 @@ START_TEST (null_context_parser)
     loader->parser = NULL;
     loader->model = model;
 
+    reset_errno();
     assert_null(load(loader));
     assert_errno(EINVAL);    
 
@@ -155,6 +161,7 @@ START_TEST (null_context_model)
     loader->parser = &parser;
     loader->model = NULL;
 
+    reset_errno();
     assert_null(load(loader));
     assert_errno(EINVAL);    
 

@@ -72,7 +72,7 @@ void emit_json(const nodelist * restrict list, const struct settings * restrict 
     fflush(stdout);
 }
 
-static bool emit_node(node *each, void *context)
+static bool emit_node(node *each, void *context __attribute__((unused)))
 {
 #pragma unused(context)
     bool result = true;

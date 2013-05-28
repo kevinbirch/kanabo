@@ -302,7 +302,8 @@ $(PROGRAM_TARGET): $(LIBRARY_TARGET) $(PROGRAM_OBJECTS)
 	@echo ""
 	@echo " -- Building program $(PROGRAM_TARGET)"
 	@echo "------------------------------------------------------------------------"
-	$(CC) -o $(PROGRAM_TARGET) $(LDLIBS) -L$(TARGET_DIR) -l$(LIBRARY_NAME_BASE) $(PROGRAM_OBJECTS)
+#	$(CC) -o $(PROGRAM_TARGET) $(LDLIBS) -L$(TARGET_DIR) -l$(LIBRARY_NAME_BASE) $(PROGRAM_OBJECTS)
+	$(CC) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_NAME_BASE) $(LDLIBS) -o $(PROGRAM_TARGET)
 
 $(PROGRAM_NAME): $(PROGRAM_TARGET)
 
@@ -311,7 +312,7 @@ $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	@echo ""
 	@echo " -- Building test harness $(TEST_PROGRAM_TARGET)"
 	@echo "------------------------------------------------------------------------"
-	$(CC) -o $(TEST_PROGRAM_TARGET) $(TEST_LDLIBS) -L$(TARGET_DIR) -l$(LIBRARY_NAME_BASE) $(TEST_OBJECTS)
+	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDLIBS) $(LDLIBS) -o $(TEST_PROGRAM_TARGET)
 
 $(TEST_PROGRAM): $(TEST_PROGRAM_TARGET)
 endif
