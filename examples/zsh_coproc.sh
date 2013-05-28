@@ -3,7 +3,7 @@
 TAX_RATE=0.08875
 
 # start kanabo as a named coprocess, in interactive mode loading the file from the 1st argument
-coproc target/kanabo -f $1 -i -o zsh
+coproc kanabo -f $1 -i -o zsh
 
 # create an empty array to hold the bookstore menu items
 choices=()
