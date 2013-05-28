@@ -35,8 +35,14 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#define _GNU_SOURCE
+#ifdef __linux__
 #define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
+#endif
+
+#ifdef __APPLE__
+#define _DARWIN_SOURCE
+#endif
 
 #include <stdio.h>
 #include <string.h>
