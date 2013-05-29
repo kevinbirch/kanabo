@@ -138,7 +138,7 @@ The following output formats are supported:
       isbn: "978-0-8048-3265-6"
       price: 13.29
     ```
- 
+
 ## INTERACTIVE EVALUATION
 
 details
@@ -149,24 +149,7 @@ A JSONPath expression is composed of a series of steps beginning with a `$` and
 separated by a `.`. The result of evaluating an expression is a list of nodes
 from the original document.
 
-The dialect of JSONPath implemented by this program differs in some ways from
-the [de facto specification][jsonpath]:
-
-  * Predicates can be applied to any step type, not just name tests (e.g. 
-    `$..array()[1]` - the second item of all array elements in the document).
-  * Node type tests can filter nodes by their type (string, number, boolean,
-    null, array, object).
-  * Step names can be quoted (e.g. `$.store.'home.appliances'.blender` to escape
-    the embedded `.`).
-  * Bracket notation (e.g. `$['store']['book'][0]['title']` instead of
-    `$store.book[0].title`) is not supported.  Bracket notation provides no
-    semantic benefit over the dot notation and hurts readability.
-  * Script Expressions (e.g. `$..book[(@.length - 1)]`) are not supported.
-    Script expressions are a very dangerous notion (see 
-    [Occupy Babel](http://www.cs.dartmouth.edu/~sergey/langsec/occupy/)).  Use
-    filter expressions instead.
-
-## EXAMPLES
+### Examples
 
 Given the following JSON document:
 
@@ -234,8 +217,26 @@ for the exact same results below.
 | `$..book[0,1]`, `$..book[:2]`	| The first two books                            |
 | `$..book[?(@.isbn)]`          | All books with an isbn number                  |
 | `$..book[?(@.price < 10)]`    | All books with a price less than 10            |
-| `$..*`                        | All nodes of the JSON document                 |
+| `$..*`                        | All nodes of the document                      |
 
+## CAVEATS
+
+The dialect of JSONPath implemented by this program differs in some ways from
+the [de facto specification][jsonpath]:
+
+  * Predicates can be applied to any step type, not just name tests (e.g. 
+    `$..array()[1]` - the second item of all array elements in the document).
+  * Node type tests can filter nodes by their type (string, number, boolean,
+    null, array, object).
+  * Step names can be quoted (e.g. `$.store.'home.appliances'.blender` to escape
+    the embedded `.`).
+  * Bracket notation (e.g. `$['store']['book'][0]['title']` instead of
+    `$store.book[0].title`) is not supported.  Bracket notation provides no
+    semantic benefit over the dot notation and hurts readability.
+  * Script Expressions (e.g. `$..book[(@.length - 1)]`) are not supported.
+    Script expressions are a very dangerous notion (see 
+    [Occupy Babel](http://www.cs.dartmouth.edu/~sergey/langsec/occupy/)).  Use
+    filter expressions instead.
 
 ## SEE ALSO
 
