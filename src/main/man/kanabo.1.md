@@ -141,13 +141,15 @@ The following output formats are supported:
 
 ## INTERACTIVE EVALUATION
 
-details
+xxx - details
 
 ## JSONPATH
 
 A JSONPath expression is composed of a series of steps beginning with a `$` and
 separated by a `.`. The result of evaluating an expression is a list of nodes
 from the original document.
+
+xxx - details
 
 ### Examples
 
