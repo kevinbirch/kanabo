@@ -43,20 +43,15 @@ LICENSE file for more details.
 
 #### Enhancements:
 
-* split jsonpath.h into model, parser and api headers
 * implement lexer
 * implement combinators
 * add full tracing
 * add human readable names for enum types
-* add original expression to jsonpath struct
-* add step and predicate expressions to jsonpath struct
 * negative subscripts should return ERR\_EXPECTED\_INTEGER instead of ERR\_UNSUPPORTED\_PRED\_TYPE
 * document api with doxygen
 * use precondition helpers
 * ensure memory is freed on secondary failure modes in parser functions
 * refactor direct status code setters into function calls
-* clean up and extract common patterns
-* add more checks for end of input
 * add exit state function with output
 
 #### Features:
@@ -98,12 +93,6 @@ LICENSE file for more details.
 * expand scalar nodes to include json subtypes
 * give nodes a pointer back to their owning document?
 
-### makefile
-
-#### Features:
-
-* add site phase impl
-
 ### unit testing
 
 #### Enhancements:
@@ -114,18 +103,18 @@ LICENSE file for more details.
   * https://github.com/bvdberg/ctest
 * eliminate check's end_test macro by creating hidden trampoline function that delegates to user's test function
 
-### site
-
-* add site target
-* http://tinytree.info
-
 ### documentation
 
 * man page
   * more jsonpath details
   * interactive mode
-  * 3rd parth review
-  
+* install file
+* readme file
+* examples
+* double check ebnf
+* static site
+  * http://tinytree.info
+  * site target
 
 [home]: https://github.com/kevinbirch/kanabo "project home"
 [license]: http://www.opensource.org/licenses/ncsa
