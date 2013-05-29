@@ -75,7 +75,7 @@ The following output formats are supported:
     delimited by square brackets so they will not be quoted.
 
     ```bash
-    $ kanabo --query '$.store.book.*' --output bash < inventory.json )
+    $ kanabo --query '$.store.book.*' --output bash < inventory.json
     ([category]=reference [author]='Nigel Rees' [title]='Sayings of the Century' [price]=8.95 )
     ([category]=fiction [author]='Evelyn Waugh' [title]='Sword of Honour' [price]=12.99 )
     ([category]=fiction [author]='Herman Melville' [title]='Moby Dick' [isbn]=0-553-21311-3 [price]=8.99 )
