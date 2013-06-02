@@ -40,6 +40,8 @@ LICENSE file for more details.
 
 * bug: `$...store` should not be accepted
 * bug: '.' should be allowed in a quoted name
+* bug: `$` should support predicates
+* bug: relational expression should superceed equality expression in filter predicate
 
 #### Enhancements:
 
