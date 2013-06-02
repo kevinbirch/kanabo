@@ -45,11 +45,11 @@ static bool emit_nodelist(const nodelist * restrict list, yaml_emitter_t *emitte
 static bool emit_node(node *value, void *context);
 static bool emit_document(node *document, void *context);
 static bool emit_sequence(node *sequence, void *context);
+static bool emit_sequence_item(node *each, void *context);
 static bool emit_mapping(node *mapping, void *context);
+static bool emit_mapping_item(node *key, node *value, void *context);
 static bool emit_scalar(const node * restrict each, void *context);
 static bool emit_tagged_scalar(const node * restrict scalar, yaml_char_t *tag, yaml_scalar_style_t style, void *context);
-static bool emit_sequence_item(node *each, void *context);
-static bool emit_mapping_item(node *key, node *value, void *context);
 
 #define component "yaml"
 #define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(TRACE, component, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
