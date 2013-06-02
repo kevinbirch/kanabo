@@ -73,6 +73,7 @@ LICENSE file for more details.
 
 * replace strtod testing with regex
   * `-?(?:0|(?:[1-9](?:\d)*))(?:\.\d+)?(?:[eE][+-]?\d+)`
+* support iteger and timestamp scalar types
 * document api with doxygen
 
 #### Features:
@@ -94,6 +95,7 @@ LICENSE file for more details.
 * switch the iterator return types to bool to propigate the evaluation status
 * expand scalar nodes to include json subtypes
 * give nodes a pointer back to their owning document?
+* support iteger and timestamp scalar types
 
 ### unit testing
 

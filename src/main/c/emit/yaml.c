@@ -36,11 +36,231 @@
  */
 
 #include <stdio.h>
+#include <yaml.h>
 
 #include "emit/yaml.h"
+#include "log.h"
 
-void emit_yaml(const nodelist * restrict list __attribute__((unused)), const struct settings * restrict settings __attribute__((unused)))
+static bool emit_nodelist(const nodelist * restrict list, yaml_emitter_t *emitter);
+static bool emit_node(node *value, void *context);
+static bool emit_document(node *document, void *context);
+static bool emit_sequence(node *sequence, void *context);
+static bool emit_mapping(node *mapping, void *context);
+static bool emit_scalar(const node * restrict each, void *context);
+static bool emit_tagged_scalar(const node * restrict scalar, yaml_char_t *tag, yaml_scalar_style_t style, void *context);
+static bool emit_sequence_item(node *each, void *context);
+static bool emit_mapping_item(node *key, node *value, void *context);
+
+#define component "yaml"
+#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(TRACE, component, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
+
+void emit_yaml(const nodelist * restrict list, const struct settings * restrict settings)
 {
-    fprintf(stdout, "sorry, not implemented yet.\n");
+    log_trace(component, "emitting...");
+    yaml_emitter_t emitter;
+    yaml_event_t event;
+    
+    yaml_emitter_initialize(&emitter);
+    yaml_emitter_set_output_file(&emitter, stdout);
+    yaml_emitter_set_unicode(&emitter, 1);
+
+    log_trace(component, "stream start");
+    yaml_stream_start_event_initialize(&event, YAML_UTF8_ENCODING);
+    if (!yaml_emitter_emit(&emitter, &event))
+        goto error;
+    
+    log_trace(component, "document start");
+    yaml_document_start_event_initialize(&event, &(yaml_version_directive_t){1, 1}, NULL, NULL, 0);
+    if (!yaml_emitter_emit(&emitter, &event))
+        goto error;
+    
+    if(!emit_nodelist(list, &emitter))
+    {
+        fprintf(stderr, "%s: %s", settings->program_name, emitter.problem);
+        goto error;
+    }
+
+    log_trace(component, "document end");
+    yaml_document_end_event_initialize(&event, 1);
+    if (!yaml_emitter_emit(&emitter, &event))
+        goto error;
+
+    log_trace(component, "stream end");
+    yaml_stream_end_event_initialize(&event);
+    if (!yaml_emitter_emit(&emitter, &event))
+        goto error;    
+    
+  error:
+    yaml_emitter_delete(&emitter);
     fflush(stdout);
 }
+
+static bool emit_nodelist(const nodelist * restrict list, yaml_emitter_t *emitter)
+{
+    log_trace(component, "emitting nodelist");
+    yaml_event_t event;
+
+    log_trace(component, "seqence start");
+    yaml_sequence_start_event_initialize(&event, NULL, (yaml_char_t *)YAML_DEFAULT_SEQUENCE_TAG, 1, YAML_BLOCK_SEQUENCE_STYLE);
+    if (!yaml_emitter_emit(emitter, &event))
+        return false;
+    
+    if(!nodelist_iterate(list, emit_sequence_item, emitter))
+    {
+        return false;
+    }
+
+    log_trace(component, "seqence end");
+    yaml_sequence_end_event_initialize(&event);
+    if (!yaml_emitter_emit(emitter, &event))
+        return false;
+
+    return true;
+}
+
+static bool emit_node(node *each, void *context)
+{
+    bool result = true;
+    switch(node_get_kind(each))
+    {
+        case DOCUMENT:
+            result = emit_document(each, context);
+            break;
+        case SCALAR:
+            result = emit_scalar(each, context);
+            break;
+        case SEQUENCE:
+            result = emit_sequence(each, context);
+            break;
+        case MAPPING:
+            result = emit_mapping(each, context);
+            break;
+    }
+
+    return result;
+}
+
+static bool emit_document(node *document, void *context)
+{
+    log_trace(component, "emitting document");
+    yaml_emitter_t *emitter = (yaml_emitter_t *)context;
+    yaml_event_t event;
+
+    yaml_document_start_event_initialize(&event, &(yaml_version_directive_t){1, 1}, NULL, NULL, 0);
+    if (!yaml_emitter_emit(emitter, &event))
+        return false;
+    
+    if(!emit_node(document_get_root(document), context))
+    {
+        return false;
+    }
+
+    yaml_document_end_event_initialize(&event, 0);
+    if (!yaml_emitter_emit(emitter, &event))
+        return false;
+
+    return true;
+}
+
+static bool emit_sequence(node *sequence, void *context)
+{
+    log_trace(component, "emitting seqence");
+    yaml_emitter_t *emitter = (yaml_emitter_t *)context;
+    yaml_event_t event;
+
+    log_trace(component, "seqence start");
+    yaml_sequence_start_event_initialize(&event, NULL, (yaml_char_t *)YAML_DEFAULT_SEQUENCE_TAG, 1, YAML_BLOCK_SEQUENCE_STYLE);
+    if (!yaml_emitter_emit(emitter, &event))
+        return false;
+    
+    if(!iterate_sequence(sequence, emit_sequence_item, context))
+    {
+        return false;
+    }
+
+    log_trace(component, "seqence end");
+    yaml_sequence_end_event_initialize(&event);
+    if (!yaml_emitter_emit(emitter, &event))
+        return false;
+
+    return true;
+}
+
+static bool emit_sequence_item(node *each, void *context)
+{
+    log_trace(component, "emitting sequence item");
+    return emit_node(each, context);
+}
+
+static bool emit_mapping(node *mapping, void *context)
+{
+    log_trace(component, "emitting mapping");
+    yaml_emitter_t *emitter = (yaml_emitter_t *)context;
+    yaml_event_t event;
+
+    log_trace(component, "mapping start");
+    yaml_mapping_start_event_initialize(&event, NULL, (yaml_char_t *)YAML_DEFAULT_MAPPING_TAG, 1, YAML_BLOCK_MAPPING_STYLE);
+    if (!yaml_emitter_emit(emitter, &event))
+        return false;
+    
+    if(!iterate_mapping(mapping, emit_mapping_item, context))
+    {
+        return false;
+    }
+
+    log_trace(component, "mapping end");
+    yaml_mapping_end_event_initialize(&event);
+    if (!yaml_emitter_emit(emitter, &event))
+        return false;
+
+    return true;
+}
+
+static bool emit_mapping_item(node *key, node *value, void *context)
+{
+    log_trace(component, "emitting mapping item");
+    if(!emit_tagged_scalar(key, (yaml_char_t *)YAML_STR_TAG, YAML_PLAIN_SCALAR_STYLE, context))
+    {
+        return false;
+    }
+    return emit_node(value, context);
+}
+
+static bool emit_scalar(const node * restrict each, void *context)
+{
+    yaml_char_t *tag;
+    yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
+    
+    switch(scalar_get_kind(each))
+    {
+        case SCALAR_STRING:
+            tag = (yaml_char_t *)YAML_STR_TAG;
+            style = YAML_DOUBLE_QUOTED_SCALAR_STYLE;
+            break;
+        case SCALAR_NUMBER:
+            tag = (yaml_char_t *)YAML_FLOAT_TAG;
+            break;
+        case SCALAR_BOOLEAN:
+            tag = (yaml_char_t *)YAML_BOOL_TAG;
+            break;
+        case SCALAR_NULL:
+            tag = (yaml_char_t *)YAML_NULL_TAG;
+            break;
+    }
+
+    return emit_tagged_scalar(each, tag, style, context);
+}
+
+static bool emit_tagged_scalar(const node * restrict scalar, yaml_char_t *tag, yaml_scalar_style_t style, void *context)
+{
+    trace_string("emitting scalar \"%s\"", scalar_get_value(scalar), node_get_size(scalar));
+    yaml_emitter_t *emitter = (yaml_emitter_t *)context;
+    yaml_event_t event;
+
+    yaml_scalar_event_initialize(&event, NULL, tag, scalar_get_value(scalar), (int)node_get_size(scalar), 1, 1, style);
+    if (!yaml_emitter_emit(emitter, &event))
+        return false;
+    
+    return true;
+}
+

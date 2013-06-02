@@ -47,20 +47,22 @@ static bool emit_raw_scalar(const node * restrict each);
 static bool emit_sequence_item(node *each, void *context);
 static bool emit_mapping_item(node *key, node *value, void *context);
 
+#define component "json"
+
 #define EMIT(STR) if(-1 == fprintf(stdout, (STR)))                      \
     {                                                                   \
-        log_error("json", "uh oh! couldn't emit literal %s", (STR));    \
+        log_error(component, "uh oh! couldn't emit literal %s", (STR));    \
         return false;                                                   \
     }    
 
 #define QEMIT(STR) if(-1 == fprintf(stdout, (STR)))                     \
     {                                                                   \
-        log_error("json", "uh oh! couldn't emit literal %s", (STR));    \
+        log_error(component, "uh oh! couldn't emit literal %s", (STR));    \
     }    
 
 void emit_json(const nodelist * restrict list, const struct settings * restrict settings)
 {
-    log_trace("json", "emitting...");
+    log_trace(component, "emitting...");
     size_t count = 0;
     QEMIT("[");
     if(!nodelist_iterate(list, emit_sequence_item, &count))
@@ -80,20 +82,20 @@ static bool emit_node(node *each, void *context __attribute__((unused)))
     switch(node_get_kind(each))
     {
         case DOCUMENT:
-            log_trace("json", "emitting document");
+            log_trace(component, "emitting document");
             result = emit_node(document_get_root(each), NULL);
             break;
         case SCALAR:
             result = emit_scalar(each);
             break;
         case SEQUENCE:
-            log_trace("json", "emitting seqence");
+            log_trace(component, "emitting seqence");
             EMIT("[");
             result = iterate_sequence(each, emit_sequence_item, &sequence_count);
             EMIT("]");
             break;
         case MAPPING:
-            log_trace("json", "emitting mapping");
+            log_trace(component, "emitting mapping");
             EMIT("{");
             result = iterate_mapping(each, emit_mapping_item, &mapping_count);
             EMIT("}");
@@ -107,12 +109,12 @@ static bool emit_scalar(const node * restrict each)
 {
     if(SCALAR_STRING == scalar_get_kind(each))
     {
-        log_trace("json", "emitting quoted scalar");
+        log_trace(component, "emitting quoted scalar");
         return emit_quoted_scalar(each);
     }
     else
     {
-        log_trace("json", "emitting raw scalar");
+        log_trace(component, "emitting raw scalar");
         return emit_raw_scalar(each);
     }
 }
@@ -122,7 +124,7 @@ static bool emit_quoted_scalar(const node * restrict each)
     EMIT("\"");
     if(!emit_raw_scalar(each))
     {
-        log_error("json", "uh oh! couldn't emit quoted scalar");
+        log_error(component, "uh oh! couldn't emit quoted scalar");
         return false;
     }
     EMIT("\"");
@@ -137,7 +139,7 @@ static bool emit_raw_scalar(const node * restrict each)
 
 static bool emit_sequence_item(node *each, void *context)
 {
-    log_trace("json", "emitting sequence item");
+    log_trace(component, "emitting sequence item");
     size_t *count = (size_t *)context;
     if(0 != (*count)++)
     {
@@ -148,7 +150,7 @@ static bool emit_sequence_item(node *each, void *context)
 
 static bool emit_mapping_item(node *key, node *value, void *context)
 {
-    log_trace("json", "emitting mapping item");
+    log_trace(component, "emitting mapping item");
     size_t *count = (size_t *)context;
     if(0 != (*count)++)
     {
