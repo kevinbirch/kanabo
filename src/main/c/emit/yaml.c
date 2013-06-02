@@ -76,7 +76,7 @@ void emit_yaml(const nodelist * restrict list, const struct settings * restrict 
     
     if(!emit_nodelist(list, &emitter))
     {
-        fprintf(stderr, "%s: %s", settings->program_name, emitter.problem);
+        fprintf(stderr, "%s: %s\n", settings->program_name, emitter.problem);
         goto error;
     }
 
