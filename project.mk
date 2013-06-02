@@ -37,7 +37,7 @@
 
 owner = com.webguys
 package = kanabo
-version = 0.3.0
+version = 0.4.0-SNAPSHOT
 artifact = program
 build = debug
 
