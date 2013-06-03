@@ -206,7 +206,13 @@ static bool add_scalar(loader_context *context, yaml_event_t *event)
 {
     node *scalar = NULL;
 
-    if(0 == memcmp("null", event->data.scalar.value, 4))
+    if(YAML_SINGLE_QUOTED_SCALAR_STYLE == event->data.scalar.style ||
+       YAML_DOUBLE_QUOTED_SCALAR_STYLE == event->data.scalar.style)
+    {
+        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
+        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_STRING);
+    }
+    else if(0 == memcmp("null", event->data.scalar.value, 4))
     {
         loader_trace("found scalar null");
         scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_NULL);
