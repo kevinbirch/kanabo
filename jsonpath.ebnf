@@ -41,7 +41,7 @@ path
     ;
 
 absolute path
-    = "$", [ qualified path ]
+    = root step, [ qualified path ]
     ;
 
 qualified path
@@ -58,7 +58,15 @@ relative location
     ;
 
 relative path
-    = step, [ qualified path ]
+    = relative step, [ qualified path ]
+    ;
+
+root step
+    = "$", [ predicate ]
+    ;
+
+relative step
+    = "@" , [ predicate ]
     ;
 
 step
