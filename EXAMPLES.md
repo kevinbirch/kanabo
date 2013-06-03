@@ -91,7 +91,7 @@ do
 done
 ```
 
-The first line opens a new file descriptor (number 3) for reading, and connects the standard output of the kanabo process to it.  The path to the input file is an argument to this script itself.  Next. a while loop calls `read` to read lines from file descriptor 3 and store the text in the variable `line`.  The body of the loop then creates an associative array named `book` with the contents of the line.  The Bash output format emits each mapping result in the associative array subscript syntax.  Mapping values that have spaces will be quoted with single quotes.  Automatic expansion by Bash will take care of word splitting and de-quoting for us.
+The first line opens a new file descriptor (number 3) for reading, and connects the standard output of the kanabo process to it.  The path to the input file is an argument to this script itself.  Next, a while loop calls `read` to read lines from file descriptor 3 and store the text in the variable `line`.  The body of the loop then creates an associative array named `book` with the contents of the line.  The Bash output format emits each mapping result in the associative array subscript syntax.  Mapping values that have spaces will be quoted with single quotes.  Automatic expansion by Bash will take care of word splitting and de-quoting for us.
 
 An example of the Bash output format would be:
 
