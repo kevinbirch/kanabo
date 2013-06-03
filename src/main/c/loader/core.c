@@ -237,7 +237,6 @@ static bool number_test(loader_context *context, yaml_event_t *event)
     memcpy(string, event->data.scalar.value, event->data.scalar.length);
     string[event->data.scalar.length] = '\0';
 
-    fprintf(stdout, "regex testing \"%s\"\n", string);
     return 0 == regexec(context->regex, string, 0, NULL, 0);
 }
 

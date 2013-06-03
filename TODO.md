@@ -71,9 +71,8 @@ LICENSE file for more details.
 
 #### Enhancements:
 
-* replace strtod testing with regex
-  * `-?(?:0|(?:[1-9](?:\d)*))(?:\.\d+)?(?:[eE][+-]?\d+)`
-* support iteger and timestamp scalar types
+* support tags
+* support integer and timestamp scalar types
 * document api with doxygen
 
 #### Features:
