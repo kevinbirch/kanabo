@@ -152,7 +152,7 @@ static loader_context *make_loader(void)
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return context;
     }
-    if(regcomp(context->regex, "-?(0|([1-9](\\d)*))(\\.\\d+)?([eE][+-]?\\d+)?$", REG_EXTENDED | REG_NOSUB))
+    if(regcomp(context->regex, "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$", REG_EXTENDED | REG_NOSUB))
     {
         loader_error("uh oh! can't compile the number regex");
         context->code = ERR_OTHER;
