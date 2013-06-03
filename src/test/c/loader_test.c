@@ -183,6 +183,7 @@ START_TEST (load_from_file)
 
     loader_context *loader = make_file_loader(input);    
     assert_not_null(loader);
+    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
     document_model *model = load(loader);
     assert_not_null(model);
 
@@ -202,6 +203,7 @@ START_TEST (load_from_string)
     assert_not_null(loader);
     document_model *model = load(loader);
     assert_not_null(model);
+    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
 
     assert_model_state(loader, model);
 

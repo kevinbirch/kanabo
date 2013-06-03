@@ -294,7 +294,7 @@ $(LIBRARY_TARGET): $(LIBRARY_OBJECTS)
 	@echo ""
 	@echo " -- Builing library $(LIBRARY_TARGET)"
 	@echo "------------------------------------------------------------------------"
-	$(AR) rcs $(LIBRARY_TARGET) $?
+	$(AR) rcs $(LIBRARY_TARGET) $(shell $(FIND) $(OBJECT_DIR) -type f -name '*.o')
 
 $(LIBRARY_NAME): $(LIBRARY_TARGET)
 

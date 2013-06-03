@@ -184,6 +184,7 @@ void node_free(node *value)
             break;
         case SCALAR:
             free(value->content.scalar.value);
+            free(value->tag.name);
             value->content.scalar.value = NULL;
             break;
         case SEQUENCE:

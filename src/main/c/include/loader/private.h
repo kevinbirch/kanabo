@@ -38,6 +38,7 @@
 #pragma once
 
 #include <errno.h>
+#include <regex.h>
 
 #include "log.h"
 
@@ -59,7 +60,8 @@ struct loader_context
     yaml_parser_t     *parser;
     document_model    *model;
     struct excursion  *excursions;
-    
+    regex_t           *regex;
+
     size_t             length;
     struct cell       *head;
     struct cell       *last;
@@ -73,6 +75,7 @@ loader_status_code interpret_yaml_error(yaml_parser_t *parser);
 #define component_name "loader"
 
 #define loader_info(FORMAT, ...)  log_info(component_name, FORMAT, ##__VA_ARGS__)
+#define loader_error(FORMAT, ...)  log_error(component_name, FORMAT, ##__VA_ARGS__)
 #define loader_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
 #define loader_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
 

@@ -56,14 +56,14 @@ loader_context *make_string_loader(const unsigned char *input, size_t size)
     }
     if(NULL == input)
     {
-        loader_debug("input is null");
+        loader_error("input is null");
         context->code = ERR_INPUT_IS_NULL;
         errno = EINVAL;
         return context;
     }
     if(0 == size)
     {
-        loader_debug("input is empty");
+        loader_error("input is empty");
         context->code = ERR_INPUT_SIZE_IS_ZERO;
         errno = EINVAL;
         return context;
@@ -84,7 +84,7 @@ loader_context *make_file_loader(FILE * restrict input)
     }
     if(NULL == input)
     {
-        loader_debug("input is null");
+        loader_error("input is null");
         context->code = ERR_INPUT_IS_NULL;
         errno = EINVAL;
         return context;
@@ -92,14 +92,14 @@ loader_context *make_file_loader(FILE * restrict input)
     struct stat file_info;
     if(-1 == fstat(fileno(input), &file_info))
     {
-        loader_debug("fstat failed on input file");
+        loader_error("fstat failed on input file");
         context->code = ERR_READER_FAILED;
         errno = EINVAL;
         return context;
     }
     if(feof(input) || 0 == file_info.st_size)
     {
-        loader_debug("input is empty");
+        loader_error("input is empty");
         context->code = ERR_INPUT_SIZE_IS_ZERO;
         errno = EINVAL;
         return context;
@@ -114,28 +114,28 @@ static loader_context *make_loader(void)
     loader_context *context = (loader_context *)calloc(1, sizeof(loader_context));
     if(NULL == context)
     {
-        loader_debug("uh oh! out of memory, can't allocate the loader context");
+        loader_error("uh oh! out of memory, can't allocate the loader context");
         return NULL;
     }
 
     yaml_parser_t *parser = (yaml_parser_t *)calloc(1, sizeof(yaml_parser_t));
     if(NULL == parser)
     {
-        loader_debug("uh oh! out of memory, can't allocate the yaml parser");
+        loader_error("uh oh! out of memory, can't allocate the yaml parser");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return context;
     }
     document_model *model = make_model(1);
     if(NULL == model)
     {
-        loader_debug("uh oh! out of memory, can't allocate the document model");
+        loader_error("uh oh! out of memory, can't allocate the document model");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return context;
     }
     
     if(!yaml_parser_initialize(parser))
     {
-        loader_debug("uh oh! can't initialize the yaml parser");
+        loader_error("uh oh! can't initialize the yaml parser");
         context->code = interpret_yaml_error(parser);
         return context;
     }
@@ -145,6 +145,19 @@ static loader_context *make_loader(void)
     context->excursions = NULL;
     context->head = NULL;
     context->last = NULL;
+    context->regex = (regex_t *)malloc(sizeof(regex_t));
+    if(NULL == context->regex)
+    {
+        loader_error("uh oh! out of memory, can't allocate the number regex");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        return context;
+    }
+    if(regcomp(context->regex, "-?(0|([1-9](\\d)*))(\\.\\d+)?([eE][+-]?\\d+)?$", REG_EXTENDED | REG_NOSUB))
+    {
+        loader_error("uh oh! can't compile the number regex");
+        context->code = ERR_OTHER;
+        return context;
+    }
 
     return context;
 }
@@ -177,6 +190,8 @@ void loader_free(loader_context *context)
     context->head = NULL;
     context->last = NULL;
     context->model = NULL;
+    regfree(context->regex);
+    free(context->regex);
 
     free(context);
 }

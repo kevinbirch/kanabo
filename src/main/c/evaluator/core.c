@@ -114,7 +114,7 @@ static nodelist *evaluate_steps(evaluator_context *context)
 
     if(!path_iterate(context->path, evaluate_step, context))
     {
-        evaluator_debug("aborted, step: %d, code: %d (%s)", context->current_step, context->code, evaluator_status_message(context));
+        evaluator_error("aborted, step: %d, code: %d (%s)", context->current_step, context->code, evaluator_status_message(context));
         nodelist_free(context->list);
         context->list = NULL;
         return NULL;
@@ -274,7 +274,7 @@ static bool apply_greedy_wildcard_test(node *each, void *argument, nodelist *tar
             result = guard(nodelist_add(target, each));
             break;
         case DOCUMENT:
-            evaluator_trace("wildcard test: uh-oh! found a document node somehow (%p), aborting...", each);
+            evaluator_error("wildcard test: uh-oh! found a document node somehow (%p), aborting...", each);
             context->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             break;
     }
@@ -300,7 +300,7 @@ static bool apply_recursive_wildcard_test(node *each, void *argument, nodelist *
             result = guard(nodelist_add(target, each));
             break;
         case DOCUMENT:
-            evaluator_trace("recurisve wildcard test: uh-oh! found a document node somehow (%p), aborting...", each);
+            evaluator_error("recurisve wildcard test: uh oh! found a document node somehow (%p), aborting...", each);
             context->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             break;
     }

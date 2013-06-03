@@ -429,7 +429,7 @@ START_TEST (dollar_only)
 
     evaluator_context *evaluator = make_evaluator(model, path);
     assert_not_null(evaluator);
-
+    
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);

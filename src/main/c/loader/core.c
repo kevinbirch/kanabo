@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>             /* for floor() */
+#include <regex.h>
 
 #include "loader.h"
 #include "loader/private.h"
@@ -54,6 +55,7 @@ static void event_loop(loader_context *context);
 static bool dispatch_event(yaml_event_t *event, loader_context *context);
 
 static bool add_scalar(loader_context *context, yaml_event_t *event);
+static bool number_test(loader_context *context, yaml_event_t *event);
 static bool add_node(loader_context *context, node *value);
 
 static bool save_excursion(loader_context *context);
@@ -83,7 +85,7 @@ document_model *build_model(loader_context *context)
     {
 #ifdef USE_LOGGING
         char *message = loader_status_message(context);
-        loader_debug("aborted. unable to create document model. status: %d (%s)", context->code, message);
+        loader_error("aborted. unable to create document model. status: %d (%s)", context->code, message);
         free(message);
 #endif
         model_free(context->model);
@@ -177,7 +179,7 @@ static bool save_excursion(loader_context *context)
     struct excursion *excursion = calloc(1, sizeof(struct excursion));
     if(NULL == excursion)
     {
-        loader_debug("uh oh! couldn't create an excursion object, aborting...");
+        loader_error("uh oh! couldn't create an excursion object, aborting...");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return true;
     }
@@ -203,13 +205,8 @@ static bool save_excursion(loader_context *context)
 static bool add_scalar(loader_context *context, yaml_event_t *event)
 {
     node *scalar = NULL;
-    if(YAML_SINGLE_QUOTED_SCALAR_STYLE == event->data.scalar.style ||
-       YAML_DOUBLE_QUOTED_SCALAR_STYLE == event->data.scalar.style)
-    {
-        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
-        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_STRING);
-    }
-    else if(0 == memcmp("null", event->data.scalar.value, 4))
+
+    if(0 == memcmp("null", event->data.scalar.value, 4))
     {
         loader_trace("found scalar null");
         scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_NULL);
@@ -220,24 +217,28 @@ static bool add_scalar(loader_context *context, yaml_event_t *event)
         trace_string("found scalar boolean '%s'", event->data.scalar.value, event->data.scalar.length);
         scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_BOOLEAN);
     }
+    else if(number_test(context, event))
+    {
+        trace_string("found scalar number '%s'", event->data.scalar.value, event->data.scalar.length);
+        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_NUMBER);
+    }
     else
     {
-        errno = 0;
-        char *endptr;
-        strtod((char *)event->data.scalar.value, &endptr);
-        if(0 != errno || endptr == (char *)event->data.scalar.value)
-        {
-            trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
-            scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_STRING);
-        }
-        else
-        {
-            trace_string("found scalar number '%s'", event->data.scalar.value, event->data.scalar.length);
-            scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_NUMBER);
-        }
+        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
+        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_STRING);
     }
 
     return add_node(context, scalar);
+}
+
+static bool number_test(loader_context *context, yaml_event_t *event)
+{
+    char string[event->data.scalar.length + 1];
+    memcpy(string, event->data.scalar.value, event->data.scalar.length);
+    string[event->data.scalar.length] = '\0';
+
+    fprintf(stdout, "regex testing \"%s\"\n", string);
+    return 0 == regexec(context->regex, string, 0, NULL, 0);
 }
 
 static bool add_node(loader_context *context, node *value)
@@ -246,7 +247,7 @@ static bool add_node(loader_context *context, node *value)
     struct cell *current = (struct cell *)calloc(1, sizeof(struct cell));
     if(NULL == current)
     {
-        loader_debug("uh oh! couldn't create a node, aborting...");
+        loader_error("uh oh! couldn't create a node, aborting...");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return true;
     }
@@ -282,14 +283,14 @@ static bool unwind_sequence(loader_context *context)
     node *sequence = make_sequence_node(context->excursions->length);
     if(NULL == sequence)
     {
-        loader_debug("uh oh! couldn't create a sequence node, aborting...");
+        loader_error("uh oh! couldn't create a sequence node, aborting...");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return true;
     }
     loader_trace("unwinding sequence (%p)", sequence);
     if(unwind_excursion(context, collect_sequence, sequence))
     {
-        loader_debug("uh oh! couldn't build the sequence, aborting...");
+        loader_error("uh oh! couldn't build the sequence, aborting...");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         free(sequence);
         return true;
@@ -304,14 +305,14 @@ static bool unwind_mapping(loader_context *context)
     node *mapping = make_mapping_node(context->excursions->length / 2);
     if(NULL == mapping)
     {
-        loader_debug("uh oh! couldn't create a mapping node, aborting...");
+        loader_error("uh oh! couldn't create a mapping node, aborting...");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return true;
     }
     loader_trace("unwinding mapping (%p)", mapping);
     if(unwind_excursion(context, collect_mapping, &(struct mapping_context){.key=NULL, .mapping=mapping}))
     {
-        loader_debug("uh oh! couldn't build the mapping, aborting...");
+        loader_error("uh oh! couldn't build the mapping, aborting...");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         free(mapping);
         return true;
@@ -329,7 +330,7 @@ static bool unwind_document(loader_context *context)
     node *document = make_document_node(root);
     if(NULL == document)
     {
-        loader_debug("uh oh! couldn't create new document node, aborting...");
+        loader_error("uh oh! couldn't create new document node, aborting...");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return true;
     }
@@ -346,7 +347,7 @@ static bool unwind_model(loader_context *context)
         loader_trace("adding document node");
         if(!model_add(context->model, pop_context(context)))
         {
-            loader_debug("uh oh! unable to add document to model, aborting...");
+            loader_error("uh oh! unable to add document to model, aborting...");
             context->code = ERR_LOADER_OUT_OF_MEMORY;
             return true;
         }
@@ -392,7 +393,7 @@ static bool unwind_excursion(loader_context *loader, collector function, void *c
     {
         if(!function(pop_node(loader, cursor), context))
         {
-            loader_debug("uh oh! excursion collector failed, aborting...");
+            loader_error("uh oh! excursion collector failed, aborting...");
             return true;
         }
     }
