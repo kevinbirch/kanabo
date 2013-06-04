@@ -25,12 +25,6 @@ LICENSE file for more details.
 
 ### evaluator
 
-#### Enhancements:
-
-* document api with doxygen
-
-#### Features:
-
 * negative subscript values
 * implement union predicates
 * implement filter predicates
@@ -50,7 +44,6 @@ LICENSE file for more details.
 * add full tracing
 * add human readable names for enum types
 * negative subscripts should return ERR\_EXPECTED\_INTEGER instead of ERR\_UNSUPPORTED\_PRED\_TYPE
-* document api with doxygen
 * use precondition helpers
 * ensure memory is freed on secondary failure modes in parser functions
 * refactor direct status code setters into function calls
@@ -72,7 +65,6 @@ LICENSE file for more details.
 * implement escaping
 * support tags
 * support integer and timestamp scalar types
-* document api with doxygen
 
 #### Features:
 
@@ -87,7 +79,6 @@ LICENSE file for more details.
 
 * replace x\_get\_y with x\_y
 * add human readable names for enum types
-* document api with doxygen
 * use precondition helpers
 * iterate\_sequence -> sequence\_iterate
 * switch the iterator return types to bool to propigate the evaluation status
