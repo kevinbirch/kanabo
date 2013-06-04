@@ -17,11 +17,10 @@ LICENSE file for more details.
 
 ### global
 
-* security
-  * https://www.securecoding.cert.org/confluence/display/seccode/CERT+C+Secure+Coding+Standard
-  * https://www.securecoding.cert.org/confluence/display/seccode/MEM07-C.+Ensure+that+the+arguments+to+calloc%28%29%2C+when+multiplied%2C+do+not+wrap
-  * https://www.securecoding.cert.org/confluence/display/seccode/MEM08-C.+Use+realloc%28%29+only+to+resize+dynamically+allocated+arrays
-  * https://www.securecoding.cert.org/confluence/display/seccode/MEM09-C.+Do+not+assume+memory+allocation+functions+initialize+memory
+* https://www.securecoding.cert.org/confluence/display/seccode/CERT+C+Secure+Coding+Standard
+* valgrind
+* coverity
+* findbugs
 * add completions for currently loaded model to linenoise
 
 ### evaluator
@@ -45,6 +44,7 @@ LICENSE file for more details.
 
 #### Enhancements:
 
+* implement escaping
 * implement lexer
 * implement combinators
 * add full tracing
@@ -67,10 +67,9 @@ LICENSE file for more details.
 
 ### loader
 
-* bug: check for yaml type tags: http://yaml.org/type/index.html
-
 #### Enhancements:
 
+* implement escaping
 * support tags
 * support integer and timestamp scalar types
 * document api with doxygen
@@ -78,7 +77,7 @@ LICENSE file for more details.
 #### Features:
 
 * handle anchors and aliases
-  * https://en.wikipedia.org/wiki/Hashed_array_tree
+  * https://en.wikipedia.org/wiki/Hashed\_array\_tree
   * use for mappings as well
 * handle tags
 
