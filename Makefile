@@ -163,7 +163,8 @@ pdfdir = $(docdir)
 psdir = $(docdir)
 
 ## Project source compiler settings
-DEPENDENCY_VALIDATIONS := $(addprefix dependency/,$(DEPENDENCIES) $(TEST_DEPENDENCIES))
+DEPENDENCY_VALIDATIONS := $(addprefix dependency/,$(DEPENDENCIES))
+TEST_DEPENDENCY_VALIDATIONS := $(addprefix test-dependency/,$(TEST_DEPENDENCIES))
 INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR)
 CFLAGS := -I$(INCLUDE_DIR) $(INCLUDES) $(CFLAGS) $($(build)_CFLAGS)
 LDLIBS := $(addprefix -l, $(DEPENDENCIES))
@@ -256,6 +257,23 @@ ifeq ($(strip $(DEPENDENCY_HELPER)),)
 	if [ "0" != "$$?" ]; then echo "build: *** The dependency \"$(@F)\" was not found."; exit 1; fi
 else
 	$(DEPENDENCY_HELPER) $(@F)
+endif
+
+## Confirm the avialability of one test library dependency
+test-dependency/%: in:=$(shell mktemp -t test-dependencyXXXXXX).c
+test-dependency/%:
+ifeq ($(strip $(skip_tests)),)
+ifeq ($(strip $(DEPENDENCY_HELPER)),)
+	@$(RM) $(in)
+	@echo "#include <$(@F).h>" > $(in); echo "int main(void) {return 0;}" >> $(in); \
+	$(CC) $(in) -l$(@F) -o `mktemp -t objXXXXXX`; \
+	if [ "0" != "$$?" ]; \
+	  then echo "build: *** The test dependency \"$(@F)\" was not found.  You can skip this check by setting the variable 'skip_tests' to any value"; \
+	  exit 1; \
+	fi
+else
+	$(DEPENDENCY_HELPER) $(@F)
+endif
 endif
 
 ## Generate depened rule files
@@ -386,13 +404,15 @@ library: process-objects $(LIBRARY_TARGET)
 
 target: library $(TARGET)
 
+ensure-test-dependencies: $(TEST_DEPENDENCY_VALIDATIONS)
+
 announce-test-phase:
 	@echo ""
 	@echo "------------------------------------------------------------------------"
 	@echo " Test phase"
 	@echo "------------------------------------------------------------------------"
 
-generate-test-sources: target announce-test-phase $(GENERATE_TEST_SOURCES_HOOKS)
+generate-test-sources: target ensure-test-dependencies announce-test-phase $(GENERATE_TEST_SOURCES_HOOKS)
 
 process-test-sources: generate-test-sources $(PROCESS_TEST_SOURCES_HOOKS)
 
@@ -455,4 +475,4 @@ install: verify
 	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
 	$(INSTALL) $(TARGET) $(DESTDIR)$(bindir)
 
-.PHONY: all check help check-syntax clean create-buid-directories announce-build initialize announce-compile-phase generate-sources process-sources generate-resources process-resources announce-compile-sources compile process-objects target announce-test-phase generate-test-sources process-test-sources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(VALIDATION_HOOKS) $(DEPENDENCY_VADLIDATIONS)
+.PHONY: all check help check-syntax clean create-buid-directories announce-build ensure-dependencies initialize announce-compile-phase generate-sources process-sources generate-resources process-resources announce-compile-sources compile process-objects target ensure-test-dependencies announce-test-phase generate-test-sources process-test-sources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(VALIDATION_HOOKS) $(DEPENDENCY_VADLIDATIONS) $(TEST_DEPENDENCY_VADLIDATIONS)
