@@ -102,11 +102,15 @@ static void event_loop(loader_context *context)
 
     loader_trace("entering event loop...");
     context->code = LOADER_SUCCESS;
-    for(bool done = false; !done; done = dispatch_event(&event, context))
+    while(true)
     {
         if (!yaml_parser_parse(context->parser, &event))
         {
             context->code = interpret_yaml_error(context->parser);
+            break;
+        }
+        if(dispatch_event(&event, context))
+        {
             break;
         }
     }

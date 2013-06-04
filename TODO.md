@@ -62,8 +62,6 @@ LICENSE file for more details.
 
 #### Enhancements:
 
-* implement escaping
-* support tags
 * support integer and timestamp scalar types
 
 #### Features:
