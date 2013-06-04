@@ -39,6 +39,7 @@
 #include <errno.h>
 
 #include "model.h"
+#include "conditions.h"
 
 static bool model_init(document_model * restrict model, size_t capacity);
 
@@ -49,11 +50,7 @@ static inline void mapping_free(node *mapping);
 
 node *make_document_node(node *root)
 {
-    if(NULL == root)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+    PRECOND_NONNULL_ELSE_NULL(root);
 
     node *result = make_node(DOCUMENT);
     if(NULL != result)
@@ -67,11 +64,7 @@ node *make_document_node(node *root)
 
 node *make_sequence_node(size_t capacity)
 {
-    if(0 == capacity)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+    PRECOND_ELSE_NULL(0 < capacity);
 
     node *result = make_node(SEQUENCE);
 
@@ -93,11 +86,7 @@ node *make_sequence_node(size_t capacity)
 
 node *make_mapping_node(size_t capacity)
 {
-    if(0 == capacity)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+    PRECOND_ELSE_NULL(0 < capacity);
 
     node *result = make_node(MAPPING);
     if(NULL != result)
@@ -118,11 +107,8 @@ node *make_mapping_node(size_t capacity)
 
 node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kind)
 {
-    if(NULL == value || 0 == length)
-    {
-        errno = EINVAL;
-        return NULL;
-    }
+    PRECOND_NONNULL_ELSE_NULL(value);
+    PRECOND_ELSE_NULL(0 < length);
 
     node *result = make_node(SCALAR);
     if(NULL != result)
@@ -176,7 +162,7 @@ void node_free(node *value)
     {
         return;
     }
-    switch(node_get_kind(value))
+    switch(node_kind(value))
     {
         case DOCUMENT:
             node_free(value->content.document.root);
@@ -203,7 +189,7 @@ static inline void sequence_free(node *sequence)
     {
         return;
     }
-    for(size_t i = 0; i < node_get_size(sequence); i++)
+    for(size_t i = 0; i < node_size(sequence); i++)
     {
         node_free(sequence->content.sequence.value[i]);
         sequence->content.sequence.value[i] = NULL;
@@ -218,7 +204,7 @@ static inline void mapping_free(node *mapping)
     {
         return;
     }
-    for(size_t i = 0; i < node_get_size(mapping); i++)
+    for(size_t i = 0; i < node_size(mapping); i++)
     {
         node_free(mapping->content.mapping.value[i]->key);
         mapping->content.mapping.value[i]->key = NULL;
@@ -245,11 +231,8 @@ document_model *make_model(size_t capacity)
 
 static bool model_init(document_model * restrict model, size_t capacity)
 {
-    if(NULL == model || 0 == capacity)
-    {
-        errno = EINVAL;
-        return false;
-    }
+    PRECOND_NONNULL_ELSE_FALSE(model);
+    PRECOND_ELSE_FALSE(0 < capacity);
 
     bool result = true;
     model->size = 0;

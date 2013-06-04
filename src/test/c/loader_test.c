@@ -70,7 +70,7 @@ static void assert_model_state(loader_context *loader, document_model *model);
         assert_int_eq((EXPECTED_RESULT), loader_status((CONTEXT)));     \
         char *_assert_message = loader_status_message((CONTEXT));       \
         assert_not_null(_assert_message);                               \
-        log_debug("loader test", "received expected failure message: '%s'", _assert_message); \
+        log_info("loader test", "received expected failure message: '%s'", _assert_message); \
         free(_assert_message);                                          \
     } while(0)
 
@@ -216,9 +216,10 @@ static void assert_model_state(loader_context *loader, document_model *model)
 {
     assert_int_eq(LOADER_SUCCESS, loader_status(loader));
     assert_not_null(model);
-    assert_uint_eq(1, model_get_document_count(model));
+    assert_uint_eq(1, model_document_count(model));
 
-    node *root = model_get_document_root(model, 0);
+    reset_errno();
+    node *root = model_document_root(model, 0);
     assert_noerr();
     assert_not_null(root);
     
@@ -226,40 +227,47 @@ static void assert_model_state(loader_context *loader, document_model *model)
     assert_node_size(root, 5);
     assert_not_null(mapping_get_all(root));
 
-    node *one = mapping_get_value(root, "one");
+    reset_errno();
+    node *one = mapping_get(root, "one");
     assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
+    reset_errno();
     node *one_0 = sequence_get(one, 0);
     assert_noerr();
     assert_node_kind(one_0, SCALAR);
     assert_scalar_value(one_0, "foo1");
     assert_scalar_kind(one_0, SCALAR_STRING);
+    reset_errno();
     node *one_1 = sequence_get(one, 1);
     assert_noerr();
     assert_node_kind(one_1, SCALAR);
     assert_scalar_value(one_1, "bar1");
     assert_scalar_kind(one_1, SCALAR_STRING);
 
-    node *two = mapping_get_value(root, "two");
+    reset_errno();
+    node *two = mapping_get(root, "two");
     assert_noerr();
     assert_not_null(two);
     assert_node_kind(two, SCALAR);
     assert_scalar_value(two, "foo2");
     assert_scalar_kind(two, SCALAR_STRING);
 
-    node *three = mapping_get_value(root, "three");
+    reset_errno();
+    node *three = mapping_get(root, "three");
     assert_noerr();
     assert_not_null(three);
     assert_node_kind(three, SCALAR);
     assert_scalar_value(three, "null");
     assert_scalar_kind(three, SCALAR_NULL);
 
-    node *four = mapping_get_value(root, "four");
+    reset_errno();
+    node *four = mapping_get(root, "four");
     assert_noerr();
     assert_not_null(four);
     assert_node_kind(four, SEQUENCE);
+    reset_errno();
     node *four_0 = sequence_get(four, 0);
     assert_noerr();
     assert_node_kind(four_0, SCALAR);
@@ -267,6 +275,7 @@ static void assert_model_state(loader_context *loader, document_model *model)
     assert_scalar_kind(four_0, SCALAR_BOOLEAN);
     assert_true(scalar_boolean_is_true(four_0));
     assert_false(scalar_boolean_is_false(four_0));
+    reset_errno();
     node *four_1 = sequence_get(four, 1);
     assert_noerr();
     assert_node_kind(four_0, SCALAR);
@@ -275,7 +284,8 @@ static void assert_model_state(loader_context *loader, document_model *model)
     assert_true(scalar_boolean_is_false(four_1));
     assert_false(scalar_boolean_is_true(four_1));
 
-    node *five = mapping_get_value(root, "five");
+    reset_errno();
+    node *five = mapping_get(root, "five");
     assert_noerr();
     assert_not_null(five);
     assert_node_kind(five, SCALAR);

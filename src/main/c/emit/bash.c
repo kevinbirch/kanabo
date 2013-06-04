@@ -61,7 +61,7 @@ void emit_bash(const nodelist * restrict list, const struct settings * restrict 
 
 static bool emit_mapping_item(node *key, node *value, void *context __attribute__((unused)))
 {
-    if(SCALAR == node_get_kind(value))
+    if(SCALAR == node_kind(value))
     {
         log_trace("bash", "emitting mapping item");
         EMIT("[");

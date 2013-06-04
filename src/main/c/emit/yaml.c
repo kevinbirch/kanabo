@@ -121,7 +121,7 @@ static bool emit_nodelist(const nodelist * restrict list, yaml_emitter_t *emitte
 static bool emit_node(node *each, void *context)
 {
     bool result = true;
-    switch(node_get_kind(each))
+    switch(node_kind(each))
     {
         case DOCUMENT:
             result = emit_document(each, context);
@@ -150,7 +150,7 @@ static bool emit_document(node *document, void *context)
     if (!yaml_emitter_emit(emitter, &event))
         return false;
     
-    if(!emit_node(document_get_root(document), context))
+    if(!emit_node(document_root(document), context))
     {
         return false;
     }
@@ -173,7 +173,7 @@ static bool emit_sequence(node *sequence, void *context)
     if (!yaml_emitter_emit(emitter, &event))
         return false;
     
-    if(!iterate_sequence(sequence, emit_sequence_item, context))
+    if(!sequence_iterate(sequence, emit_sequence_item, context))
     {
         return false;
     }
@@ -203,7 +203,7 @@ static bool emit_mapping(node *mapping, void *context)
     if (!yaml_emitter_emit(emitter, &event))
         return false;
     
-    if(!iterate_mapping(mapping, emit_mapping_item, context))
+    if(!mapping_iterate(mapping, emit_mapping_item, context))
     {
         return false;
     }
@@ -231,7 +231,7 @@ static bool emit_scalar(const node * restrict each, void *context)
     yaml_char_t *tag;
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
     
-    switch(scalar_get_kind(each))
+    switch(scalar_kind(each))
     {
         case SCALAR_STRING:
             tag = (yaml_char_t *)YAML_STR_TAG;
@@ -253,11 +253,11 @@ static bool emit_scalar(const node * restrict each, void *context)
 
 static bool emit_tagged_scalar(const node * restrict scalar, yaml_char_t *tag, yaml_scalar_style_t style, void *context)
 {
-    trace_string("emitting scalar \"%s\"", scalar_get_value(scalar), node_get_size(scalar));
+    trace_string("emitting scalar \"%s\"", scalar_value(scalar), node_size(scalar));
     yaml_emitter_t *emitter = (yaml_emitter_t *)context;
     yaml_event_t event;
 
-    yaml_scalar_event_initialize(&event, NULL, tag, scalar_get_value(scalar), (int)node_get_size(scalar), 1, 1, style);
+    yaml_scalar_event_initialize(&event, NULL, tag, scalar_value(scalar), (int)node_size(scalar), 1, 1, style);
     if (!yaml_emitter_emit(emitter, &event))
         return false;
     

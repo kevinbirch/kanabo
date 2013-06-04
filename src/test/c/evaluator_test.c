@@ -731,8 +731,8 @@ END_TEST
 bool scalar_true(node *each, void *context __attribute__((unused)))
 {
 
-    return SCALAR == node_get_kind(each) &&
-        SCALAR_BOOLEAN == scalar_get_kind(each) &&
+    return SCALAR == node_kind(each) &&
+        SCALAR_BOOLEAN == scalar_kind(each) &&
         scalar_boolean_is_true(each);
 }
 
@@ -854,7 +854,7 @@ START_TEST (subscript_predicate)
     assert_node_kind(mapping, MAPPING);
     assert_noerr();
     reset_errno();
-    node *author = mapping_get_value(mapping, "author");
+    node *author = mapping_get(mapping, "author");
     assert_noerr();
     assert_not_null(author);
     assert_scalar_value(author, "Herman Melville");
@@ -890,7 +890,7 @@ START_TEST (recursive_subscript_predicate)
     assert_node_kind(mapping, MAPPING);
     assert_noerr();
     reset_errno();
-    node *author = mapping_get_value(mapping, "author");
+    node *author = mapping_get(mapping, "author");
     assert_noerr();
     assert_not_null(author);
     assert_scalar_value(author, "Herman Melville");
@@ -927,7 +927,7 @@ START_TEST (slice_predicate)
     assert_node_kind(book, MAPPING);
 
     reset_errno();
-    node *author = mapping_get_value(book, "author");
+    node *author = mapping_get(book, "author");
     assert_noerr();
     assert_not_null(author);
     assert_scalar_value(author, "Nigel Rees");
@@ -938,7 +938,7 @@ START_TEST (slice_predicate)
     assert_node_kind(book, MAPPING);
 
     reset_errno();
-    author = mapping_get_value(book, "author");
+    author = mapping_get(book, "author");
     assert_noerr();
     assert_not_null(author);
     assert_scalar_value(author, "Evelyn Waugh");
@@ -975,7 +975,7 @@ START_TEST (recursive_slice_predicate)
     assert_node_kind(book, MAPPING);
 
     reset_errno();
-    node *author = mapping_get_value(book, "author");
+    node *author = mapping_get(book, "author");
     assert_noerr();
     assert_not_null(author);
     assert_scalar_value(author, "Nigel Rees");
@@ -986,7 +986,7 @@ START_TEST (recursive_slice_predicate)
     assert_node_kind(book, MAPPING);
 
     reset_errno();
-    author = mapping_get_value(book, "author");
+    author = mapping_get(book, "author");
     assert_noerr();
     assert_not_null(author);
     assert_scalar_value(author, "Evelyn Waugh");
@@ -1023,7 +1023,7 @@ START_TEST (slice_predicate_with_step)
     assert_node_kind(book, MAPPING);
 
     reset_errno();
-    node *author = mapping_get_value(book, "author");
+    node *author = mapping_get(book, "author");
     assert_noerr();
     assert_not_null(author);
     assert_scalar_value(author, "Nigel Rees");
@@ -1060,7 +1060,7 @@ START_TEST (slice_predicate_negative_from)
     assert_node_kind(book, MAPPING);
 
     reset_errno();
-    node *author = mapping_get_value(book, "author");
+    node *author = mapping_get(book, "author");
     assert_noerr();
     assert_not_null(author);
     assert_scalar_value(author, "夏目漱石 (NATSUME Sōseki)");
@@ -1097,7 +1097,7 @@ START_TEST (recursive_slice_predicate_negative_from)
     assert_node_kind(book, MAPPING);
 
     reset_errno();
-    node *author = mapping_get_value(book, "author");
+    node *author = mapping_get(book, "author");
     assert_noerr();
     assert_not_null(author);
     assert_scalar_value(author, "夏目漱石 (NATSUME Sōseki)");
@@ -1129,16 +1129,16 @@ START_TEST (slice_predicate_copy)
     assert_nodelist_length(list, 5);
 
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 0), "author"), "Nigel Rees");
+    assert_scalar_value(mapping_get(nodelist_get(list, 0), "author"), "Nigel Rees");
     assert_noerr();
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 1), "author"), "Evelyn Waugh");
+    assert_scalar_value(mapping_get(nodelist_get(list, 1), "author"), "Evelyn Waugh");
     assert_noerr();
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 2), "author"), "Herman Melville");
+    assert_scalar_value(mapping_get(nodelist_get(list, 2), "author"), "Herman Melville");
     assert_noerr();
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 3), "author"), "J. R. R. Tolkien");
+    assert_scalar_value(mapping_get(nodelist_get(list, 3), "author"), "J. R. R. Tolkien");
     assert_noerr();
 
     nodelist_free(list);
@@ -1168,19 +1168,19 @@ START_TEST (slice_predicate_reverse)
     assert_nodelist_length(list, 5);
 
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 0), "author"), "夏目漱石 (NATSUME Sōseki)");
+    assert_scalar_value(mapping_get(nodelist_get(list, 0), "author"), "夏目漱石 (NATSUME Sōseki)");
     assert_noerr();
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 1), "author"), "J. R. R. Tolkien");
+    assert_scalar_value(mapping_get(nodelist_get(list, 1), "author"), "J. R. R. Tolkien");
     assert_noerr();
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 2), "author"), "Herman Melville");
+    assert_scalar_value(mapping_get(nodelist_get(list, 2), "author"), "Herman Melville");
     assert_noerr();
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 3), "author"), "Evelyn Waugh");
+    assert_scalar_value(mapping_get(nodelist_get(list, 3), "author"), "Evelyn Waugh");
     assert_noerr();
     reset_errno();
-    assert_scalar_value(mapping_get_value(nodelist_get(list, 4), "author"), "Nigel Rees");
+    assert_scalar_value(mapping_get(nodelist_get(list, 4), "author"), "Nigel Rees");
     assert_noerr();
 
     nodelist_free(list);

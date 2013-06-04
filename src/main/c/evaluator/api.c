@@ -64,14 +64,14 @@ evaluator_context *make_evaluator(const document_model *model, const jsonpath *p
         context->code = ERR_PATH_IS_NULL;
         return context;
     }
-    if(NULL == model_get_document(model, 0))
+    if(NULL == model_document(model, 0))
     {
         evaluator_debug("document is null");
         errno = EINVAL;
         context->code = ERR_NO_DOCUMENT_IN_MODEL;
         return context;
     }
-    if(NULL == model_get_document_root(model, 0))
+    if(NULL == model_document_root(model, 0))
     {
         evaluator_debug("document root is null");
         errno = EINVAL;

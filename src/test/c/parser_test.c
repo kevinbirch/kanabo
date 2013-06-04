@@ -69,7 +69,7 @@
         assert_int_eq((EXPECTED_RESULT), parser_status((CONTEXT)));     \
         char *_assert_message = parser_status_message((CONTEXT));       \
         assert_not_null(_assert_message);                               \
-        log_debug("parser test", "for expression: '%s', received expected failure message: '%s'", (EXPRESSION), _assert_message); \
+        log_info("parser test", "for expression: '%s', received expected failure message: '%s'", (EXPRESSION), _assert_message); \
         free(_assert_message);                                          \
         assert_uint_eq((EXPECTED_POSITION), (CONTEXT)->cursor);         \
     } while(0)

@@ -58,7 +58,7 @@
 bool model_add(document_model * restrict model, node *document)
 {
     PRECOND_NONNULL_ELSE_FALSE(model, document);
-    PRECOND_ELSE_FALSE(DOCUMENT == node_get_kind(document));
+    PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
 
     ensure_capacity(node, model->documents, model->size + 1, model->capacity);
     model->documents[model->size++] = document;
@@ -68,7 +68,7 @@ bool model_add(document_model * restrict model, node *document)
 bool document_set_root(node * restrict document, node *root)
 {
     PRECOND_NONNULL_ELSE_FALSE(document, root);
-    PRECOND_ELSE_FALSE(DOCUMENT == node_get_kind(document));
+    PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
 
     document->content.document.root = root;
     return true;
@@ -77,7 +77,7 @@ bool document_set_root(node * restrict document, node *root)
 bool sequence_add(node * restrict sequence, node *item)
 {
     PRECOND_NONNULL_ELSE_FALSE(sequence, item);
-    PRECOND_ELSE_FALSE(SEQUENCE == node_get_kind(sequence));
+    PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence));
 
     ensure_capacity(node, sequence->content.sequence.value, sequence->content.size + 1, sequence->content.sequence.capacity);
     sequence->content.sequence.value[sequence->content.size++] = item;
@@ -88,7 +88,7 @@ bool sequence_add(node * restrict sequence, node *item)
 bool sequence_set(node * restrict sequence, node *item, size_t index)
 {
     PRECOND_NONNULL_ELSE_FALSE(sequence, item);
-    PRECOND_ELSE_FALSE(SEQUENCE == node_get_kind(sequence), index < sequence->content.size);
+    PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence), index < sequence->content.size);
 
     sequence->content.sequence.value[index] = item;
 
@@ -98,7 +98,7 @@ bool sequence_set(node * restrict sequence, node *item, size_t index)
 bool mapping_put(node * restrict mapping, node *key, node *value)
 {
     PRECOND_NONNULL_ELSE_FALSE(mapping, key, value);
-    PRECOND_ELSE_FALSE(MAPPING == node_get_kind(mapping));
+    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping));
 
     ensure_capacity(key_value_pair, mapping->content.mapping.value, mapping->content.size + 1, mapping->content.mapping.capacity);
 

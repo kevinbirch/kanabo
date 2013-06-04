@@ -75,16 +75,7 @@ LICENSE file for more details.
 
 ### model
 
-#### Enhancements:
-
-* replace x\_get\_y with x\_y
-* add human readable names for enum types
-* use precondition helpers
-* iterate\_sequence -> sequence\_iterate
-* switch the iterator return types to bool to propigate the evaluation status
-* expand scalar nodes to include json subtypes
-* give nodes a pointer back to their owning document?
-* support iteger and timestamp scalar types
+* support integer and timestamp scalar types
 
 ### unit testing
 

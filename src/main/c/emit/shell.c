@@ -52,11 +52,11 @@ bool emit_node(node *each, void *argument)
     emit_context *context = (emit_context *)argument;
 
     bool result = true;
-    switch(node_get_kind(each))
+    switch(node_kind(each))
     {
         case DOCUMENT:
             log_trace("shell", "emitting document");
-            result = emit_node(document_get_root(each), NULL);
+            result = emit_node(document_root(each), NULL);
             break;
         case SCALAR:
             result = emit_scalar(each);
@@ -65,14 +65,14 @@ bool emit_node(node *each, void *argument)
         case SEQUENCE:
             log_trace("shell", "emitting seqence");
             MAYBE_EMIT("(");            
-            result = iterate_sequence(each, emit_sequence_item, NULL);
+            result = sequence_iterate(each, emit_sequence_item, NULL);
             MAYBE_EMIT(")");
             EMIT("\n");
             break;
         case MAPPING:
             log_trace("shell", "emitting mapping");
             MAYBE_EMIT("(");            
-            result = iterate_mapping(each, context->emit_mapping_item, NULL);
+            result = mapping_iterate(each, context->emit_mapping_item, NULL);
             MAYBE_EMIT(")");
             EMIT("\n");
             break;
@@ -84,7 +84,7 @@ bool emit_node(node *each, void *argument)
 
 bool emit_scalar(const node * restrict each)
 {
-    if(SCALAR_STRING == scalar_get_kind(each) && scalar_contains_space(each))
+    if(SCALAR_STRING == scalar_kind(each) && scalar_contains_space(each))
     {
         log_trace("shell", "emitting quoted scalar");
         return emit_quoted_scalar(each);
@@ -111,12 +111,12 @@ bool emit_quoted_scalar(const node * restrict each)
 
 bool emit_raw_scalar(const node * restrict each)
 {
-    return fwrite(scalar_get_value(each), node_get_size(each), 1, stdout);
+    return fwrite(scalar_value(each), node_size(each), 1, stdout);
 }
 
 bool emit_sequence_item(node *each, void *context __attribute__((unused)))
 {
-    if(SCALAR == node_get_kind(each))
+    if(SCALAR == node_kind(each))
     {
         log_trace("shell", "emitting sequence item");
         if(!emit_scalar(each))
@@ -135,8 +135,8 @@ bool emit_sequence_item(node *each, void *context __attribute__((unused)))
 
 bool scalar_contains_space(const node * restrict each)
 {
-    uint8_t *value = scalar_get_value(each);
-    for(size_t i = 0; i < node_get_size(each); i++)
+    uint8_t *value = scalar_value(each);
+    for(size_t i = 0; i < node_size(each); i++)
     {
         if(isspace(*(value + i)))
         {

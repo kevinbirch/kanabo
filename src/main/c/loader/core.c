@@ -79,7 +79,7 @@ document_model *build_model(loader_context *context)
     if(LOADER_SUCCESS == context->code)
     {
         unwind_model(context);
-        loader_debug("done. found %zd documents.", model_get_document_count(context->model));
+        loader_debug("done. found %zd documents.", model_document_count(context->model));
     }
     else
     {
@@ -301,7 +301,7 @@ static bool unwind_sequence(loader_context *context)
         return true;
     }
     add_node(context, sequence);
-    loader_trace("added sequence (%p) of length: %zd", sequence, node_get_size(sequence));
+    loader_trace("added sequence (%p) of length: %zd", sequence, node_size(sequence));
     return false;
 }
 
@@ -324,7 +324,7 @@ static bool unwind_mapping(loader_context *context)
     }
 
     add_node(context, mapping);
-    loader_trace("added mapping of length: %zd", node_get_size(mapping));
+    loader_trace("added mapping of length: %zd", node_size(mapping));
     return false;
 }
 

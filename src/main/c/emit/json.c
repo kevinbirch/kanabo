@@ -79,11 +79,11 @@ static bool emit_node(node *each, void *context __attribute__((unused)))
     bool result = true;
     size_t sequence_count = 0;
     size_t mapping_count = 0;
-    switch(node_get_kind(each))
+    switch(node_kind(each))
     {
         case DOCUMENT:
             log_trace(component, "emitting document");
-            result = emit_node(document_get_root(each), NULL);
+            result = emit_node(document_root(each), NULL);
             break;
         case SCALAR:
             result = emit_scalar(each);
@@ -91,13 +91,13 @@ static bool emit_node(node *each, void *context __attribute__((unused)))
         case SEQUENCE:
             log_trace(component, "emitting seqence");
             EMIT("[");
-            result = iterate_sequence(each, emit_sequence_item, &sequence_count);
+            result = sequence_iterate(each, emit_sequence_item, &sequence_count);
             EMIT("]");
             break;
         case MAPPING:
             log_trace(component, "emitting mapping");
             EMIT("{");
-            result = iterate_mapping(each, emit_mapping_item, &mapping_count);
+            result = mapping_iterate(each, emit_mapping_item, &mapping_count);
             EMIT("}");
             break;
     }
@@ -107,7 +107,7 @@ static bool emit_node(node *each, void *context __attribute__((unused)))
 
 static bool emit_scalar(const node * restrict each)
 {
-    if(SCALAR_STRING == scalar_get_kind(each))
+    if(SCALAR_STRING == scalar_kind(each))
     {
         log_trace(component, "emitting quoted scalar");
         return emit_quoted_scalar(each);
@@ -134,7 +134,7 @@ static bool emit_quoted_scalar(const node * restrict each)
 
 static bool emit_raw_scalar(const node * restrict each)
 {
-    return fwrite(scalar_get_value(each), node_get_size(each), 1, stdout);
+    return fwrite(scalar_value(each), node_size(each), 1, stdout);
 }
 
 static bool emit_sequence_item(node *each, void *context)
