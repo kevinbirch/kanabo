@@ -234,17 +234,24 @@ static bool emit_scalar(const node * restrict each, void *context)
     switch(scalar_kind(each))
     {
         case SCALAR_STRING:
-            tag = (yaml_char_t *)YAML_STR_TAG;
+            // xxx - don't need node tag (name) length, nuke it
+            tag = NULL == node_name(each) ? (yaml_char_t *)YAML_STR_TAG : node_name(each);
             style = YAML_DOUBLE_QUOTED_SCALAR_STYLE;
             break;
-        case SCALAR_NUMBER:
-            tag = (yaml_char_t *)YAML_FLOAT_TAG;
+        case SCALAR_INTEGER:
+            tag = NULL == node_name(each) ? (yaml_char_t *)YAML_INT_TAG : node_name(each);
+            break;
+        case SCALAR_DECIMAL:
+            tag = NULL == node_name(each) ? (yaml_char_t *)YAML_FLOAT_TAG : node_name(each);
+            break;
+        case SCALAR_TIMESTAMP:
+            tag = NULL == node_name(each) ? (yaml_char_t *)YAML_TIMESTAMP_TAG : node_name(each);
             break;
         case SCALAR_BOOLEAN:
-            tag = (yaml_char_t *)YAML_BOOL_TAG;
+            tag = NULL == node_name(each) ? (yaml_char_t *)YAML_BOOL_TAG : node_name(each);
             break;
         case SCALAR_NULL:
-            tag = (yaml_char_t *)YAML_NULL_TAG;
+            tag = NULL == node_name(each) ? (yaml_char_t *)YAML_NULL_TAG : node_name(each);
             break;
     }
 

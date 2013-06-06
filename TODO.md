@@ -28,6 +28,7 @@ LICENSE file for more details.
 * negative subscript values
 * implement union predicates
 * implement filter predicates
+* support integer and timestamp scalar types
 
 ### parser
 
@@ -57,12 +58,13 @@ LICENSE file for more details.
   * allow more than two items
 * filter predicate support
 * YAML anchor/alias syntax support?
+* support integer and timestamp scalar types
 
 ### loader
 
 #### Enhancements:
 
-* support integer and timestamp scalar types
+* clobber duplicate keys in mappings
 
 #### Features:
 
@@ -70,10 +72,6 @@ LICENSE file for more details.
   * https://en.wikipedia.org/wiki/Hashed\_array\_tree
   * use for mappings as well
 * handle tags
-
-### model
-
-* support integer and timestamp scalar types
 
 ### unit testing
 

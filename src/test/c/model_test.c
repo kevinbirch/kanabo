@@ -87,10 +87,6 @@ START_TEST (null_node)
     assert_errno(EINVAL);
 
     reset_errno();
-    assert_uint_eq(0, node_name_length(NULL));
-    assert_errno(EINVAL);
-
-    reset_errno();
     assert_node_size(NULL, 0);
     assert_errno(EINVAL);
 }
@@ -164,7 +160,7 @@ void model_setup(void)
     assert_noerr();
     assert_not_null(foo1);
     reset_errno();
-    node *one_point_five = make_scalar_node((uint8_t *)"1.5", 4, SCALAR_NUMBER);
+    node *one_point_five = make_scalar_node((uint8_t *)"1.5", 4, SCALAR_DECIMAL);
     assert_noerr();
     assert_not_null(one_point_five);
     reset_errno();
@@ -330,11 +326,6 @@ START_TEST (nodes)
     unsigned char *n = node_name(r);
     assert_noerr();
     assert_null(n);
-
-    reset_errno();
-    size_t l = node_name_length(r);
-    assert_noerr();
-    assert_uint_eq(0, l);
 
     reset_errno();
     size_t s = node_size(r);

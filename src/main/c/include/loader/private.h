@@ -60,7 +60,9 @@ struct loader_context
     yaml_parser_t     *parser;
     document_model    *model;
     struct excursion  *excursions;
-    regex_t           *regex;
+    regex_t           *decimal_regex;
+    regex_t           *integer_regex;
+    regex_t           *timestamp_regex;
 
     size_t             length;
     struct cell       *head;

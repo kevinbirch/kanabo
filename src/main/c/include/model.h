@@ -52,7 +52,9 @@ enum node_kind
 enum scalar_kind
 {
     SCALAR_STRING,
-    SCALAR_NUMBER,
+    SCALAR_INTEGER,
+    SCALAR_DECIMAL,
+    SCALAR_TIMESTAMP,
     SCALAR_BOOLEAN,
     SCALAR_NULL
 };
@@ -71,7 +73,6 @@ struct node
     {
         enum node_kind  kind;
         uint8_t        *name;
-        size_t          name_length;
     } tag;
 
     struct
@@ -122,7 +123,6 @@ size_t  model_document_count(const document_model * restrict model);
 
 enum node_kind  node_kind(const node * restrict value);
 uint8_t        *node_name(const node * restrict value);
-size_t          node_name_length(const node * restrict value);
 size_t          node_size(const node * restrict value);
 
 node *document_root(const node * restrict document);

@@ -137,7 +137,6 @@ START_TEST (null_document_root)
     assert_not_null(document);
     document->tag.kind = DOCUMENT;
     document->tag.name = NULL;
-    document->tag.name_length = 0;
     document->content.size = 0;
     document->content.document.root = NULL;
     model_add(bad_model, document);
@@ -307,7 +306,6 @@ START_TEST (null_context_document_root)
     assert_not_null(document);
     document->tag.kind = DOCUMENT;
     document->tag.name = NULL;
-    document->tag.name_length = 0;
     document->content.size = 0;
     document->content.document.root = NULL;
 

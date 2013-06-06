@@ -61,7 +61,7 @@ bool  transform(node *each, void *context, nodelist *target);
 bool  fail_transform(node *each, void *context, nodelist *target);
 
 #define make_scalar_string(VALUE) make_scalar_node((uint8_t *)(VALUE), strlen((VALUE)), SCALAR_STRING)
-#define make_scalar_number(VALUE) make_scalar_node((uint8_t *)(VALUE), strlen((VALUE)), SCALAR_NUMBER)
+#define make_scalar_integer(VALUE) make_scalar_node((uint8_t *)(VALUE), strlen((VALUE)), SCALAR_INTEGER)
 
 static nodelist *list;
 
@@ -387,12 +387,12 @@ START_TEST (map)
 
     node *zero = nodelist_get(result, 0);
     assert_not_null(zero);
-    assert_scalar_kind(zero, SCALAR_NUMBER);
+    assert_scalar_kind(zero, SCALAR_INTEGER);
     assert_scalar_value(zero, "1");
 
     node *one = nodelist_get(result, 1);
     assert_not_null(one);
-    assert_scalar_kind(one, SCALAR_NUMBER);
+    assert_scalar_kind(one, SCALAR_INTEGER);
     assert_scalar_value(one, "2");
 
     nodelist_free_nodes(result);
@@ -408,7 +408,7 @@ bool transform(node *each, void *context, nodelist *target)
     char *value;
     int result = asprintf(&value, "%zd", *count);
     assert_int_ne(-1, result);
-    return nodelist_add(target, make_scalar_number(value));
+    return nodelist_add(target, make_scalar_integer(value));
 }
 
 START_TEST (fail_map)

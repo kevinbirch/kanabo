@@ -44,6 +44,20 @@
 #include "loader.h"
 #include "loader/private.h"
 
+#define make_regex(MEMBER, PATTERN) context->MEMBER = (regex_t *)malloc(sizeof(regex_t)); \
+    if(NULL == context->MEMBER)                                         \
+    {                                                                   \
+        loader_error("uh oh! out of memory, can't allocate the number regex");\
+        context->code = ERR_LOADER_OUT_OF_MEMORY;                       \
+        return context;                                                 \
+    }                                                                   \
+    if(regcomp(context->MEMBER, PATTERN, REG_EXTENDED | REG_NOSUB))     \
+    {                                                                   \
+        loader_error("uh oh! can't compile the decimal regex");         \
+        context->code = ERR_OTHER;                                      \
+        return context;                                                 \
+    }
+
 static loader_context *make_loader(void);
 
 loader_context *make_string_loader(const unsigned char *input, size_t size)
@@ -145,20 +159,11 @@ static loader_context *make_loader(void)
     context->excursions = NULL;
     context->head = NULL;
     context->last = NULL;
-    context->regex = (regex_t *)malloc(sizeof(regex_t));
-    if(NULL == context->regex)
-    {
-        loader_error("uh oh! out of memory, can't allocate the number regex");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return context;
-    }
-    if(regcomp(context->regex, "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$", REG_EXTENDED | REG_NOSUB))
-    {
-        loader_error("uh oh! can't compile the number regex");
-        context->code = ERR_OTHER;
-        return context;
-    }
 
+    make_regex(decimal_regex, "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$");
+    make_regex(integer_regex, "^-?(0|([1-9][[:digit:]]*))$");
+    make_regex(timestamp_regex, "^[0-9][0-9][0-9][0-9]-[0-9][0-9]?-[0-9][0-9]?(([Tt]|[ \t]+)[0-9][0-9]?:[0-9][0-9]:[0-9][0-9]([.][0-9]+)?([ \t]*(Z|([-+][0-9][0-9]?(:[0-9][0-9])?)))?)?$");
+    
     return context;
 }
 
@@ -190,8 +195,12 @@ void loader_free(loader_context *context)
     context->head = NULL;
     context->last = NULL;
     context->model = NULL;
-    regfree(context->regex);
-    free(context->regex);
+    regfree(context->decimal_regex);
+    free(context->decimal_regex);
+    regfree(context->integer_regex);
+    free(context->integer_regex);
+    regfree(context->timestamp_regex);
+    free(context->timestamp_regex);
 
     free(context);
 }

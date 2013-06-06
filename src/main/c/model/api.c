@@ -43,7 +43,8 @@
 #include "model.h"
 #include "conditions.h"
 
-static bool string_equals(const uint8_t * restrict one, size_t n1, const uint8_t * restrict two, size_t n2);
+static bool scalar_equals(const node * restrict one, const node * restrict two);
+static bool tag_equals(const uint8_t * restrict one, const uint8_t * restrict two);
 static bool sequence_equals(const node * restrict one, const node * restrict two);
 static bool mapping_equals(const node * restrict one, const node * restrict two);
 
@@ -85,13 +86,6 @@ uint8_t *node_name(const node * restrict value)
     PRECOND_NONNULL_ELSE_NULL(value);
 
     return value->tag.name;
-}
-
-size_t node_name_length(const node * restrict value)
-{
-    PRECOND_NONNULL_ELSE_ZERO(value);
-
-    return value->tag.name_length;
 }
 
 size_t node_size(const node * restrict value)
@@ -247,8 +241,7 @@ bool node_equals(const node * restrict one, const node * restrict two)
 
     bool result = 
         node_kind(one) == node_kind(two) &&
-        node_name_length(one) == node_name_length(two) &&
-        string_equals(node_name(one), node_name_length(one), node_name(two), node_name_length(two)) &&
+        tag_equals(node_name(one), node_name(two)) &&
         node_size(one) == node_size(two);
     
     switch(node_kind(one))
@@ -257,7 +250,7 @@ bool node_equals(const node * restrict one, const node * restrict two)
             result &= node_equals(document_root(one), document_root(two));
             break;
         case SCALAR:
-            result &= string_equals(scalar_value(one), node_size(one), scalar_value(two), node_size(two));
+            result &= scalar_equals(one, two);
             break;
         case SEQUENCE:
             result &= sequence_equals(one, two);
@@ -269,8 +262,25 @@ bool node_equals(const node * restrict one, const node * restrict two)
     return result;
 }
 
-static bool string_equals(const uint8_t * restrict one, size_t n1, const uint8_t * restrict two, size_t n2)
+static bool scalar_equals(const node * restrict one, const node * restrict two)
 {
+    size_t n1 = node_size(one);
+    size_t n2 = node_size(two);
+    return memcmp(scalar_value(one), scalar_value(two), n1 > n2 ? n2 : n1) == 0;
+}
+
+static bool tag_equals(const uint8_t * restrict one, const uint8_t * restrict two)
+{
+    if(NULL == one && NULL == two)
+    {
+        return true;
+    }
+    if((NULL == one && NULL != two) || (NULL != one && NULL == two))
+    {
+        return false;
+    }
+    size_t n1 = strlen((char *)one);
+    size_t n2 = strlen((char *)two);
     return memcmp(one, two, n1 > n2 ? n2 : n1) == 0;
 }
 

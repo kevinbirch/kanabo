@@ -290,7 +290,7 @@ static void assert_model_state(loader_context *loader, document_model *model)
     assert_not_null(five);
     assert_node_kind(five, SCALAR);
     assert_scalar_value(five, "1.5");
-    assert_scalar_kind(five, SCALAR_NUMBER);
+    assert_scalar_kind(five, SCALAR_DECIMAL);
 }
 
 Suite *loader_suite(void)

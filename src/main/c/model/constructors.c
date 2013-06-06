@@ -135,7 +135,6 @@ static inline node *make_node(enum node_kind kind)
     {
         result->tag.kind = kind;
         result->tag.name = NULL;
-        result->tag.name_length = 0;
     }
 
     return result;

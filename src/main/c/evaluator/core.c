@@ -314,27 +314,28 @@ static bool apply_type_test(node *each, void *argument, nodelist *target)
     switch(type_test_step_kind(current_step(context)))
     {
         case OBJECT_TEST:
-            evaluator_trace("type test: testing for an object (%d)", MAPPING);
+            evaluator_trace("type test: testing for an object");
             match = MAPPING == node_kind(each);
             break;
         case ARRAY_TEST:
-            evaluator_trace("type test: testing for an array (%d)", SEQUENCE);
+            evaluator_trace("type test: testing for an array");
             match = SEQUENCE == node_kind(each);
             break;
         case STRING_TEST:
-            evaluator_trace("type test: testing for a string (%d)", SCALAR_STRING);
+            evaluator_trace("type test: testing for a string");
             match = SCALAR == node_kind(each) && SCALAR_STRING == scalar_kind(each);
             break;
         case NUMBER_TEST:
-            evaluator_trace("type test: testing for a number (%d)", SCALAR_NUMBER);
-            match = SCALAR == node_kind(each) && SCALAR_NUMBER == scalar_kind(each);
+            evaluator_trace("type test: testing for a number");
+            match = SCALAR == node_kind(each) &&
+                (SCALAR_INTEGER == scalar_kind(each) || SCALAR_DECIMAL == scalar_kind(each));
             break;
         case BOOLEAN_TEST:
-            evaluator_trace("type test: testing for a boolean (%d)", SCALAR_BOOLEAN);
+            evaluator_trace("type test: testing for a boolean");
             match = SCALAR == node_kind(each) && SCALAR_BOOLEAN == scalar_kind(each);
             break;
         case NULL_TEST:
-            evaluator_trace("type test: testing for a null (%d)", SCALAR_NULL);
+            evaluator_trace("type test: testing for a null");
             match = SCALAR == node_kind(each) && SCALAR_NULL == scalar_kind(each);
             break;
     }
