@@ -151,6 +151,7 @@ void model_free(document_model *model)
         node_free(model->documents[i]);
         model->documents[i] = NULL;
     }
+    free(model->documents);
     model->size = 0;
     model->documents = NULL;
 }
