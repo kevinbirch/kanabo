@@ -56,7 +56,7 @@ static bool emit_tagged_scalar(const node * restrict scalar, yaml_char_t *tag, y
 
 void emit_yaml(const nodelist * restrict list, const struct settings * restrict settings)
 {
-    log_trace(component, "emitting...");
+    log_debug(component, "emitting...");
     yaml_emitter_t emitter;
     yaml_event_t event;
     

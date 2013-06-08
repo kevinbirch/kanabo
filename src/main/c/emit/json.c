@@ -62,7 +62,7 @@ static bool emit_mapping_item(node *key, node *value, void *context);
 
 void emit_json(const nodelist * restrict list, const struct settings * restrict settings)
 {
-    log_trace(component, "emitting...");
+    log_debug(component, "emitting...");
     size_t count = 0;
     QEMIT("[");
     if(!nodelist_iterate(list, emit_sequence_item, &count))
