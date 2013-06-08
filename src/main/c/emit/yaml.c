@@ -228,7 +228,7 @@ static bool emit_mapping_item(node *key, node *value, void *context)
 
 static bool emit_scalar(const node * restrict each, void *context)
 {
-    yaml_char_t *tag;
+    yaml_char_t *tag = NULL;
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
     
     switch(scalar_kind(each))
