@@ -22,6 +22,7 @@ LICENSE file for more details.
 * coverity
 * findbugs
 * add completions for currently loaded model to linenoise
+* bug: `--help` option prints error message before help text
 
 ### evaluator
 
@@ -32,50 +33,37 @@ LICENSE file for more details.
 
 ### parser
 
+* implement lexer
+* implement combinators
+* add full tracing
 * bug: `$...store` should not be accepted
 * bug: '.' should be allowed in a quoted name
 * bug: `$` should support predicates
 * bug: relational expression should superceed equality expression in filter predicate
-
-#### Enhancements:
-
 * implement escaping
-* implement lexer
-* implement combinators
-* add full tracing
-* add human readable names for enum types
-* negative subscripts should return ERR\_EXPECTED\_INTEGER instead of ERR\_UNSUPPORTED\_PRED\_TYPE
+* bug: negative subscripts should return ERR\_EXPECTED\_INTEGER instead of ERR\_UNSUPPORTED\_PRED\_TYPE
 * use precondition helpers
 * ensure memory is freed on secondary failure modes in parser functions
 * refactor direct status code setters into function calls
 * add exit state function with output
-
-#### Features:
-
 * negative subscript values
 * union support
   * allow array indices
   * allow more than two items
 * filter predicate support
-* YAML anchor/alias syntax support?
+* YAML anchor/alias syntax support
 * support integer and timestamp scalar types
 
 ### loader
 
-#### Enhancements:
-
+* add tests for new types
+* when and why are tags implicit in libyaml?
 * clobber duplicate keys in mappings
-
-#### Features:
-
 * handle anchors and aliases
   * https://en.wikipedia.org/wiki/Hashed\_array\_tree
   * use for mappings as well
-* handle tags
 
 ### unit testing
-
-#### Enhancements:
 
 * implement parameterized tests (some expression given to BEGIN_TEST that is inserted in the test boiler plate)
 * add more beautiful runner output
@@ -90,7 +78,6 @@ LICENSE file for more details.
   * interactive mode
 * install file
 * readme file
-* examples
 * double check ebnf
 * static site
   * http://tinytree.info
