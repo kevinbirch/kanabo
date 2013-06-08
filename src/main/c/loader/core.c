@@ -55,9 +55,6 @@ static void event_loop(loader_context *context);
 static bool dispatch_event(yaml_event_t *event, loader_context *context);
 
 static bool add_scalar(loader_context *context, yaml_event_t *event);
-static bool decimal_test(loader_context *context, yaml_event_t *event);
-static bool integer_test(loader_context *context, yaml_event_t *event);
-static bool timestamp_test(loader_context *context, yaml_event_t *event);
 static bool regex_test(yaml_event_t *event, regex_t *regex);
 static bool add_node(loader_context *context, node *value);
 
@@ -230,19 +227,19 @@ static bool add_scalar(loader_context *context, yaml_event_t *event)
         trace_string("found scalar boolean '%s'", event->data.scalar.value, event->data.scalar.length);
         scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_BOOLEAN);
     }
-    else if(integer_test(context, event))
+    else if(regex_test(event, context->integer_regex))
     {
-        trace_string("found scalar number '%s'", event->data.scalar.value, event->data.scalar.length);
+        trace_string("found scalar integer '%s'", event->data.scalar.value, event->data.scalar.length);
         scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_INTEGER);
     }
-    else if(decimal_test(context, event))
+    else if(regex_test(event, context->decimal_regex))
     {
-        trace_string("found scalar number '%s'", event->data.scalar.value, event->data.scalar.length);
+        trace_string("found scalar decimal '%s'", event->data.scalar.value, event->data.scalar.length);
         scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_DECIMAL);
     }
-    else if(timestamp_test(context, event))
+    else if(regex_test(event, context->timestamp_regex))
     {
-        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
+        trace_string("found scalar timestamp '%s'", event->data.scalar.value, event->data.scalar.length);
         scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_TIMESTAMP);
     }
     else
@@ -252,21 +249,6 @@ static bool add_scalar(loader_context *context, yaml_event_t *event)
     }
 
     return add_node(context, scalar);
-}
-
-static bool decimal_test(loader_context *context, yaml_event_t *event)
-{
-    return regex_test(event, context->decimal_regex);
-}
-
-static bool integer_test(loader_context *context, yaml_event_t *event)
-{
-    return regex_test(event, context->integer_regex);
-}
-
-static bool timestamp_test(loader_context *context, yaml_event_t *event)
-{
-    return regex_test(event, context->timestamp_regex);
 }
 
 static bool regex_test(yaml_event_t *event, regex_t *regex)
