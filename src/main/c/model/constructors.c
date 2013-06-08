@@ -135,6 +135,7 @@ static inline node *make_node(enum node_kind kind)
     {
         result->tag.kind = kind;
         result->tag.name = NULL;
+        result->anchor = NULL;
     }
 
     return result;
@@ -154,6 +155,8 @@ void model_free(document_model *model)
     free(model->documents);
     model->size = 0;
     model->documents = NULL;
+    
+    free(model);
 }
 
 void node_free(node *value)
@@ -170,7 +173,6 @@ void node_free(node *value)
             break;
         case SCALAR:
             free(value->content.scalar.value);
-            free(value->tag.name);
             value->content.scalar.value = NULL;
             break;
         case SEQUENCE:
@@ -180,6 +182,8 @@ void node_free(node *value)
             mapping_free(value);
             break;
     }
+    free(value->tag.name);
+    free(value->anchor);
     free(value);
 }
 

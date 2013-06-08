@@ -105,7 +105,6 @@ void parser_free(parser_context *context)
     context->steps = NULL;
     context->path = NULL;
     context->input = NULL;
-
     free(context);
 }
 
