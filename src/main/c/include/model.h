@@ -75,6 +75,7 @@ struct node
         uint8_t        *name;
     } tag;
 
+    uint8_t *anchor;
     struct
     {
         size_t size;
