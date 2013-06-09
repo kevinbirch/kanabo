@@ -56,7 +56,6 @@ LICENSE file for more details.
 
 ### loader
 
-* add tests for new types
 * when and why are tags implicit in libyaml?
 * clobber duplicate keys in mappings
 * handle anchors and aliases

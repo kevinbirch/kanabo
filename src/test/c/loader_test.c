@@ -59,7 +59,10 @@ static const unsigned char * const YAML = (unsigned char *)
     "  - true\n"
     "  - false\n"
     "\n"
-    "five: 1.5\n";
+    "five:\n"
+    "  - 1.5\n"
+    "  - 42\n"
+    "  - 1978-07-26 10:15";
 
 static void assert_model_state(loader_context *loader, document_model *model);
 
@@ -288,9 +291,25 @@ static void assert_model_state(loader_context *loader, document_model *model)
     node *five = mapping_get(root, "five");
     assert_noerr();
     assert_not_null(five);
-    assert_node_kind(five, SCALAR);
-    assert_scalar_value(five, "1.5");
-    assert_scalar_kind(five, SCALAR_DECIMAL);
+    assert_node_kind(five, SEQUENCE);
+    node *five_0 = sequence_get(five, 0);
+    assert_noerr();
+    assert_node_kind(five_0, SCALAR);
+    assert_scalar_value(five_0, "1.5");
+    assert_scalar_kind(five_0, SCALAR_DECIMAL);
+    reset_errno();
+    node *five_1 = sequence_get(five, 1);
+    assert_noerr();
+    assert_node_kind(five_1, SCALAR);
+    assert_scalar_value(five_1, "42");
+    assert_scalar_kind(five_1, SCALAR_INTEGER);
+    reset_errno();
+    node *five_2 = sequence_get(five, 2);
+    assert_noerr();
+    assert_node_kind(five_2, SCALAR);
+    assert_scalar_value(five_2, "1978-07-26 10:15");
+    assert_scalar_kind(five_2, SCALAR_TIMESTAMP);
+    reset_errno();
 }
 
 Suite *loader_suite(void)

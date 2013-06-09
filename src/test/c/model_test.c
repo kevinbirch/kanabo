@@ -229,8 +229,6 @@ void model_setup(void)
 void model_teardown(void)
 {
     model_free(model);
-    assert_null(model->documents);
-    assert_uint_eq(0, model->size);
 }
 
 START_TEST (constructors)
