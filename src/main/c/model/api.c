@@ -173,7 +173,10 @@ node *mapping_get_scalar_key(const node * restrict mapping, uint8_t *key, size_t
     PRECOND_ELSE_NULL(0 < key_length);
 
     node *scalar = make_scalar_node(key, key_length, SCALAR_STRING);
-    return mapping_get_node_key(mapping, scalar);
+    node *result = mapping_get_node_key(mapping, scalar);
+    node_free(scalar);
+    
+    return result;
 }
 
 node *mapping_get_node_key(const node * restrict mapping, const node *key)

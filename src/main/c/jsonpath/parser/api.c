@@ -103,6 +103,7 @@ void parser_free(parser_context *context)
         free(entry);
     }
     context->steps = NULL;
+    // N.B. - the path member should not be freed! it is given back to the caller of parse()
     context->path = NULL;
     context->input = NULL;
     free(context);

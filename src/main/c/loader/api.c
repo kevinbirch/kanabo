@@ -179,8 +179,11 @@ void loader_free(loader_context *context)
     {
         return;
     }
+
     yaml_parser_delete(context->parser);
+    free(context->parser);
     context->parser = NULL;
+
     for(struct excursion *entry = context->excursions; NULL != entry; entry = context->excursions)
     {
         context->excursions = entry->next;

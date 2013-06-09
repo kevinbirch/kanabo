@@ -57,6 +57,7 @@ void path_free(jsonpath *path)
         step_free(path->steps[i]);
     }
     free(path->steps);
+    free(path);
 }
 
 void step_free(step *value)
