@@ -30,6 +30,7 @@ LICENSE file for more details.
 * implement union predicates
 * implement filter predicates
 * support integer and timestamp scalar types
+* refactor iteration methods to use filter, tranform, fold
 
 ### parser
 
