@@ -35,61 +35,101 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  *)
 
-path
+jsonpath
     = absolute path
     | relative path
     ;
 
 absolute path
-    = root step, [ qualified path ]
-    ;
-
-qualified path
-    = recursive location
-    | relative location
-    ;
-
-recurisive location
-    = "..", relative path
-    ;
-
-relative location
-    = ".", relative path
-    ;
-
-relative path
-    = relative step, [ qualified path ]
+    = root step, { qualified step }
     ;
 
 root step
     = "$", [ predicate ]
     ;
 
+qualified step
+    = recursive step
+    | relative step
+    ;
+
+recurisive step
+    = "..", step
+    ;
+
 relative step
+    = ".", step
+    ;
+
+relative path
+    = relative head step | step, { qualified step }
+    ;
+
+relative head step
     = "@" , [ predicate ]
     ;
 
 step
-    = node test, [ predicate ]
+    = transformer
+    | selector, [ predicate ]
     ;
 
-node test
-    = node type, "(", ")"
-    | name test
+transformer
+    = "=", mapping
     ;
 
-name test
-    = "*"
-    | name
+mapping
+    = "{",  { key value, [ ",", key value ] }, "}"
     ;
 
-node type
+key value
+    = string, ":", value
+    ;
+
+vaue
+    = sequence
+    | mapping
+    | additive expr
+    ;
+
+sequence
+    = "[", { value }, "]"
+    ;
+
+selector
+    = tag selector
+    | anchor selector
+    | type selector
+    | name selector
+    ;
+
+tag selector
+    = "!", name
+    ;
+
+anchor selector
+    = "&", name
+    ;
+
+type selector
+    = type, "(", ")"
+    ;
+
+type
     = "object"
     | "array"
     | "string"
     | "number"
+    | "integer"
+    | "decimal"
+    | "timestamp"
     | "boolean"
     | "null"
+    ;
+
+name selector
+    = "*"
+    | name
     ;
 
 name
@@ -98,11 +138,16 @@ name
     ;
 
 quoted name character
-    = ? any unicode character except ''' (single quote), unlesss it is quoted with a '\' (backslash) ?
+    = ? any unicode character except ' or control characters ?
+    | "\'"
+    | escape
     ;
 
 name character
-    = ? any unicode character except '.' and '[' ?
+    = ? any unicode character except " or [ or control characters ?
+    | "\."
+    | "\["
+    | escape
     ;
 
 predicate
@@ -130,13 +175,7 @@ slice
     ;
 
 union
-    = integer, ",", integer
-    | union expression, ",", union expression
-    ;
-
-union expression
-    = relative path
-    | filter expression
+    = relative path, ",", relative path, { ",", relative path }
     ;
 
 filter
@@ -152,27 +191,20 @@ or expr
     ;
 
 and expr
-    = equality expr, [ "and", and expr ]
+    = relational expr, [ "and", and expr ]
     ;
 
-equality expr
-    = relational expr, [ equality op, equality expr ]
+comparison expr
+    = additive expr, [ comparison op, comparison expr ]
     ;
 
-equality op
-    = "="
-    | "!="
-    ;
-
-relational expr
-    = additive expr, [ relational op, relational expr ]
-    ;
-
-relational op
+comparison op
     = ">"
     | "<"
     | ">="
     | "<="
+    | "="
+    | "!="
     ;
 
 additive expr
@@ -195,7 +227,7 @@ multiplicative op
     ;
 
 unary expr
-    = "@", qualified path
+    = relative path
     | number
     | string
     | boolean
@@ -230,12 +262,23 @@ escape
     = "\""
     | "\\"
     | "\/"
+    | "\ "
+    | "\_"
+    | "\0"
+    | "\a"
     | "\b"
+    | "\e"
     | "\f"
     | "\n"
     | "\r"
     | "\t"
+    | "\v"
+    | "\L"
+    | "\N"
+    | "\P"
+    | "\x", 2 * hex digit
     | "\u", 4 * hex digit
+    | "\U", 8 * hex digit
     ;
 
 hex digit
