@@ -49,8 +49,6 @@ LICENSE file for more details.
 * add exit state function with output
 * negative subscript values
 * union support
-  * allow array indices
-  * allow more than two items
 * filter predicate support
 * YAML anchor/alias syntax support
 * support integer and timestamp scalar types
