@@ -75,7 +75,7 @@ step
     ;
 
 transformer
-    = "=", mapping
+    = "=", value
     ;
 
 mapping
@@ -86,14 +86,14 @@ key value
     = string, ":", value
     ;
 
+sequence
+    = "[", { value }, "]"
+    ;
+
 vaue
     = sequence
     | mapping
     | additive expr
-    ;
-
-sequence
-    = "[", { value }, "]"
     ;
 
 selector
@@ -128,13 +128,13 @@ type
     ;
 
 name selector
-    = "*"
+    = wildcard
     | name
     ;
 
 name
     = "'", quoted name character, { quoted name character }, "'"
-    = name character, { name character }
+    | name character, { name character }
     ;
 
 quoted name character
