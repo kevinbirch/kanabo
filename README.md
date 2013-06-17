@@ -1,6 +1,6 @@
 # [金棒][home] (kanabō)
 
-<img src="http://kevinbirch.github.com/kanabo/img/kanabo.jpg" alt="Tokugawa Samurai with kanabo" align="right"/>
+[[img/kanabo.jpg|align=right|float]]
 
 [金棒][wiki] is a tool to bludgeon YAML and JSON files from the shell: *the strong made stronger*.
 
