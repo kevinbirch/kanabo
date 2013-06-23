@@ -54,6 +54,17 @@ LICENSE file for more details.
 * filter predicate support
 * YAML anchor/alias syntax support
 * support integer and timestamp scalar types
+* use a more flexibile subscripting syntax
+  * ala: http://docs.python.org/2/reference/expressions.html#slicings
+  * a predicate is a wildcard, selection or filter
+  * a selection is a comma separated list of slice and/or additive expr
+  * all literals are copied to the result, all relative paths are evaluated
+  * this means you must write @[n] to access unioned subscripts?
+  * special case for true subscript predicatess?
+  * really this is a generalization of union? they can be additive expr and/or slice
+  * can the union item ever be a or expr?
+* string functions
+* other built-in functions
 
 ### loader
 
