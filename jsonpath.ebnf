@@ -132,6 +132,10 @@ name selector
     | name
     ;
 
+wildcard
+    = "*"
+    ;
+
 name
     = "'", quoted name character, { quoted name character }, "'"
     | name character, { name character }
@@ -162,10 +166,6 @@ predicate expression
     | filter
     ;
 
-wildcard
-    = "*"
-    ;
-
 subscript
      = signed integer
      ;
@@ -175,7 +175,7 @@ slice
     ;
 
 union
-    = relative path, ",", relative path, { ",", relative path }
+    = additive expr, ",", additive expr, { ",", additive expr }
     ;
 
 filter
