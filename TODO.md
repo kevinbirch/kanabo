@@ -68,10 +68,9 @@ LICENSE file for more details.
 
 ### loader
 
-* when and why are tags implicit in libyaml?
 * clobber duplicate keys in mappings
 * handle anchors and aliases
-  * https://en.wikipedia.org/wiki/Hashed\_array\_tree
+  * https://en.wikipedia.org/wiki/HAT-trie
   * use for mappings as well
 
 ### unit testing
