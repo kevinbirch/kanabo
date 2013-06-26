@@ -320,7 +320,6 @@ $(PROGRAM_TARGET): $(LIBRARY_TARGET) $(PROGRAM_OBJECTS)
 	@echo ""
 	@echo " -- Building program $(PROGRAM_TARGET)"
 	@echo "------------------------------------------------------------------------"
-#	$(CC) -o $(PROGRAM_TARGET) $(LDLIBS) -L$(TARGET_DIR) -l$(LIBRARY_NAME_BASE) $(PROGRAM_OBJECTS)
 	$(CC) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_NAME_BASE) $(LDLIBS) -o $(PROGRAM_TARGET)
 
 $(PROGRAM_NAME): $(PROGRAM_TARGET)
