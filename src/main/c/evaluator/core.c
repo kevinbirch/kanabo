@@ -428,6 +428,7 @@ static bool apply_subscript_predicate(node *value, evaluator_context *context, n
     if(SEQUENCE != node_kind(value))
     {
         evaluator_trace("subscript predicate: node is not a sequence type, cannot use an index on it (kind: %d), dropping (%p)", node_kind(value), value);
+        return true;
     }
     predicate *subscript = step_predicate(current_step(context));
     size_t index = subscript_predicate_index(subscript);
@@ -446,6 +447,7 @@ static bool apply_slice_predicate(node *value, evaluator_context *context, nodel
     if(SEQUENCE != node_kind(value))
     {
         evaluator_trace("slice predicate: node is not a sequence type, cannot use a slice on it (kind: %d), dropping (%p)", node_kind(value), value);
+        return true;
     }
 
     predicate *slice = step_predicate(current_step(context));
