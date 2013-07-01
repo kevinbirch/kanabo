@@ -68,10 +68,10 @@ LICENSE file for more details.
 
 ### loader
 
-* clobber duplicate keys in mappings
+* support explicit tags, do custom tags get passed w/ each node?
 * handle anchors and aliases
   * https://en.wikipedia.org/wiki/HAT-trie
-  * use for mappings as well
+* hashtable for mappings
 
 ### unit testing
 
