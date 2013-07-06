@@ -253,7 +253,7 @@ static bool add_scalar(loader_context *context, yaml_event_t *event)
     else if(regex_test(event, context->decimal_regex))
     {
         trace_string("found scalar real '%s'", event->data.scalar.value, event->data.scalar.length);
-        kind = SCALAR_DECIMAL;
+        kind = SCALAR_REAL;
     }
     else if(regex_test(event, context->timestamp_regex))
     {
@@ -300,7 +300,7 @@ static enum scalar_kind tag_to_scalar_kind(const yaml_event_t * restrict event)
     if(0 == memcmp(YAML_FLOAT_TAG, tag, strlen(YAML_FLOAT_TAG)))
     {
         trace_string("found scalar real '%s'", event->data.scalar.value, event->data.scalar.length);
-        return SCALAR_DECIMAL;
+        return SCALAR_REAL;
     }
     if(0 == memcmp(YAML_TIMESTAMP_TAG, tag, strlen(YAML_TIMESTAMP_TAG)))
     {

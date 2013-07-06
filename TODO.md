@@ -68,7 +68,6 @@ LICENSE file for more details.
 
 ### loader
 
-* rename SCALAR_DECIMAL to SCALAR_REAL
 * handle anchors and aliases
   * https://en.wikipedia.org/wiki/HAT-trie
 * hashtable for mappings

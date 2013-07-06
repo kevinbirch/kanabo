@@ -160,7 +160,7 @@ void model_setup(void)
     assert_noerr();
     assert_not_null(foo1);
     reset_errno();
-    node *one_point_five = make_scalar_node((uint8_t *)"1.5", 4, SCALAR_DECIMAL);
+    node *one_point_five = make_scalar_node((uint8_t *)"1.5", 4, SCALAR_REAL);
     assert_noerr();
     assert_not_null(one_point_five);
     reset_errno();

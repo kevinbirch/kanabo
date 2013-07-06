@@ -255,7 +255,7 @@ static bool emit_scalar(const node * restrict each, void *context)
         case SCALAR_INTEGER:
             tag = NULL == node_name(each) ? (yaml_char_t *)YAML_INT_TAG : node_name(each);
             break;
-        case SCALAR_DECIMAL:
+        case SCALAR_REAL:
             tag = NULL == node_name(each) ? (yaml_char_t *)YAML_FLOAT_TAG : node_name(each);
             break;
         case SCALAR_TIMESTAMP:

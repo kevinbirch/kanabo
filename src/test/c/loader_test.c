@@ -312,7 +312,7 @@ static void assert_model_state(loader_context *loader, document_model *model)
     assert_noerr();
     assert_node_kind(five_0, SCALAR);
     assert_scalar_value(five_0, "1.5");
-    assert_scalar_kind(five_0, SCALAR_DECIMAL);
+    assert_scalar_kind(five_0, SCALAR_REAL);
     reset_errno();
     node *five_1 = sequence_get(five, 1);
     assert_noerr();
@@ -402,7 +402,7 @@ START_TEST (explicit_tags)
     assert_noerr();
     assert_not_null(exchange_rate);
     assert_node_kind(exchange_rate, SCALAR);
-    assert_scalar_kind(exchange_rate, SCALAR_DECIMAL);
+    assert_scalar_kind(exchange_rate, SCALAR_REAL);
     assert_node_tag(exchange_rate, "tag:yaml.org,2002:float");
     
     reset_errno();

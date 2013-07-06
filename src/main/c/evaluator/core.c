@@ -328,7 +328,7 @@ static bool apply_type_test(node *each, void *argument, nodelist *target)
         case NUMBER_TEST:
             evaluator_trace("type test: testing for a number");
             match = SCALAR == node_kind(each) &&
-                (SCALAR_INTEGER == scalar_kind(each) || SCALAR_DECIMAL == scalar_kind(each));
+                (SCALAR_INTEGER == scalar_kind(each) || SCALAR_REAL == scalar_kind(each));
             break;
         case BOOLEAN_TEST:
             evaluator_trace("type test: testing for a boolean");
