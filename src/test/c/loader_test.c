@@ -64,7 +64,23 @@ static const unsigned char * const YAML = (unsigned char *)
     "  - 42\n"
     "  - 1978-07-26 10:15";
 
+static const unsigned char * const TAGGED_YAML = (unsigned char *)
+    "%TAG !squid! tag:vampire-squid.com,2008:\n"
+    "--- !squid!instrument\n"
+    "name: !!str USD-JPY 2008-04-01 103.92\n"
+    "asset-class: !squid!asset-class FX\n"
+    "type: !squid!instrument/type spot market\n"
+    "exchange-rate: !!float 103.92\n"
+    "symbol: !squid!instrument/symbol USD-JPY\n"
+    "spot-date: !!timestamp 2008-04-01T10:12:00Z\n"
+    "settlement-date: !!timestamp 2008-04-03T09:00:00Z\n";
+
+static document_model *tagged_model = NULL;
+static node *tagged_mapping_root = NULL;
+
 static void assert_model_state(loader_context *loader, document_model *model);
+void tag_setup(void);
+void tag_teardown(void);
 
 #define assert_loader_failure(CONTEXT, EXPECTED_RESULT)                 \
     do                                                                  \
@@ -312,6 +328,101 @@ static void assert_model_state(loader_context *loader, document_model *model)
     reset_errno();
 }
 
+void tag_setup(void)
+{
+    size_t yaml_size = strlen((char *)TAGGED_YAML);
+
+    loader_context *loader = make_string_loader(TAGGED_YAML, yaml_size);
+    assert_not_null(loader);
+    tagged_model = load(loader);
+    assert_not_null(tagged_model);
+    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
+
+    reset_errno();
+    tagged_mapping_root = model_document_root(tagged_model, 0);
+    assert_noerr();
+    assert_not_null(tagged_mapping_root);
+    
+    assert_node_kind(tagged_mapping_root, MAPPING);
+    assert_node_size(tagged_mapping_root, 7);
+    assert_not_null(mapping_get_all(tagged_mapping_root));
+
+    loader_free(loader);
+}
+
+void tag_teardown(void)
+{
+    model_free(tagged_model);
+    tagged_model = NULL;
+    tagged_mapping_root = NULL;
+}
+
+START_TEST (shorthand_tags)
+{
+    assert_node_tag(tagged_mapping_root, "tag:vampire-squid.com,2008:instrument");
+
+    reset_errno();
+    node *asset_class = mapping_get(tagged_mapping_root, "asset-class");
+    assert_noerr();
+    assert_not_null(asset_class);
+    assert_node_kind(asset_class, SCALAR);
+    assert_scalar_kind(asset_class, SCALAR_STRING);
+    assert_node_tag(asset_class, "tag:vampire-squid.com,2008:asset-class");
+    
+    reset_errno();
+    node *type = mapping_get(tagged_mapping_root, "type");
+    assert_noerr();
+    assert_not_null(type);
+    assert_node_kind(type, SCALAR);
+    assert_scalar_kind(type, SCALAR_STRING);
+    assert_node_tag(type, "tag:vampire-squid.com,2008:instrument/type");
+    
+    reset_errno();
+    node *symbol = mapping_get(tagged_mapping_root, "symbol");
+    assert_noerr();
+    assert_not_null(symbol);
+    assert_node_kind(symbol, SCALAR);
+    assert_scalar_kind(symbol, SCALAR_STRING);
+    assert_node_tag(symbol, "tag:vampire-squid.com,2008:instrument/symbol");
+}
+END_TEST
+
+START_TEST (explicit_tags)
+{
+    reset_errno();
+    node *name = mapping_get(tagged_mapping_root, "name");
+    assert_noerr();
+    assert_not_null(name);
+    assert_node_kind(name, SCALAR);
+    assert_scalar_kind(name, SCALAR_STRING);
+    assert_node_tag(name, "tag:yaml.org,2002:str");
+    
+    reset_errno();
+    node *exchange_rate = mapping_get(tagged_mapping_root, "exchange-rate");
+    assert_noerr();
+    assert_not_null(exchange_rate);
+    assert_node_kind(exchange_rate, SCALAR);
+    assert_scalar_kind(exchange_rate, SCALAR_DECIMAL);
+    assert_node_tag(exchange_rate, "tag:yaml.org,2002:float");
+    
+    reset_errno();
+    node *spot_date = mapping_get(tagged_mapping_root, "spot-date");
+    assert_noerr();
+    assert_not_null(spot_date);
+    assert_node_kind(spot_date, SCALAR);
+    assert_scalar_kind(spot_date, SCALAR_TIMESTAMP);
+    assert_node_tag(spot_date, "tag:yaml.org,2002:timestamp");
+    
+    reset_errno();
+    node *settlement_date = mapping_get(tagged_mapping_root, "settlement-date");
+    assert_noerr();
+    assert_not_null(settlement_date);
+    assert_node_kind(settlement_date, SCALAR);
+    assert_scalar_kind(settlement_date, SCALAR_TIMESTAMP);
+    assert_node_tag(settlement_date, "tag:yaml.org,2002:timestamp");
+}
+END_TEST
+
 Suite *loader_suite(void)
 {
     TCase *bad_input_case = tcase_create("bad input");
@@ -329,11 +440,17 @@ Suite *loader_suite(void)
     TCase *string_case = tcase_create("string");
     tcase_add_test(string_case, load_from_string);
 
+    TCase *tag_case = tcase_create("tag");
+    tcase_add_unchecked_fixture(tag_case, tag_setup, tag_teardown);
+    tcase_add_test(tag_case, shorthand_tags);
+    tcase_add_test(tag_case, explicit_tags);
+
     Suite *loader = suite_create("Loader");
     suite_add_tcase(loader, bad_input_case);
     suite_add_tcase(loader, file_case);
     suite_add_tcase(loader, string_case);
-    
+    suite_add_tcase(loader, tag_case);
+
     return loader;
 }
 

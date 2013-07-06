@@ -68,10 +68,11 @@ LICENSE file for more details.
 
 ### loader
 
-* support explicit tags, do custom tags get passed w/ each node?
+* rename SCALAR_DECIMAL to SCALAR_REAL
 * handle anchors and aliases
   * https://en.wikipedia.org/wiki/HAT-trie
 * hashtable for mappings
+* support sets and ordered maps
 
 ### unit testing
 

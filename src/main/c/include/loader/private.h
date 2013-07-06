@@ -51,7 +51,8 @@ struct cell
 struct excursion
 {
     size_t            length;
-    struct cell      *car;
+    uint8_t          *tag;
+    struct cell      *head;
     struct excursion *next;
 };
 

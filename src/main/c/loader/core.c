@@ -55,10 +55,11 @@ static void event_loop(loader_context *context);
 static bool dispatch_event(yaml_event_t *event, loader_context *context);
 
 static bool add_scalar(loader_context *context, yaml_event_t *event);
+static enum scalar_kind tag_to_scalar_kind(const yaml_event_t * restrict tag);
 static bool regex_test(yaml_event_t *event, regex_t *regex);
 static bool add_node(loader_context *context, node *value);
 
-static bool save_excursion(loader_context *context);
+static bool save_excursion(loader_context *context, yaml_char_t *tag);
 static bool unwind_excursion(loader_context *loader, collector function, void *context);
 
 static bool unwind_sequence(loader_context *context);
@@ -156,7 +157,7 @@ static bool dispatch_event(yaml_event_t *event, loader_context *context)
 
         case YAML_SEQUENCE_START_EVENT:
             loader_trace("received sequence start event");
-            done = save_excursion(context);
+            done = save_excursion(context, event->data.scalar.tag);
             break;                
                 
         case YAML_SEQUENCE_END_EVENT:
@@ -166,7 +167,7 @@ static bool dispatch_event(yaml_event_t *event, loader_context *context)
             
         case YAML_MAPPING_START_EVENT:
             loader_trace("received mapping start event");
-            done = save_excursion(context);
+            done = save_excursion(context, event->data.scalar.tag);
             break;
 
         case YAML_MAPPING_END_EVENT:
@@ -178,7 +179,7 @@ static bool dispatch_event(yaml_event_t *event, loader_context *context)
     return done;
 }
 
-static bool save_excursion(loader_context *context)
+static bool save_excursion(loader_context *context, yaml_char_t *tag)
 {
     struct excursion *excursion = calloc(1, sizeof(struct excursion));
     if(NULL == excursion)
@@ -189,7 +190,20 @@ static bool save_excursion(loader_context *context)
     }
     loader_trace("saving excursion (%p) from node: %p", excursion, NULL == context->last ? NULL : context->last->this);
     excursion->length = 0;
-    excursion->car = context->last;
+    if(NULL != tag)
+    {
+        size_t length = strlen((char *)tag);
+        excursion->tag = (uint8_t *)calloc(1, length + 1);
+        if(NULL == excursion->tag)
+        {
+            loader_error("uh oh! couldn't create tag object, aborting...");
+            context->code = ERR_LOADER_OUT_OF_MEMORY;
+            return true;
+        }
+        memcpy(excursion->tag, tag, length);
+        excursion->tag[length] = '\0';
+    }
+    excursion->head = context->last;
 
     if(NULL == context->excursions)
     {
@@ -208,47 +222,96 @@ static bool save_excursion(loader_context *context)
 
 static bool add_scalar(loader_context *context, yaml_event_t *event)
 {
-    node *scalar = NULL;
-
-    if(YAML_SINGLE_QUOTED_SCALAR_STYLE == event->data.scalar.style ||
-       YAML_DOUBLE_QUOTED_SCALAR_STYLE == event->data.scalar.style)
+    enum scalar_kind kind = SCALAR_STRING;
+    
+    if(NULL != event->data.scalar.tag)
+    {
+        kind = tag_to_scalar_kind(event);
+    }
+    else if(YAML_SINGLE_QUOTED_SCALAR_STYLE == event->data.scalar.style ||
+            YAML_DOUBLE_QUOTED_SCALAR_STYLE == event->data.scalar.style)
     {
         trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
-        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_STRING);
+        kind = SCALAR_STRING;
     }
     else if(0 == memcmp("null", event->data.scalar.value, 4))
     {
         loader_trace("found scalar null");
-        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_NULL);
+        kind = SCALAR_NULL;
     }
     else if(0 == memcmp("true", event->data.scalar.value, 4) ||
             0 == memcmp("false", event->data.scalar.value, 5))
     {
         trace_string("found scalar boolean '%s'", event->data.scalar.value, event->data.scalar.length);
-        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_BOOLEAN);
+        kind = SCALAR_BOOLEAN;
     }
     else if(regex_test(event, context->integer_regex))
     {
         trace_string("found scalar integer '%s'", event->data.scalar.value, event->data.scalar.length);
-        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_INTEGER);
+        kind = SCALAR_INTEGER;
     }
     else if(regex_test(event, context->decimal_regex))
     {
-        trace_string("found scalar decimal '%s'", event->data.scalar.value, event->data.scalar.length);
-        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_DECIMAL);
+        trace_string("found scalar real '%s'", event->data.scalar.value, event->data.scalar.length);
+        kind = SCALAR_DECIMAL;
     }
     else if(regex_test(event, context->timestamp_regex))
     {
         trace_string("found scalar timestamp '%s'", event->data.scalar.value, event->data.scalar.length);
-        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_TIMESTAMP);
+        kind = SCALAR_TIMESTAMP;
     }
     else
     {
         trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
-        scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, SCALAR_STRING);
+    }
+
+    node *scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, kind);
+    if(NULL != event->data.scalar.tag)
+    {
+        node_set_tag(scalar, event->data.scalar.tag, strlen((char *)event->data.scalar.tag));
     }
 
     return add_node(context, scalar);
+}
+
+static enum scalar_kind tag_to_scalar_kind(const yaml_event_t * restrict event)
+{
+    const yaml_char_t * tag = event->data.scalar.tag;
+    if(0 == memcmp(YAML_NULL_TAG, tag, strlen(YAML_NULL_TAG)))
+    {
+        loader_trace("found scalar null");
+        return SCALAR_NULL;
+    }
+    if(0 == memcmp(YAML_BOOL_TAG, tag, strlen(YAML_BOOL_TAG)))
+    {
+        trace_string("found scalar boolean '%s'", event->data.scalar.value, event->data.scalar.length);
+        return SCALAR_BOOLEAN;
+    }
+    if(0 == memcmp(YAML_STR_TAG, tag, strlen(YAML_STR_TAG)))
+    {
+        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
+        return SCALAR_STRING;
+    }
+    if(0 == memcmp(YAML_INT_TAG, tag, strlen(YAML_INT_TAG)))
+    {
+        trace_string("found scalar integer '%s'", event->data.scalar.value, event->data.scalar.length);
+        return SCALAR_INTEGER;
+    }
+    if(0 == memcmp(YAML_FLOAT_TAG, tag, strlen(YAML_FLOAT_TAG)))
+    {
+        trace_string("found scalar real '%s'", event->data.scalar.value, event->data.scalar.length);
+        return SCALAR_DECIMAL;
+    }
+    if(0 == memcmp(YAML_TIMESTAMP_TAG, tag, strlen(YAML_TIMESTAMP_TAG)))
+    {
+        trace_string("found scalar timestamp '%s'", event->data.scalar.value, event->data.scalar.length);
+        return SCALAR_TIMESTAMP;
+    }
+    else
+    {
+        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
+        return SCALAR_STRING;
+    }
 }
 
 static bool regex_test(yaml_event_t *event, regex_t *regex)
@@ -306,6 +369,10 @@ static bool unwind_sequence(loader_context *context)
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return true;
     }
+    if(NULL != context->excursions->tag)
+    {
+        node_set_tag_nocopy(sequence, context->excursions->tag);
+    }
     loader_trace("unwinding sequence (%p)", sequence);
     if(unwind_excursion(context, collect_sequence, sequence))
     {
@@ -327,6 +394,10 @@ static bool unwind_mapping(loader_context *context)
         loader_error("uh oh! couldn't create a mapping node, aborting...");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return true;
+    }
+    if(NULL != context->excursions->tag)
+    {
+        node_set_tag_nocopy(mapping, context->excursions->tag);
     }
     loader_trace("unwinding mapping (%p)", mapping);
     if(unwind_excursion(context, collect_mapping, &(struct mapping_context){.key=NULL, .mapping=mapping}))
@@ -407,7 +478,7 @@ static bool collect_mapping(node *each, void *context)
 static bool unwind_excursion(loader_context *loader, collector function, void *context)
 {
     loader_trace("unwinding excursion of length: %zd", loader->excursions->length);
-    struct cell **cursor = NULL == loader->excursions->car ? &loader->head : &loader->excursions->car->next;
+    struct cell **cursor = NULL == loader->excursions->head ? &loader->head : &loader->excursions->head->next;
     while(NULL != *cursor)
     {
         if(!function(pop_node(loader, cursor), context))
@@ -417,7 +488,7 @@ static bool unwind_excursion(loader_context *loader, collector function, void *c
         }
     }
 
-    loader->last = loader->excursions->car;
+    loader->last = loader->excursions->head;
     struct excursion *top = loader->excursions;
     loader->excursions = loader->excursions->next;
     free(top);

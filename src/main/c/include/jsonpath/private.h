@@ -162,6 +162,7 @@ bool parse_expression(parser_context *context);
 #define component_name "parser"
 
 #define parser_info(FORMAT, ...)  log_info(component_name, FORMAT, ##__VA_ARGS__)
+#define parser_error(FORMAT, ...)  log_error(component_name, FORMAT, ##__VA_ARGS__)
 #define parser_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
 #define parser_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
 

@@ -161,6 +161,9 @@ void node_free(node *value);
 
 bool node_equals(const node *one, const node *two);
 
+void node_set_tag(node * restrict target, const uint8_t * restrict value, size_t length);
+void node_set_tag_nocopy(node * restrict target, uint8_t * restrict value);
+
 bool model_add(document_model * restrict model, node *document);
 bool document_set_root(node * restrict document, node *root);
 bool sequence_add(node * restrict sequence, node *item);

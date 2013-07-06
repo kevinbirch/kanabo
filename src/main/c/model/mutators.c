@@ -55,6 +55,23 @@
         (CAPACITY) = new_capacity;                                      \
     }
 
+void node_set_tag(node * restrict target, const uint8_t * restrict value, size_t length)
+{
+    PRECOND_NONNULL_ELSE_VOID(target, value);
+    target->tag.name = (uint8_t *)calloc(1, length + 1);
+    if(NULL != target->tag.name)
+    {
+        memcpy(target->tag.name, value, length);
+        target->tag.name[length] = '\0';
+    }
+}
+
+void node_set_tag_nocopy(node * restrict target, uint8_t * restrict value)
+{
+    PRECOND_NONNULL_ELSE_VOID(target, value);
+    target->tag.name = value;
+}
+
 bool model_add(document_model * restrict model, node *document)
 {
     PRECOND_NONNULL_ELSE_FALSE(model, document);
