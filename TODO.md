@@ -19,8 +19,6 @@ LICENSE file for more details.
 
 * https://www.securecoding.cert.org/confluence/display/seccode/CERT+C+Secure+Coding+Standard
 * valgrind
-* coverity
-* findbugs
 * add completions for currently loaded model to linenoise
 * bug: `--help` option prints error message before help text
 
@@ -68,9 +66,8 @@ LICENSE file for more details.
 
 ### loader
 
-* handle anchors and aliases
-  * https://en.wikipedia.org/wiki/HAT-trie
 * hashtable for mappings
+* handle anchors and aliases
 * support sets and ordered maps
 
 ### unit testing
