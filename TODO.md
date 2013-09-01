@@ -66,6 +66,7 @@ LICENSE file for more details.
 
 ### loader
 
+* forbid non-scalars as mapping keys
 * hashtable for mappings
 * handle anchors and aliases
 * support sets and ordered maps
