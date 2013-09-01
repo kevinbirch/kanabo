@@ -192,6 +192,10 @@ vpath %.c $(SOURCE_DIR)
 vpath %.h $(INCLUDE_DIR)
 DEPENDS := $(call source_to_depend,$(SOURCES),$(GENERATED_DEPEND_DIR))
 
+ifneq (1,$(words $(PROGRAM_SOURCES)))
+$(warning "Multiple sources containing `main' detected: $(PROGRAM_SOURCES)")
+endif
+
 ## Project test source file locations
 ifeq ($(strip $(skip_tests)),)
 TEST_SOURCES := $(call find_source_files,$(TEST_SOURCE_DIR))
@@ -309,34 +313,34 @@ $(TEST_OBJECT_DIR)/%.o: %.c  | $(TEST_OBJECT_DIR)
 	$(CC) $(TEST_CFLAGS) $(CDEFS) -c $< -o $@
 
 $(LIBRARY_TARGET): $(LIBRARY_OBJECTS)
-	@echo ""
-	@echo " -- Builing library $(LIBRARY_TARGET)"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo " -- Builing library $(LIBRARY_TARGET)"; \
+	echo "------------------------------------------------------------------------"
 	$(AR) rcs $(LIBRARY_TARGET) $(shell $(FIND) $(OBJECT_DIR) -type f -name '*.o')
 
 $(LIBRARY_NAME): $(LIBRARY_TARGET)
 
 $(PROGRAM_TARGET): $(LIBRARY_TARGET) $(PROGRAM_OBJECTS)
-	@echo ""
-	@echo " -- Building program $(PROGRAM_TARGET)"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo " -- Building program $(PROGRAM_TARGET)"; \
+	echo "------------------------------------------------------------------------"
 	$(CC) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_NAME_BASE) $(LDLIBS) -o $(PROGRAM_TARGET)
 
 $(PROGRAM_NAME): $(PROGRAM_TARGET)
 
 ifeq ($(strip $(skip_tests)),)
 $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
-	@echo ""
-	@echo " -- Building test harness $(TEST_PROGRAM_TARGET)"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo " -- Building test harness $(TEST_PROGRAM_TARGET)"; \
+	echo "------------------------------------------------------------------------"
 	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDLIBS) -o $(TEST_PROGRAM_TARGET)
 
 $(TEST_PROGRAM): $(TEST_PROGRAM_TARGET)
 endif
 
 clean:
-	@echo ""
-	@echo " Deleting directory `pwd`/$(TARGET_DIR)"
+	@echo ""; \
+	echo " Deleting directory `pwd`/$(TARGET_DIR)"
 	@$(RM) -r $(TARGET_DIR)
 
 validate:
@@ -350,8 +354,8 @@ endif
 ensure-dependencies: $(DEPENDENCY_VALIDATIONS)
 
 announce-build:
-	@echo ""
-	@echo " Buidling $(owner):$(package):$(version)"
+	@echo ""; \
+	echo " Buidling $(owner):$(package):$(version)"
 
 create-build-directories:
 	@mkdir -p $(OBJECT_DIR)
@@ -362,38 +366,49 @@ create-build-directories:
 initialize: validate ensure-dependencies announce-build create-build-directories
 
 announce-compile-phase:
-	@echo ""
-	@echo "------------------------------------------------------------------------"
-	@echo " Compile phase"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo "------------------------------------------------------------------------"; \
+	echo " Compile phase"; \
+	echo "------------------------------------------------------------------------"
 
 announce-generate-sources:
 ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
-	@echo ""
-	@echo " -- Generating sources"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo " -- Generating sources"; \
+	echo "------------------------------------------------------------------------"; \
+	echo "Executing $(words $(GENERATE_SOURCES_HOOKS)) source hooks"
 endif
 
 generate-sources: initialize announce-compile-phase announce-generate-sources $(GENERATE_SOURCES_HOOKS) $(DEPENDS)
 
 process-sources: generate-sources $(PROCESS_SOURCES_HOOKS)
 
-generate-resources: process-sources $(GENERATE_RESOURCES_HOOKS)
+announce-generate-resources:
+ifneq ($(strip $(GENERATE_RESOURCES_HOOKS)),)
+	@echo ""; \
+	echo " -- Generating resources"; \
+	echo "------------------------------------------------------------------------"; \
+	echo "Executing $(words $(GENERATE_RESOURCES_HOOKS)) resource hooks"
+endif
+
+generate-resources: process-sources announce-generate-resources $(GENERATE_RESOURCES_HOOKS)
 
 process-resources: count = $(shell if [ -d $(RESOURCE_DIR) ]; then ls $(RESOURCE_DIR) | wc -l; fi)
 process-resources: generate-resources $(PROCESS_RESOURCES_HOOKS)
 ifeq ($(shell if [ -d $(RESOURCE_DIR) ]; then echo "true"; fi),true)
-	@echo ""
-	@echo " -- Copying resources..."
-	@echo "------------------------------------------------------------------------"
-	@echo "Copying $(strip $(count)) files to $(TARGET_DIR)"
+	@echo ""; \
+	echo " -- Copying resources..."; \
+	echo "------------------------------------------------------------------------"; \
+	echo "Copying $(strip $(count)) files to: $(TARGET_DIR)"
 	@cp -r $(RESOURCE_DIR)/* $(TARGET_DIR)
 endif
 
 announce-compile-sources:
-	@echo ""
-	@echo " -- Compiling sources"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo " -- Compiling sources"; \
+	echo "------------------------------------------------------------------------"; \
+	echo "Evaluating $(words $(OBJECTS)) source files"; \
+	echo ""
 
 compile: process-resources announce-compile-sources $(OBJECTS)
 
@@ -406,32 +421,50 @@ target: library $(TARGET)
 ensure-test-dependencies: $(TEST_DEPENDENCY_VALIDATIONS)
 
 announce-test-phase:
-	@echo ""
-	@echo "------------------------------------------------------------------------"
-	@echo " Test phase"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo "------------------------------------------------------------------------"; \
+	echo " Test phase"; \
+	echo "------------------------------------------------------------------------"
 
-generate-test-sources: target ensure-test-dependencies announce-test-phase $(GENERATE_TEST_SOURCES_HOOKS)
+announce-generate-test-sources:
+ifneq ($(strip $(GENERATE_TEST_SOURCES_HOOKS)),)
+	@echo ""; \
+	echo " -- Generating test sources"; \
+	echo "------------------------------------------------------------------------"; \
+	echo "Executing $(words $(GENERATE_TEST_SOURCES_HOOKS)) test source hooks"
+endif
+
+generate-test-sources: target ensure-test-dependencies announce-test-phase announce-generate-test-sources $(GENERATE_TEST_SOURCES_HOOKS)
 
 process-test-sources: generate-test-sources $(PROCESS_TEST_SOURCES_HOOKS)
 
-generate-test-resources: process-test-sources $(GENERATE_TEST_RESOURCES_HOOKS)
+announce-generate-test-resources:
+ifneq ($(strip $(GENERATE_TEST_RESOURCES_HOOKS)),)
+	@echo ""; \
+	echo " -- Generating test resources"; \
+	echo "------------------------------------------------------------------------"; \
+	echo "Executing $(words $(GENERATE_TEST_RESOURCES_HOOKS)) test resource hooks"
+endif
+
+generate-test-resources: process-test-sources announce-generate-test-sources $(GENERATE_TEST_RESOURCES_HOOKS)
 
 process-test-resources: count = $(shell if [ -d $(TEST_RESOURCE_DIR) ]; then ls $(TEST_RESOURCE_DIR) | wc -l; fi)
 process-test-resources: generate-test-resources $(PROCESS_TEST_RESOURCES_HOOKS)
 ifeq ($(shell if [ -d $(TEST_RESOURCE_DIR) ]; then echo "true"; fi),true)
-	@echo ""
-	@echo " -- Copying test resources..."
-	@echo "------------------------------------------------------------------------"
-	@echo "Copying $(strip $(count)) files to $(TARGET_DIR)"
+	@echo ""; \
+	echo " -- Copying test resources..."; \
+	echo "------------------------------------------------------------------------"; \
+	echo "Copying $(strip $(count)) files to $(TARGET_DIR)"
 	@cp -r $(TEST_RESOURCE_DIR)/* $(TARGET_DIR)
 endif
 
 announce-compile-test-sources:
 ifeq ($(strip $(skip_tests)),)
-	@echo ""
-	@echo " -- Compiling test sources"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo " -- Compiling test sources"; \
+	echo "------------------------------------------------------------------------"; \
+	echo "Evaluating $(words $(TEST_OBJECTS)) source files"; \
+	echo ""
 endif
 
 test-compile: process-test-resources announce-compile-test-sources $(TEST_OBJECTS)
@@ -442,31 +475,31 @@ test-target: library process-test-objects $(TEST_PROGRAM_TARGET)
 
 test: test-target
 ifeq ($(strip $(skip_tests)),)
-	@echo ""
-	@echo " -- Executing test harness"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo " -- Executing test harness"; \
+	echo "------------------------------------------------------------------------"
 	@cd $(TARGET_DIR); ./$(TEST_PROGRAM)
 else
-	@echo ""
-	@echo " -- Skipping tests"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo " -- Skipping tests"; \
+	echo "------------------------------------------------------------------------"
 endif
 
 announce-package-phase:
-	@echo ""
-	@echo "------------------------------------------------------------------------"
-	@echo " Package phase"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo "------------------------------------------------------------------------"; \
+	echo " Package phase"; \
+	echo "------------------------------------------------------------------------"
 
 prepare-package: test announce-package-phase
 
 package: prepare-package
 
 announce-install-phase:
-	@echo ""
-	@echo "------------------------------------------------------------------------"
-	@echo " Install phase"
-	@echo "------------------------------------------------------------------------"
+	@echo ""; \
+	echo "------------------------------------------------------------------------"; \
+	echo " Install phase"; \
+	echo "------------------------------------------------------------------------"
 
 verify: package announce-install-phase
 
@@ -474,4 +507,4 @@ install: verify
 	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
 	$(INSTALL) $(TARGET) $(DESTDIR)$(bindir)
 
-.PHONY: all check help check-syntax clean create-buid-directories announce-build ensure-dependencies initialize announce-compile-phase generate-sources process-sources generate-resources process-resources announce-compile-sources compile process-objects target ensure-test-dependencies announce-test-phase generate-test-sources process-test-sources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(VALIDATION_HOOKS) $(DEPENDENCY_VADLIDATIONS) $(TEST_DEPENDENCY_VADLIDATIONS)
+.PHONY: all check help check-syntax clean validate create-buid-directories announce-build ensure-dependencies initialize announce-compile-phase announce-generate-sources generate-sources process-sources announce-generate-resources generate-resources process-resources announce-compile-sources compile process-objects library target ensure-test-dependencies announce-test-phase announce-generate-test-sources generate-test-sources process-test-sources announce-generate-test-resources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(VALIDATION_HOOKS) $(DEPENDENCY_VADLIDATIONS) $(TEST_DEPENDENCY_VADLIDATIONS)

@@ -57,5 +57,6 @@ $(CONFIG_H): $(GENERATED_HEADERS_DIR)
 	@echo "Generating $(CONFIG_H)"
 	@build/generate_config_header $(CONFIG_H) PREFX=$(prefix) LIBEXECDIR=$(package_libexecdir) DATADIR=$(package_datadir) LOGDIR=$(package_logdir) RUNDIR=$(package_rundir) MANDIR=$(man1dir) HTMLDIR=$(htmldir) INFODIR=$(infodir)
 
-generate-headers: $(VERSION_H) $(CONFIG_H)
-GENERATE_SOURCES_HOOKS = generate-headers
+generate-version-header: $(VERSION_H)
+generate-config-header: $(CONFIG_H)
+GENERATE_SOURCES_HOOKS = generate-version-header generate-config-header
