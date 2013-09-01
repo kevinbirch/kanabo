@@ -35,6 +35,9 @@
 #
 # [license]: http://www.opensource.org/licenses/ncsa
 
+# Compatibility target
+all: help
+
 include project.mk
 
 ## Defaults for common shell commands
@@ -224,9 +227,6 @@ ifneq ($(MAKECMDGOALS),clean)
 endif
 endif
 endif
-
-# Compatibility target
-all: help
 
 # Compatibility target
 check: test
