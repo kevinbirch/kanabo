@@ -21,6 +21,8 @@ LICENSE file for more details.
 * valgrind
 * add completions for currently loaded model to linenoise
 * bug: `--help` option prints error message before help text
+* build: libtool integration?
+* build: shtool integration?
 
 ### evaluator
 
