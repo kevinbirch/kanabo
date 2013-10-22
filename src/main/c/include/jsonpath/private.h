@@ -167,5 +167,5 @@ bool parse_expression(parser_context *context);
 #define parser_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
 
 #define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
-#define debug_string(FORMAT, VALUE, LENGTH, ...) log_string(DEBUG, component_name, FORMAT, VALUE, LENGTH##__VA_ARGS__)
+#define debug_string(FORMAT, VALUE, LENGTH, ...) log_string(DEBUG, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 

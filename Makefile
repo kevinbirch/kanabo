@@ -368,7 +368,7 @@ initialize: validate ensure-dependencies announce-build create-build-directories
 announce-compile-phase:
 	@echo ""; \
 	echo "------------------------------------------------------------------------"; \
-	echo " Compile phase"; \
+	echo " Build phase"; \
 	echo "------------------------------------------------------------------------"
 
 announce-generate-sources:

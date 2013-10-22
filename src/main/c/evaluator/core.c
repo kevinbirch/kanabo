@@ -90,7 +90,11 @@ static int_fast32_t normalize_to(predicate *predicate, node *value);
 static int_fast32_t normalize_extent(bool specified_p, int_fast32_t actual, int_fast32_t fallback, int_fast32_t length);
 
 #define current_step(CONTEXT) path_get((CONTEXT)->path, (CONTEXT)->current_step)
+#ifdef USE_LOGGING
 #define guard(EXPR) EXPR ? true : (evaluator_error("uh oh! out of memory, aborting. (line: " S(__LINE__) ")"), context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false)
+#else
+#define guard(EXPR) EXPR ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false)
+#endif
 
 nodelist *evaluate(evaluator_context *context)
 {
@@ -177,7 +181,7 @@ static bool evaluate_predicate(evaluator_context *context)
     return evaluate_nodelist(context, "predicate", predicate_kind_name(predicate_kind(step_predicate(current_step(context)))), apply_predicate);
 }
 
-static inline bool evaluate_nodelist(evaluator_context *context, const char *name, const char *test, nodelist_map_function function)
+static inline bool evaluate_nodelist(evaluator_context *context, const char *name __attribute__((unused)), const char *test __attribute__((unused)), nodelist_map_function function)
 {
     evaluator_trace("evaluating %s across %zd nodes", name, nodelist_length(context->list));
     nodelist *result = nodelist_map(context->list, function, context);
@@ -514,7 +518,9 @@ static bool add_values_to_nodelist_map_iterator(node *key __attribute__((unused)
 static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *increment)
 {
     char *from_fmt = NULL, *to_fmt = NULL, *increment_fmt = NULL;
-    int from_result = 0, to_result = 0, inc_result = 0;
+    int from_result __attribute__((unused)) = 0;
+    int to_result __attribute__((unused)) = 0;
+    int inc_result __attribute__((unused)) = 0;
     evaluator_trace("slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items",
                     slice_predicate_has_from(slice) ? (from_result = asprintf(&from_fmt, "%zd", slice_predicate_from(slice)), -1 == from_result ? "?" : from_fmt) : "_",
                     slice_predicate_has_to(slice) ? (to_result = asprintf(&to_fmt, "%zd", slice_predicate_to(slice)), -1 == to_result ? "?" : to_fmt) : "_",

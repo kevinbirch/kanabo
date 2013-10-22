@@ -86,12 +86,27 @@ LICENSE file for more details.
 * man page
   * more jsonpath details
   * interactive mode
+  * pandoc?
+  * ronn? http://rtomayko.github.io/ronn/ronn-format.7.html
 * install file
 * readme file
 * double check ebnf
 * static site
   * http://tinytree.info
+  * sphynx?
+  * jeckyl?
+  * http://staticsitegenerators.net
   * site target
+
+### build
+
+* http://code.google.com/p/qi-make/
+* http://google-engtools.blogspot.fr/2011/08/build-in-cloud-how-build-system-works.html
+* http://facebook.github.io/buck/
+* http://aosabook.org/en/posa/ninja.html
+* gnu make 4.0
+  * try --trace to check out rule ordering
+* define, eval to create dynamic rules and shell?
 
 [home]: https://github.com/kevinbirch/kanabo "project home"
 [license]: http://www.opensource.org/licenses/ncsa

@@ -81,6 +81,12 @@ int vlogger(enum log_level level, const char * restrict component, const char * 
 
 #else
 
+#define ERROR NULL
+#define WARNING NULL
+#define INFO NULL
+#define DEBUG NULL
+#define TRACE NULL
+
 #define enable_logging()
 #define disable_logging()
 #define set_log_level(...)
@@ -92,7 +98,10 @@ int vlogger(enum log_level level, const char * restrict component, const char * 
 #define log_debug(...)
 #define log_trace(...)
 
+#define log_string(...)
+
 #define logger(...)
+#define vlogger(...)
 
 #endif /* USE_LOGGING */
 

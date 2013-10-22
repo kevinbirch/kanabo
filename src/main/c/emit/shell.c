@@ -36,6 +36,7 @@
  */
 
 #include <ctype.h>
+#include <stdio.h>
 
 #include "emit/shell.h"
 #include "log.h"
