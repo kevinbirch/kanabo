@@ -138,9 +138,9 @@ then
             now=$(date +%s)
             if [ $now -ge $sunset ] || [ $now -le $sunrise ]
 			then
-				icon="$moon"
+				icon="$moon "
 			else
-				icon="$sun"
+				icon="$sun "
 			fi
 			;;
 		Clouds)
@@ -150,7 +150,7 @@ then
 			icon="$rain"
 			;;
         Fog)
-            icon="$fog"
+            icon="$fog "
             ;;
 	esac
 fi
