@@ -235,8 +235,10 @@ START_TEST (constructors)
 {
     reset_errno();
     node *s = make_scalar_node(NULL, 0, SCALAR_STRING);
-    assert_errno(EINVAL);
-    assert_null(s);
+    assert_noerr();
+    assert_not_null(s);
+    node_free(s);
+
     reset_errno();
     s = make_scalar_node((uint8_t *)"foo", 3, SCALAR_STRING);
     assert_noerr();
