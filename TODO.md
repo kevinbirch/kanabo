@@ -81,6 +81,8 @@ LICENSE file for more details.
 * can ctest's style of test macros be used in check?
   * https://github.com/bvdberg/ctest
 * eliminate check's end_test macro by creating hidden trampoline function that delegates to user's test function
+* fuzz testing: https://en.wikipedia.org/wiki/API_Sanity_Checker
+* find undefined behavior code: http://css.csail.mit.edu/stack/
 
 ### documentation
 
