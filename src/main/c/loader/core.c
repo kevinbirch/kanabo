@@ -266,6 +266,11 @@ static bool add_scalar(loader_context *context, yaml_event_t *event)
     }
 
     node *scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, kind);
+    if(NULL == scalar)
+    {
+        loader_error("uh oh! couldn't create scalar node, aborting...");
+        return true;
+    }
     if(NULL != event->data.scalar.tag)
     {
         node_set_tag(scalar, event->data.scalar.tag, strlen((char *)event->data.scalar.tag));

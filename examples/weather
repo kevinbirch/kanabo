@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+
+###############################################################################
+#                                                                             #
+# This program is based on:                                                   #
+#                                                                             #
+#   AnsiWeather by Frederic Cambus (c) 2013                                   #
+#   https://github.com/fcambus/ansiweather                                    #
+#                                                                             #
+###############################################################################
+
+
+
+###[ Configuration options ]###################################################
+
+config_file=~/.ansiweatherrc
+
+declare -A options
+
+if [ -f $config_file ]; then
+    exec 3< $config_file
+    IFS=$':'
+    while read -ru 3 key value
+    do
+        if [ "${key//[[:space:]]}" = "" ]; then
+            continue
+        fi
+        options["${key//[[:space:]]}"]="${value//[[:space:]]}"
+    done
+    unset IFS
+    exec 3>&-
+fi
+
+# Location : example "New York,NY"
+if [ 0 -ne $# ]; then
+    location=$*
+else
+    location=${options["location"]:-"New York,NY"}
+fi
+
+# System of Units : "metric" or "imperial"
+units=${options["units"]:-"metric"}
+
+# Display symbols : "true" or "false" (requires an Unicode capable display)
+symbols=${options["symbols"]:-"true"}
+
+
+####[ Colors and characters ]##################################################
+
+background=${options["background"]-"\033[44m"}
+decoration=${options["decoration"]-"\033[4m"}
+text=${options["text"]-"\033[36;1m"}
+data=${options["data"]-"\033[33;1m"}
+delimiter=${options["delimiter"]:-"\033[35m\xe2\x87\x92"}
+dashes=${options["dashes"]:-"\033[34m\xe2\x80\x93"}
+off="\033[0m"
+
+###[ Unicode Symbols for icons ]###############################################
+
+sun=${options["sun"]:-"🌞"}
+moon=${options["moon"]:-"🌙"}
+clouds=${options["clouds"]:-"☁"}
+rain=${options["rain"]:-"☔"}
+fog=${options["fog"]:-"\xf0\x9f\x8c\x81"}
+
+###[ Create weather command ]######################################################
+
+fetch_cmd=${options["fetch_cmd"]:-"curl -s -m 2"}
+url="http://api.openweathermap.org/data/2.5/weather?q=$location\&units=$units"
+
+###[ Process Weather data ]####################################################
+
+# enable job control so we can trap early exit of the child process
+set -m
+
+# start kanabo as a named coprocess, in interactive mode loading the input from curl
+coproc kanabo { kanabo -f <($fetch_cmd "$url") -i ; }
+
+trap 'echo Unable to fetch weather; exit 1' CHLD
+
+function extract
+{
+    echo ${1} >&${kanabo[1]}
+    read -ru ${kanabo[0]} value
+    # throw away the 'EOD' marker
+    read -ru ${kanabo[0]}
+
+    # strip the quoting from values with embedded spaces
+    export -n "$2"="${value//\'/}"
+}
+
+# handle error codes from the service
+extract '$.cod' cod
+if [ "200" != "$cod" ]; then
+    extract '$.message' message
+    echo Unable to fetch the weather: $message
+    trap '' CHLD
+    eval "exec ${kanabo[1]}>&-"
+    exit 1
+fi
+    
+extract '$.name' city
+extract '$.main.temp' temperature
+extract '$.main.temp_max' high
+extract '$.main.temp_min' low
+extract '$.main.humidity' humidity
+extract '$.weather[0].main' conditions
+extract '$.weather[0].description' sky
+extract '$.sys.sunrise' sunrise
+extract '$.sys.sunset' sunset
+
+# remove the trap
+trap '' CHLD
+
+# close the stdin fd for the coprocess, causing it to exit
+eval "exec ${kanabo[1]}>&-"
+
+# round the temperature
+temperature=$(printf '%.0f' $temperature)
+
+###[ Set the scale ]###########################################################
+
+case $units in
+	metric)
+		scale="°C"
+		;;
+	imperial)
+		scale="°F"
+		;;
+esac
+
+###[ Set icons ]###############################################################
+
+if [ $symbols = true ]
+then
+	case $conditions in
+		Clear)
+            now=$(date +%s)
+            if [ $now -ge $sunset ] || [ $now -le $sunrise ]
+			then
+				icon="$moon"
+			else
+				icon="$sun"
+			fi
+			;;
+		Clouds)
+			icon="$clouds"
+			;;
+		Rain)
+			icon="$rain"
+			;;
+        Fog)
+            icon="$fog"
+            ;;
+	esac
+fi
+
+###[ Display current Weather ]#################################################
+
+echo -e "$background$text$decoration$city$off$text $icon $data$temperature$scale$text $sky $dashes Humidity $delimiter$data $humidity%$off"

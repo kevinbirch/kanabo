@@ -121,6 +121,11 @@ static int interactive_mode(const struct settings * restrict settings)
     {
         return EXIT_FAILURE;
     }
+    if(NULL == model_document(model, 0))
+    {
+        error("", "No document data was loaded", settings);
+        return EXIT_FAILURE;
+    }
     char *prompt = NULL;
     
     if(isatty(fileno(stdin)))
@@ -144,7 +149,10 @@ static int interactive_mode(const struct settings * restrict settings)
             continue;
         }
         linenoiseHistoryAdd(input);
-        apply_expression(settings, model, input);
+        if(apply_expression(settings, model, input))
+        {
+            return EXIT_FAILURE;
+        }
         if(!isatty(fileno(stdin)))
         {
             fprintf(stdout, "EOD\n");
@@ -282,7 +290,6 @@ static nodelist *evaluate_expression(const struct settings * restrict settings, 
     evaluator_context *evaluator = make_evaluator(model, path);
     if(NULL == evaluator)
     {
-        fprintf(stderr, "%s: an internal error has occured.\n", settings->program_name);
         perror(settings->program_name);
         return NULL;
     }
@@ -336,6 +343,10 @@ static void close_input(const struct settings * restrict settings, FILE *input)
 
 static void error(const char * restrict prelude, const char * restrict message, const struct settings * restrict settings)
 {
+    if(!isatty(fileno(stdin)))
+    {
+        return;
+    }
     if(INTERACTIVE_MODE == settings->command)
     {
         fprintf(stderr, "%s\n", message);

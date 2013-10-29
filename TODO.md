@@ -72,6 +72,7 @@ LICENSE file for more details.
 * hashtable for mappings
 * handle anchors and aliases
 * support sets and ordered maps
+* allow empty scalar values, forbid empty scalar keys
 
 ### unit testing
 

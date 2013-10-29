@@ -111,7 +111,7 @@ loader_context *make_file_loader(FILE * restrict input)
         errno = EINVAL;
         return context;
     }
-    if(feof(input) || 0 == file_info.st_size)
+    if(file_info.st_mode & S_IFREG && (feof(input) || 0 == file_info.st_size))
     {
         loader_error("input is empty");
         context->code = ERR_INPUT_SIZE_IS_ZERO;

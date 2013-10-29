@@ -107,22 +107,28 @@ node *make_mapping_node(size_t capacity)
 
 node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kind)
 {
-    PRECOND_NONNULL_ELSE_NULL(value);
-    PRECOND_ELSE_NULL(0 < length);
+    if(NULL == value && 0 != length)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
 
     node *result = make_node(SCALAR);
     if(NULL != result)
     {
         result->content.size = length;
         result->content.scalar.kind = kind;
-        result->content.scalar.value = (uint8_t *)calloc(1, length);
-        if(NULL == result->content.scalar.value)
+        if(NULL != value)
         {
-            free(result);
-            result = NULL;
-            return NULL;
+            result->content.scalar.value = (uint8_t *)calloc(1, length);
+            if(NULL == result->content.scalar.value)
+            {
+                free(result);
+                result = NULL;
+                return NULL;
+            }
+            memcpy(result->content.scalar.value, value, length);
         }
-        memcpy(result->content.scalar.value, value, length);
     }
 
     return result;
