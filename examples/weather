@@ -63,51 +63,50 @@ clouds=${options["clouds"]:-"☁"}
 rain=${options["rain"]:-"☔"}
 fog=${options["fog"]:-"\xf0\x9f\x8c\x81"}
 
-###[ Create weather command ]######################################################
+###[ Create weather command ]###################################################
 
 fetch_cmd=${options["fetch_cmd"]:-"curl -s -m 2"}
 url="http://api.openweathermap.org/data/2.5/weather?q=$location\&units=$units"
 
-###[ Process Weather data ]####################################################
+###[ Process Weather data ]#####################################################
 
 # enable job control so we can trap early exit of the child process
 set -m
 
+# monitor for an early exit of the child process
+trap 'echo Unable to fetch weather; exit 1' CHLD
+
 # start kanabo as a named coprocess, in interactive mode loading the input from curl
 coproc kanabo { kanabo -f <($fetch_cmd "$url") -i ; }
-
-trap 'echo Unable to fetch weather; exit 1' CHLD
 
 function extract
 {
     echo ${1} >&${kanabo[1]}
-    read -ru ${kanabo[0]} value
+    read -ru ${kanabo[0]} line
     # throw away the 'EOD' marker
     read -ru ${kanabo[0]}
 
-    # strip the quoting from values with embedded spaces
-    export -n "$2"="${value//\'/}"
+    # place the extracted data into a globally-scoped associative array
+    declare -g -A "$2"="$line"
 }
 
+# put the root hash into an associative array `base`
+extract '$' base
+
 # handle error codes from the service
-extract '$.cod' cod
-if [ "200" != "$cod" ]; then
-    extract '$.message' message
-    echo Unable to fetch the weather: $message
+if [ "200" != "${base[cod]}" ]; then
+    echo Unable to fetch the weather: ${base[message]}
     trap '' CHLD
     eval "exec ${kanabo[1]}>&-"
     exit 1
 fi
-    
-extract '$.name' city
-extract '$.main.temp' temperature
-extract '$.main.temp_max' high
-extract '$.main.temp_min' low
-extract '$.main.humidity' humidity
-extract '$.weather[0].main' conditions
-extract '$.weather[0].description' sky
-extract '$.sys.sunrise' sunrise
-extract '$.sys.sunset' sunset
+
+# put the hash `main` into an associative array `main`
+extract '$.main' main
+# put the hash `sys` into an associative array `sys`
+extract '$.sys' sys
+# put the 0-th weather hash into an associative array `weather`
+extract '$.weather[0]' weather
 
 # remove the trap
 trap '' CHLD
@@ -116,7 +115,7 @@ trap '' CHLD
 eval "exec ${kanabo[1]}>&-"
 
 # round the temperature
-temperature=$(printf '%.0f' $temperature)
+temperature=$(printf '%.0f' ${main[temp]})
 
 ###[ Set the scale ]###########################################################
 
@@ -133,10 +132,10 @@ esac
 
 if [ $symbols = true ]
 then
-	case $conditions in
+	case ${weather[main]} in
 		Clear)
             now=$(date +%s)
-            if [ $now -ge $sunset ] || [ $now -le $sunrise ]
+            if [ $now -ge ${sys[sunset]} ] || [ $now -le ${sys[sunrise]} ]
 			then
 				icon="$moon "
 			else
@@ -157,4 +156,4 @@ fi
 
 ###[ Display current Weather ]#################################################
 
-echo -e "$background$text$decoration$city$off$text $icon $data$temperature$scale$text $sky $dashes Humidity $delimiter$data $humidity%$off"
+echo -e "$background$text$decoration${base[name]}$off$text $icon $data$temperature$scale$text ${weather[description]} $dashes Humidity $delimiter$data ${main[humidity]}%$off"
