@@ -231,7 +231,7 @@ static bool add_scalar(loader_context *context, yaml_event_t *event)
     else if(YAML_SINGLE_QUOTED_SCALAR_STYLE == event->data.scalar.style ||
             YAML_DOUBLE_QUOTED_SCALAR_STYLE == event->data.scalar.style)
     {
-        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
+        trace_string("found scalar string '%s', len: %zd", event->data.scalar.value, event->data.scalar.length, event->data.scalar.length);
         kind = SCALAR_STRING;
     }
     else if(0 == memcmp("null", event->data.scalar.value, 4))
@@ -262,7 +262,7 @@ static bool add_scalar(loader_context *context, yaml_event_t *event)
     }
     else
     {
-        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
+        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length, event->data.scalar.length);
     }
 
     node *scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, kind);
@@ -284,39 +284,36 @@ static enum scalar_kind tag_to_scalar_kind(const yaml_event_t * restrict event)
     const yaml_char_t * tag = event->data.scalar.tag;
     if(0 == memcmp(YAML_NULL_TAG, tag, strlen(YAML_NULL_TAG)))
     {
-        loader_trace("found scalar null");
+        trace_string("found yaml null tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
         return SCALAR_NULL;
     }
     if(0 == memcmp(YAML_BOOL_TAG, tag, strlen(YAML_BOOL_TAG)))
     {
-        trace_string("found scalar boolean '%s'", event->data.scalar.value, event->data.scalar.length);
+        trace_string("found yaml boolean tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
         return SCALAR_BOOLEAN;
     }
     if(0 == memcmp(YAML_STR_TAG, tag, strlen(YAML_STR_TAG)))
     {
-        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
+        trace_string("found yaml string tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
         return SCALAR_STRING;
     }
     if(0 == memcmp(YAML_INT_TAG, tag, strlen(YAML_INT_TAG)))
     {
-        trace_string("found scalar integer '%s'", event->data.scalar.value, event->data.scalar.length);
+        trace_string("found yaml integer tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
         return SCALAR_INTEGER;
     }
     if(0 == memcmp(YAML_FLOAT_TAG, tag, strlen(YAML_FLOAT_TAG)))
     {
-        trace_string("found scalar real '%s'", event->data.scalar.value, event->data.scalar.length);
+        trace_string("found yaml float tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
         return SCALAR_REAL;
     }
     if(0 == memcmp(YAML_TIMESTAMP_TAG, tag, strlen(YAML_TIMESTAMP_TAG)))
     {
-        trace_string("found scalar timestamp '%s'", event->data.scalar.value, event->data.scalar.length);
+        trace_string("found yaml timestamp tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
         return SCALAR_TIMESTAMP;
     }
-    else
-    {
-        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length);
-        return SCALAR_STRING;
-    }
+    trace_string("found non-yaml tag for scalar '%s', assuming string", event->data.scalar.value, event->data.scalar.length);
+    return SCALAR_STRING;
 }
 
 static bool regex_test(yaml_event_t *event, regex_t *regex)

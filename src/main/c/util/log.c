@@ -58,7 +58,7 @@ static const char * const LEVELS[] =
 };
 
 static bool LOGGING_ENABLED = false;
-static enum log_level LOG_LEVEL = ERROR;
+static enum log_level LOG_LEVEL = LVL_ERROR;
 
 int print_prelude(enum log_level level, const char * restrict component);
 
@@ -82,31 +82,31 @@ void set_log_level_from_env(void)
     char *level = getenv("KANABO_LOG_LEVEL");
     if(NULL == level)
     {
-        set_log_level(INFO);
+        set_log_level(LVL_INFO);
     }
     else if(0 == memcmp("ERROR", level, 5))
     {
-        set_log_level(ERROR);
+        set_log_level(LVL_ERROR);
     }
     else if(0 == memcmp("WARNING", level, 7))
     {
-        set_log_level(WARNING);
+        set_log_level(LVL_WARNING);
     }
     else if(0 == memcmp("INFO", level, 4))
     {
-        set_log_level(INFO);
+        set_log_level(LVL_INFO);
     }
     else if(0 == memcmp("DEBUG", level, 5))
     {
-        set_log_level(DEBUG);
+        set_log_level(LVL_DEBUG);
     }
     else if(0 == memcmp("TRACE", level, 5))
     {
-        set_log_level(TRACE);
+        set_log_level(LVL_TRACE);
     }
     else
     {
-        set_log_level(INFO);
+        set_log_level(LVL_INFO);
     }
 }
 

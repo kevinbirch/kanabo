@@ -41,6 +41,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "hashtable.h"
+
 enum node_kind 
 {
     DOCUMENT,
@@ -92,12 +94,8 @@ struct node
                 size_t capacity;
                 struct node **value;
             } sequence;
-        
-            struct
-            {
-                size_t capacity;
-                struct key_value_pair **value;
-            } mapping;
+
+            Hashtable *mapping;
 
             struct
             {
@@ -139,12 +137,8 @@ node **sequence_get_all(const node * restrict sequence);
 typedef bool (*sequence_iterator)(node *each, void *context);
 bool sequence_iterate(const node * restrict sequence, sequence_iterator iterator, void *context);
 
-node            *mapping_get(const node * restrict mapping, const char * key);
-node            *mapping_get_scalar_key(const node * restrict mapping, uint8_t *key, size_t key_length);
-node            *mapping_get_node_key(const node * restrict mapping, const node *key);
-bool             mapping_contains_key(const node * restrict mapping, const char *key);
-bool             mapping_contains_node_key(const node * restrict mapping, const node *key);
-key_value_pair **mapping_get_all(const node * restrict mapping);
+node            *mapping_get(const node * restrict mapping, uint8_t *key, size_t length);
+bool             mapping_contains(const node * restrict mapping, uint8_t *key, size_t length);
 
 typedef bool (*mapping_iterator)(node *key, node *value, void *context);
 bool mapping_iterate(const node * restrict mapping, mapping_iterator iterator, void *context);

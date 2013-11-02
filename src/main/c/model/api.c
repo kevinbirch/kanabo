@@ -41,12 +41,23 @@
 #include <errno.h>
 
 #include "model.h"
+#include "model/private.h"
 #include "conditions.h"
 
-static bool scalar_equals(const node * restrict one, const node * restrict two);
+struct context_adapter_s
+{
+    mapping_iterator iterator;
+    void *context;
+};
+
+typedef struct context_adapter_s context_adapter;
+
 static bool tag_equals(const uint8_t * restrict one, const uint8_t * restrict two);
 static bool sequence_equals(const node * restrict one, const node * restrict two);
 static bool mapping_equals(const node * restrict one, const node * restrict two);
+
+static bool iterator_adpater(void *key, void *value, void *context);
+
 
 node *model_document(const document_model * restrict model, size_t index)
 {
@@ -158,61 +169,35 @@ bool sequence_iterate(const node * restrict sequence, sequence_iterator iterator
     return true;
 }
 
-node *mapping_get(const node * restrict mapping, const char *key)
+node *mapping_get(const node * restrict mapping, uint8_t *key, size_t length)
 {
     PRECOND_NONNULL_ELSE_NULL(mapping, key);
     PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
+    PRECOND_ELSE_NULL(0 < length);
 
-    return mapping_get_scalar_key(mapping, (uint8_t *)key, strlen(key));
-}
-
-node *mapping_get_scalar_key(const node * restrict mapping, uint8_t *key, size_t key_length)
-{
-    PRECOND_NONNULL_ELSE_NULL(mapping, key);
-    PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
-    PRECOND_ELSE_NULL(0 < key_length);
-
-    node *scalar = make_scalar_node(key, key_length, SCALAR_STRING);
-    node *result = mapping_get_node_key(mapping, scalar);
+    node *scalar = make_scalar_node(key, length, SCALAR_STRING);
+    node *result = hashtable_get(mapping->content.mapping, (void *)scalar);
     node_free(scalar);
     
     return result;
 }
 
-node *mapping_get_node_key(const node * restrict mapping, const node *key)
+bool mapping_contains(const node * restrict mapping, uint8_t *key, size_t length)
 {
     PRECOND_NONNULL_ELSE_NULL(mapping, key);
     PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
 
-    node *result = NULL;
-    for(size_t i = 0; i < mapping->content.size; i++)
-    {
-        if(node_equals(key, mapping->content.mapping.value[i]->key))
-        {
-            result = mapping->content.mapping.value[i]->value;
-            break;
-        }
-    }
+    node *scalar = make_scalar_node(key, length, SCALAR_STRING);
+    bool result = hashtable_contains(mapping->content.mapping, scalar);
+    node_free(scalar);
 
     return result;
 }
 
-bool mapping_contains_key(const node * restrict mapping, const char *key)
+static bool iterator_adpater(void *key, void *value, void *context)
 {
-    return NULL != mapping_get(mapping, key);
-}
-
-bool mapping_contains_node_key(const node * restrict mapping, const node *key)
-{
-    return NULL != mapping_get_node_key(mapping, key);
-}
-
-key_value_pair **mapping_get_all(const node * restrict mapping)
-{
-    PRECOND_NONNULL_ELSE_NULL(mapping);
-    PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
-
-    return mapping->content.mapping.value;
+    context_adapter *adapter = (context_adapter *)context;
+    return adapter->iterator((node *)key, (node *)value, adapter->context);
 }
 
 bool mapping_iterate(const node * restrict mapping, mapping_iterator iterator, void *context)
@@ -220,14 +205,7 @@ bool mapping_iterate(const node * restrict mapping, mapping_iterator iterator, v
     PRECOND_NONNULL_ELSE_FALSE(mapping, iterator);
     PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping));
 
-    for(size_t i = 0; i < node_size(mapping); i++)
-    {
-        if(!iterator(mapping->content.mapping.value[i]->key, mapping->content.mapping.value[i]->value, context))
-        {
-            return false;
-        }
-    }
-    return true;
+    return hashtable_iterate(mapping->content.mapping, iterator_adpater,  &(context_adapter){iterator, context});
 }
 
 bool node_equals(const node * restrict one, const node * restrict two)
@@ -242,11 +220,14 @@ bool node_equals(const node * restrict one, const node * restrict two)
         return false;
     }
 
-    bool result = 
-        node_kind(one) == node_kind(two) &&
+    bool result = node_kind(one) == node_kind(two) &&
         tag_equals(node_name(one), node_name(two)) &&
         node_size(one) == node_size(two);
-    
+
+    if(!result)
+    {
+        return result;
+    }
     switch(node_kind(one))
     {
         case DOCUMENT:
@@ -265,11 +246,16 @@ bool node_equals(const node * restrict one, const node * restrict two)
     return result;
 }
 
-static bool scalar_equals(const node * restrict one, const node * restrict two)
+bool scalar_equals(const node * restrict one, const node * restrict two)
 {
     size_t n1 = node_size(one);
     size_t n2 = node_size(two);
-    return memcmp(scalar_value(one), scalar_value(two), n1 > n2 ? n2 : n1) == 0;
+
+    if(n1 != n2)
+    {
+        return false;
+    }
+    return memcmp(scalar_value(one), scalar_value(two), n1) == 0;
 }
 
 static bool tag_equals(const uint8_t * restrict one, const uint8_t * restrict two)
@@ -299,17 +285,14 @@ static bool sequence_equals(const node * restrict one, const node * restrict two
     return true;
 }
 
+bool node_comparitor(void *one, void *two)
+{
+    return node_equals((node *)one, (node *)two);
+}
+
 static bool mapping_equals(const node * restrict one, const node * restrict two)
 {
-    for(size_t i = node_size(one); i < node_size(one); i++)
-    {
-        if(!node_equals(one->content.mapping.value[i]->key, two->content.mapping.value[i]->key) ||
-           !node_equals(one->content.mapping.value[i]->value, two->content.mapping.value[i]->value))
-        {
-            return false;
-        }
-    }
-    return true;
+    return hashtable_equals(one->content.mapping, two->content.mapping, node_comparitor);
 }
 
 

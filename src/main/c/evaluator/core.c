@@ -366,7 +366,7 @@ static bool apply_name_test(node *each, void *argument, nodelist *target)
         evaluator_trace("name test: node is not a mapping type, cannot use a key on it (kind: %d), dropping (%p)", node_kind(each), each);
         return true;
     }
-    node *value = mapping_get_scalar_key(each, name_test_step_name(context_step), name_test_step_length(context_step));
+    node *value = mapping_get(each, name_test_step_name(context_step), name_test_step_length(context_step));
     if(NULL == value)
     {
         evaluator_trace("name test: key not found in mapping, dropping (%p)", each);

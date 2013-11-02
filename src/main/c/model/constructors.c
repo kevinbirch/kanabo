@@ -39,6 +39,7 @@
 #include <errno.h>
 
 #include "model.h"
+#include "model/private.h"
 #include "conditions.h"
 
 static bool model_init(document_model * restrict model, size_t capacity);
@@ -47,6 +48,9 @@ static inline node *make_node(enum node_kind kind);
 
 static inline void sequence_free(node *sequence);
 static inline void mapping_free(node *mapping);
+
+static hashcode scalar_node_hash(void *key);
+static bool freedom_iterator(void *key, void *value, void *context);
 
 node *make_document_node(node *root)
 {
@@ -91,15 +95,14 @@ node *make_mapping_node(size_t capacity)
     node *result = make_node(MAPPING);
     if(NULL != result)
     {
-        result->content.size = 0;
-        result->content.mapping.capacity = capacity;
-        result->content.mapping.value = (key_value_pair **)calloc(1, sizeof(key_value_pair *) * capacity);
-        if(NULL == result->content.mapping.value)
+        result->content.mapping = make_hashtable_with_function(node_comparitor, scalar_node_hash);
+        if(NULL == result->content.mapping)
         {
             free(result);
             result = NULL;
             return NULL;
         }        
+        result->content.size = 0;
     }
 
     return result;
@@ -178,6 +181,7 @@ void node_free(node *value)
             value->content.document.root = NULL;
             break;
         case SCALAR:
+            fflush(stdout);
             free(value->content.scalar.value);
             value->content.scalar.value = NULL;
             break;
@@ -208,23 +212,24 @@ static inline void sequence_free(node *sequence)
     sequence->content.sequence.value = NULL;
 }
 
+static bool freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
+{
+    node_free((node *)key);
+    node_free((node *)value);
+    
+    return true;
+}
+
 static inline void mapping_free(node *mapping)
 {
-    if(NULL == mapping->content.mapping.value)
+    if(NULL == mapping->content.mapping)
     {
         return;
     }
-    for(size_t i = 0; i < node_size(mapping); i++)
-    {
-        node_free(mapping->content.mapping.value[i]->key);
-        mapping->content.mapping.value[i]->key = NULL;
-        node_free(mapping->content.mapping.value[i]->value);
-        mapping->content.mapping.value[i]->value = NULL;
-        free(mapping->content.mapping.value[i]);
-        mapping->content.mapping.value[i] = NULL;
-    }
-    free(mapping->content.mapping.value);
-    mapping->content.mapping.value = NULL;
+    
+    hashtable_iterate(mapping->content.mapping, freedom_iterator, NULL);
+    hashtable_free(mapping->content.mapping);
+    mapping->content.mapping = NULL;
 }
 
 document_model *make_model(size_t capacity)
@@ -258,5 +263,11 @@ static bool model_init(document_model * restrict model, size_t capacity)
     }
 
     return result;
+}
+
+static hashcode scalar_node_hash(void *key)
+{
+    node *scalar = (node *)key;
+    return shift_add_xor_string_buffer_hash(scalar_value(scalar), node_size(scalar));
 }
 

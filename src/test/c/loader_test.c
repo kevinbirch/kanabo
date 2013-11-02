@@ -244,14 +244,14 @@ static void assert_model_state(loader_context *loader, document_model *model)
     
     assert_node_kind(root, MAPPING);
     assert_node_size(root, 5);
-    assert_not_null(mapping_get_all(root));
 
     reset_errno();
-    node *one = mapping_get(root, "one");
+    node *one = mapping_get(root, (uint8_t *)"one", 3ul);
     assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
+
     reset_errno();
     node *one_0 = sequence_get(one, 0);
     assert_noerr();
@@ -266,7 +266,7 @@ static void assert_model_state(loader_context *loader, document_model *model)
     assert_scalar_kind(one_1, SCALAR_STRING);
 
     reset_errno();
-    node *two = mapping_get(root, "two");
+    node *two = mapping_get(root, (uint8_t *)"two", 3ul);
     assert_noerr();
     assert_not_null(two);
     assert_node_kind(two, SCALAR);
@@ -274,7 +274,7 @@ static void assert_model_state(loader_context *loader, document_model *model)
     assert_scalar_kind(two, SCALAR_STRING);
 
     reset_errno();
-    node *three = mapping_get(root, "three");
+    node *three = mapping_get(root, (uint8_t *)"three", 5ul);
     assert_noerr();
     assert_not_null(three);
     assert_node_kind(three, SCALAR);
@@ -282,10 +282,11 @@ static void assert_model_state(loader_context *loader, document_model *model)
     assert_scalar_kind(three, SCALAR_NULL);
 
     reset_errno();
-    node *four = mapping_get(root, "four");
+    node *four = mapping_get(root, (uint8_t *)"four", 4ul);
     assert_noerr();
     assert_not_null(four);
     assert_node_kind(four, SEQUENCE);
+
     reset_errno();
     node *four_0 = sequence_get(four, 0);
     assert_noerr();
@@ -304,7 +305,7 @@ static void assert_model_state(loader_context *loader, document_model *model)
     assert_false(scalar_boolean_is_true(four_1));
 
     reset_errno();
-    node *five = mapping_get(root, "five");
+    node *five = mapping_get(root, (uint8_t *)"five", 4ul);
     assert_noerr();
     assert_not_null(five);
     assert_node_kind(five, SEQUENCE);
@@ -345,7 +346,6 @@ void tag_setup(void)
     
     assert_node_kind(tagged_mapping_root, MAPPING);
     assert_node_size(tagged_mapping_root, 7);
-    assert_not_null(mapping_get_all(tagged_mapping_root));
 
     loader_free(loader);
 }
@@ -362,7 +362,7 @@ START_TEST (shorthand_tags)
     assert_node_tag(tagged_mapping_root, "tag:vampire-squid.com,2008:instrument");
 
     reset_errno();
-    node *asset_class = mapping_get(tagged_mapping_root, "asset-class");
+    node *asset_class = mapping_get(tagged_mapping_root, (uint8_t *)"asset-class", 11ul);
     assert_noerr();
     assert_not_null(asset_class);
     assert_node_kind(asset_class, SCALAR);
@@ -370,7 +370,7 @@ START_TEST (shorthand_tags)
     assert_node_tag(asset_class, "tag:vampire-squid.com,2008:asset-class");
     
     reset_errno();
-    node *type = mapping_get(tagged_mapping_root, "type");
+    node *type = mapping_get(tagged_mapping_root, (uint8_t *)"type", 4ul);
     assert_noerr();
     assert_not_null(type);
     assert_node_kind(type, SCALAR);
@@ -378,7 +378,7 @@ START_TEST (shorthand_tags)
     assert_node_tag(type, "tag:vampire-squid.com,2008:instrument/type");
     
     reset_errno();
-    node *symbol = mapping_get(tagged_mapping_root, "symbol");
+    node *symbol = mapping_get(tagged_mapping_root, (uint8_t *)"symbol", 6ul);
     assert_noerr();
     assert_not_null(symbol);
     assert_node_kind(symbol, SCALAR);
@@ -390,7 +390,7 @@ END_TEST
 START_TEST (explicit_tags)
 {
     reset_errno();
-    node *name = mapping_get(tagged_mapping_root, "name");
+    node *name = mapping_get(tagged_mapping_root, (uint8_t *)"name", 4ul);
     assert_noerr();
     assert_not_null(name);
     assert_node_kind(name, SCALAR);
@@ -398,7 +398,7 @@ START_TEST (explicit_tags)
     assert_node_tag(name, "tag:yaml.org,2002:str");
     
     reset_errno();
-    node *exchange_rate = mapping_get(tagged_mapping_root, "exchange-rate");
+    node *exchange_rate = mapping_get(tagged_mapping_root, (uint8_t *)"exchange-rate", 13ul);
     assert_noerr();
     assert_not_null(exchange_rate);
     assert_node_kind(exchange_rate, SCALAR);
@@ -406,7 +406,7 @@ START_TEST (explicit_tags)
     assert_node_tag(exchange_rate, "tag:yaml.org,2002:float");
     
     reset_errno();
-    node *spot_date = mapping_get(tagged_mapping_root, "spot-date");
+    node *spot_date = mapping_get(tagged_mapping_root, (uint8_t *)"spot-date", 9ul);
     assert_noerr();
     assert_not_null(spot_date);
     assert_node_kind(spot_date, SCALAR);
@@ -414,7 +414,7 @@ START_TEST (explicit_tags)
     assert_node_tag(spot_date, "tag:yaml.org,2002:timestamp");
     
     reset_errno();
-    node *settlement_date = mapping_get(tagged_mapping_root, "settlement-date");
+    node *settlement_date = mapping_get(tagged_mapping_root, (uint8_t *)"settlement-date", 15ul);
     assert_noerr();
     assert_not_null(settlement_date);
     assert_node_kind(settlement_date, SCALAR);

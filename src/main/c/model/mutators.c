@@ -115,18 +115,14 @@ bool sequence_set(node * restrict sequence, node *item, size_t index)
 bool mapping_put(node * restrict mapping, node *key, node *value)
 {
     PRECOND_NONNULL_ELSE_FALSE(mapping, key, value);
-    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping));
+    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping), SCALAR == node_kind(key));
 
-    ensure_capacity(key_value_pair, mapping->content.mapping.value, mapping->content.size + 1, mapping->content.mapping.capacity);
-
-    bool result = true;
-    key_value_pair *pair = (key_value_pair *)calloc(1, sizeof(key_value_pair));
-    ENSURE_NONNULL_ELSE_FALSE(errno, pair);
-
-    pair->key = key;
-    pair->value = value;
-    mapping->content.mapping.value[mapping->content.size++] = pair;
-
-    return result;
+    errno = 0;
+    hashtable_put(mapping->content.mapping, key, value);
+    if(0 == errno)
+    {
+        mapping->content.size++;
+    }
+    return 0 == errno;
 }
 

@@ -1,14 +1,8 @@
 /*
- * 金棒 (kanabō)
- * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- *
- * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
- * made stronger.
- *
- * For more information, consult the README file in the project root.
- *
+ * Copyright (c) 2013 Kevin Birch <kmb@pobox.com>.  All rights reserved.
+ * 
  * Distributed under an [MIT-style][license] license.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -37,21 +31,29 @@
 
 #pragma once
 
-struct evaluator_context
-{
-    enum evaluator_status_code code;
-    size_t                     current_step;
-    const document_model      *model;
-    const jsonpath            *path;
-    nodelist                  *list;
-};
+#include <stdint.h>
+#include <stdbool.h>
 
-#define component_name "evaluator"
+typedef size_t hashcode;
 
-#define evaluator_info(FORMAT, ...)  log_info(component_name, FORMAT, ##__VA_ARGS__)
-#define evaluator_error(FORMAT, ...)  log_error(component_name, FORMAT, ##__VA_ARGS__)
-#define evaluator_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
-#define evaluator_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
+typedef hashcode (*hash_function)(void *key);
+typedef bool (*compare_function)(void *key1, void *key2);
 
-#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
+hashcode identity_hash(void *key);
+hashcode identity_xor_hash(void *key);
+
+hashcode shift_add_xor_string_hash(void *key);
+hashcode shift_add_xor_string_buffer_hash(uint8_t *key, size_t length);
+
+hashcode sdbm_string_hash(void *key);
+hashcode sdbm_string_buffer_hash(uint8_t *key, size_t length);
+
+hashcode fnv1_string_hash(void *key);
+hashcode fnv1_string_buffer_hash(uint8_t *key, size_t length);
+
+hashcode fnv1a_string_hash(void *key);
+hashcode fnv1a_string_buffer_hash(uint8_t *key, size_t length);
+
+hashcode djb_string_hash(void *key);
+hashcode djb_string_buffer_hash(uint8_t *key, size_t length);
 

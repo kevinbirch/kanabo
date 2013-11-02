@@ -52,7 +52,7 @@ static bool emit_scalar(const node * restrict each, void *context);
 static bool emit_tagged_scalar(const node * restrict scalar, yaml_char_t *tag, yaml_scalar_style_t style, int implicit, void *context);
 
 #define component "yaml"
-#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(TRACE, component, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
+#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 
 void emit_yaml(const nodelist * restrict list, const struct settings * restrict settings)
 {
