@@ -159,7 +159,7 @@ END_TEST
 
 START_TEST (null_context_parser)
 {
-    document_model *model = make_model(1);
+    document_model *model = make_model();
     loader_context *loader = (loader_context *)calloc(1, sizeof(loader_context));
     loader->parser = NULL;
     loader->model = model;

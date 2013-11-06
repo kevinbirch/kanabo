@@ -113,10 +113,6 @@ START_TEST (null_sequence)
     reset_errno();
     assert_null(sequence_get(NULL, 0));
     assert_errno(EINVAL);
-
-    reset_errno();
-    assert_null(sequence_get_all(NULL));
-    assert_errno(EINVAL);
 }
 END_TEST
 
@@ -137,12 +133,12 @@ END_TEST
 void model_setup(void)
 {
     reset_errno();
-    model = make_model(1);
+    model = make_model();
     assert_not_null(model);
     assert_noerr();
 
     reset_errno();
-    node *root = make_mapping_node(4);
+    node *root = make_mapping_node();
     assert_noerr();
     assert_not_null(root);
 
@@ -155,7 +151,7 @@ void model_setup(void)
     assert_noerr();
     assert_not_null(one_point_five);
     reset_errno();
-    node *one_value = make_sequence_node(2);
+    node *one_value = make_sequence_node();
     assert_noerr();
     assert_not_null(one_value);
     reset_errno();
@@ -245,31 +241,6 @@ START_TEST (constructors)
     assert_noerr();
     assert_not_null(d);
     node_free(d); // N.B. - this will also free `s'
-
-    reset_errno();
-    node *v = make_sequence_node(0);
-    assert_errno(EINVAL);
-    assert_null(v);
-    reset_errno();
-    v = make_sequence_node(1);
-    assert_noerr();
-    assert_not_null(v);
-    assert_not_null(v->content.sequence.value);
-    assert_uint_eq(1, v->content.sequence.capacity);
-    assert_uint_eq(0, v->content.size);
-    node_free(v);
-    
-    reset_errno();
-    node *m = make_mapping_node(0);
-    assert_errno(EINVAL);
-    assert_null(m);
-    reset_errno();
-    m = make_mapping_node(1);
-    assert_noerr();
-    assert_not_null(m);
-    assert_not_null(m->content.mapping);
-    assert_uint_eq(0, m->content.size);
-    node_free(m);
 }
 END_TEST
 
@@ -395,13 +366,6 @@ START_TEST (sequence)
     assert_node_kind(one, SCALAR);
 
     reset_errno();
-    node **all = sequence_get_all(s);
-    assert_noerr();
-    assert_not_null(all);
-    assert_ptr_eq(zero, all[0]);
-    assert_ptr_eq(one, all[1]);
-
-    reset_errno();
     node *x = make_scalar_node((uint8_t *)"x", 1, SCALAR_STRING);
     assert_noerr();
     assert_not_null(x);
@@ -414,11 +378,10 @@ START_TEST (sequence)
     assert_noerr();
     assert_not_null(z);
     reset_errno();
-    node *xyz = make_sequence_node(2);
+    node *xyz = make_sequence_node();
     assert_noerr();
     assert_not_null(xyz);
     assert_uint_eq(0, xyz->content.size);
-    assert_uint_eq(2, xyz->content.sequence.capacity);
 
     reset_errno();
     sequence_add(xyz, x);
@@ -430,7 +393,6 @@ START_TEST (sequence)
     sequence_add(xyz, z);
     assert_noerr();
     assert_uint_eq(3, xyz->content.size);
-    assert_uint_eq(5, xyz->content.sequence.capacity);
     assert_ptr_eq(x, sequence_get(xyz, 0));
     assert_ptr_eq(y, sequence_get(xyz, 1));
     assert_ptr_eq(z, sequence_get(xyz, 2));

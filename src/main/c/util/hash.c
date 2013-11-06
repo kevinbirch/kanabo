@@ -33,12 +33,12 @@
 
 #include "hash.h"
 
-hashcode identity_hash(void *key)
+hashcode identity_hash(const void *key)
 {
     return (hashcode)key;
 }
 
-hashcode identity_xor_hash(void *key)
+hashcode identity_xor_hash(const void *key)
 {
     hashcode result = (hashcode)key;
     result ^= result >> 20 ^ result >> 12;
@@ -53,14 +53,14 @@ hashcode identity_xor_hash(void *key)
  * M. V. Ramakrishna and J. Zobel. Performance in practice of string hashing functions. In DASFAA, pages 215–224, 1997.
  * http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.18.7520
  */
-hashcode shift_add_xor_string_hash(void *key)
+hashcode shift_add_xor_string_hash(const void *key)
 {
     uint8_t *string = (uint8_t *)key;
     size_t length = strlen((char *)string);
     return shift_add_xor_string_buffer_hash(string, length);
 }
 
-hashcode shift_add_xor_string_buffer_hash(uint8_t *key, size_t length)
+hashcode shift_add_xor_string_buffer_hash(const uint8_t *key, size_t length)
 {
     hashcode result = 0ul;
     for(size_t i = 0; i < length; i++)
@@ -71,14 +71,14 @@ hashcode shift_add_xor_string_buffer_hash(uint8_t *key, size_t length)
     return result;
 }
 
-hashcode sdbm_string_hash(void *key)
+hashcode sdbm_string_hash(const void *key)
 {
     uint8_t *string = (uint8_t *)key;
     size_t length = strlen((char *)string);
     return sdbm_string_buffer_hash(string, length);
 }
 
-hashcode sdbm_string_buffer_hash(uint8_t *key, size_t length)
+hashcode sdbm_string_buffer_hash(const uint8_t *key, size_t length)
 {
     hashcode result = 0ul;
     for(size_t i = 0; i < length; i++)
@@ -92,14 +92,14 @@ hashcode sdbm_string_buffer_hash(uint8_t *key, size_t length)
 static const size_t FNV_OFFSET_BASIS = 0xcbf29ce484222325;
 static const size_t FNV_PRIME = 0x100000001b3;
 
-hashcode fnv1_string_hash(void *key)
+hashcode fnv1_string_hash(const void *key)
 {
     uint8_t *string = (uint8_t *)key;
     size_t length = strlen((char *)string);
     return fnv1_string_buffer_hash(string, length);
 }
 
-hashcode fnv1_string_buffer_hash(uint8_t *key, size_t length)
+hashcode fnv1_string_buffer_hash(const uint8_t *key, size_t length)
 {
     hashcode result = FNV_OFFSET_BASIS;
     for(size_t i = 0; i < length; i++)
@@ -111,14 +111,14 @@ hashcode fnv1_string_buffer_hash(uint8_t *key, size_t length)
     return result;
 }
 
-hashcode fnv1a_string_hash(void *key)
+hashcode fnv1a_string_hash(const void *key)
 {
     uint8_t *string = (uint8_t *)key;
     size_t length = strlen((char *)string);
     return fnv1a_string_buffer_hash(string, length);
 }
 
-hashcode fnv1a_string_buffer_hash(uint8_t *key, size_t length)
+hashcode fnv1a_string_buffer_hash(const uint8_t *key, size_t length)
 {
     hashcode result = FNV_OFFSET_BASIS;
     for(size_t i = 0; i < length; i++)
@@ -130,14 +130,14 @@ hashcode fnv1a_string_buffer_hash(uint8_t *key, size_t length)
     return result;
 }
 
-hashcode djb_string_hash(void *key)
+hashcode djb_string_hash(const void *key)
 {
     uint8_t *string = (uint8_t *)key;
     size_t length = strlen((char *)string);
     return djb_string_buffer_hash(string, length);
 }
 
-hashcode djb_string_buffer_hash(uint8_t *key, size_t length)
+hashcode djb_string_buffer_hash(const uint8_t *key, size_t length)
 {
     hashcode result = 5381ul;
     for(size_t i = 0; i < length; i++)

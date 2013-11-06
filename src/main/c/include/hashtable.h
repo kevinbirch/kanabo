@@ -59,32 +59,34 @@ Hashtable *make_hashtable_with_capacity_factor_function(compare_function compari
 
 void hashtable_free(Hashtable *hashtable);
 
-size_t hashtable_size(Hashtable *hashtable);
-size_t hashtable_capacity(Hashtable *hashtable);
-bool hashtable_is_empty(Hashtable *hashtable);
-float hashtable_load_factor(Hashtable *hashtable);
-bool hashtable_is_mutable(Hashtable *hashtable);
+size_t hashtable_size(const Hashtable *hashtable);
+size_t hashtable_capacity(const Hashtable *hashtable);
+bool hashtable_is_empty(const Hashtable *hashtable);
+float hashtable_load_factor(const Hashtable *hashtable);
+
+bool hashtable_is_mutable(const Hashtable *hashtable);
 void hashtable_set_mutable(Hashtable *hashtable);
+
+bool hashtable_is_immutable(const Hashtable *hashtable);
 void hashtable_set_immutable(Hashtable *hashtable);
-bool hashtable_is_immutable(Hashtable *hashtable);
 
-bool hashtable_equals(Hashtable *hashtable1, Hashtable *hashtable2, compare_function comparitor);
+bool hashtable_equals(const Hashtable *hashtable1, 
+                      const Hashtable *hashtable2, 
+                      compare_function comparitor);
 
-bool hashtable_contains(Hashtable *hashtable, void *key);
-void *hashtable_get(Hashtable *hashtable, void *key);
-void *hashtable_get_if_absent(Hashtable *hashtable, void *key, void *value);
+bool hashtable_contains(const Hashtable *hashtable, const void *key);
+void *hashtable_get(const Hashtable *hashtable, const void *key);
+void *hashtable_get_if_absent(Hashtable *hashtable, void * key, void * value);
 void *hashtable_get_if_absent_put(Hashtable *hashtable, void *key, void *value);
 
 void *hashtable_put(Hashtable *hashtable, void *key, void *value);
-void hashtable_put_all(Hashtable *to, Hashtable *from);
+void hashtable_put_all(Hashtable *to, const Hashtable * from);
 
-Hashtable *hashtable_copy(Hashtable *hashtable);
+Hashtable *hashtable_copy(const Hashtable * hashtable);
 
 void *hashtable_remove(Hashtable *hashtable, void *key);
 void hashtable_clear(Hashtable *hashtable);
 
-bool hashtable_iterate(Hashtable *hashtable, hashtable_iterator iterator, void *context);
-bool hashtable_iterate_keys(Hashtable *hashtable, hashtable_item_iterator iterator, void *context);
-bool hashtable_iterate_values(Hashtable *hashtable, hashtable_item_iterator iterator, void *context);
-
-void hashtable_summary(Hashtable *hashtable, FILE *stream);
+bool hashtable_iterate(const Hashtable *hashtable, hashtable_iterator iterator, void *context);
+bool hashtable_iterate_keys(const Hashtable *hashtable, hashtable_item_iterator iterator, void *context);
+bool hashtable_iterate_values(const Hashtable *hashtable, hashtable_item_iterator iterator, void *context);

@@ -42,6 +42,7 @@
 #include <stdint.h>
 
 #include "hashtable.h"
+#include "vector.h"
 
 enum node_kind 
 {
@@ -89,12 +90,7 @@ struct node
                 uint8_t         *value;
             } scalar;
         
-            struct
-            {
-                size_t capacity;
-                struct node **value;
-            } sequence;
-
+            Vector *sequence;
             Hashtable *mapping;
 
             struct
@@ -109,9 +105,7 @@ typedef struct node node;
 
 struct model
 {
-    size_t size;
-    size_t capacity;
-    node **documents;
+    Vector *documents;
 };
 
 typedef struct model document_model;
@@ -132,7 +126,6 @@ bool scalar_boolean_is_true(const node * restrict scalar);
 bool scalar_boolean_is_false(const node * restrict scalar);
 
 node  *sequence_get(const node * restrict sequence, size_t index);
-node **sequence_get_all(const node * restrict sequence);
 
 typedef bool (*sequence_iterator)(node *each, void *context);
 bool sequence_iterate(const node * restrict sequence, sequence_iterator iterator, void *context);
@@ -143,11 +136,11 @@ bool             mapping_contains(const node * restrict mapping, uint8_t *key, s
 typedef bool (*mapping_iterator)(node *key, node *value, void *context);
 bool mapping_iterate(const node * restrict mapping, mapping_iterator iterator, void *context);
 
-document_model *make_model(size_t capacity);
+document_model *make_model(void);
 
 node *make_document_node(node * root);
-node *make_sequence_node(size_t capacity);
-node *make_mapping_node(size_t capacity);
+node *make_sequence_node(void);
+node *make_mapping_node(void);
 node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kind);
 
 void model_free(document_model *model);

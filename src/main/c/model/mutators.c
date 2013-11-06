@@ -41,20 +41,6 @@
 #include "model.h"
 #include "conditions.h"
 
-#define ensure_capacity(TYPE, ARRAY, SIZE, CAPACITY)                    \
-    if((SIZE) > (CAPACITY))                                             \
-    {                                                                   \
-        size_t new_capacity = ((SIZE) * 3) / 2 + 1;                     \
-        TYPE **array_cache = (ARRAY);                                   \
-        (ARRAY) = realloc((ARRAY), sizeof(TYPE *) * new_capacity);      \
-        if(NULL == (ARRAY))                                             \
-        {                                                               \
-            (ARRAY) = array_cache;                                      \
-            return false;                                               \
-        }                                                               \
-        (CAPACITY) = new_capacity;                                      \
-    }
-
 void node_set_tag(node * restrict target, const uint8_t * restrict value, size_t length)
 {
     PRECOND_NONNULL_ELSE_VOID(target, value);
@@ -77,9 +63,7 @@ bool model_add(document_model * restrict model, node *document)
     PRECOND_NONNULL_ELSE_FALSE(model, document);
     PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
 
-    ensure_capacity(node, model->documents, model->size + 1, model->capacity);
-    model->documents[model->size++] = document;
-    return true;
+    return vector_add(model->documents, document);
 }
 
 bool document_set_root(node * restrict document, node *root)
@@ -96,10 +80,12 @@ bool sequence_add(node * restrict sequence, node *item)
     PRECOND_NONNULL_ELSE_FALSE(sequence, item);
     PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence));
 
-    ensure_capacity(node, sequence->content.sequence.value, sequence->content.size + 1, sequence->content.sequence.capacity);
-    sequence->content.sequence.value[sequence->content.size++] = item;
-
-    return true;
+    bool result = vector_add(sequence->content.sequence, item);
+    if(result)
+    {
+        sequence->content.size = vector_length(sequence->content.sequence);
+    }
+    return result;
 }
 
 bool sequence_set(node * restrict sequence, node *item, size_t index)
@@ -107,9 +93,7 @@ bool sequence_set(node * restrict sequence, node *item, size_t index)
     PRECOND_NONNULL_ELSE_FALSE(sequence, item);
     PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence), index < sequence->content.size);
 
-    sequence->content.sequence.value[index] = item;
-
-    return true;
+    return vector_set(sequence->content.sequence, item, index);
 }
 
 bool mapping_put(node * restrict mapping, node *key, node *value)
@@ -121,7 +105,7 @@ bool mapping_put(node * restrict mapping, node *key, node *value)
     hashtable_put(mapping->content.mapping, key, value);
     if(0 == errno)
     {
-        mapping->content.size++;
+        mapping->content.size = hashtable_size(mapping->content.mapping);
     }
     return 0 == errno;
 }

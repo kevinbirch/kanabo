@@ -87,7 +87,7 @@ END_TEST
 
 START_TEST (null_path)
 {
-    document_model *bad_model = make_model(1);
+    document_model *bad_model = make_model();
     evaluator_context *evaluator = make_evaluator(bad_model, NULL);
     assert_not_null(evaluator);
     assert_errno(EINVAL);
@@ -109,7 +109,7 @@ START_TEST (null_document)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    document_model *bad_model = make_model(1);
+    document_model *bad_model = make_model();
     evaluator_context *evaluator = make_evaluator(bad_model, path);
     assert_not_null(evaluator);
     assert_errno(EINVAL);
@@ -132,7 +132,7 @@ START_TEST (null_document_root)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    document_model *bad_model = make_model(1);
+    document_model *bad_model = make_model();
     node *document = (node *)calloc(1, sizeof(struct node));
     assert_not_null(document);
     document->tag.kind = DOCUMENT;
@@ -163,8 +163,8 @@ START_TEST (relative_path)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    document_model *bad_model = make_model(1);
-    node *root = make_mapping_node(1);
+    document_model *bad_model = make_model();
+    node *root = make_mapping_node();
     node *document = make_document_node(root);
     model_add(bad_model, document);
 
@@ -188,8 +188,8 @@ START_TEST (empty_path)
     path->length = 0;
     path->steps = NULL;
 
-    document_model *bad_model = make_model(1);
-    node *root = make_mapping_node(1);
+    document_model *bad_model = make_model();
+    node *root = make_mapping_node();
     node *document = make_document_node(root);
     model_add(bad_model, document);
 
@@ -229,7 +229,7 @@ END_TEST
 
 START_TEST (null_context_path)
 {
-    document_model *bad_model = make_model(1);
+    document_model *bad_model = make_model();
     evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
     evaluator->model = bad_model;
     evaluator->path = NULL;
@@ -246,7 +246,7 @@ END_TEST
 
 START_TEST (null_context_list)
 {
-    document_model *bad_model = make_model(1);
+    document_model *bad_model = make_model();
     jsonpath *path = (jsonpath *)calloc(1, sizeof(jsonpath));
 
     evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
@@ -275,7 +275,7 @@ START_TEST (null_context_document)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    document_model *bad_model = make_model(1);
+    document_model *bad_model = make_model();
     evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
     evaluator->model = bad_model;
     evaluator->path = path;
@@ -309,7 +309,7 @@ START_TEST (null_context_document_root)
     document->content.size = 0;
     document->content.document.root = NULL;
 
-    document_model *bad_model = make_model(1);
+    document_model *bad_model = make_model();
     model_add(bad_model, document);
 
     evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
@@ -339,8 +339,8 @@ START_TEST (relative_context_path)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    document_model *bad_model = make_model(1);
-    node *root = make_mapping_node(1);
+    document_model *bad_model = make_model();
+    node *root = make_mapping_node();
     node *document = make_document_node(root);
     model_add(bad_model, document);
 
@@ -368,8 +368,8 @@ START_TEST (empty_context_path)
     path->length = 0;
     path->steps = NULL;
 
-    document_model *bad_model = make_model(1);
-    node *root = make_mapping_node(1);
+    document_model *bad_model = make_model();
+    node *root = make_mapping_node();
     node *document = make_document_node(root);
     model_add(bad_model, document);
 
@@ -391,7 +391,7 @@ END_TEST
 
 void evaluator_setup(void)
 {
-    model = make_model(1);
+    model = make_model();
     assert_not_null(model);
     
     FILE *input = fopen("inventory.json", "r");
