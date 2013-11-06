@@ -41,9 +41,9 @@
 #include "log.h"
 
 static bool emit_json_node(node *value, void *context);
-static bool emit_json_scalar(const node * restrict each);
-static bool emit_json_quoted_scalar(const node * restrict each);
-static bool emit_json_raw_scalar(const node * restrict each);
+static bool emit_json_scalar(const node *each);
+static bool emit_json_quoted_scalar(const node *each);
+static bool emit_json_raw_scalar(const node *each);
 static bool emit_json_sequence_item(node *each, void *context);
 static bool emit_json_mapping_item(node *key, node *value, void *context);
 
@@ -60,7 +60,7 @@ static bool emit_json_mapping_item(node *key, node *value, void *context);
         log_error(component, "uh oh! couldn't emit literal %s", (STR));    \
     }    
 
-void emit_json(const nodelist * restrict list, const struct settings * restrict settings)
+void emit_json(const nodelist *list, const struct settings *settings)
 {
     log_debug(component, "emitting...");
     size_t count = 0;
@@ -105,7 +105,7 @@ static bool emit_json_node(node *each, void *context __attribute__((unused)))
     return result;
 }
 
-static bool emit_json_scalar(const node * restrict each)
+static bool emit_json_scalar(const node *each)
 {
     if(SCALAR_STRING == scalar_kind(each) ||
        SCALAR_TIMESTAMP == scalar_kind(each))
@@ -120,7 +120,7 @@ static bool emit_json_scalar(const node * restrict each)
     }
 }
 
-static bool emit_json_quoted_scalar(const node * restrict each)
+static bool emit_json_quoted_scalar(const node *each)
 {
     EMIT("\"");
     if(!emit_json_raw_scalar(each))
@@ -133,7 +133,7 @@ static bool emit_json_quoted_scalar(const node * restrict each)
     return true;
 }
 
-static bool emit_json_raw_scalar(const node * restrict each)
+static bool emit_json_raw_scalar(const node *each)
 {
     return fwrite(scalar_value(each), node_size(each), 1, stdout);
 }

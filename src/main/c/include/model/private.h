@@ -38,5 +38,5 @@
 
 #pragma once
 
-bool scalar_equals(const node * restrict one, const node * restrict two);
+bool scalar_equals(const node *one, const node *two);
 bool node_comparitor(const void *one, const void *two);

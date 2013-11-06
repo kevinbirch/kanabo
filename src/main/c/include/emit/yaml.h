@@ -40,5 +40,5 @@
 #include "nodelist.h"
 #include "options.h"
 
-void emit_yaml(const nodelist * restrict list, const struct settings * restrict settings);
+void emit_yaml(const nodelist *list, const struct settings *settings);
 

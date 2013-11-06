@@ -41,20 +41,20 @@
 #include "emit/yaml.h"
 #include "log.h"
 
-static bool emit_nodelist(const nodelist * restrict list, yaml_emitter_t *emitter);
+static bool emit_nodelist(const nodelist *list, yaml_emitter_t *emitter);
 static bool emit_node(node *value, void *context);
 static bool emit_document(node *document, void *context);
 static bool emit_sequence(node *sequence, void *context);
 static bool emit_sequence_item(node *each, void *context);
 static bool emit_mapping(node *mapping, void *context);
 static bool emit_mapping_item(node *key, node *value, void *context);
-static bool emit_scalar(const node * restrict each, void *context);
-static bool emit_tagged_scalar(const node * restrict scalar, yaml_char_t *tag, yaml_scalar_style_t style, int implicit, void *context);
+static bool emit_scalar(const node *each, void *context);
+static bool emit_tagged_scalar(const node *scalar, yaml_char_t *tag, yaml_scalar_style_t style, int implicit, void *context);
 
 #define component "yaml"
 #define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 
-void emit_yaml(const nodelist * restrict list, const struct settings * restrict settings)
+void emit_yaml(const nodelist *list, const struct settings *settings)
 {
     log_debug(component, "emitting...");
     yaml_emitter_t emitter;
@@ -106,7 +106,7 @@ void emit_yaml(const nodelist * restrict list, const struct settings * restrict 
     fflush(stdout);
 }
 
-static bool emit_nodelist(const nodelist * restrict list, yaml_emitter_t *emitter)
+static bool emit_nodelist(const nodelist *list, yaml_emitter_t *emitter)
 {
     log_trace(component, "emitting nodelist");
     yaml_event_t event;
@@ -241,7 +241,7 @@ static bool emit_mapping_item(node *key, node *value, void *context)
     return emit_node(value, context);
 }
 
-static bool emit_scalar(const node * restrict each, void *context)
+static bool emit_scalar(const node *each, void *context)
 {
     yaml_char_t *tag = NULL;
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
@@ -272,7 +272,7 @@ static bool emit_scalar(const node * restrict each, void *context)
     return emit_tagged_scalar(each, tag, style, NULL == node_name(each), context);
 }
 
-static bool emit_tagged_scalar(const node * restrict scalar, yaml_char_t *tag, yaml_scalar_style_t style, int implicit, void *context)
+static bool emit_tagged_scalar(const node *scalar, yaml_char_t *tag, yaml_scalar_style_t style, int implicit, void *context)
 {
     trace_string("emitting scalar \"%s\"", scalar_value(scalar), node_size(scalar));
     yaml_emitter_t *emitter = (yaml_emitter_t *)context;

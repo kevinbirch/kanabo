@@ -88,7 +88,7 @@ loader_context *make_string_loader(const unsigned char *input, size_t size)
     return context;
 }
 
-loader_context *make_file_loader(FILE * restrict input)
+loader_context *make_file_loader(FILE *input)
 {
     loader_debug("creating file loader context");
     loader_context *context = make_loader();
@@ -139,7 +139,7 @@ static loader_context *make_loader(void)
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return context;
     }
-    document_model *model = make_model(1);
+    document_model *model = make_model();
     if(NULL == model)
     {
         loader_error("uh oh! out of memory, can't allocate the document model");
@@ -167,7 +167,7 @@ static loader_context *make_loader(void)
     return context;
 }
 
-enum loader_status_code loader_status(const loader_context * restrict context)
+enum loader_status_code loader_status(const loader_context *context)
 {
     return context->code;
 }

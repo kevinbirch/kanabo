@@ -59,13 +59,13 @@ typedef enum loader_status_code loader_status_code;
 typedef struct loader_context loader_context;
 
 loader_context *make_string_loader(const unsigned char *input, size_t size);
-loader_context *make_file_loader(FILE * restrict input);
-loader_status_code loader_status(const loader_context * restrict context);
+loader_context *make_file_loader(FILE *input);
+loader_status_code loader_status(const loader_context *context);
 
 void loader_free(loader_context *context);
 
 document_model *load(loader_context *context);
 
-char *loader_status_message(const loader_context * restrict context);
+char *loader_status_message(const loader_context *context);
 
 

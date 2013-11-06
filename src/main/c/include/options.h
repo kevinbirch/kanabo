@@ -65,5 +65,5 @@ struct settings
     enum command    command;
 };
 
-enum command process_options(const int argc, char * const *argv, struct settings * restrict settings);
+enum command process_options(const int argc, char * const *argv, struct settings *settings);
 

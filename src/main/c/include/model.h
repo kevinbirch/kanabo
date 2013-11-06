@@ -110,31 +110,31 @@ struct model
 
 typedef struct model document_model;
 
-node   *model_document(const document_model * restrict model, size_t index);
-node   *model_document_root(const document_model * restrict model, size_t index);
-size_t  model_document_count(const document_model * restrict model);
+node   *model_document(const document_model *model, size_t index);
+node   *model_document_root(const document_model *model, size_t index);
+size_t  model_document_count(const document_model *model);
 
-enum node_kind  node_kind(const node * restrict value);
-uint8_t        *node_name(const node * restrict value);
-size_t          node_size(const node * restrict value);
+enum node_kind  node_kind(const node *value);
+uint8_t        *node_name(const node *value);
+size_t          node_size(const node *value);
 
-node *document_root(const node * restrict document);
+node *document_root(const node *document);
 
-uint8_t *scalar_value(const node * restrict scalar);
-enum scalar_kind scalar_kind(const node * restrict scalar);
-bool scalar_boolean_is_true(const node * restrict scalar);
-bool scalar_boolean_is_false(const node * restrict scalar);
+uint8_t *scalar_value(const node *scalar);
+enum scalar_kind scalar_kind(const node *scalar);
+bool scalar_boolean_is_true(const node *scalar);
+bool scalar_boolean_is_false(const node *scalar);
 
-node  *sequence_get(const node * restrict sequence, size_t index);
+node  *sequence_get(const node *sequence, size_t index);
 
 typedef bool (*sequence_iterator)(node *each, void *context);
-bool sequence_iterate(const node * restrict sequence, sequence_iterator iterator, void *context);
+bool sequence_iterate(const node *sequence, sequence_iterator iterator, void *context);
 
-node            *mapping_get(const node * restrict mapping, uint8_t *key, size_t length);
-bool             mapping_contains(const node * restrict mapping, uint8_t *key, size_t length);
+node            *mapping_get(const node *mapping, uint8_t *key, size_t length);
+bool             mapping_contains(const node *mapping, uint8_t *key, size_t length);
 
 typedef bool (*mapping_iterator)(node *key, node *value, void *context);
-bool mapping_iterate(const node * restrict mapping, mapping_iterator iterator, void *context);
+bool mapping_iterate(const node *mapping, mapping_iterator iterator, void *context);
 
 document_model *make_model(void);
 
@@ -148,12 +148,12 @@ void node_free(node *value);
 
 bool node_equals(const node *one, const node *two);
 
-void node_set_tag(node * restrict target, const uint8_t * restrict value, size_t length);
-void node_set_tag_nocopy(node * restrict target, uint8_t * restrict value);
+void node_set_tag(node *target, const uint8_t *value, size_t length);
+void node_set_tag_nocopy(node *target, uint8_t *value);
 
-bool model_add(document_model * restrict model, node *document);
-bool document_set_root(node * restrict document, node *root);
-bool sequence_add(node * restrict sequence, node *item);
-bool sequence_set(node * restrict sequence, node *item, size_t index);
-bool mapping_put(node * restrict mapping, node *key, node *value);
+bool model_add(document_model *model, node *document);
+bool document_set_root(node *document, node *root);
+bool sequence_add(node *sequence, node *item);
+bool sequence_set(node *sequence, node *item, size_t index);
+bool mapping_put(node *mapping, node *key, node *value);
 

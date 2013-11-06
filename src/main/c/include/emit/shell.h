@@ -42,9 +42,9 @@
 #include "model.h"
 
 bool emit_node(node *value, void *context);
-bool emit_scalar(const node * restrict each);
-bool emit_quoted_scalar(const node * restrict each);
-bool emit_raw_scalar(const node * restrict each);
+bool emit_scalar(const node *each);
+bool emit_quoted_scalar(const node *each);
+bool emit_raw_scalar(const node *each);
 bool emit_sequence_item(node *each, void *context);
 
 struct emit_context

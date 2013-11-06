@@ -43,7 +43,7 @@
 
 static bool emit_mapping_item(node *key, node *value, void *context);
 
-void emit_zsh(const nodelist * restrict list, const struct settings * restrict settings)
+void emit_zsh(const nodelist *list, const struct settings *settings)
 {
     log_debug("zsh", "emitting...");
     emit_context context = 

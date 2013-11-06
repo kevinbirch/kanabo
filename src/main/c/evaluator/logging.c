@@ -53,7 +53,7 @@ static const char * const MESSAGES[] =
     "The path is not supported",
 };
 
-const char *evaluator_status_message(const evaluator_context * restrict context)
+const char *evaluator_status_message(const evaluator_context *context)
 {
     PRECOND_NONNULL_ELSE_NULL(context);
 

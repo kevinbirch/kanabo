@@ -68,11 +68,11 @@ LICENSE file for more details.
 
 ### loader
 
+* refactor and simply loading with hashtables and vectors
 * forbid non-scalars as mapping keys
-* hashtable for mappings
+* allow empty scalar values, forbid empty scalar keys
 * handle anchors and aliases
 * support sets and ordered maps
-* allow empty scalar values, forbid empty scalar keys
 
 ### unit testing
 

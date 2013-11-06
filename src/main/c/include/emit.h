@@ -40,5 +40,5 @@
 #include "emit/json.h"
 #include "emit/yaml.h"
 
-typedef void (*emit_function)(const nodelist * restrict list, const struct settings * restrict settings);
+typedef void (*emit_function)(const nodelist *list, const struct settings *settings);
 

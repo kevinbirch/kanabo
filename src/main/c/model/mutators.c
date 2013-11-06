@@ -41,7 +41,7 @@
 #include "model.h"
 #include "conditions.h"
 
-void node_set_tag(node * restrict target, const uint8_t * restrict value, size_t length)
+void node_set_tag(node *target, const uint8_t *value, size_t length)
 {
     PRECOND_NONNULL_ELSE_VOID(target, value);
     target->tag.name = (uint8_t *)calloc(1, length + 1);
@@ -52,13 +52,13 @@ void node_set_tag(node * restrict target, const uint8_t * restrict value, size_t
     }
 }
 
-void node_set_tag_nocopy(node * restrict target, uint8_t * restrict value)
+void node_set_tag_nocopy(node *target, uint8_t *value)
 {
     PRECOND_NONNULL_ELSE_VOID(target, value);
     target->tag.name = value;
 }
 
-bool model_add(document_model * restrict model, node *document)
+bool model_add(document_model *model, node *document)
 {
     PRECOND_NONNULL_ELSE_FALSE(model, document);
     PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
@@ -66,7 +66,7 @@ bool model_add(document_model * restrict model, node *document)
     return vector_add(model->documents, document);
 }
 
-bool document_set_root(node * restrict document, node *root)
+bool document_set_root(node *document, node *root)
 {
     PRECOND_NONNULL_ELSE_FALSE(document, root);
     PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
@@ -75,7 +75,7 @@ bool document_set_root(node * restrict document, node *root)
     return true;
 }
 
-bool sequence_add(node * restrict sequence, node *item)
+bool sequence_add(node *sequence, node *item)
 {
     PRECOND_NONNULL_ELSE_FALSE(sequence, item);
     PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence));
@@ -88,7 +88,7 @@ bool sequence_add(node * restrict sequence, node *item)
     return result;
 }
 
-bool sequence_set(node * restrict sequence, node *item, size_t index)
+bool sequence_set(node *sequence, node *item, size_t index)
 {
     PRECOND_NONNULL_ELSE_FALSE(sequence, item);
     PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence), index < sequence->content.size);
@@ -96,7 +96,7 @@ bool sequence_set(node * restrict sequence, node *item, size_t index)
     return vector_set(sequence->content.sequence, item, index);
 }
 
-bool mapping_put(node * restrict mapping, node *key, node *value)
+bool mapping_put(node *mapping, node *key, node *value)
 {
     PRECOND_NONNULL_ELSE_FALSE(mapping, key, value);
     PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping), SCALAR == node_kind(key));

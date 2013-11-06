@@ -85,7 +85,7 @@ parser_context *make_parser(const uint8_t *expression, size_t length)
     return context;
 }
 
-enum parser_status_code parser_status(const parser_context * restrict context)
+enum parser_status_code parser_status(const parser_context *context)
 {
     return context->result.code;
 }

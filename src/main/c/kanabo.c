@@ -54,21 +54,21 @@
 #include "version.h"
 #include "linenoise.h"
 
-static int dispatch(enum command cmd, const struct settings * restrict settings);
+static int dispatch(enum command cmd, const struct settings *settings);
 
-static int interactive_mode(const struct settings * restrict settings);
-static int expression_mode(const struct settings * restrict settings);
-static int apply_expression(const struct settings * restrict settings, document_model *model, const char * restrict expression);
+static int interactive_mode(const struct settings *settings);
+static int expression_mode(const struct settings *settings);
+static int apply_expression(const struct settings *settings, document_model *model, const char *expression);
 
-static document_model *load_model(const struct settings * restrict settings);
-static jsonpath *parse_expression(const struct settings * restrict settings, const char * restrict expression);
-static nodelist *evaluate_expression(const struct settings * restrict settings, const document_model *model, const jsonpath *path);
+static document_model *load_model(const struct settings *settings);
+static jsonpath *parse_expression(const struct settings *settings, const char *expression);
+static nodelist *evaluate_expression(const struct settings *settings, const document_model *model, const jsonpath *path);
 
-static FILE *open_input(const struct settings * restrict settings);
-static void close_input(const struct settings * restrict settings, FILE *input);
-static void error(const char * restrict prelude, const char * restrict message, const struct settings * restrict settings);
+static FILE *open_input(const struct settings *settings);
+static void close_input(const struct settings *settings, FILE *input);
+static void error(const char *prelude, const char *message, const struct settings *settings);
 
-static emit_function get_emitter(const struct settings * restrict settings);
+static emit_function get_emitter(const struct settings *settings);
 
 int main(const int argc, char * const *argv)
 {
@@ -88,7 +88,7 @@ int main(const int argc, char * const *argv)
     return dispatch(cmd, &settings);
 }
 
-static int dispatch(enum command cmd, const struct settings * restrict settings)
+static int dispatch(enum command cmd, const struct settings *settings)
 {
     int result = EXIT_SUCCESS;
     
@@ -114,7 +114,7 @@ static int dispatch(enum command cmd, const struct settings * restrict settings)
     return result;
 }
 
-static int interactive_mode(const struct settings * restrict settings)
+static int interactive_mode(const struct settings *settings)
 {
     document_model *model = load_model(settings);
     if(NULL == model)
@@ -165,7 +165,7 @@ static int interactive_mode(const struct settings * restrict settings)
     return EXIT_SUCCESS;
 }
 
-static int expression_mode(const struct settings * restrict settings)
+static int expression_mode(const struct settings *settings)
 {
     log_debug("kanabo", "evaluating expression: \"%s\"", settings->expression);
     document_model *model = load_model(settings);
@@ -180,7 +180,7 @@ static int expression_mode(const struct settings * restrict settings)
     return result;
 }
 
-static int apply_expression(const struct settings * restrict settings, document_model *model, const char * restrict expression)
+static int apply_expression(const struct settings *settings, document_model *model, const char *expression)
 {
     jsonpath *path = parse_expression(settings, expression);
     if(NULL == path)
@@ -211,7 +211,7 @@ static int apply_expression(const struct settings * restrict settings, document_
     return EXIT_SUCCESS;
 }
 
-static document_model *load_model(const struct settings * restrict settings)
+static document_model *load_model(const struct settings *settings)
 {
     log_trace("kanabo", "loading model");
     FILE *input = open_input(settings);
@@ -252,7 +252,7 @@ static document_model *load_model(const struct settings * restrict settings)
     return model;
 }
 
-static jsonpath *parse_expression(const struct settings * restrict settings, const char * restrict expression)
+static jsonpath *parse_expression(const struct settings *settings, const char *expression)
 {
     log_trace("kanabo", "parsing expression");
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
@@ -284,7 +284,7 @@ static jsonpath *parse_expression(const struct settings * restrict settings, con
     return path;
 }
 
-static nodelist *evaluate_expression(const struct settings * restrict settings, const document_model *model, const jsonpath *path)
+static nodelist *evaluate_expression(const struct settings *settings, const document_model *model, const jsonpath *path)
 {
     log_trace("kanabo", "evaluating expression");
     evaluator_context *evaluator = make_evaluator(model, path);
@@ -314,7 +314,7 @@ static nodelist *evaluate_expression(const struct settings * restrict settings, 
     return list;
 }
 
-static FILE *open_input(const struct settings * restrict settings)
+static FILE *open_input(const struct settings *settings)
 {
     if(NULL == settings->input_file_name)
     {
@@ -328,7 +328,7 @@ static FILE *open_input(const struct settings * restrict settings)
     }
 }
 
-static void close_input(const struct settings * restrict settings, FILE *input)
+static void close_input(const struct settings *settings, FILE *input)
 {
     if(NULL != settings->input_file_name)
     {
@@ -341,7 +341,7 @@ static void close_input(const struct settings * restrict settings, FILE *input)
     }
 }
 
-static void error(const char * restrict prelude, const char * restrict message, const struct settings * restrict settings)
+static void error(const char *prelude, const char *message, const struct settings *settings)
 {
     if(!isatty(fileno(stdin)))
     {
@@ -357,7 +357,7 @@ static void error(const char * restrict prelude, const char * restrict message, 
     }
 }
 
-static emit_function get_emitter(const struct settings * restrict settings)
+static emit_function get_emitter(const struct settings *settings)
 {
     emit_function result = NULL;
     switch(settings->emit_mode)

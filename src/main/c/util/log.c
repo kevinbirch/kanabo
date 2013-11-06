@@ -60,7 +60,7 @@ static const char * const LEVELS[] =
 static bool LOGGING_ENABLED = false;
 static enum log_level LOG_LEVEL = LVL_ERROR;
 
-int print_prelude(enum log_level level, const char * restrict component);
+int print_prelude(enum log_level level, const char *component);
 
 void enable_logging(void)
 {
@@ -112,7 +112,7 @@ void set_log_level_from_env(void)
 
 #define ensure_log_enabled(LEVEL) if(!LOGGING_ENABLED || LOG_LEVEL < LEVEL) return 0
 
-int logger(enum log_level level, const char * restrict component, const char * restrict format, ...)
+int logger(enum log_level level, const char *component, const char *format, ...)
 {
     ensure_log_enabled(level);
     va_list args;
@@ -122,7 +122,7 @@ int logger(enum log_level level, const char * restrict component, const char * r
     return result;
 }
 
-int vlogger(enum log_level level, const char * restrict component, const char * restrict format, va_list args)
+int vlogger(enum log_level level, const char *component, const char *format, va_list args)
 {
     ensure_log_enabled(level);
     int result = print_prelude(level, component);
@@ -138,7 +138,7 @@ int vlogger(enum log_level level, const char * restrict component, const char * 
     return result;
 }
 
-int print_prelude(enum log_level level, const char * restrict component)
+int print_prelude(enum log_level level, const char *component)
 {
     time_t now = time(NULL);
     struct tm now_tm;

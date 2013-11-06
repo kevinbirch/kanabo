@@ -55,7 +55,7 @@ static void event_loop(loader_context *context);
 static bool dispatch_event(yaml_event_t *event, loader_context *context);
 
 static bool add_scalar(loader_context *context, yaml_event_t *event);
-static enum scalar_kind tag_to_scalar_kind(const yaml_event_t * restrict tag);
+static enum scalar_kind tag_to_scalar_kind(const yaml_event_t *tag);
 static bool regex_test(yaml_event_t *event, regex_t *regex);
 static bool add_node(loader_context *context, node *value);
 
@@ -279,7 +279,7 @@ static bool add_scalar(loader_context *context, yaml_event_t *event)
     return add_node(context, scalar);
 }
 
-static enum scalar_kind tag_to_scalar_kind(const yaml_event_t * restrict event)
+static enum scalar_kind tag_to_scalar_kind(const yaml_event_t *event)
 {
     const yaml_char_t * tag = event->data.scalar.tag;
     if(0 == memcmp(YAML_NULL_TAG, tag, strlen(YAML_NULL_TAG)))
@@ -364,7 +364,7 @@ static bool add_node(loader_context *context, node *value)
 
 static bool unwind_sequence(loader_context *context)
 {
-    node *sequence = make_sequence_node(context->excursions->length);
+    node *sequence = make_sequence_node();
     if(NULL == sequence)
     {
         loader_error("uh oh! couldn't create a sequence node, aborting...");
@@ -390,7 +390,7 @@ static bool unwind_sequence(loader_context *context)
 
 static bool unwind_mapping(loader_context *context)
 {
-    node *mapping = make_mapping_node(context->excursions->length / 2);
+    node *mapping = make_mapping_node();
     if(NULL == mapping)
     {
         loader_error("uh oh! couldn't create a mapping node, aborting...");

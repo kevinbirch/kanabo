@@ -40,7 +40,7 @@
 #include "nodelist.h"
 #include "conditions.h"
 
-static bool allocate(nodelist * restrict list, size_t capacity);
+static bool allocate(nodelist *list, size_t capacity);
 static inline bool ensure_capacity(nodelist *list, size_t min_capacity);
 
 nodelist *make_nodelist(void)
@@ -104,21 +104,21 @@ bool nodelist_clear(nodelist *list)
     return allocate(list, DEFAULT_CAPACITY);
 }
 
-size_t nodelist_length(const nodelist * restrict list)
+size_t nodelist_length(const nodelist *list)
 {
     PRECOND_NONNULL_ELSE_ZERO(list);
 
     return list->length;
 }
 
-bool nodelist_is_empty(const nodelist * restrict list)
+bool nodelist_is_empty(const nodelist *list)
 {
     PRECOND_NONNULL_ELSE_TRUE(list);
 
     return 0 == list->length;
 }
 
-node *nodelist_get(const nodelist * restrict list, size_t index)
+node *nodelist_get(const nodelist *list, size_t index)
 {
     PRECOND_NONNULL_ELSE_NULL(list);
     PRECOND_ELSE_NULL(index < list->length);
@@ -126,7 +126,7 @@ node *nodelist_get(const nodelist * restrict list, size_t index)
     return list->nodes[index];
 }
 
-bool nodelist_add(nodelist * restrict list, node  * restrict value)
+bool nodelist_add(nodelist *list, node  *value)
 {
     PRECOND_NONNULL_ELSE_FALSE(list, value);
     if(!ensure_capacity(list, list->length + 1))
@@ -137,7 +137,7 @@ bool nodelist_add(nodelist * restrict list, node  * restrict value)
     return true;
 }
 
-bool nodelist_add_all(nodelist * restrict list, nodelist * restrict value)
+bool nodelist_add_all(nodelist *list, nodelist *value)
 {
     PRECOND_NONNULL_ELSE_FALSE(list, value);
     if(!ensure_capacity(list, list->length + value->length))
@@ -148,7 +148,7 @@ bool nodelist_add_all(nodelist * restrict list, nodelist * restrict value)
     return result;
 }
 
-bool nodelist_set(nodelist * restrict list, node *value, size_t index)
+bool nodelist_set(nodelist *list, node *value, size_t index)
 {                                                                        
     PRECOND_NONNULL_ELSE_FALSE(list, value);
     PRECOND_ELSE_FALSE(index < list->length);
@@ -157,7 +157,7 @@ bool nodelist_set(nodelist * restrict list, node *value, size_t index)
     return true;
 }
 
-bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator, void *context)
+bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context)
 {
     PRECOND_NONNULL_ELSE_FALSE(list, iterator);
 
@@ -177,7 +177,7 @@ bool add_to_nodelist_sequence_iterator(node *each, void *context)
     return nodelist_add(list, each);
 }
 
-nodelist *nodelist_map(const nodelist * restrict list, nodelist_map_function function, void *context)
+nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context)
 {
     PRECOND_NONNULL_ELSE_NULL(list, function);
 
@@ -196,7 +196,7 @@ nodelist *nodelist_map(const nodelist * restrict list, nodelist_map_function fun
     return target;            
 }
 
-nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_map_function function, void *context, nodelist * restrict target)
+nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target)
 {
     PRECOND_NONNULL_ELSE_NULL(list, function, target);
 
@@ -211,7 +211,7 @@ nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_map_functio
     return target;
 }
 
-static bool allocate(nodelist * restrict list, size_t capacity)
+static bool allocate(nodelist *list, size_t capacity)
 {
     list->length = 0;
     list->capacity = capacity;

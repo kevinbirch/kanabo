@@ -82,7 +82,7 @@ loader_status_code interpret_yaml_error(yaml_parser_t *parser)
     }
 }
 
-char *loader_status_message(const loader_context * restrict context)
+char *loader_status_message(const loader_context *context)
 {
     PRECOND_NONNULL_ELSE_NULL(context);
     PRECOND_NONNULL_ELSE_NULL(context->parser);

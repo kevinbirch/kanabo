@@ -43,7 +43,7 @@
 
 #include "options.h"
 
-static inline int32_t process_emit_mode(const char * restrict argument);
+static inline int32_t process_emit_mode(const char *argument);
 static inline const char *process_program_name(const char *argv0);
 
 static struct option options[] = 
@@ -69,7 +69,7 @@ static struct option options[] =
         break;                             \
     }
 
-enum command process_options(const int argc, char * const *argv, struct settings * restrict settings)
+enum command process_options(const int argc, char * const *argv, struct settings *settings)
 {
     int opt;
     int32_t mode = -1;
@@ -147,7 +147,7 @@ enum command process_options(const int argc, char * const *argv, struct settings
     return settings->command;
 }
 
-static inline int32_t process_emit_mode(const char * restrict argument)
+static inline int32_t process_emit_mode(const char *argument)
 {
     if(strncmp("bash", argument, 4) == 0)
     {
