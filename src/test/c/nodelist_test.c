@@ -65,26 +65,10 @@ bool  fail_transform(node *each, void *context, nodelist *target);
 
 static nodelist *list;
 
-START_TEST (bad_clear)
-{
-    reset_errno();
-    assert_false(nodelist_clear(NULL));
-    assert_errno(EINVAL);
-}
-END_TEST
-
 START_TEST (bad_length)
 {
     reset_errno();
     assert_nodelist_length(NULL, 0);
-    assert_errno(EINVAL);
-}
-END_TEST
-
-START_TEST (bad_is_empty)
-{
-    reset_errno();
-    assert_true(nodelist_is_empty(NULL));
     assert_errno(EINVAL);
 }
 END_TEST
@@ -231,7 +215,7 @@ END_TEST
 
 void nodelist_setup(void)
 {
-    list = make_nodelist_with_capacity(2);
+    list = make_nodelist();
 
     reset_errno();
     node *foo = make_scalar_string("foo");
@@ -254,9 +238,17 @@ void nodelist_setup(void)
     assert_nodelist_length(list, 2);
 }
 
+static bool freedom_iterator(node *each, void *context);
+
+static bool freedom_iterator(node *each, void *context __attribute__((unused)))
+{
+    node_free(each);
+    return true;
+}
+
 void nodelist_teardown(void)
 {
-    nodelist_free_nodes(list);
+    nodelist_iterate(list, freedom_iterator, NULL);
     nodelist_free(list);
 }
 
@@ -291,44 +283,6 @@ START_TEST (set)
     assert_node_equals(baz, nodelist_get(list, 0));
 
     // N.B. not freeing baz here as it is added to `list` and will be freed by teardown
-}
-END_TEST
-
-START_TEST (add_all)
-{
-    reset_errno();
-    node *baz = make_scalar_string("baz");
-    assert_not_null(baz);
-    assert_noerr();
-
-    reset_errno();
-    node *quaz = make_scalar_string("quaz");
-    assert_not_null(baz);
-    assert_noerr();
-
-    reset_errno();
-    nodelist *other_list = make_nodelist_with_capacity(2);
-    assert_noerr();
-    assert_not_null(other_list);
-
-    reset_errno();
-    assert_true(nodelist_add(other_list, baz));
-    assert_noerr();
-    assert_nodelist_length(other_list, 1);
-
-    reset_errno();
-    assert_true(nodelist_add(other_list, quaz));
-    assert_noerr();
-    assert_nodelist_length(other_list, 2);
-
-    reset_errno();
-    assert_true(nodelist_add_all(list, other_list));
-    assert_noerr();
-    assert_nodelist_length(list, 4);
-    assert_nodelist_length(other_list, 2);
-    
-    // N.B. not freeing baz and quaz here as they are added to `list` and will be freed by teardown
-    nodelist_free(other_list);
 }
 END_TEST
 
@@ -395,7 +349,6 @@ START_TEST (map)
     assert_scalar_kind(one, SCALAR_INTEGER);
     assert_scalar_value(one, "2");
 
-    nodelist_free_nodes(result);
     nodelist_free(result);
 }
 END_TEST
@@ -440,9 +393,7 @@ bool fail_transform(node *each __attribute__((unused)), void *context, nodelist 
 Suite *nodelist_suite(void)
 {
     TCase *bad_input_case = tcase_create("bad input");
-    tcase_add_test(bad_input_case, bad_clear);
     tcase_add_test(bad_input_case, bad_length);
-    tcase_add_test(bad_input_case, bad_is_empty);
     tcase_add_test(bad_input_case, bad_get);
     tcase_add_test(bad_input_case, bad_add);
     tcase_add_test(bad_input_case, bad_set);
@@ -457,7 +408,6 @@ Suite *nodelist_suite(void)
     tcase_add_checked_fixture(mutate_case, nodelist_setup, nodelist_teardown);
     tcase_add_test(mutate_case, add);
     tcase_add_test(mutate_case, set);
-    tcase_add_test(mutate_case, add_all);
 
     TCase *iterate_case = tcase_create("iterate");
     tcase_add_checked_fixture(iterate_case, nodelist_setup, nodelist_teardown);

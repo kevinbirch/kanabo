@@ -382,6 +382,7 @@ static bool end_sequence(loader_context *context)
     node *sequence = context->target;
     loader_trace("completed sequence (%p)", sequence);
     loader_trace("added sequence (%p) of length: %zd", sequence, node_size(sequence));
+    vector_trim(sequence->content.sequence);
     context->target = sequence->parent;
     
     return false;

@@ -68,7 +68,6 @@ LICENSE file for more details.
 
 ### loader
 
-* replace nodelist with vector
 * handle anchors and aliases
 * support sets and ordered maps
 
