@@ -47,13 +47,13 @@
 #define make_regex(MEMBER, PATTERN) context->MEMBER = (regex_t *)malloc(sizeof(regex_t)); \
     if(NULL == context->MEMBER)                                         \
     {                                                                   \
-        loader_error("uh oh! out of memory, can't allocate the number regex");\
+        loader_error("uh oh! out of memory, can't allocate a regex");   \
         context->code = ERR_LOADER_OUT_OF_MEMORY;                       \
         return context;                                                 \
     }                                                                   \
     if(regcomp(context->MEMBER, PATTERN, REG_EXTENDED | REG_NOSUB))     \
     {                                                                   \
-        loader_error("uh oh! can't compile the decimal regex");         \
+        loader_error("uh oh! can't compile a regex");                   \
         context->code = ERR_OTHER;                                      \
         return context;                                                 \
     }
@@ -156,9 +156,6 @@ static loader_context *make_loader(void)
 
     context->parser = parser;
     context->model = model;
-    context->excursions = NULL;
-    context->head = NULL;
-    context->last = NULL;
 
     make_regex(decimal_regex, "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$");
     make_regex(integer_regex, "^-?(0|([1-9][[:digit:]]*))$");
@@ -184,19 +181,6 @@ void loader_free(loader_context *context)
     free(context->parser);
     context->parser = NULL;
 
-    for(struct excursion *entry = context->excursions; NULL != entry; entry = context->excursions)
-    {
-        context->excursions = entry->next;
-        free(entry);
-    }
-    context->excursions = NULL;
-    for(struct cell *entry = context->head; NULL != entry; entry = context->head)
-    {
-        context->head = entry->next;
-        free(entry);
-    }
-    context->head = NULL;
-    context->last = NULL;
     context->model = NULL;
     regfree(context->decimal_regex);
     free(context->decimal_regex);

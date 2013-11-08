@@ -62,16 +62,9 @@ enum scalar_kind
     SCALAR_NULL
 };
 
-struct key_value_pair
-{
-    struct node *key;
-    struct node *value;
-};
-
-typedef struct key_value_pair key_value_pair;
-
 struct node
 {
+    struct node *parent;
     struct 
     {
         enum node_kind  kind;
@@ -138,7 +131,7 @@ bool mapping_iterate(const node *mapping, mapping_iterator iterator, void *conte
 
 document_model *make_model(void);
 
-node *make_document_node(node * root);
+node *make_document_node(void);
 node *make_sequence_node(void);
 node *make_mapping_node(void);
 node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kind);
@@ -155,5 +148,5 @@ bool model_add(document_model *model, node *document);
 bool document_set_root(node *document, node *root);
 bool sequence_add(node *sequence, node *item);
 bool sequence_set(node *sequence, node *item, size_t index);
-bool mapping_put(node *mapping, node *key, node *value);
+bool mapping_put(node *mapping, uint8_t *key, size_t length, node *value);
 

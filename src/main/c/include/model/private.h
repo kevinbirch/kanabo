@@ -38,5 +38,4 @@
 
 #pragma once
 
-bool scalar_equals(const node *one, const node *two);
-bool node_comparitor(const void *one, const void *two);
+uint8_t *make_key(uint8_t *scalar, size_t length);

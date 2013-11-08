@@ -165,7 +165,8 @@ START_TEST (relative_path)
 
     document_model *bad_model = make_model();
     node *root = make_mapping_node();
-    node *document = make_document_node(root);
+    node *document = make_document_node();
+    document_set_root(document, root);
     model_add(bad_model, document);
 
     evaluator_context *evaluator = make_evaluator(bad_model, path);
@@ -190,7 +191,8 @@ START_TEST (empty_path)
 
     document_model *bad_model = make_model();
     node *root = make_mapping_node();
-    node *document = make_document_node(root);
+    node *document = make_document_node();
+    document_set_root(document, root);
     model_add(bad_model, document);
 
     evaluator_context *evaluator = make_evaluator(bad_model, path);
@@ -341,7 +343,8 @@ START_TEST (relative_context_path)
 
     document_model *bad_model = make_model();
     node *root = make_mapping_node();
-    node *document = make_document_node(root);
+    node *document = make_document_node();
+    document_set_root(document, root);
     model_add(bad_model, document);
 
     evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
@@ -370,7 +373,8 @@ START_TEST (empty_context_path)
 
     document_model *bad_model = make_model();
     node *root = make_mapping_node();
-    node *document = make_document_node(root);
+    node *document = make_document_node();
+    document_set_root(document, root);
     model_add(bad_model, document);
 
     evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));

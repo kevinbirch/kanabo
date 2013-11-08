@@ -47,19 +47,17 @@ static inline node *make_node(enum node_kind kind);
 static inline void sequence_free(node *sequence);
 static inline void mapping_free(node *mapping);
 
-static hashcode scalar_node_hash(const void *key);
+static bool scalar_comparitor(const void *one, const void *two);
+static hashcode scalar_hash(const void *key);
 static bool sequence_freedom_iterator(void *each, void *context __attribute__((unused)));
 static bool mapping_freedom_iterator(void *key, void *value, void *context);
 
-node *make_document_node(node *root)
+node *make_document_node(void)
 {
-    PRECOND_NONNULL_ELSE_NULL(root);
-
     node *result = make_node(DOCUMENT);
     if(NULL != result)
     {
-        result->content.size = 1;
-        result->content.document.root = root;
+        result->content.size = 0;
     }
 
     return result;
@@ -87,7 +85,7 @@ node *make_mapping_node(void)
     node *result = make_node(MAPPING);
     if(NULL != result)
     {
-        result->content.mapping = make_hashtable_with_function(node_comparitor, scalar_node_hash);
+        result->content.mapping = make_hashtable_with_function(scalar_comparitor, scalar_hash);
         if(NULL == result->content.mapping)
         {
             free(result);
@@ -203,7 +201,7 @@ static inline void sequence_free(node *sequence)
 
 static bool mapping_freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
 {
-    node_free((node *)key);
+    free(key);
     node_free((node *)value);
     
     return true;
@@ -238,9 +236,38 @@ document_model *make_model(void)
     return result;
 }
 
-static hashcode scalar_node_hash(const void *key)
+uint8_t *make_key(uint8_t *scalar, size_t length)
 {
-    node *scalar = (node *)key;
-    return shift_add_xor_string_buffer_hash(scalar_value(scalar), node_size(scalar));
+    uint8_t *key = calloc(1, sizeof(size_t) + length);
+    memcpy(key, &length, sizeof(size_t));
+    memcpy(key + sizeof(size_t), scalar, length);
+
+    return key;
 }
 
+static hashcode scalar_hash(const void *scalar)
+{
+    uint8_t *key = ((uint8_t *)scalar) + sizeof(size_t);
+    size_t *length = (size_t *)scalar;
+    return shift_add_xor_string_buffer_hash(key, *length);
+}
+
+static bool scalar_comparitor(const void *one, const void *two)
+{
+    if(one == two)
+    {
+        return true;
+    }
+    uint8_t *one_value = ((uint8_t *)one) + sizeof(size_t);
+    size_t  *one_length = (size_t *)one;
+
+    uint8_t *two_value = ((uint8_t *)two) + sizeof(size_t);
+    size_t  *two_length = (size_t *)two;
+
+    if(*one_length != *two_length)
+    {
+        return false;
+    }
+
+    return 0 == memcmp(one_value, two_value, *one_length);
+}

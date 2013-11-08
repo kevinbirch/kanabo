@@ -55,23 +55,19 @@ static void event_loop(loader_context *context);
 static bool dispatch_event(yaml_event_t *event, loader_context *context);
 
 static bool add_scalar(loader_context *context, yaml_event_t *event);
+static enum scalar_kind resolve_scalar_kind(const loader_context *context, const yaml_event_t *event);
 static enum scalar_kind tag_to_scalar_kind(const yaml_event_t *tag);
-static bool regex_test(yaml_event_t *event, regex_t *regex);
+static bool regex_test(const yaml_event_t *event, const regex_t *regex);
+
 static bool add_node(loader_context *context, node *value);
 
-static bool save_excursion(loader_context *context, yaml_char_t *tag);
-static bool unwind_excursion(loader_context *loader, collector function, void *context);
+static bool start_mapping(loader_context *context, yaml_char_t *tag);
+static bool end_mapping(loader_context *context);
+static bool start_sequence(loader_context *context, yaml_char_t *tag);
+static bool end_sequence(loader_context *context);
+static bool start_document(loader_context *context);
+static bool end_document(loader_context *context);
 
-static bool unwind_sequence(loader_context *context);
-static bool unwind_mapping(loader_context *context);
-static bool unwind_document(loader_context *context);
-static bool unwind_model(loader_context *context);
-
-static bool collect_sequence(node *each, void *context);
-static bool collect_mapping(node *each, void *context);
-
-static node *pop_context(loader_context *context);
-static node *pop_node(loader_context *context, struct cell **prev);
 
 document_model *build_model(loader_context *context)
 {
@@ -79,7 +75,6 @@ document_model *build_model(loader_context *context)
 
     if(LOADER_SUCCESS == context->code)
     {
-        unwind_model(context);
         loader_debug("done. found %zd documents.", model_document_count(context->model));
     }
     else
@@ -115,7 +110,7 @@ static void event_loop(loader_context *context)
             break;
         }
     }
-    loader_trace("finished parsing");
+    loader_trace("finished loading");
 }
 
 static bool dispatch_event(yaml_event_t *event, loader_context *context)
@@ -139,11 +134,12 @@ static bool dispatch_event(yaml_event_t *event, loader_context *context)
                 
         case YAML_DOCUMENT_START_EVENT:
             loader_trace("received document start event");
+            done = start_document(context);
             break;
 
         case YAML_DOCUMENT_END_EVENT:
             loader_trace("received document end event");
-            done = unwind_document(context);
+            done = end_document(context);
             break;
                 
         case YAML_ALIAS_EVENT:
@@ -157,73 +153,58 @@ static bool dispatch_event(yaml_event_t *event, loader_context *context)
 
         case YAML_SEQUENCE_START_EVENT:
             loader_trace("received sequence start event");
-            done = save_excursion(context, event->data.scalar.tag);
+            done = start_sequence(context, event->data.sequence_start.tag);
             break;                
                 
         case YAML_SEQUENCE_END_EVENT:
             loader_trace("received sequence end event");
-            done = unwind_sequence(context);
+            done = end_sequence(context);
             break;
             
         case YAML_MAPPING_START_EVENT:
             loader_trace("received mapping start event");
-            done = save_excursion(context, event->data.scalar.tag);
+            done = start_mapping(context, event->data.mapping_start.tag);
             break;
 
         case YAML_MAPPING_END_EVENT:
             loader_trace("received mapping end event");
-            done = unwind_mapping(context);
+            done = end_mapping(context);
             break;                
     }
 
     return done;
 }
 
-static bool save_excursion(loader_context *context, yaml_char_t *tag)
-{
-    struct excursion *excursion = calloc(1, sizeof(struct excursion));
-    if(NULL == excursion)
-    {
-        loader_error("uh oh! couldn't create an excursion object, aborting...");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return true;
-    }
-    loader_trace("saving excursion (%p) from node: %p", excursion, NULL == context->last ? NULL : context->last->this);
-    excursion->length = 0;
-    if(NULL != tag)
-    {
-        size_t length = strlen((char *)tag);
-        excursion->tag = (uint8_t *)calloc(1, length + 1);
-        if(NULL == excursion->tag)
-        {
-            loader_error("uh oh! couldn't create tag object, aborting...");
-            context->code = ERR_LOADER_OUT_OF_MEMORY;
-            return true;
-        }
-        memcpy(excursion->tag, tag, length);
-        excursion->tag[length] = '\0';
-    }
-    excursion->head = context->last;
-
-    if(NULL == context->excursions)
-    {
-        loader_trace("no previous excursion");
-        context->excursions = excursion;
-        excursion->next = NULL;
-    }
-    else
-    {
-        loader_trace("previous excursion (%p) is depth: %zd", context->excursions, context->excursions->length);
-        excursion->next = context->excursions;
-        context->excursions = excursion;
-    }
-    return false;
-}
-
 static bool add_scalar(loader_context *context, yaml_event_t *event)
 {
+    enum scalar_kind kind = resolve_scalar_kind(context, event);
+
+    if(NULL == context->key_holder.value && MAPPING == node_kind(context->target))
+    {
+        trace_string("caching scalar '%s' (%p) as mapping key", event->data.scalar.value, event->data.scalar.length, event->data.scalar.value);
+        context->key_holder.value = event->data.scalar.value;
+        context->key_holder.length = event->data.scalar.length;
+        return false;
+    }
+
+    node *scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, kind);
+    if(NULL == scalar)
+    {
+        loader_error("uh oh! couldn't create scalar node, aborting...");
+        return true;
+    }
+    if(NULL != event->data.scalar.tag)
+    {
+        node_set_tag(scalar, event->data.scalar.tag, strlen((char *)event->data.scalar.tag));
+    }
+
+    return add_node(context, scalar);
+}
+
+static enum scalar_kind resolve_scalar_kind(const loader_context *context, const yaml_event_t *event)
+{
     enum scalar_kind kind = SCALAR_STRING;
-    
+
     if(NULL != event->data.scalar.tag)
     {
         kind = tag_to_scalar_kind(event);
@@ -262,21 +243,10 @@ static bool add_scalar(loader_context *context, yaml_event_t *event)
     }
     else
     {
-        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length, event->data.scalar.length);
+        trace_string("defaulting to scalar string '%s'", event->data.scalar.value, event->data.scalar.length, event->data.scalar.length);
     }
 
-    node *scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, kind);
-    if(NULL == scalar)
-    {
-        loader_error("uh oh! couldn't create scalar node, aborting...");
-        return true;
-    }
-    if(NULL != event->data.scalar.tag)
-    {
-        node_set_tag(scalar, event->data.scalar.tag, strlen((char *)event->data.scalar.tag));
-    }
-
-    return add_node(context, scalar);
+    return kind;
 }
 
 static enum scalar_kind tag_to_scalar_kind(const yaml_event_t *event)
@@ -316,7 +286,7 @@ static enum scalar_kind tag_to_scalar_kind(const yaml_event_t *event)
     return SCALAR_STRING;
 }
 
-static bool regex_test(yaml_event_t *event, regex_t *regex)
+static bool regex_test(const yaml_event_t *event, const regex_t *regex)
 {
     char string[event->data.scalar.length + 1];
     memcpy(string, event->data.scalar.value, event->data.scalar.length);
@@ -327,42 +297,60 @@ static bool regex_test(yaml_event_t *event, regex_t *regex)
 
 static bool add_node(loader_context *context, node *value)
 {    
-    loader_trace("adding node to cache");
-    struct cell *current = (struct cell *)calloc(1, sizeof(struct cell));
-    if(NULL == current)
+    switch(node_kind(context->target))
     {
-        loader_error("uh oh! couldn't create a node, aborting...");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return true;
+        case DOCUMENT:
+            loader_trace("adding node to document context (%p)", context->target);
+            return !document_set_root(context->target, value);
+        case SEQUENCE:
+            loader_trace("adding node to sequence context (%p)", context->target);
+            return !sequence_add(context->target, value);
+        case MAPPING:
+        {
+            loader_trace("adding node to mapping context (%p)", context->target);
+            bool done = !mapping_put(context->target, context->key_holder.value, context->key_holder.length, value);
+            if(!done)
+            {
+                context->key_holder.value = NULL;
+                context->key_holder.length = 0ul;
+            }
+            return done;
+        }
+        case SCALAR:
+            loader_error("uh oh! a scalar node has become the context node, aborting...");
+            return true;
     }
-    current->this = value;    
-    current->next = NULL;
-
-    if(NULL == context->head)
-    {
-        loader_trace("cache is empty, this will be the head node");
-        context->length = 0;
-        context->head = current;
-    }
-    else
-    {
-        loader_trace("adding after %p", context->last->this);
-        context->last->next = current;
-    }
-    context->last = current;
-    context->length++;
-
-    if(NULL != context->excursions)
-    {
-        context->excursions->length++;
-    }
-
-    loader_trace("added node (%p), cache size: %zd, excursion length: %zd", value, context->length, NULL == context->excursions ? 0 : context->excursions->length);
 
     return false;
 }
 
-static bool unwind_sequence(loader_context *context)
+
+static bool start_document(loader_context *context)
+{
+    node *document = make_document_node();
+    if(NULL == document)
+    {
+        loader_error("uh oh! couldn't create new document node, aborting...");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        return true;
+    }
+    loader_trace("started document (%p)", document);
+    context->target = document;
+    return false;
+}
+
+static bool end_document(loader_context *context)
+{
+    node *document = context->target;
+    loader_trace("completed document (%p)", document);
+
+    model_add(context->model, document);
+    loader_trace("added document (%p) to model (%p)", document, context->model);
+    context->target = NULL;
+
+    return false;
+}
+static bool start_sequence(loader_context *context, yaml_char_t *tag)
 {
     node *sequence = make_sequence_node();
     if(NULL == sequence)
@@ -371,24 +359,29 @@ static bool unwind_sequence(loader_context *context)
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return true;
     }
-    if(NULL != context->excursions->tag)
+    if(NULL != tag)
     {
-        node_set_tag_nocopy(sequence, context->excursions->tag);
+        node_set_tag(sequence, tag, strlen((char *)tag));
     }
-    loader_trace("unwinding sequence (%p)", sequence);
-    if(unwind_excursion(context, collect_sequence, sequence))
-    {
-        loader_error("uh oh! couldn't build the sequence, aborting...");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        free(sequence);
-        return true;
-    }
+    loader_trace("started sequence (%p)", sequence);
+    
     add_node(context, sequence);
-    loader_trace("added sequence (%p) of length: %zd", sequence, node_size(sequence));
+
+    context->target = sequence;
     return false;
 }
 
-static bool unwind_mapping(loader_context *context)
+static bool end_sequence(loader_context *context)
+{
+    node *sequence = context->target;
+    loader_trace("completed sequence (%p)", sequence);
+    loader_trace("added sequence (%p) of length: %zd", sequence, node_size(sequence));
+    context->target = sequence->parent;
+    
+    return false;
+}
+
+static bool start_mapping(loader_context *context, yaml_char_t *tag)
 {
     node *mapping = make_mapping_node();
     if(NULL == mapping)
@@ -397,128 +390,24 @@ static bool unwind_mapping(loader_context *context)
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return true;
     }
-    if(NULL != context->excursions->tag)
+    if(NULL != tag)
     {
-        node_set_tag_nocopy(mapping, context->excursions->tag);
+        node_set_tag(mapping, tag, strlen((char *)tag));
     }
-    loader_trace("unwinding mapping (%p)", mapping);
-    if(unwind_excursion(context, collect_mapping, &(struct mapping_context){.key=NULL, .mapping=mapping}))
-    {
-        loader_error("uh oh! couldn't build the mapping, aborting...");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        free(mapping);
-        return true;
-    }
-
+    loader_trace("started mapping (%p)", mapping);
+    
     add_node(context, mapping);
-    loader_trace("added mapping of length: %zd", node_size(mapping));
+
+    context->target = mapping;
     return false;
 }
 
-static bool unwind_document(loader_context *context)
+static bool end_mapping(loader_context *context)
 {
-    loader_trace("unwinding document");
-    node *root = pop_context(context);
-    node *document = make_document_node(root);
-    if(NULL == document)
-    {
-        loader_error("uh oh! couldn't create new document node, aborting...");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return true;
-    }
-    add_node(context, document);
+    node *mapping = context->target;
+    loader_trace("completed mapping (%p)", mapping);
+    loader_trace("loaded mapping of length: %zd", node_size(mapping));
+    context->target = mapping->parent;
 
     return false;
 }
-
-static bool unwind_model(loader_context *context)
-{
-    loader_trace("unwinding model");
-    while(0 < context->length)
-    {
-        loader_trace("adding document node");
-        if(!model_add(context->model, pop_context(context)))
-        {
-            loader_error("uh oh! unable to add document to model, aborting...");
-            context->code = ERR_LOADER_OUT_OF_MEMORY;
-            return true;
-        }
-    }
-    return false;
-}
-
-/* 
- * Utility Functions
- * =================
- */
-
-static bool collect_sequence(node *each, void *context)
-{
-    node *sequence = (node *)context;
-    loader_trace("adding node (%p) to sequence (%p)", each, sequence);
-    return sequence_add(sequence, each);
-}
-
-static bool collect_mapping(node *each, void *context)
-{
-    struct mapping_context *argument = (struct mapping_context *)context;
-    if(NULL == argument->key)
-    {
-        loader_trace("caching mapping key (%p) for next invocation", each);
-        argument->key = each;
-        return true;
-    }
-    else
-    {
-        loader_trace("adding key (%p) and value (%p) to mapping (%p)", argument->key, each, argument->mapping);
-        bool result = mapping_put(argument->mapping, argument->key, each);
-        argument->key = NULL;
-        return result;
-    }
-}
-
-static bool unwind_excursion(loader_context *loader, collector function, void *context)
-{
-    loader_trace("unwinding excursion of length: %zd", loader->excursions->length);
-    struct cell **cursor = NULL == loader->excursions->head ? &loader->head : &loader->excursions->head->next;
-    while(NULL != *cursor)
-    {
-        if(!function(pop_node(loader, cursor), context))
-        {
-            loader_error("uh oh! excursion collector failed, aborting...");
-            return true;
-        }
-    }
-
-    loader->last = loader->excursions->head;
-    struct excursion *top = loader->excursions;
-    loader->excursions = loader->excursions->next;
-    free(top);
-    loader_trace("cache size now: %zd", loader->length);
-
-    return false;
-}
-
-static node *pop_context(loader_context *context)
-{
-    node *result = pop_node(context, &context->head);
-    loader_trace("popping node (%p) from head of cache", result);
-    return result;
-}
-
-static node *pop_node(loader_context *context, struct cell **cursor)
-{
-    node *result = (*cursor)->this;
-    loader_trace("extracting node (%p) from cache", result);
-
-    struct cell *entry = *cursor;
-    *cursor = (*cursor)->next;
-    entry->next = NULL;
-    free(entry);
-    entry = NULL;
-
-    context->length--;
-
-    return result;
-}
-

@@ -56,7 +56,10 @@ struct context_adapter_s
 
 typedef struct context_adapter_s context_adapter;
 
+static bool node_comparitor(const void *one, const void *two);
 static bool tag_equals(const uint8_t *one, const uint8_t *two);
+
+static bool scalar_equals(const node *one, const node *two);
 static bool sequence_equals(const node *one, const node *two);
 static bool mapping_equals(const node *one, const node *two);
 
@@ -166,27 +169,28 @@ bool sequence_iterate(const node *sequence, sequence_iterator iterator, void *co
     return vector_iterate(sequence->content.sequence, sequence_iterator_adpater, &adapter);
 }
 
-node *mapping_get(const node *mapping, uint8_t *key, size_t length)
+node *mapping_get(const node *mapping, uint8_t *scalar, size_t length)
 {
-    PRECOND_NONNULL_ELSE_NULL(mapping, key);
+    PRECOND_NONNULL_ELSE_NULL(mapping, scalar);
     PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
     PRECOND_ELSE_NULL(0 < length);
 
-    node *scalar = make_scalar_node(key, length, SCALAR_STRING);
-    node *result = hashtable_get(mapping->content.mapping, (void *)scalar);
-    node_free(scalar);
+    uint8_t *key = make_key(scalar, length);
+    node *result = hashtable_get(mapping->content.mapping, key);
+    free(key);
     
     return result;
 }
 
-bool mapping_contains(const node *mapping, uint8_t *key, size_t length)
+bool mapping_contains(const node *mapping, uint8_t *scalar, size_t length)
 {
-    PRECOND_NONNULL_ELSE_NULL(mapping, key);
+    PRECOND_NONNULL_ELSE_NULL(mapping, scalar);
     PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
+    PRECOND_ELSE_NULL(0 < length);
 
-    node *scalar = make_scalar_node(key, length, SCALAR_STRING);
-    bool result = hashtable_contains(mapping->content.mapping, scalar);
-    node_free(scalar);
+    uint8_t *key = make_key(scalar, length);
+    bool result = hashtable_contains(mapping->content.mapping, key);
+    free(key);
 
     return result;
 }
@@ -244,7 +248,7 @@ bool node_equals(const node *one, const node *two)
     return result;
 }
 
-bool scalar_equals(const node *one, const node *two)
+static bool scalar_equals(const node *one, const node *two)
 {
     size_t n1 = node_size(one);
     size_t n2 = node_size(two);
@@ -271,7 +275,7 @@ static bool tag_equals(const uint8_t *one, const uint8_t *two)
     return memcmp(one, two, n1 > n2 ? n2 : n1) == 0;
 }
 
-bool node_comparitor(const void *one, const void *two)
+static bool node_comparitor(const void *one, const void *two)
 {
     return node_equals((node *)one, (node *)two);
 }

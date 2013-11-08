@@ -68,9 +68,8 @@ LICENSE file for more details.
 
 ### loader
 
-* refactor and simply loading with hashtables and vectors
 * forbid non-scalars as mapping keys
-* allow empty scalar values, forbid empty scalar keys
+* replace nodelist with vector
 * handle anchors and aliases
 * support sets and ordered maps
 

@@ -42,34 +42,22 @@
 
 #include "log.h"
 
-struct cell
-{
-    node        *this;
-    struct cell *next;
-};
-
-struct excursion
-{
-    size_t            length;
-    uint8_t          *tag;
-    struct cell      *head;
-    struct excursion *next;
-};
-
 struct loader_context
 {
     yaml_parser_t     *parser;
+    loader_status_code code;
     document_model    *model;
-    struct excursion  *excursions;
+
+    node              *target;
+    struct 
+    {
+        uint8_t *value;
+        size_t   length;
+    } key_holder;
+
     regex_t           *decimal_regex;
     regex_t           *integer_regex;
     regex_t           *timestamp_regex;
-
-    size_t             length;
-    struct cell       *head;
-    struct cell       *last;
-
-    loader_status_code code;
 };
 
 document_model *build_model(loader_context *context);

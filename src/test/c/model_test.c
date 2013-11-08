@@ -161,51 +161,36 @@ void model_setup(void)
     sequence_add(one_value, one_point_five);
     assert_noerr();
     reset_errno();
-    node *one = make_scalar_node((uint8_t *)"one", 3, SCALAR_STRING);
-    assert_noerr();
-    assert_not_null(one);
-    reset_errno();
-    mapping_put(root, one, one_value);
+    mapping_put(root, (uint8_t *)"one", 3, one_value);
     assert_noerr();
     
-    reset_errno();
-    node *two = make_scalar_node((uint8_t *)"two", 3, SCALAR_STRING);
-    assert_noerr();
-    assert_not_null(two);
     reset_errno();
     node *two_value = make_scalar_node((uint8_t *)"foo2", 4, SCALAR_STRING);
     assert_noerr();
     assert_not_null(two_value);
     reset_errno();
-    mapping_put(root, two, two_value);
+    mapping_put(root, (uint8_t *)"two", 3, two_value);
     assert_noerr();
     
-    reset_errno();
-    node *three = make_scalar_node((uint8_t *)"three", 5, SCALAR_STRING);
-    assert_noerr();
-    assert_not_null(three);
     reset_errno();
     node *three_value = make_scalar_node((uint8_t *)"false", 5, SCALAR_BOOLEAN);
     assert_noerr();
     assert_not_null(three_value);
     reset_errno();
-    mapping_put(root, three, three_value);
+    mapping_put(root, (uint8_t *)"three", 5, three_value);
     assert_noerr();
 
-    reset_errno();
-    node *four = make_scalar_node((uint8_t *)"four", 4, SCALAR_STRING);
-    assert_noerr();
-    assert_not_null(four);
     reset_errno();
     node *four_value = make_scalar_node((uint8_t *)"true", 4, SCALAR_BOOLEAN);
     assert_noerr();
     assert_not_null(four_value);
     reset_errno();
-    mapping_put(root, four, four_value);
+    mapping_put(root, (uint8_t *)"four", 4, four_value);
     assert_noerr();
 
     reset_errno();
-    node *document = make_document_node(root);
+    node *document = make_document_node();
+    document_set_root(document, root);
     assert_noerr();
     assert_not_null(document);
     reset_errno();
@@ -232,12 +217,8 @@ START_TEST (constructors)
     assert_not_null(s);
     
     reset_errno();
-    node *d = make_document_node(NULL);
-    assert_errno(EINVAL);
-    assert_null(d);
-
-    reset_errno();
-    d = make_document_node(s);
+    node *d = make_document_node();
+    document_set_root(d, s);
     assert_noerr();
     assert_not_null(d);
     node_free(d); // N.B. - this will also free `s'

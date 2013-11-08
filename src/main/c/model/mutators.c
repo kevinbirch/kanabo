@@ -39,6 +39,7 @@
 #include <errno.h>
 
 #include "model.h"
+#include "model/private.h"
 #include "conditions.h"
 
 void node_set_tag(node *target, const uint8_t *value, size_t length)
@@ -72,6 +73,7 @@ bool document_set_root(node *document, node *root)
     PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
 
     document->content.document.root = root;
+    root->parent = document;
     return true;
 }
 
@@ -84,6 +86,7 @@ bool sequence_add(node *sequence, node *item)
     if(result)
     {
         sequence->content.size = vector_length(sequence->content.sequence);
+        item->parent = sequence;
     }
     return result;
 }
@@ -93,19 +96,31 @@ bool sequence_set(node *sequence, node *item, size_t index)
     PRECOND_NONNULL_ELSE_FALSE(sequence, item);
     PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence), index < sequence->content.size);
 
-    return vector_set(sequence->content.sequence, item, index);
+    bool result = vector_set(sequence->content.sequence, item, index);
+    if(result)
+    {
+        item->parent = sequence;
+    }
+
+    return result;
 }
 
-bool mapping_put(node *mapping, node *key, node *value)
+bool mapping_put(node *mapping, uint8_t *scalar, size_t length, node *value)
 {
-    PRECOND_NONNULL_ELSE_FALSE(mapping, key, value);
-    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping), SCALAR == node_kind(key));
+    PRECOND_NONNULL_ELSE_FALSE(mapping, scalar, value);
+    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping));
 
+    uint8_t *key = make_key(scalar, length);
+    if(NULL == key)
+    {
+        return false;
+    }
     errno = 0;
     hashtable_put(mapping->content.mapping, key, value);
     if(0 == errno)
     {
         mapping->content.size = hashtable_size(mapping->content.mapping);
+        value->parent = mapping;
     }
     return 0 == errno;
 }
