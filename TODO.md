@@ -68,7 +68,6 @@ LICENSE file for more details.
 
 ### loader
 
-* forbid non-scalars as mapping keys
 * replace nodelist with vector
 * handle anchors and aliases
 * support sets and ordered maps

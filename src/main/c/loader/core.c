@@ -352,6 +352,12 @@ static bool end_document(loader_context *context)
 }
 static bool start_sequence(loader_context *context, yaml_char_t *tag)
 {
+    if(NULL == context->key_holder.value && MAPPING == node_kind(context->target))
+    {
+        loader_error("uh oh! found a non scalar mapping key, aborting...");
+        context->code = ERR_NON_SCALAR_KEY;
+        return true;
+    }
     node *sequence = make_sequence_node();
     if(NULL == sequence)
     {
@@ -383,6 +389,12 @@ static bool end_sequence(loader_context *context)
 
 static bool start_mapping(loader_context *context, yaml_char_t *tag)
 {
+    if(NULL == context->key_holder.value && MAPPING == node_kind(context->target))
+    {
+        loader_error("uh oh! found a non scalar mapping key, aborting...");
+        context->code = ERR_NON_SCALAR_KEY;
+        return true;
+    }
     node *mapping = make_mapping_node();
     if(NULL == mapping)
     {
