@@ -125,37 +125,43 @@ loader_context *make_file_loader(FILE *input)
 
 static loader_context *make_loader(void)
 {
+    loader_debug("creating common loader context");
     loader_context *context = (loader_context *)calloc(1, sizeof(loader_context));
     if(NULL == context)
     {
         loader_error("uh oh! out of memory, can't allocate the loader context");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
         return NULL;
     }
 
-    yaml_parser_t *parser = (yaml_parser_t *)calloc(1, sizeof(yaml_parser_t));
-    if(NULL == parser)
+    context->parser = (yaml_parser_t *)calloc(1, sizeof(yaml_parser_t));
+    if(NULL == context->parser)
     {
         loader_error("uh oh! out of memory, can't allocate the yaml parser");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return context;
-    }
-    document_model *model = make_model();
-    if(NULL == model)
-    {
-        loader_error("uh oh! out of memory, can't allocate the document model");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return context;
+        free(context);
+        return NULL;
     }
     
-    if(!yaml_parser_initialize(parser))
+    context->anchors = make_hashtable_with_function(string_comparitor, shift_add_xor_string_hash);
+    if(NULL == context->anchors)
     {
-        loader_error("uh oh! can't initialize the yaml parser");
-        context->code = interpret_yaml_error(parser);
-        return context;
+        loader_error("uh oh! out of memory, can't allocate the anchor table");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        free(context->parser);
+        free(context);
+        return NULL;
     }
 
-    context->parser = parser;
-    context->model = model;
+    if(!yaml_parser_initialize(context->parser))
+    {
+        loader_error("uh oh! can't initialize the yaml parser");
+        context->code = interpret_yaml_error(context->parser);
+        free(context->parser);
+        free(context->anchors);
+        free(context);
+        return NULL;
+    }
 
     make_regex(decimal_regex, "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$");
     make_regex(integer_regex, "^-?(0|([1-9][[:digit:]]*))$");
@@ -181,7 +187,9 @@ void loader_free(loader_context *context)
     free(context->parser);
     context->parser = NULL;
 
-    context->model = NULL;
+    hashtable_free(context->anchors);
+    context->anchors = NULL;
+
     regfree(context->decimal_regex);
     free(context->decimal_regex);
     regfree(context->integer_regex);
@@ -196,7 +204,6 @@ document_model *load(loader_context *context)
 {
     PRECOND_NONNULL_ELSE_NULL(context);
     PRECOND_NONNULL_ELSE_NULL(context->parser);
-    PRECOND_NONNULL_ELSE_NULL(context->model);
 
     loader_debug("starting load...");
     return build_model(context);

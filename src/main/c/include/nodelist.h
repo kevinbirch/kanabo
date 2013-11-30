@@ -58,8 +58,6 @@ bool nodelist_set(nodelist *list, void *value, size_t index);
 typedef bool (*nodelist_iterator)(node *each, void *context);
 bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
 
-bool add_to_nodelist_sequence_iterator(node *each, void *context);
-
 typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
 
 nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);

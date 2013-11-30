@@ -41,7 +41,6 @@
 #include <errno.h>
 
 #include "model.h"
-#include "model/private.h"
 #include "conditions.h"
 
 struct context_adapter_s
@@ -95,6 +94,14 @@ size_t model_document_count(const document_model *model)
     return vector_length(model->documents);
 }
 
+node *document_root(const node *document)
+{
+    PRECOND_NONNULL_ELSE_NULL(document);
+    PRECOND_ELSE_NULL(DOCUMENT == node_kind(document));
+
+    return document->content.target;
+}
+
 enum node_kind node_kind(const node *value)
 {
     return value->tag.kind;
@@ -114,12 +121,10 @@ size_t node_size(const node *value)
     return value->content.size;
 }
 
-node *document_root(const node *document)
+node *node_parent(const node *value)
 {
-    PRECOND_NONNULL_ELSE_NULL(document);
-    PRECOND_ELSE_NULL(DOCUMENT == node_kind(document));
-
-    return document->content.document.root;
+    PRECOND_NONNULL_ELSE_NULL(value);
+    return value->parent;
 }
 
 uint8_t *scalar_value(const node *scalar)
@@ -175,23 +180,10 @@ node *mapping_get(const node *mapping, uint8_t *scalar, size_t length)
     PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
     PRECOND_ELSE_NULL(0 < length);
 
-    uint8_t *key = make_key(scalar, length);
+    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
     node *result = hashtable_get(mapping->content.mapping, key);
-    free(key);
+    node_free(key);
     
-    return result;
-}
-
-bool mapping_contains(const node *mapping, uint8_t *scalar, size_t length)
-{
-    PRECOND_NONNULL_ELSE_NULL(mapping, scalar);
-    PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
-    PRECOND_ELSE_NULL(0 < length);
-
-    uint8_t *key = make_key(scalar, length);
-    bool result = hashtable_contains(mapping->content.mapping, key);
-    free(key);
-
     return result;
 }
 
@@ -244,6 +236,9 @@ bool node_equals(const node *one, const node *two)
         case MAPPING:
             result &= mapping_equals(one, two);
             break;
+        case ALIAS:
+            result &= node_equals(alias_target(one), alias_target(two));
+            break;
     }
     return result;
 }
@@ -290,4 +285,10 @@ static bool mapping_equals(const node *one, const node *two)
     return hashtable_equals(one->content.mapping, two->content.mapping, node_comparitor);
 }
 
+node *alias_target(const node *alias)
+{
+    PRECOND_NONNULL_ELSE_NULL(alias);
+    PRECOND_ELSE_NULL(ALIAS == node_kind(alias));
 
+    return alias->content.target;
+}

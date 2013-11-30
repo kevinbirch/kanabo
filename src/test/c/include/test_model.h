@@ -60,8 +60,8 @@
 
 #define assert_node_equals(X, Y)              assert_true(node_equals((X), (Y)))
 
-#define assert_mapping_has_key(NODE, KEY)     assert_true(mapping_contains((NODE), (uint8_t *)(KEY), NULL == (KEY) ? 0 : strlen(KEY)))
-#define assert_mapping_has_no_key(NODE, KEY)  assert_false(mapping_contains((NODE), (uint8_t *)(KEY), NULL == (KEY) ? 0 : strlen(KEY)))
+#define assert_mapping_has_key(NODE, KEY)     assert_not_null(mapping_get((NODE), (uint8_t *)(KEY), NULL == (KEY) ? 0 : strlen(KEY)))
+#define assert_mapping_has_no_key(NODE, KEY)  assert_null(mapping_get((NODE), (uint8_t *)(KEY), NULL == (KEY) ? 0 : strlen(KEY)))
 
 #define assert_scalar_kind(NODE, EXPECTED)    assert_int_eq(EXPECTED, scalar_kind((NODE)))
 

@@ -83,7 +83,7 @@ static bool emit_json_node(node *each, void *context __attribute__((unused)))
     {
         case DOCUMENT:
             log_trace(component, "emitting document");
-            result = emit_json_node(document_root(each), NULL);
+            result = emit_json_node(document_root(each), context);
             break;
         case SCALAR:
             result = emit_json_scalar(each);
@@ -99,6 +99,10 @@ static bool emit_json_node(node *each, void *context __attribute__((unused)))
             EMIT("{");
             result = mapping_iterate(each, emit_json_mapping_item, &mapping_count);
             EMIT("}");
+            break;
+        case ALIAS:
+            log_trace(component, "resolving alias");
+            result = emit_json_node(alias_target(each), context);
             break;
     }
 

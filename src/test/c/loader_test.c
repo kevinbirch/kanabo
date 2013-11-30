@@ -46,6 +46,32 @@
 #include "test.h"
 #include "test_model.h"
 
+static const unsigned char * const ALIAS_LOOP_YAML = (unsigned char *)
+    "level1: &id001\n"
+    "  key1-1: foo\n"
+    "  key1-2: bar\n"
+    "  level2:\n"
+    "    key2-1: foo\n"
+    "    key2-2: bar\n"
+    "    level3:\n"
+    "      - *id001\n"
+    "      - bar1\n";
+
+static const unsigned char * const NON_SCALAR_KEY_YAML = (unsigned char *)
+    "foo: 1\n"
+    "? - one\n"
+    "  - two\n"
+    ":\n"
+    "  - foo1\n"
+    "  - bar1\n";
+
+static const unsigned char * const MISSING_ANCHOR_YAML = (unsigned char *)
+    "one:\n"
+    "  - foo1\n"
+    "  - bar1\n"
+    "\n"
+    "two: *value\n";
+
 static const unsigned char * const YAML = (unsigned char *)
     "one:\n"
     "  - foo1\n"
@@ -74,6 +100,20 @@ static const unsigned char * const TAGGED_YAML = (unsigned char *)
     "symbol: !squid!instrument/symbol USD-JPY\n"
     "spot-date: !!timestamp 2008-04-01T10:12:00Z\n"
     "settlement-date: !!timestamp 2008-04-03T09:00:00Z\n";
+
+static const unsigned char * const ANCHOR_YAML = (unsigned char *)
+    "one:\n"
+    "  - &value foo1\n"
+    "  - &value bar1\n"
+    "\n"
+    "two: *value\n";
+
+static const unsigned char * const KEY_ANCHOR_YAML = (unsigned char *)
+    "&value one:\n"
+    "  - foo1\n"
+    "  - *value\n"
+    "two: *value\n";
+
 
 static document_model *tagged_model = NULL;
 static node *tagged_mapping_root = NULL;
@@ -159,32 +199,56 @@ END_TEST
 
 START_TEST (null_context_parser)
 {
-    document_model *model = make_model();
     loader_context *loader = (loader_context *)calloc(1, sizeof(loader_context));
     loader->parser = NULL;
-    loader->model = model;
 
     reset_errno();
     assert_null(load(loader));
     assert_errno(EINVAL);    
 
-    model_free(model);
     free(loader);
 }
 END_TEST
 
-START_TEST (null_context_model)
+START_TEST (non_scalar_key)
 {
-    yaml_parser_t parser;
-    loader_context *loader = (loader_context *)calloc(1, sizeof(loader_context));
-    loader->parser = &parser;
-    loader->model = NULL;
+    size_t yaml_size = strlen((char *)NON_SCALAR_KEY_YAML);
 
-    reset_errno();
+    loader_context *loader = make_string_loader(NON_SCALAR_KEY_YAML, yaml_size);
+    assert_not_null(loader);
     assert_null(load(loader));
-    assert_errno(EINVAL);    
 
-    free(loader);
+    assert_loader_failure(loader, ERR_NON_SCALAR_KEY);
+
+    loader_free(loader);
+}
+END_TEST
+
+START_TEST (alias_loop)
+{
+    size_t yaml_size = strlen((char *)ALIAS_LOOP_YAML);
+
+    loader_context *loader = make_string_loader(ALIAS_LOOP_YAML, yaml_size);
+    assert_not_null(loader);
+    assert_null(load(loader));
+
+    assert_loader_failure(loader, ERR_ALIAS_LOOP);
+
+    loader_free(loader);
+}
+END_TEST
+
+START_TEST (missing_anchor)
+{
+    size_t yaml_size = strlen((char *)MISSING_ANCHOR_YAML);
+
+    loader_context *loader = make_string_loader(MISSING_ANCHOR_YAML, yaml_size);
+    assert_not_null(loader);
+    assert_null(load(loader));
+
+    assert_loader_failure(loader, ERR_NO_ANCHOR_FOR_ALIAS);
+
+    loader_free(loader);
 }
 END_TEST
 
@@ -423,6 +487,95 @@ START_TEST (explicit_tags)
 }
 END_TEST
 
+START_TEST (anchor)
+{
+    size_t yaml_size = strlen((char *)ANCHOR_YAML);
+
+    loader_context *loader = make_string_loader(ANCHOR_YAML, yaml_size);
+    assert_not_null(loader);
+    document_model *model = load(loader);
+    assert_not_null(model);
+    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
+
+    reset_errno();
+    node *root = model_document_root(model, 0);
+    assert_noerr();
+    assert_not_null(root);
+    
+    reset_errno();
+    node *one = mapping_get(root, (uint8_t *)"one", 3ul);
+    assert_noerr();
+    assert_not_null(one);
+    assert_node_kind(one, SEQUENCE);
+    assert_node_size(one, 2);
+
+    reset_errno();
+    node *alias = mapping_get(root, (uint8_t *)"two", 3ul);
+    assert_noerr();
+    assert_not_null(alias);
+    assert_node_kind(alias, ALIAS);
+
+    node *two = alias_target(alias);
+    assert_not_null(two);
+    assert_node_kind(two, SCALAR);
+    assert_scalar_kind(two, SCALAR_STRING);
+    assert_scalar_value(two, "bar1");
+
+    model_free(model);
+    loader_free(loader);
+}
+END_TEST
+
+START_TEST (key_anchor)
+{
+    size_t yaml_size = strlen((char *)KEY_ANCHOR_YAML);
+
+    loader_context *loader = make_string_loader(KEY_ANCHOR_YAML, yaml_size);
+    assert_not_null(loader);
+    document_model *model = load(loader);
+    assert_not_null(model);
+    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
+
+    reset_errno();
+    node *root = model_document_root(model, 0);
+    assert_noerr();
+    assert_not_null(root);
+    
+    reset_errno();
+    node *one = mapping_get(root, (uint8_t *)"one", 3ul);
+    assert_noerr();
+    assert_not_null(one);
+    assert_node_kind(one, SEQUENCE);
+    assert_node_size(one, 2);
+
+    reset_errno();
+    node *alias1 = sequence_get(one, 1);
+    assert_noerr();
+    assert_not_null(alias1);
+    assert_node_kind(alias1, ALIAS);
+
+    node *one_1 = alias_target(alias1);
+    assert_noerr();
+    assert_not_null(one_1);
+    assert_node_kind(one_1, SCALAR);
+    assert_scalar_kind(one_1, SCALAR_STRING);
+    assert_scalar_value(one_1, "one");
+    reset_errno();
+
+    node *alias2 = mapping_get(root, (uint8_t *)"two", 3ul);
+    assert_noerr();
+    assert_not_null(alias2);
+
+    node *two = alias_target(alias2);
+    assert_node_kind(two, SCALAR);
+    assert_scalar_kind(two, SCALAR_STRING);
+    assert_scalar_value(two, "one");
+
+    model_free(model);
+    loader_free(loader);
+}
+END_TEST
+
 Suite *loader_suite(void)
 {
     TCase *bad_input_case = tcase_create("bad input");
@@ -432,7 +585,9 @@ Suite *loader_suite(void)
     tcase_add_test(bad_input_case, eof_file_input);
     tcase_add_test(bad_input_case, null_context);
     tcase_add_test(bad_input_case, null_context_parser);
-    tcase_add_test(bad_input_case, null_context_model);
+    tcase_add_test(bad_input_case, non_scalar_key);
+    tcase_add_test(bad_input_case, alias_loop);
+    tcase_add_test(bad_input_case, missing_anchor);
 
     TCase *file_case = tcase_create("file");
     tcase_add_test(file_case, load_from_file);
@@ -445,12 +600,16 @@ Suite *loader_suite(void)
     tcase_add_test(tag_case, shorthand_tags);
     tcase_add_test(tag_case, explicit_tags);
 
+    TCase *anchor_case = tcase_create("anchor");
+    tcase_add_test(anchor_case, anchor);
+    tcase_add_test(anchor_case, key_anchor);
+
     Suite *loader = suite_create("Loader");
     suite_add_tcase(loader, bad_input_case);
     suite_add_tcase(loader, file_case);
     suite_add_tcase(loader, string_case);
     suite_add_tcase(loader, tag_case);
+    suite_add_tcase(loader, anchor_case);
 
     return loader;
 }
-

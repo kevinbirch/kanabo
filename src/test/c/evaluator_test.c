@@ -49,7 +49,10 @@
 #include "test_model.h"
 #include "test_nodelist.h"
 
-void evaluator_setup(void);
+void inventory_setup(void);
+void invoice_setup(void);
+document_model *load_file(char *name);
+
 void evaluator_teardown(void);
 
 bool scalar_true(node *each, void *context);
@@ -138,7 +141,7 @@ START_TEST (null_document_root)
     document->tag.kind = DOCUMENT;
     document->tag.name = NULL;
     document->content.size = 0;
-    document->content.document.root = NULL;
+    document->content.target = NULL;
     model_add(bad_model, document);
 
     evaluator_context *evaluator = make_evaluator(bad_model, path);
@@ -309,7 +312,7 @@ START_TEST (null_context_document_root)
     document->tag.kind = DOCUMENT;
     document->tag.name = NULL;
     document->content.size = 0;
-    document->content.document.root = NULL;
+    document->content.target = NULL;
 
     document_model *bad_model = make_model();
     model_add(bad_model, document);
@@ -393,23 +396,32 @@ START_TEST (empty_context_path)
 }
 END_TEST
 
-void evaluator_setup(void)
+void inventory_setup(void)
 {
-    model = make_model();
-    assert_not_null(model);
-    
-    FILE *input = fopen("inventory.json", "r");
+    model = load_file("inventory.json");
+}
+
+void invoice_setup(void)
+{
+    model = load_file("invoice.yaml");
+}
+
+document_model *load_file(char *name)
+{
+    FILE *input = fopen(name, "r");
     assert_not_null(input);
     
     loader_context *loader = make_file_loader(input);    
     assert_not_null(loader);
-    model = load(loader);
-    assert_not_null(model);
+    document_model *result = load(loader);
+    assert_not_null(result);
     assert_int_eq(LOADER_SUCCESS, loader_status(loader));
 
     int closed = fclose(input);
     assert_int_eq(0, closed);
     loader_free(loader);
+
+    return result;
 }
 
 void evaluator_teardown(void)
@@ -1189,6 +1201,185 @@ START_TEST (slice_predicate_reverse)
 }
 END_TEST
 
+START_TEST (name_alias)
+{
+    char *expression = "$.payment.billing-address.name";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 1);
+    reset_errno();
+    assert_scalar_value(nodelist_get(list, 0), "Ramond Hessel");
+    assert_noerr();
+
+    nodelist_free(list);
+}
+END_TEST
+
+START_TEST (type_alias)
+{
+    char *expression = "$.shipments[0].*.number()";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 1);
+    reset_errno();
+    assert_scalar_value(nodelist_get(list, 0), "237.23");
+    assert_noerr();
+
+    nodelist_free(list);
+}
+END_TEST
+
+START_TEST (greedy_wildcard_alias)
+{
+    char *expression = "$.shipments[0].items.*";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 2);
+
+    reset_errno();
+    node *zero = nodelist_get(list, 0);
+    assert_noerr();
+    assert_node_kind(zero, MAPPING);
+    assert_scalar_value(mapping_get(zero, (uint8_t *)"isbn", 4), "1428312250");
+
+    node *one = nodelist_get(list, 1);
+    assert_noerr();
+    assert_node_kind(one, MAPPING);
+    assert_scalar_value(mapping_get(one, (uint8_t *)"isbn", 4), "0323073867");
+
+    nodelist_free(list);
+}
+END_TEST
+
+START_TEST (recursive_alias)
+{
+    char *expression = "$.shipments..isbn";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 2);
+
+    assert_scalar_value(nodelist_get(list, 0), "1428312250");
+    assert_scalar_value(nodelist_get(list, 1), "0323073867");
+
+    nodelist_free(list);
+}
+END_TEST
+
+START_TEST (wildcard_predicate_alias)
+{
+    char *expression = "$.shipments[0].items[*].price";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 2);
+
+    assert_scalar_value(nodelist_get(list, 0), "135.48");
+    assert_scalar_value(nodelist_get(list, 1), "84.18");
+
+    nodelist_free(list);
+}
+END_TEST
+
+START_TEST (recursive_wildcard_alias)
+{
+    char *expression = "$.shipments[0].items..*";
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    assert_not_null(parser);
+
+    jsonpath *path = parse(parser);
+    assert_not_null(path);
+    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
+    parser_free(parser);
+
+    evaluator_context *evaluator = make_evaluator(model, path);
+    assert_not_null(evaluator);
+
+    nodelist *list = evaluate(evaluator);
+    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
+    assert_not_null(list);
+    evaluator_free(evaluator);
+    path_free(path);
+
+    assert_nodelist_length(list, 15);
+
+    nodelist_free(list);
+}
+END_TEST
+
 Suite *evaluator_suite(void)
 {
     TCase *bad_input_case = tcase_create("bad input");
@@ -1208,7 +1399,7 @@ Suite *evaluator_suite(void)
     tcase_add_test(bad_input_case, empty_context_path);
 
     TCase *basic_case = tcase_create("basic");
-    tcase_add_unchecked_fixture(basic_case, evaluator_setup, evaluator_teardown);
+    tcase_add_unchecked_fixture(basic_case, inventory_setup, evaluator_teardown);
     tcase_add_test(basic_case, dollar_only);
     tcase_add_test(basic_case, single_name_step);
     tcase_add_test(basic_case, long_path);
@@ -1218,7 +1409,7 @@ Suite *evaluator_suite(void)
     tcase_add_test(basic_case, number_test);
 
     TCase *predicate_case = tcase_create("predicate");
-    tcase_add_unchecked_fixture(predicate_case, evaluator_setup, evaluator_teardown);
+    tcase_add_unchecked_fixture(predicate_case, inventory_setup, evaluator_teardown);
     tcase_add_test(predicate_case, wildcard_predicate);
     tcase_add_test(predicate_case, wildcard_predicate_on_mapping);
     tcase_add_test(predicate_case, wildcard_predicate_on_scalar);
@@ -1231,19 +1422,29 @@ Suite *evaluator_suite(void)
     tcase_add_test(predicate_case, slice_predicate_reverse);
 
     TCase *recursive_case = tcase_create("recursive");
-    tcase_add_unchecked_fixture(recursive_case, evaluator_setup, evaluator_teardown);
+    tcase_add_unchecked_fixture(recursive_case, inventory_setup, evaluator_teardown);
     tcase_add_test(recursive_case, simple_recursive_step);
     tcase_add_test(recursive_case, compound_recursive_step);
     tcase_add_test(recursive_case, recursive_slice_predicate);
     tcase_add_test(recursive_case, recursive_subscript_predicate);
     tcase_add_test(recursive_case, recursive_slice_predicate_negative_from);
     tcase_add_test(recursive_case, recursive_wildcard);
+
+    TCase *alias_case = tcase_create("alias");
+    tcase_add_unchecked_fixture(alias_case, invoice_setup, evaluator_teardown);
+    tcase_add_test(alias_case, name_alias);
+    tcase_add_test(alias_case, type_alias);
+    tcase_add_test(alias_case, greedy_wildcard_alias);
+    tcase_add_test(alias_case, recursive_alias);
+    tcase_add_test(alias_case, wildcard_predicate_alias);
+    tcase_add_test(alias_case, recursive_wildcard_alias);
     
     Suite *evaluator = suite_create("Evaluator");
     suite_add_tcase(evaluator, bad_input_case);
     suite_add_tcase(evaluator, basic_case);
     suite_add_tcase(evaluator, predicate_case);
     suite_add_tcase(evaluator, recursive_case);
+    suite_add_tcase(evaluator, alias_case);
 
     return evaluator;
 }

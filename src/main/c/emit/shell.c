@@ -77,6 +77,11 @@ bool emit_node(node *each, void *argument)
             MAYBE_EMIT(")");
             EMIT("\n");
             break;
+        case ALIAS:
+            log_trace("shell", "resolving alias");
+            result = emit_node(alias_target(each), NULL);
+            break;
+            
     }
     fflush(stdout);
 

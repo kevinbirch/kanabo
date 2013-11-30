@@ -37,40 +37,48 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include <math.h>             /* for floor() */
 #include <regex.h>
 
 #include "loader.h"
 #include "loader/private.h"
 
-typedef bool (*collector)(node *each, void *context);
-
-struct mapping_context
-{
-    node *key;
-    node *mapping;
-};
-
 static void event_loop(loader_context *context);
 static bool dispatch_event(yaml_event_t *event, loader_context *context);
 
-static bool add_scalar(loader_context *context, yaml_event_t *event);
+static bool add_scalar(loader_context *context, const yaml_event_t *event);
 static enum scalar_kind resolve_scalar_kind(const loader_context *context, const yaml_event_t *event);
-static enum scalar_kind tag_to_scalar_kind(const yaml_event_t *tag);
-static bool regex_test(const yaml_event_t *event, const regex_t *regex);
+static enum scalar_kind tag_to_scalar_kind(const yaml_event_t *event);
+static inline bool regex_test(const yaml_event_t *event, const regex_t *regex);
 
-static bool add_node(loader_context *context, node *value);
+static bool cache_mapping_key(loader_context *context, const yaml_event_t *event);
+static node *build_scalar_node(loader_context *context, const yaml_event_t *event);
 
-static bool start_mapping(loader_context *context, yaml_char_t *tag);
-static bool end_mapping(loader_context *context);
-static bool start_sequence(loader_context *context, yaml_char_t *tag);
-static bool end_sequence(loader_context *context);
+static bool add_alias(loader_context *context, const yaml_event_t *event);
+
 static bool start_document(loader_context *context);
 static bool end_document(loader_context *context);
+static bool start_sequence(loader_context *context, const yaml_event_t *event);
+static bool end_sequence(loader_context *context);
+static bool start_mapping(loader_context *context, const yaml_event_t *event);
+static bool end_mapping(loader_context *context);
+
+static void set_anchor(loader_context *context, node *target, uint8_t *anchor);
+
+static bool add_node(loader_context *context, node *value);
 
 
 document_model *build_model(loader_context *context)
 {
+    loader_debug("building model...");
+    document_model *model = make_model();
+    if(NULL == model)
+    {
+        loader_error("uh oh! out of memory, can't allocate the document model, aborting...");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        return NULL;
+    }
+    context->model = model;
+
     event_loop(context);
 
     if(LOADER_SUCCESS == context->code)
@@ -98,17 +106,15 @@ static void event_loop(loader_context *context)
 
     loader_trace("entering event loop...");
     context->code = LOADER_SUCCESS;
-    while(true)
+    bool done = false;
+    while(!done)
     {
         if(!yaml_parser_parse(context->parser, &event))
         {
             context->code = interpret_yaml_error(context->parser);
             break;
         }
-        if(dispatch_event(&event, context))
-        {
-            break;
-        }
+        done = dispatch_event(&event, context);
     }
     loader_trace("finished loading");
 }
@@ -144,6 +150,7 @@ static bool dispatch_event(yaml_event_t *event, loader_context *context)
                 
         case YAML_ALIAS_EVENT:
             loader_trace("received alias event");
+            done = add_alias(context, event);
             break;
                 
         case YAML_SCALAR_EVENT:
@@ -153,7 +160,7 @@ static bool dispatch_event(yaml_event_t *event, loader_context *context)
 
         case YAML_SEQUENCE_START_EVENT:
             loader_trace("received sequence start event");
-            done = start_sequence(context, event->data.sequence_start.tag);
+            done = start_sequence(context, event);
             break;                
                 
         case YAML_SEQUENCE_END_EVENT:
@@ -163,7 +170,7 @@ static bool dispatch_event(yaml_event_t *event, loader_context *context)
             
         case YAML_MAPPING_START_EVENT:
             loader_trace("received mapping start event");
-            done = start_mapping(context, event->data.mapping_start.tag);
+            done = start_mapping(context, event);
             break;
 
         case YAML_MAPPING_END_EVENT:
@@ -175,30 +182,58 @@ static bool dispatch_event(yaml_event_t *event, loader_context *context)
     return done;
 }
 
-static bool add_scalar(loader_context *context, yaml_event_t *event)
+static bool add_scalar(loader_context *context, const yaml_event_t *event)
 {
-    enum scalar_kind kind = resolve_scalar_kind(context, event);
 
     if(NULL == context->key_holder.value && MAPPING == node_kind(context->target))
     {
-        trace_string("caching scalar '%s' (%p) as mapping key", event->data.scalar.value, event->data.scalar.length, event->data.scalar.value);
-        context->key_holder.value = event->data.scalar.value;
-        context->key_holder.length = event->data.scalar.length;
-        return false;
+        return cache_mapping_key(context, event);
     }
 
+    node *scalar = build_scalar_node(context, event);
+    if(NULL == scalar)
+    {
+        return true;
+    }
+
+    loader_trace("added scalar (%p)", scalar);
+    return add_node(context, scalar);
+}
+
+
+static bool cache_mapping_key(loader_context *context, const yaml_event_t *event)
+{
+    trace_string("caching scalar '%s' (%p) as mapping key", event->data.scalar.value, event->data.scalar.length, event->data.scalar.value);
+    context->key_holder.value = event->data.scalar.value;
+    context->key_holder.length = event->data.scalar.length;
+    
+    if(NULL != event->data.scalar.anchor)
+    {
+        // this node will be held in the anchor hashtable
+        node *key = build_scalar_node(context, event);
+        return NULL == key;
+    }
+
+    return false;
+}
+
+static node *build_scalar_node(loader_context *context, const yaml_event_t *event)
+{
+    enum scalar_kind kind = resolve_scalar_kind(context, event);
     node *scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, kind);
     if(NULL == scalar)
     {
         loader_error("uh oh! couldn't create scalar node, aborting...");
-        return true;
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        return NULL;
     }
     if(NULL != event->data.scalar.tag)
     {
         node_set_tag(scalar, event->data.scalar.tag, strlen((char *)event->data.scalar.tag));
     }
+    set_anchor(context, scalar, event->data.scalar.anchor);
 
-    return add_node(context, scalar);
+    return scalar;
 }
 
 static enum scalar_kind resolve_scalar_kind(const loader_context *context, const yaml_event_t *event)
@@ -286,7 +321,7 @@ static enum scalar_kind tag_to_scalar_kind(const yaml_event_t *event)
     return SCALAR_STRING;
 }
 
-static bool regex_test(const yaml_event_t *event, const regex_t *regex)
+static inline bool regex_test(const yaml_event_t *event, const regex_t *regex)
 {
     char string[event->data.scalar.length + 1];
     memcpy(string, event->data.scalar.value, event->data.scalar.length);
@@ -295,35 +330,30 @@ static bool regex_test(const yaml_event_t *event, const regex_t *regex)
     return 0 == regexec(regex, string, 0, NULL, 0);
 }
 
-static bool add_node(loader_context *context, node *value)
-{    
-    switch(node_kind(context->target))
+static bool add_alias(loader_context *context, const yaml_event_t *event)
+{
+    node *target = hashtable_get(context->anchors, event->data.alias.anchor);
+    if(NULL == target)
     {
-        case DOCUMENT:
-            loader_trace("adding node to document context (%p)", context->target);
-            return !document_set_root(context->target, value);
-        case SEQUENCE:
-            loader_trace("adding node to sequence context (%p)", context->target);
-            return !sequence_add(context->target, value);
-        case MAPPING:
-        {
-            loader_trace("adding node to mapping context (%p)", context->target);
-            bool done = !mapping_put(context->target, context->key_holder.value, context->key_holder.length, value);
-            if(!done)
-            {
-                context->key_holder.value = NULL;
-                context->key_holder.length = 0ul;
-            }
-            return done;
-        }
-        case SCALAR:
-            loader_error("uh oh! a scalar node has become the context node, aborting...");
-            return true;
+        loader_debug("uh oh! couldn't find anchor for alias '%s', aborting...", event->data.alias.anchor);
+        context->code = ERR_NO_ANCHOR_FOR_ALIAS;
+        return true;
     }
 
-    return false;
-}
+    for(node *cur = context->target->parent; NULL != cur; cur = cur->parent)
+    {
+        if(cur == target)
+        {
+            loader_debug("uh oh! found an alias loop for '%s', aborting...", event->data.alias.anchor);
+            context->code = ERR_ALIAS_LOOP;
+            return true;
+        }
+    }
 
+    loader_trace("added '%s' alias target (%p)", event->data.alias.anchor, target);
+    node *alias = make_alias_node(target);
+    return add_node(context, alias);
+}
 
 static bool start_document(loader_context *context)
 {
@@ -350,11 +380,12 @@ static bool end_document(loader_context *context)
 
     return false;
 }
-static bool start_sequence(loader_context *context, yaml_char_t *tag)
+
+static bool start_sequence(loader_context *context, const yaml_event_t *event)
 {
     if(NULL == context->key_holder.value && MAPPING == node_kind(context->target))
     {
-        loader_error("uh oh! found a non scalar mapping key, aborting...");
+        loader_debug("uh oh! found a non scalar mapping key, aborting...");
         context->code = ERR_NON_SCALAR_KEY;
         return true;
     }
@@ -365,16 +396,17 @@ static bool start_sequence(loader_context *context, yaml_char_t *tag)
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return true;
     }
-    if(NULL != tag)
+    if(NULL != event->data.sequence_start.tag)
     {
-        node_set_tag(sequence, tag, strlen((char *)tag));
+        node_set_tag(sequence, event->data.sequence_start.tag, strlen((char *)event->data.sequence_start.tag));
     }
+    set_anchor(context, sequence, event->data.sequence_start.anchor);
+
     loader_trace("started sequence (%p)", sequence);
     
-    add_node(context, sequence);
-
+    bool done = add_node(context, sequence);
     context->target = sequence;
-    return false;
+    return done;
 }
 
 static bool end_sequence(loader_context *context)
@@ -388,11 +420,11 @@ static bool end_sequence(loader_context *context)
     return false;
 }
 
-static bool start_mapping(loader_context *context, yaml_char_t *tag)
+static bool start_mapping(loader_context *context, const yaml_event_t *event)
 {
     if(NULL == context->key_holder.value && MAPPING == node_kind(context->target))
     {
-        loader_error("uh oh! found a non scalar mapping key, aborting...");
+        loader_debug("uh oh! found a non scalar mapping key, aborting...");
         context->code = ERR_NON_SCALAR_KEY;
         return true;
     }
@@ -403,16 +435,17 @@ static bool start_mapping(loader_context *context, yaml_char_t *tag)
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return true;
     }
-    if(NULL != tag)
+    if(NULL != event->data.mapping_start.tag)
     {
-        node_set_tag(mapping, tag, strlen((char *)tag));
+        node_set_tag(mapping, event->data.mapping_start.tag, strlen((char *)event->data.mapping_start.tag));
     }
-    loader_trace("started mapping (%p)", mapping);
-    
-    add_node(context, mapping);
+    set_anchor(context, mapping, event->data.mapping_start.anchor);
 
+    loader_trace("started mapping (%p)", mapping);
+
+    bool done = add_node(context, mapping);
     context->target = mapping;
-    return false;
+    return done;
 }
 
 static bool end_mapping(loader_context *context)
@@ -421,6 +454,49 @@ static bool end_mapping(loader_context *context)
     loader_trace("completed mapping (%p)", mapping);
     loader_trace("loaded mapping of length: %zd", node_size(mapping));
     context->target = mapping->parent;
+
+    return false;
+}
+
+static void set_anchor(loader_context *context, node *target, uint8_t *anchor)
+{
+    if(NULL == anchor)
+    {
+        return;
+    }
+    node_set_anchor(target, anchor, strlen((char *)anchor));
+
+    hashtable_put(context->anchors, anchor, target);    
+}
+
+static bool add_node(loader_context *context, node *value)
+{    
+    switch(node_kind(context->target))
+    {
+        case DOCUMENT:
+            loader_trace("adding node (%p) to document context (%p)", value, context->target);
+            return !document_set_root(context->target, value);
+        case SEQUENCE:
+            loader_trace("adding node (%p) to sequence context (%p)", value, context->target);
+            return !sequence_add(context->target, value);
+        case MAPPING:
+        {
+            trace_string("adding {\"%s\": node (%p)} to mapping context (%p)", context->key_holder.value, context->key_holder.length, value, context->target);
+            bool done = !mapping_put(context->target, context->key_holder.value, context->key_holder.length, value);
+            if(!done)
+            {
+                context->key_holder.value = NULL;
+                context->key_holder.length = 0ul;
+            }
+            return done;
+        }
+        case SCALAR:
+            loader_debug("uh oh! a scalar node has become the context node, aborting...");
+            return true;
+        case ALIAS:
+            loader_debug("uh oh! an alias node has become the context node, aborting...");
+            return true;
+    }
 
     return false;
 }

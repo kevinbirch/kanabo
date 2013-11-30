@@ -76,12 +76,6 @@ bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *co
     return vector_iterate(list, nodelist_iterator_adpater, &(context_adapter){.iterator.foreach=iterator, context});
 }
 
-bool add_to_nodelist_sequence_iterator(node *each, void *context)
-{
-    nodelist *list = (nodelist *)context;
-    return nodelist_add(list, each);
-}
-
 static bool nodelist_map_adpater(void *each, void *context, Vector *target)
 {
     context_adapter *adapter = (context_adapter *)context;

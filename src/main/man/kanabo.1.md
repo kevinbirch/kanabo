@@ -245,9 +245,13 @@ These references may be of interest to the user of this program:
   * [JSONPath Query Language][jsonpath]
   * [GNU Bash shell][bash]
   * [Z shell][zsh]
+  
+These alternatives to Kanabo may be useful to comapre features:
+
   * [jshon](http://kmkeen.com/jshon)
   * [jq](http://stedolan.github.com/jq/)
   * [JSON.sh](https://github.com/dominictarr/JSON.sh)
+  * [json-bash](https://github.com/ingydotnet/json-bash)
   * [jsawk](https://github.com/micha/jsawk)
   * [jsonpipe](https://github.com/zacharyvoase/jsonpipe)
   * [jsontool](http://trentm.com/json/)

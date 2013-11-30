@@ -83,6 +83,7 @@ static bool apply_subscript_predicate(node *value, evaluator_context *context, n
 static bool apply_slice_predicate(node *value, evaluator_context *context, nodelist *target);
 static bool apply_join_predicate(node *value, evaluator_context *context, nodelist *target);
 
+static bool add_to_nodelist_sequence_iterator(node *each, void *context);
 static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context);
 static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *step);
 static int_fast32_t normalize_from(predicate *predicate, node *value);
@@ -193,7 +194,11 @@ static inline bool evaluate_nodelist(evaluator_context *context, const char *nam
 static bool apply_recursive_node_test(node *each, void *argument, nodelist *target)
 {
     evaluator_context *context = (evaluator_context *)argument;
-    bool result = apply_node_test(each, argument, target);
+    bool result = true;
+    if(ALIAS != node_kind(each))
+    {
+        result = apply_node_test(each, argument, target);
+    }
     if(result)
     {
         switch(node_kind(each))
@@ -214,6 +219,10 @@ static bool apply_recursive_node_test(node *each, void *argument, nodelist *targ
                 evaluator_error("recursive step: uh-oh! found a document node somehow (%p), aborting...", each);
                 context->code = ERR_UNEXPECTED_DOCUMENT_NODE;
                 result = false;
+                break;
+            case ALIAS:
+                evaluator_trace("recursive step: resolving alias (%p)", each);
+                result = apply_recursive_node_test(alias_target(each), argument, target);
                 break;
         }
     }
@@ -281,6 +290,10 @@ static bool apply_greedy_wildcard_test(node *each, void *argument, nodelist *tar
             evaluator_error("wildcard test: uh-oh! found a document node somehow (%p), aborting...", each);
             context->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             break;
+        case ALIAS:
+            evaluator_trace("wildcard test: resolving alias (%p)", node_size(each), each);
+            result = apply_greedy_wildcard_test(alias_target(each), argument, target);
+            break;
     }
     return result;
 }
@@ -307,6 +320,10 @@ static bool apply_recursive_wildcard_test(node *each, void *argument, nodelist *
             evaluator_error("recurisve wildcard test: uh oh! found a document node somehow (%p), aborting...", each);
             context->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             break;
+        case ALIAS:
+            evaluator_trace("recurisve wildcard test: resolving alias (%p)", each);
+            result = apply_recursive_wildcard_test(alias_target(each), argument, target);
+            break;
     }
     return result;
 }
@@ -314,43 +331,49 @@ static bool apply_recursive_wildcard_test(node *each, void *argument, nodelist *
 static bool apply_type_test(node *each, void *argument, nodelist *target)
 {
     bool match = false;
+    node *value = each;
+    if(ALIAS == node_kind(value))
+    {
+        evaluator_trace("type test: resolved alias from: (%p) to: (%p)", value, alias_target(value));
+        value = alias_target(value);
+    }
     evaluator_context *context = (evaluator_context *)argument;
     switch(type_test_step_kind(current_step(context)))
     {
         case OBJECT_TEST:
             evaluator_trace("type test: testing for an object");
-            match = MAPPING == node_kind(each);
+            match = MAPPING == node_kind(value);
             break;
         case ARRAY_TEST:
             evaluator_trace("type test: testing for an array");
-            match = SEQUENCE == node_kind(each);
+            match = SEQUENCE == node_kind(value);
             break;
         case STRING_TEST:
             evaluator_trace("type test: testing for a string");
-            match = SCALAR == node_kind(each) && SCALAR_STRING == scalar_kind(each);
+            match = SCALAR == node_kind(value) && SCALAR_STRING == scalar_kind(value);
             break;
         case NUMBER_TEST:
             evaluator_trace("type test: testing for a number");
-            match = SCALAR == node_kind(each) &&
-                (SCALAR_INTEGER == scalar_kind(each) || SCALAR_REAL == scalar_kind(each));
+            match = SCALAR == node_kind(value) &&
+                (SCALAR_INTEGER == scalar_kind(value) || SCALAR_REAL == scalar_kind(value));
             break;
         case BOOLEAN_TEST:
             evaluator_trace("type test: testing for a boolean");
-            match = SCALAR == node_kind(each) && SCALAR_BOOLEAN == scalar_kind(each);
+            match = SCALAR == node_kind(value) && SCALAR_BOOLEAN == scalar_kind(value);
             break;
         case NULL_TEST:
             evaluator_trace("type test: testing for a null");
-            match = SCALAR == node_kind(each) && SCALAR_NULL == scalar_kind(each);
+            match = SCALAR == node_kind(value) && SCALAR_NULL == scalar_kind(value);
             break;
     }
     if(match)
     {        
-        evaluator_trace("type test: match! adding node (%p)", each);
-        return nodelist_add(target, each) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
+        evaluator_trace("type test: match! adding node (%p)", value);
+        return nodelist_add(target, value) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
     }
     else
     {
-        evaluator_trace("type test: no match (actual: %d). dropping (%p)", SCALAR == node_kind(each) ? scalar_kind(each) : node_kind(each), each);
+        evaluator_trace("type test: no match (actual: %d). dropping (%p)", SCALAR == node_kind(value) ? scalar_kind(value) : node_kind(value), value);
         return true;
     }
 }
@@ -373,6 +396,11 @@ static bool apply_name_test(node *each, void *argument, nodelist *target)
         return true;
     }
     evaluator_trace("name test: match! adding node (%p)", value);
+    if(ALIAS == node_kind(value))
+    {
+        evaluator_trace("name test: resolved alias from: (%p) to: (%p)", value, alias_target(value));
+        value = alias_target(value);
+    }
     return nodelist_add(target, value) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
 }
 
@@ -422,6 +450,10 @@ static bool apply_wildcard_predicate(node *value, evaluator_context *context, no
         case DOCUMENT:
             evaluator_error("wildcard predicate: uh-oh! found a document node somehow (%p), aborting...", value);
             context->code = ERR_UNEXPECTED_DOCUMENT_NODE;
+            break;
+        case ALIAS:
+            evaluator_trace("wildcard predicate: resolving alias (%p)", value);
+            result = apply_wildcard_predicate(alias_target(value), context, target);
             break;
     }
     return result;
@@ -488,6 +520,17 @@ static bool apply_join_predicate(node *value __attribute__((unused)), evaluator_
  * =================
  */
 
+static bool add_to_nodelist_sequence_iterator(node *each, void *context)
+{
+    nodelist *list = (nodelist *)context;
+    node *value = each;
+    if(ALIAS == node_kind(each))
+    {
+        value = alias_target(each);
+    }
+    return nodelist_add(list, value);
+}
+
 static bool add_values_to_nodelist_map_iterator(node *key __attribute__((unused)), node *value, void *context)
 {
     meta_context *iterator_context = (meta_context *)context;
@@ -510,6 +553,10 @@ static bool add_values_to_nodelist_map_iterator(node *key __attribute__((unused)
             evaluator_error("wildcard test: uh-oh! found a document node somehow (%p), aborting...", value);
             iterator_context->context->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             result = false;
+            break;
+        case ALIAS:
+            evaluator_trace("wildcard test: resolving alias (%p)", value);
+            result = add_values_to_nodelist_map_iterator(key, alias_target(value), context);
             break;
     }
     return result;

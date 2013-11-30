@@ -39,7 +39,6 @@
 #include <errno.h>
 
 #include "model.h"
-#include "model/private.h"
 #include "conditions.h"
 
 static inline node *make_node(enum node_kind kind);
@@ -127,6 +126,18 @@ node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kin
     return result;
 }
 
+node *make_alias_node(node *target)
+{
+    node *result = make_node(ALIAS);
+    if(NULL != result)
+    {
+        result->content.size = 0;
+        result->content.target = target;
+    }
+
+    return result;
+}
+
 static inline node *make_node(enum node_kind kind)
 {
     node *result = (node *)calloc(1, sizeof(struct node));
@@ -162,11 +173,10 @@ void node_free(node *value)
     switch(node_kind(value))
     {
         case DOCUMENT:
-            node_free(value->content.document.root);
-            value->content.document.root = NULL;
+            node_free(value->content.target);
+            value->content.target = NULL;
             break;
         case SCALAR:
-            fflush(stdout);
             free(value->content.scalar.value);
             value->content.scalar.value = NULL;
             break;
@@ -175,6 +185,8 @@ void node_free(node *value)
             break;
         case MAPPING:
             mapping_free(value);
+            break;
+        case ALIAS:
             break;
     }
     free(value->tag.name);
@@ -201,7 +213,7 @@ static inline void sequence_free(node *sequence)
 
 static bool mapping_freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
 {
-    free(key);
+    node_free((node *)key);
     node_free((node *)value);
     
     return true;
@@ -236,38 +248,13 @@ document_model *make_model(void)
     return result;
 }
 
-uint8_t *make_key(uint8_t *scalar, size_t length)
+static hashcode scalar_hash(const void *key)
 {
-    uint8_t *key = calloc(1, sizeof(size_t) + length);
-    memcpy(key, &length, sizeof(size_t));
-    memcpy(key + sizeof(size_t), scalar, length);
-
-    return key;
-}
-
-static hashcode scalar_hash(const void *scalar)
-{
-    uint8_t *key = ((uint8_t *)scalar) + sizeof(size_t);
-    size_t *length = (size_t *)scalar;
-    return shift_add_xor_string_buffer_hash(key, *length);
+    node *scalar = (node *)key;
+    return shift_add_xor_string_buffer_hash(scalar_value(scalar), node_size(scalar));
 }
 
 static bool scalar_comparitor(const void *one, const void *two)
 {
-    if(one == two)
-    {
-        return true;
-    }
-    uint8_t *one_value = ((uint8_t *)one) + sizeof(size_t);
-    size_t  *one_length = (size_t *)one;
-
-    uint8_t *two_value = ((uint8_t *)two) + sizeof(size_t);
-    size_t  *two_length = (size_t *)two;
-
-    if(*one_length != *two_length)
-    {
-        return false;
-    }
-
-    return 0 == memcmp(one_value, two_value, *one_length);
+    return node_equals((node *)one, (node *)two);
 }

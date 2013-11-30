@@ -146,6 +146,9 @@ static bool emit_node(node *each, void *context)
         case MAPPING:
             result = emit_mapping(each, context);
             break;
+        case ALIAS:
+            result = emit_node(alias_target(each), context);
+            break;
     }
 
     return result;

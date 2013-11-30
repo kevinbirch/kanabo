@@ -147,3 +147,8 @@ hashcode djb_string_buffer_hash(const uint8_t *key, size_t length)
 
     return result;
 }
+
+bool string_comparitor(const void *key1, const void *key2)
+{
+    return 0 == strcmp((char *)key1, (char *)key2);
+}

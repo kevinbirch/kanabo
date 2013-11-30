@@ -41,6 +41,7 @@
 #include <regex.h>
 
 #include "log.h"
+#include "hashtable.h"
 
 struct loader_context
 {
@@ -55,6 +56,8 @@ struct loader_context
         size_t   length;
     } key_holder;
 
+    Hashtable *anchors;
+    
     regex_t           *decimal_regex;
     regex_t           *integer_regex;
     regex_t           *timestamp_regex;

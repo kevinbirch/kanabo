@@ -39,7 +39,6 @@
 #include <errno.h>
 
 #include "model.h"
-#include "model/private.h"
 #include "conditions.h"
 
 void node_set_tag(node *target, const uint8_t *value, size_t length)
@@ -53,10 +52,15 @@ void node_set_tag(node *target, const uint8_t *value, size_t length)
     }
 }
 
-void node_set_tag_nocopy(node *target, uint8_t *value)
+void node_set_anchor(node *target, const uint8_t *value, size_t length)
 {
     PRECOND_NONNULL_ELSE_VOID(target, value);
-    target->tag.name = value;
+    target->anchor = (uint8_t *)calloc(1, length + 1);
+    if(NULL != target->anchor)
+    {
+        memcpy(target->anchor, value, length);
+        target->anchor[length] = '\0';
+    }
 }
 
 bool model_add(document_model *model, node *document)
@@ -72,7 +76,7 @@ bool document_set_root(node *document, node *root)
     PRECOND_NONNULL_ELSE_FALSE(document, root);
     PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
 
-    document->content.document.root = root;
+    document->content.target = root;
     root->parent = document;
     return true;
 }
@@ -91,26 +95,12 @@ bool sequence_add(node *sequence, node *item)
     return result;
 }
 
-bool sequence_set(node *sequence, node *item, size_t index)
-{
-    PRECOND_NONNULL_ELSE_FALSE(sequence, item);
-    PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence), index < sequence->content.size);
-
-    bool result = vector_set(sequence->content.sequence, item, index);
-    if(result)
-    {
-        item->parent = sequence;
-    }
-
-    return result;
-}
-
 bool mapping_put(node *mapping, uint8_t *scalar, size_t length, node *value)
 {
     PRECOND_NONNULL_ELSE_FALSE(mapping, scalar, value);
     PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping));
 
-    uint8_t *key = make_key(scalar, length);
+    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
     if(NULL == key)
     {
         return false;

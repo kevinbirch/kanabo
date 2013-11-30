@@ -124,9 +124,6 @@ START_TEST (null_mapping)
     reset_errno();
     assert_mapping_has_no_key(NULL, NULL);
     assert_errno(EINVAL);
-    reset_errno();
-    assert_false(mapping_contains(NULL, NULL, 0));
-    assert_errno(EINVAL);
 }
 END_TEST
 
@@ -393,9 +390,7 @@ START_TEST (mapping)
     assert_mapping_has_key(r, "two");
     assert_mapping_has_no_key(r, "bogus");
 
-    assert_true(mapping_contains(r, (uint8_t *)"two", 3ul));
-
-    assert_false(mapping_contains(r, (uint8_t *)"bogus", 5ul));
+    assert_not_null(mapping_get(r, (uint8_t *)"two", 3ul));
     assert_null(mapping_get(r, (uint8_t *)"bogus", 5ul));
 
     reset_errno();

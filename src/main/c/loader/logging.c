@@ -61,6 +61,8 @@ static const char * const MESSAGES[] =
     "An error occured scanning the input: %s at line %ld, column %ld.",
     "An error occured parsing the input: %s at line %ld, column %ld.",
     "A non-scalar mapping key was found on line %ld.",
+    "No matching anchor was found for the alias on line %ld.",
+    "The alias on line %ld refers to an anchor that is an ancestor.",
     "An unexpected error has occured."
 };
 
@@ -96,14 +98,14 @@ char *loader_status_message(const loader_context *context)
         case ERR_READER_FAILED:
             result = asprintf(&message, MESSAGES[context->code], parser->problem, parser->problem_offset);
             break;	
+        case ERR_PARSER_FAILED:
         case ERR_SCANNER_FAILED:
             result = asprintf(&message, MESSAGES[context->code], parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
             break;
-        case ERR_PARSER_FAILED:
-            result = asprintf(&message, MESSAGES[context->code], parser->problem, parser->problem_mark.line+1, parser->problem_mark.column+1);
-            break;
+        case ERR_ALIAS_LOOP:
+        case ERR_NO_ANCHOR_FOR_ALIAS:
         case ERR_NON_SCALAR_KEY:
-            result = asprintf(&message, MESSAGES[context->code], parser->mark.line+1);
+            result = asprintf(&message, MESSAGES[context->code], parser->mark.line);
             break;
         default:
             message = strdup(MESSAGES[context->code]);

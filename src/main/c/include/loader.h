@@ -52,6 +52,8 @@ enum loader_status_code
     ERR_SCANNER_FAILED,        // unable to lexically analyze the input
     ERR_PARSER_FAILED,         // unable to parse the input
     ERR_NON_SCALAR_KEY,        // found a non-scalar mapping key
+    ERR_NO_ANCHOR_FOR_ALIAS,   // no anchor referenced by alias
+    ERR_ALIAS_LOOP,            // the alias references an ancestor
     ERR_OTHER
 };
 
