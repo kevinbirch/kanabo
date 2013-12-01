@@ -236,6 +236,7 @@ static document_model *load_model(const struct settings *settings)
         loader_free(loader);
         return NULL;
     }
+    loader_set_dupe_strategy(loader, settings->duplicate_strategy);
 
     document_model *model = load(loader);    
     if(loader_status(loader))

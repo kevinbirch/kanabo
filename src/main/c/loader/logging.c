@@ -63,6 +63,7 @@ static const char * const MESSAGES[] =
     "A non-scalar mapping key was found on line %ld.",
     "No matching anchor was found for the alias on line %ld.",
     "The alias on line %ld refers to an anchor that is an ancestor.",
+    "A duplicate mapping key was found on line %ld.",
     "An unexpected error has occured."
 };
 
@@ -105,6 +106,7 @@ char *loader_status_message(const loader_context *context)
         case ERR_ALIAS_LOOP:
         case ERR_NO_ANCHOR_FOR_ALIAS:
         case ERR_NON_SCALAR_KEY:
+        case ERR_DUPLICATE_KEY:
             result = asprintf(&message, MESSAGES[context->code], parser->mark.line);
             break;
         default:

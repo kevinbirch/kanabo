@@ -187,6 +187,18 @@ node *mapping_get(const node *mapping, uint8_t *scalar, size_t length)
     return result;
 }
 
+bool mapping_contains(const node *mapping, uint8_t *scalar, size_t length)
+{
+    PRECOND_NONNULL_ELSE_FALSE(mapping, scalar);
+    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping), 0 < length);
+
+    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
+    bool result = hashtable_contains(mapping->content.mapping, key);
+    node_free(key);
+    
+    return result;
+}
+
 static bool mapping_iterator_adpater(void *key, void *value, void *context)
 {
     context_adapter *adapter = (context_adapter *)context;

@@ -44,6 +44,7 @@
 #include "options.h"
 
 static inline int32_t process_emit_mode(const char *argument);
+static inline int32_t process_dupe_strategy(const char *argument);
 static inline const char *process_program_name(const char *argv0);
 
 static struct option options[] = 
@@ -57,7 +58,8 @@ static struct option options[] =
     {"query",       required_argument, NULL, 'q'}, // evaluate given expression and exit
     // optional arguments:
     {"file",        required_argument, NULL, 'f'}, // read input from file instead of stdin (required for interactive mode)
-    {"output",       required_argument, NULL, 'o'}, // emit expressions for the given shell (the default is Bash)
+    {"output",      required_argument, NULL, 'o'}, // emit expressions for the given shell (the default is Bash)
+    {"duplicate",   required_argument, NULL, 'd'}, // how to respond to duplicate mapping keys
     {0, 0, 0, 0}
 };
 
@@ -73,15 +75,17 @@ enum command process_options(const int argc, char * const *argv, struct settings
 {
     int opt;
     int32_t mode = -1;
+    int32_t strategy = -1;
     bool done = false;
     bool interaction_decided = false;
     
     settings->program_name = process_program_name(argv[0]);
     settings->emit_mode = BASH;
+    settings->duplicate_strategy = DUPE_CLOBBER;
     settings->expression = NULL;
     settings->input_file_name = NULL;
 
-    while(!done && (opt = getopt_long(argc, argv, "vwhiq:o:f:", options, NULL)) != -1)
+    while(!done && (opt = getopt_long(argc, argv, "vwhiq:o:f:d:", options, NULL)) != -1)
     {
         switch(opt)
         {
@@ -124,6 +128,16 @@ enum command process_options(const int argc, char * const *argv, struct settings
             case 'f':
                 settings->input_file_name = optarg;
                 break;
+            case 'd':
+                strategy = process_dupe_strategy(optarg);
+                if(-1 == strategy)
+                {
+                    fprintf(stderr, "%s: unsupported duplicate strategy `%s'\n", settings->program_name, optarg);
+                    settings->command = SHOW_HELP;
+                    done = true;
+                }
+                settings->duplicate_strategy = (enum loader_duplicate_key_strategy)strategy;
+                break;
             case ':':
             case '?':
             default:
@@ -164,6 +178,26 @@ static inline int32_t process_emit_mode(const char *argument)
     else if(strncmp("yaml", argument, 4) == 0)
     {
         return YAML;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+static inline int32_t process_dupe_strategy(const char *argument)
+{
+    if(0 == strncmp("clobber", argument, 7ul))
+    {
+        return DUPE_CLOBBER;
+    }
+    else if(0 == strncmp("warn", argument, 4ul))
+    {
+        return DUPE_WARN;
+    }
+    else if(0 == strncmp("fail", argument, 4ul))
+    {
+        return DUPE_FAIL;
     }
     else
     {

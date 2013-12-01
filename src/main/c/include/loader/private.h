@@ -47,6 +47,8 @@ struct loader_context
 {
     yaml_parser_t     *parser;
     loader_status_code code;
+    enum loader_duplicate_key_strategy strategy;
+    
     document_model    *model;
 
     node              *target;

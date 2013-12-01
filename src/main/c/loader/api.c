@@ -133,6 +133,7 @@ static loader_context *make_loader(void)
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return NULL;
     }
+    context->strategy = DUPE_CLOBBER;
 
     context->parser = (yaml_parser_t *)calloc(1, sizeof(yaml_parser_t));
     if(NULL == context->parser)
@@ -173,6 +174,11 @@ static loader_context *make_loader(void)
 enum loader_status_code loader_status(const loader_context *context)
 {
     return context->code;
+}
+
+void loader_set_dupe_strategy(loader_context *context, enum loader_duplicate_key_strategy value)
+{
+    context->strategy = value;
 }
 
 void loader_free(loader_context *context)

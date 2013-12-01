@@ -65,6 +65,7 @@ static bool end_mapping(loader_context *context);
 static void set_anchor(loader_context *context, node *target, uint8_t *anchor);
 
 static bool add_node(loader_context *context, node *value);
+static inline bool add_to_mapping_node(loader_context *context, node *value);
 
 
 document_model *build_model(loader_context *context)
@@ -480,23 +481,42 @@ static bool add_node(loader_context *context, node *value)
             loader_trace("adding node (%p) to sequence context (%p)", value, context->target);
             return !sequence_add(context->target, value);
         case MAPPING:
-        {
             trace_string("adding {\"%s\": node (%p)} to mapping context (%p)", context->key_holder.value, context->key_holder.length, value, context->target);
-            bool done = !mapping_put(context->target, context->key_holder.value, context->key_holder.length, value);
-            if(!done)
-            {
-                context->key_holder.value = NULL;
-                context->key_holder.length = 0ul;
-            }
-            return done;
-        }
+            return add_to_mapping_node(context, value);
         case SCALAR:
             loader_debug("uh oh! a scalar node has become the context node, aborting...");
+            context->code = ERR_OTHER;
             return true;
         case ALIAS:
             loader_debug("uh oh! an alias node has become the context node, aborting...");
+            context->code = ERR_OTHER;
             return true;
     }
 
     return false;
+}
+
+static inline bool add_to_mapping_node(loader_context *context, node *value)
+{
+    bool duplicate = mapping_contains(context->target, context->key_holder.value, context->key_holder.length);
+    if(duplicate && DUPE_FAIL == context->strategy)
+    {
+        loader_debug("uh oh! a scalar node has become the context node, aborting...");
+        context->code = ERR_DUPLICATE_KEY;
+        return true;
+    }
+    if(duplicate && DUPE_WARN == context->strategy)
+    {
+        char key_name[context->key_holder.length + 1];
+        memcpy(key_name, context->key_holder.value, context->key_holder.length);
+        key_name[context->key_holder.length] = '\0';
+        fprintf(stderr, "warning: duplicate mapping key found: '%s'\n", key_name);
+    }
+    bool done = !mapping_put(context->target, context->key_holder.value, context->key_holder.length, value);
+    if(!done)
+    {
+        context->key_holder.value = NULL;
+        context->key_holder.length = 0ul;
+    }
+    return done;
 }

@@ -114,13 +114,25 @@ static const unsigned char * const KEY_ANCHOR_YAML = (unsigned char *)
     "  - *value\n"
     "two: *value\n";
 
+static const unsigned char * const DUPLICATE_KEY_YAML = (unsigned char *)
+    "one: foo\n"
+    "two:\n"
+    "  - foo\n"
+    "  - bar\n"
+    "one: bar\n"
+    "three: baz\n";
+
 
 static document_model *tagged_model = NULL;
 static node *tagged_mapping_root = NULL;
 
 static void assert_model_state(loader_context *loader, document_model *model);
+
 void tag_setup(void);
 void tag_teardown(void);
+
+document_model *anchor_setup(const unsigned char *yaml);
+document_model *duplicate_setup(enum loader_duplicate_key_strategy value);
 
 #define assert_loader_failure(CONTEXT, EXPECTED_RESULT)                 \
     do                                                                  \
@@ -487,20 +499,29 @@ START_TEST (explicit_tags)
 }
 END_TEST
 
-START_TEST (anchor)
+document_model *anchor_setup(const unsigned char *yaml)
 {
-    size_t yaml_size = strlen((char *)ANCHOR_YAML);
-
-    loader_context *loader = make_string_loader(ANCHOR_YAML, yaml_size);
+    loader_context *loader = make_string_loader(yaml, strlen((const char *)yaml));
     assert_not_null(loader);
-    document_model *model = load(loader);
-    assert_not_null(model);
+    document_model *result = load(loader);
+    assert_not_null(result);
     assert_int_eq(LOADER_SUCCESS, loader_status(loader));
 
     reset_errno();
-    node *root = model_document_root(model, 0);
+    node *root = model_document_root(result, 0);
     assert_noerr();
     assert_not_null(root);
+    
+    assert_node_kind(root, MAPPING);
+
+    loader_free(loader);
+    return result;
+}
+
+START_TEST (anchor)
+{
+    document_model *model = anchor_setup(ANCHOR_YAML);
+    node *root = model_document_root(model, 0);
     
     reset_errno();
     node *one = mapping_get(root, (uint8_t *)"one", 3ul);
@@ -522,25 +543,14 @@ START_TEST (anchor)
     assert_scalar_value(two, "bar1");
 
     model_free(model);
-    loader_free(loader);
 }
 END_TEST
 
 START_TEST (key_anchor)
 {
-    size_t yaml_size = strlen((char *)KEY_ANCHOR_YAML);
-
-    loader_context *loader = make_string_loader(KEY_ANCHOR_YAML, yaml_size);
-    assert_not_null(loader);
-    document_model *model = load(loader);
-    assert_not_null(model);
-    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
-
-    reset_errno();
+    document_model *model = anchor_setup(KEY_ANCHOR_YAML);
     node *root = model_document_root(model, 0);
-    assert_noerr();
-    assert_not_null(root);
-    
+
     reset_errno();
     node *one = mapping_get(root, (uint8_t *)"one", 3ul);
     assert_noerr();
@@ -570,6 +580,72 @@ START_TEST (key_anchor)
     assert_node_kind(two, SCALAR);
     assert_scalar_kind(two, SCALAR_STRING);
     assert_scalar_value(two, "one");
+}
+END_TEST
+
+document_model *duplicate_setup(enum loader_duplicate_key_strategy value)
+{
+    size_t yaml_size = strlen((char *)DUPLICATE_KEY_YAML);
+
+    loader_context *loader = make_string_loader(DUPLICATE_KEY_YAML, yaml_size);
+    assert_not_null(loader);
+    loader_set_dupe_strategy(loader, value);
+
+    document_model *result = load(loader);
+    assert_not_null(result);
+    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
+
+    reset_errno();
+    node *root = model_document_root(result, 0);
+    assert_noerr();
+    assert_not_null(root);
+    
+    assert_node_kind(root, MAPPING);
+    loader_free(loader);
+
+    return result;
+}
+
+START_TEST (duplicate_clobber)
+{
+    document_model *model = duplicate_setup(DUPE_CLOBBER);
+    node *root = model_document_root(model, 0);
+    node *one = mapping_get(root, (uint8_t *)"one", 3ul);
+    assert_noerr();
+    assert_not_null(one);
+    assert_node_kind(one, SCALAR);
+    assert_scalar_value(one, "bar");
+    assert_scalar_kind(one, SCALAR_STRING);
+
+    model_free(model);
+}
+END_TEST
+
+START_TEST (duplicate_warn)
+{
+    document_model *model = duplicate_setup(DUPE_WARN);
+    node *root = model_document_root(model, 0);
+    node *one = mapping_get(root, (uint8_t *)"one", 3ul);
+    assert_noerr();
+    assert_not_null(one);
+    assert_node_kind(one, SCALAR);
+    assert_scalar_value(one, "bar");
+    assert_scalar_kind(one, SCALAR_STRING);
+
+    model_free(model);
+}
+END_TEST
+
+START_TEST (duplicate_fail)
+{
+    size_t yaml_size = strlen((char *)DUPLICATE_KEY_YAML);
+
+    loader_context *loader = make_string_loader(DUPLICATE_KEY_YAML, yaml_size);
+    assert_not_null(loader);
+    loader_set_dupe_strategy(loader, DUPE_FAIL);
+
+    document_model *model = load(loader);
+    assert_loader_failure(loader, ERR_DUPLICATE_KEY);
 
     model_free(model);
     loader_free(loader);
@@ -604,12 +680,18 @@ Suite *loader_suite(void)
     tcase_add_test(anchor_case, anchor);
     tcase_add_test(anchor_case, key_anchor);
 
+    TCase *duplicate_case = tcase_create("duplicate");
+    tcase_add_test(duplicate_case, duplicate_clobber);
+    tcase_add_test(duplicate_case, duplicate_warn);
+    tcase_add_test(duplicate_case, duplicate_fail);
+
     Suite *loader = suite_create("Loader");
     suite_add_tcase(loader, bad_input_case);
     suite_add_tcase(loader, file_case);
     suite_add_tcase(loader, string_case);
     suite_add_tcase(loader, tag_case);
     suite_add_tcase(loader, anchor_case);
+    suite_add_tcase(loader, duplicate_case);
 
     return loader;
 }

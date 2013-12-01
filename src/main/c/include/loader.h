@@ -54,7 +54,15 @@ enum loader_status_code
     ERR_NON_SCALAR_KEY,        // found a non-scalar mapping key
     ERR_NO_ANCHOR_FOR_ALIAS,   // no anchor referenced by alias
     ERR_ALIAS_LOOP,            // the alias references an ancestor
+    ERR_DUPLICATE_KEY,         // a duplicate mapping key was detected
     ERR_OTHER
+};
+
+enum loader_duplicate_key_strategy
+{
+    DUPE_CLOBBER,
+    DUPE_WARN,
+    DUPE_FAIL
 };
 
 typedef enum loader_status_code loader_status_code;
@@ -64,6 +72,8 @@ typedef struct loader_context loader_context;
 loader_context *make_string_loader(const unsigned char *input, size_t size);
 loader_context *make_file_loader(FILE *input);
 loader_status_code loader_status(const loader_context *context);
+
+void loader_set_dupe_strategy(loader_context *context, enum loader_duplicate_key_strategy value);
 
 void loader_free(loader_context *context);
 
