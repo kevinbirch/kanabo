@@ -49,11 +49,11 @@
         size_t   _expected_len = strlen(_expected_tag);                 \
         node    *_assert_node = (NODE);                                 \
         uint8_t *_assert_name = node_name(_assert_node);                \
-        size_t   _assert_name_len = strlen((char *)_assert_name);       \
-        assert_int_eq(_expected_len, _assert_name_len);                 \
-        char     _actual_tag[_assert_name_len + 1];                     \
-        memcpy(&_actual_tag, _assert_name, _assert_name_len);           \
-        _actual_tag[_assert_name_len] = '\0';                           \
+        size_t   _assert_len = strlen((char *)_assert_name);            \
+        assert_int_eq((intmax_t)_expected_len, (intmax_t)_assert_len);  \
+        char     _actual_tag[_assert_len + 1];                          \
+        memcpy(&_actual_tag, _assert_name, _assert_len);                \
+        _actual_tag[_assert_len] = '\0';                                \
         bool _assert_result = memcmp(_expected_tag, _actual_tag, _expected_len) == 0; \
         ck_assert_msg(_assert_result, "Assertion 'memcmp("#TAG", \"%s\", %zd)' failed", _actual_tag, _expected_len); \
     } while(0)

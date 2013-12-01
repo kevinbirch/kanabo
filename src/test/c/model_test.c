@@ -121,9 +121,6 @@ START_TEST (null_mapping)
     reset_errno();
     assert_null(mapping_get(NULL, NULL, 0));
     assert_errno(EINVAL);
-    reset_errno();
-    assert_mapping_has_no_key(NULL, NULL);
-    assert_errno(EINVAL);
 }
 END_TEST
 
