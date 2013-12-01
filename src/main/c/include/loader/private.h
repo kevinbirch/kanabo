@@ -41,34 +41,28 @@
 #include <regex.h>
 
 #include "log.h"
-
-struct cell
-{
-    node        *this;
-    struct cell *next;
-};
-
-struct excursion
-{
-    size_t            length;
-    struct cell      *car;
-    struct excursion *next;
-};
+#include "hashtable.h"
 
 struct loader_context
 {
     yaml_parser_t     *parser;
+    loader_status_code code;
+    enum loader_duplicate_key_strategy strategy;
+    
     document_model    *model;
-    struct excursion  *excursions;
+
+    node              *target;
+    struct 
+    {
+        uint8_t *value;
+        size_t   length;
+    } key_holder;
+
+    Hashtable *anchors;
+    
     regex_t           *decimal_regex;
     regex_t           *integer_regex;
     regex_t           *timestamp_regex;
-
-    size_t             length;
-    struct cell       *head;
-    struct cell       *last;
-
-    loader_status_code code;
 };
 
 document_model *build_model(loader_context *context);
@@ -81,5 +75,5 @@ loader_status_code interpret_yaml_error(yaml_parser_t *parser);
 #define loader_debug(FORMAT, ...) log_debug(component_name, FORMAT, ##__VA_ARGS__)
 #define loader_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
 
-#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
+#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 

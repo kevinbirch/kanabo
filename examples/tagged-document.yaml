@@ -1,0 +1,9 @@
+%TAG !squid! tag:vampire-squid.com,2008:
+--- !squid!instrument
+name: !!str USD-JPY 2008-04-01 103.92
+asset-class: !squid!asset-class FX
+type: !squid!instrument/type spot market
+exchange-rate: !!float 103.92
+symbol: !squid!instrument/symbol USD-JPY
+spot-date: !!timestamp 2008-04-01T10:12:00Z
+settlement-date: !!timestamp 2008-04-03T09:00:00Z

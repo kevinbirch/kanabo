@@ -1,12 +1,6 @@
 /*
- * 金棒 (kanabō)
- * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
+ * Copyright (c) 2013 Kevin Birch <kmb@pobox.com>.  All rights reserved.
  * 
- * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
- * made stronger.
- *
- * For more information, consult the README file in the project root.
- *
  * Distributed under an [MIT-style][license] license.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -37,8 +31,31 @@
 
 #pragma once
 
-#include "nodelist.h"
-#include "options.h"
+#include <stdint.h>
+#include <stdbool.h>
 
-void emit_yaml(const nodelist *list, const struct settings *settings);
+typedef size_t hashcode;
 
+typedef hashcode (*hash_function)(const void *key);
+
+hashcode identity_hash(const void *key);
+hashcode identity_xor_hash(const void *key);
+
+hashcode shift_add_xor_string_hash(const void *key);
+hashcode shift_add_xor_string_buffer_hash(const uint8_t *key, size_t length);
+
+hashcode sdbm_string_hash(const void *key);
+hashcode sdbm_string_buffer_hash(const uint8_t *key, size_t length);
+
+hashcode fnv1_string_hash(const void *key);
+hashcode fnv1_string_buffer_hash(const uint8_t *key, size_t length);
+
+hashcode fnv1a_string_hash(const void *key);
+hashcode fnv1a_string_buffer_hash(const uint8_t *key, size_t length);
+
+hashcode djb_string_hash(const void *key);
+hashcode djb_string_buffer_hash(const uint8_t *key, size_t length);
+
+typedef bool (*compare_function)(const void *key1, const void *key2);
+
+bool string_comparitor(const void *key1, const void *key2);

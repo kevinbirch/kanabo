@@ -41,20 +41,20 @@
 #include "emit/yaml.h"
 #include "log.h"
 
-static bool emit_nodelist(const nodelist * restrict list, yaml_emitter_t *emitter);
+static bool emit_nodelist(const nodelist *list, yaml_emitter_t *emitter);
 static bool emit_node(node *value, void *context);
 static bool emit_document(node *document, void *context);
 static bool emit_sequence(node *sequence, void *context);
 static bool emit_sequence_item(node *each, void *context);
 static bool emit_mapping(node *mapping, void *context);
 static bool emit_mapping_item(node *key, node *value, void *context);
-static bool emit_scalar(const node * restrict each, void *context);
-static bool emit_tagged_scalar(const node * restrict scalar, yaml_char_t *tag, yaml_scalar_style_t style, void *context);
+static bool emit_scalar(const node *each, void *context);
+static bool emit_tagged_scalar(const node *scalar, yaml_char_t *tag, yaml_scalar_style_t style, int implicit, void *context);
 
 #define component "yaml"
-#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(TRACE, component, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
+#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 
-void emit_yaml(const nodelist * restrict list, const struct settings * restrict settings)
+void emit_yaml(const nodelist *list, const struct settings *settings)
 {
     log_debug(component, "emitting...");
     yaml_emitter_t emitter;
@@ -73,11 +73,22 @@ void emit_yaml(const nodelist * restrict list, const struct settings * restrict 
     yaml_document_start_event_initialize(&event, &(yaml_version_directive_t){1, 1}, NULL, NULL, 0);
     if (!yaml_emitter_emit(&emitter, &event))
         goto error;
-    
-    if(!emit_nodelist(list, &emitter))
+
+    if(1 == nodelist_length(list))
     {
-        fprintf(stderr, "%s: %s\n", settings->program_name, emitter.problem);
-        goto error;
+        if(!emit_node(nodelist_get(list, 0), &emitter))
+        {
+            fprintf(stderr, "%s: %s\n", settings->program_name, emitter.problem);
+            goto error;
+        }
+    }
+    else
+    {
+        if(!emit_nodelist(list, &emitter))
+        {
+            fprintf(stderr, "%s: %s\n", settings->program_name, emitter.problem);
+            goto error;
+        }
     }
 
     log_trace(component, "document end");
@@ -95,7 +106,7 @@ void emit_yaml(const nodelist * restrict list, const struct settings * restrict 
     fflush(stdout);
 }
 
-static bool emit_nodelist(const nodelist * restrict list, yaml_emitter_t *emitter)
+static bool emit_nodelist(const nodelist *list, yaml_emitter_t *emitter)
 {
     log_trace(component, "emitting nodelist");
     yaml_event_t event;
@@ -135,6 +146,9 @@ static bool emit_node(node *each, void *context)
         case MAPPING:
             result = emit_mapping(each, context);
             break;
+        case ALIAS:
+            result = emit_node(alias_target(each), context);
+            break;
     }
 
     return result;
@@ -169,7 +183,9 @@ static bool emit_sequence(node *sequence, void *context)
     yaml_event_t event;
 
     log_trace(component, "seqence start");
-    yaml_sequence_start_event_initialize(&event, NULL, (yaml_char_t *)YAML_DEFAULT_SEQUENCE_TAG, 1, YAML_BLOCK_SEQUENCE_STYLE);
+    uint8_t *name = node_name(sequence);
+    yaml_char_t *tag = NULL == name ? (yaml_char_t *)YAML_DEFAULT_SEQUENCE_TAG : (yaml_char_t *)name;
+    yaml_sequence_start_event_initialize(&event, NULL, tag, NULL == name, YAML_BLOCK_SEQUENCE_STYLE);
     if (!yaml_emitter_emit(emitter, &event))
         return false;
     
@@ -199,7 +215,9 @@ static bool emit_mapping(node *mapping, void *context)
     yaml_event_t event;
 
     log_trace(component, "mapping start");
-    yaml_mapping_start_event_initialize(&event, NULL, (yaml_char_t *)YAML_DEFAULT_MAPPING_TAG, 1, YAML_BLOCK_MAPPING_STYLE);
+    uint8_t *name = node_name(mapping);
+    yaml_char_t *tag = NULL == name ? (yaml_char_t *)YAML_DEFAULT_MAPPING_TAG : (yaml_char_t *)name;
+    yaml_mapping_start_event_initialize(&event, NULL, tag, NULL == name, YAML_BLOCK_MAPPING_STYLE);
     if (!yaml_emitter_emit(emitter, &event))
         return false;
     
@@ -219,14 +237,14 @@ static bool emit_mapping(node *mapping, void *context)
 static bool emit_mapping_item(node *key, node *value, void *context)
 {
     log_trace(component, "emitting mapping item");
-    if(!emit_tagged_scalar(key, (yaml_char_t *)YAML_STR_TAG, YAML_PLAIN_SCALAR_STYLE, context))
+    if(!emit_tagged_scalar(key, (yaml_char_t *)YAML_STR_TAG, YAML_PLAIN_SCALAR_STYLE, 1, context))
     {
         return false;
     }
     return emit_node(value, context);
 }
 
-static bool emit_scalar(const node * restrict each, void *context)
+static bool emit_scalar(const node *each, void *context)
 {
     yaml_char_t *tag = NULL;
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
@@ -234,14 +252,13 @@ static bool emit_scalar(const node * restrict each, void *context)
     switch(scalar_kind(each))
     {
         case SCALAR_STRING:
-            // xxx - don't need node tag (name) length, nuke it
             tag = NULL == node_name(each) ? (yaml_char_t *)YAML_STR_TAG : node_name(each);
             style = YAML_DOUBLE_QUOTED_SCALAR_STYLE;
             break;
         case SCALAR_INTEGER:
             tag = NULL == node_name(each) ? (yaml_char_t *)YAML_INT_TAG : node_name(each);
             break;
-        case SCALAR_DECIMAL:
+        case SCALAR_REAL:
             tag = NULL == node_name(each) ? (yaml_char_t *)YAML_FLOAT_TAG : node_name(each);
             break;
         case SCALAR_TIMESTAMP:
@@ -255,16 +272,16 @@ static bool emit_scalar(const node * restrict each, void *context)
             break;
     }
 
-    return emit_tagged_scalar(each, tag, style, context);
+    return emit_tagged_scalar(each, tag, style, NULL == node_name(each), context);
 }
 
-static bool emit_tagged_scalar(const node * restrict scalar, yaml_char_t *tag, yaml_scalar_style_t style, void *context)
+static bool emit_tagged_scalar(const node *scalar, yaml_char_t *tag, yaml_scalar_style_t style, int implicit, void *context)
 {
     trace_string("emitting scalar \"%s\"", scalar_value(scalar), node_size(scalar));
     yaml_emitter_t *emitter = (yaml_emitter_t *)context;
     yaml_event_t event;
 
-    yaml_scalar_event_initialize(&event, NULL, tag, scalar_value(scalar), (int)node_size(scalar), 1, 1, style);
+    yaml_scalar_event_initialize(&event, NULL, tag, scalar_value(scalar), (int)node_size(scalar), implicit, implicit, style);
     if (!yaml_emitter_emit(emitter, &event))
         return false;
     

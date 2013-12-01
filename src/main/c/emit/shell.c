@@ -36,11 +36,12 @@
  */
 
 #include <ctype.h>
+#include <stdio.h>
 
 #include "emit/shell.h"
 #include "log.h"
 
-static bool scalar_contains_space(const node * restrict each);
+static bool scalar_contains_space(const node *each);
 
 #define MAYBE_EMIT(STR) if(context->wrap_collections)   \
     {                                                   \
@@ -76,13 +77,18 @@ bool emit_node(node *each, void *argument)
             MAYBE_EMIT(")");
             EMIT("\n");
             break;
+        case ALIAS:
+            log_trace("shell", "resolving alias");
+            result = emit_node(alias_target(each), NULL);
+            break;
+            
     }
     fflush(stdout);
 
     return result;
 }
 
-bool emit_scalar(const node * restrict each)
+bool emit_scalar(const node *each)
 {
     if(SCALAR_STRING == scalar_kind(each) && scalar_contains_space(each))
     {
@@ -96,7 +102,7 @@ bool emit_scalar(const node * restrict each)
     }
 }
 
-bool emit_quoted_scalar(const node * restrict each)
+bool emit_quoted_scalar(const node *each)
 {
     EMIT("'");
     if(!emit_raw_scalar(each))
@@ -109,7 +115,7 @@ bool emit_quoted_scalar(const node * restrict each)
     return true;
 }
 
-bool emit_raw_scalar(const node * restrict each)
+bool emit_raw_scalar(const node *each)
 {
     return fwrite(scalar_value(each), node_size(each), 1, stdout);
 }
@@ -133,7 +139,7 @@ bool emit_sequence_item(node *each, void *context __attribute__((unused)))
     return true;
 }
 
-bool scalar_contains_space(const node * restrict each)
+bool scalar_contains_space(const node *each)
 {
     uint8_t *value = scalar_value(each);
     for(size_t i = 0; i < node_size(each); i++)

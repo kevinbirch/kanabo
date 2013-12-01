@@ -85,7 +85,7 @@ extern const void * SENTINEL;
 #define ENSURE_ELSE_FALSE(ERRNO, ...) ENSURE_THAT(false, ERRNO, __VA_ARGS__)
 
 
-bool is_null(const void * restrict first, ...);
+bool is_null(const void *first, ...);
 bool is_false(int_fast8_t first, ...);
 
 

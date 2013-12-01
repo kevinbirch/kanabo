@@ -47,13 +47,13 @@
 #define make_regex(MEMBER, PATTERN) context->MEMBER = (regex_t *)malloc(sizeof(regex_t)); \
     if(NULL == context->MEMBER)                                         \
     {                                                                   \
-        loader_error("uh oh! out of memory, can't allocate the number regex");\
+        loader_error("uh oh! out of memory, can't allocate a regex");   \
         context->code = ERR_LOADER_OUT_OF_MEMORY;                       \
         return context;                                                 \
     }                                                                   \
     if(regcomp(context->MEMBER, PATTERN, REG_EXTENDED | REG_NOSUB))     \
     {                                                                   \
-        loader_error("uh oh! can't compile the decimal regex");         \
+        loader_error("uh oh! can't compile a regex");                   \
         context->code = ERR_OTHER;                                      \
         return context;                                                 \
     }
@@ -88,7 +88,7 @@ loader_context *make_string_loader(const unsigned char *input, size_t size)
     return context;
 }
 
-loader_context *make_file_loader(FILE * restrict input)
+loader_context *make_file_loader(FILE *input)
 {
     loader_debug("creating file loader context");
     loader_context *context = make_loader();
@@ -111,7 +111,7 @@ loader_context *make_file_loader(FILE * restrict input)
         errno = EINVAL;
         return context;
     }
-    if(feof(input) || 0 == file_info.st_size)
+    if(file_info.st_mode & S_IFREG && (feof(input) || 0 == file_info.st_size))
     {
         loader_error("input is empty");
         context->code = ERR_INPUT_SIZE_IS_ZERO;
@@ -125,40 +125,44 @@ loader_context *make_file_loader(FILE * restrict input)
 
 static loader_context *make_loader(void)
 {
+    loader_debug("creating common loader context");
     loader_context *context = (loader_context *)calloc(1, sizeof(loader_context));
     if(NULL == context)
     {
         loader_error("uh oh! out of memory, can't allocate the loader context");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
         return NULL;
     }
+    context->strategy = DUPE_CLOBBER;
 
-    yaml_parser_t *parser = (yaml_parser_t *)calloc(1, sizeof(yaml_parser_t));
-    if(NULL == parser)
+    context->parser = (yaml_parser_t *)calloc(1, sizeof(yaml_parser_t));
+    if(NULL == context->parser)
     {
         loader_error("uh oh! out of memory, can't allocate the yaml parser");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return context;
-    }
-    document_model *model = make_model(1);
-    if(NULL == model)
-    {
-        loader_error("uh oh! out of memory, can't allocate the document model");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return context;
+        free(context);
+        return NULL;
     }
     
-    if(!yaml_parser_initialize(parser))
+    context->anchors = make_hashtable_with_function(string_comparitor, shift_add_xor_string_hash);
+    if(NULL == context->anchors)
     {
-        loader_error("uh oh! can't initialize the yaml parser");
-        context->code = interpret_yaml_error(parser);
-        return context;
+        loader_error("uh oh! out of memory, can't allocate the anchor table");
+        context->code = ERR_LOADER_OUT_OF_MEMORY;
+        free(context->parser);
+        free(context);
+        return NULL;
     }
 
-    context->parser = parser;
-    context->model = model;
-    context->excursions = NULL;
-    context->head = NULL;
-    context->last = NULL;
+    if(!yaml_parser_initialize(context->parser))
+    {
+        loader_error("uh oh! can't initialize the yaml parser");
+        context->code = interpret_yaml_error(context->parser);
+        free(context->parser);
+        free(context->anchors);
+        free(context);
+        return NULL;
+    }
 
     make_regex(decimal_regex, "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$");
     make_regex(integer_regex, "^-?(0|([1-9][[:digit:]]*))$");
@@ -167,9 +171,14 @@ static loader_context *make_loader(void)
     return context;
 }
 
-enum loader_status_code loader_status(const loader_context * restrict context)
+enum loader_status_code loader_status(const loader_context *context)
 {
     return context->code;
+}
+
+void loader_set_dupe_strategy(loader_context *context, enum loader_duplicate_key_strategy value)
+{
+    context->strategy = value;
 }
 
 void loader_free(loader_context *context)
@@ -184,20 +193,9 @@ void loader_free(loader_context *context)
     free(context->parser);
     context->parser = NULL;
 
-    for(struct excursion *entry = context->excursions; NULL != entry; entry = context->excursions)
-    {
-        context->excursions = entry->next;
-        free(entry);
-    }
-    context->excursions = NULL;
-    for(struct cell *entry = context->head; NULL != entry; entry = context->head)
-    {
-        context->head = entry->next;
-        free(entry);
-    }
-    context->head = NULL;
-    context->last = NULL;
-    context->model = NULL;
+    hashtable_free(context->anchors);
+    context->anchors = NULL;
+
     regfree(context->decimal_regex);
     free(context->decimal_regex);
     regfree(context->integer_regex);
@@ -212,7 +210,6 @@ document_model *load(loader_context *context)
 {
     PRECOND_NONNULL_ELSE_NULL(context);
     PRECOND_NONNULL_ELSE_NULL(context->parser);
-    PRECOND_NONNULL_ELSE_NULL(context->model);
 
     loader_debug("starting load...");
     return build_model(context);

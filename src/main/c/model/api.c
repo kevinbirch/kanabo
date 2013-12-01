@@ -43,20 +43,38 @@
 #include "model.h"
 #include "conditions.h"
 
-static bool scalar_equals(const node * restrict one, const node * restrict two);
-static bool tag_equals(const uint8_t * restrict one, const uint8_t * restrict two);
-static bool sequence_equals(const node * restrict one, const node * restrict two);
-static bool mapping_equals(const node * restrict one, const node * restrict two);
+struct context_adapter_s
+{
+    union
+    {
+        mapping_iterator mapping;
+        sequence_iterator sequence;
+    } iterator;
+    void *context;
+};
 
-node *model_document(const document_model * restrict model, size_t index)
+typedef struct context_adapter_s context_adapter;
+
+static bool node_comparitor(const void *one, const void *two);
+static bool tag_equals(const uint8_t *one, const uint8_t *two);
+
+static bool scalar_equals(const node *one, const node *two);
+static bool sequence_equals(const node *one, const node *two);
+static bool mapping_equals(const node *one, const node *two);
+
+static bool mapping_iterator_adpater(void *key, void *value, void *context);
+static bool sequence_iterator_adpater(void *each, void *context);
+
+
+node *model_document(const document_model *model, size_t index)
 {
     PRECOND_NONNULL_ELSE_NULL(model);
     PRECOND_ELSE_NULL(index < model_document_count(model));
 
-    return model->documents[index];
+    return vector_get(model->documents, index);
 }
 
-node *model_document_root(const document_model * restrict model, size_t index)
+node *model_document_root(const document_model *model, size_t index)
 {
     node *document = model_document(model, index);
     node *result = NULL;
@@ -69,41 +87,47 @@ node *model_document_root(const document_model * restrict model, size_t index)
     return result;
 }
 
-size_t model_document_count(const document_model * restrict model)
+size_t model_document_count(const document_model *model)
 {
     PRECOND_NONNULL_ELSE_ZERO(model);
 
-    return model->size;
+    return vector_length(model->documents);
 }
 
-enum node_kind node_kind(const node * restrict value)
+node *document_root(const node *document)
+{
+    PRECOND_NONNULL_ELSE_NULL(document);
+    PRECOND_ELSE_NULL(DOCUMENT == node_kind(document));
+
+    return document->content.target;
+}
+
+enum node_kind node_kind(const node *value)
 {
     return value->tag.kind;
 }
 
-uint8_t *node_name(const node * restrict value)
+uint8_t *node_name(const node *value)
 {
     PRECOND_NONNULL_ELSE_NULL(value);
 
     return value->tag.name;
 }
 
-size_t node_size(const node * restrict value)
+size_t node_size(const node *value)
 {
     PRECOND_NONNULL_ELSE_ZERO(value);
 
     return value->content.size;
 }
 
-node *document_root(const node * restrict document)
+node *node_parent(const node *value)
 {
-    PRECOND_NONNULL_ELSE_NULL(document);
-    PRECOND_ELSE_NULL(DOCUMENT == node_kind(document));
-
-    return document->content.document.root;
+    PRECOND_NONNULL_ELSE_NULL(value);
+    return value->parent;
 }
 
-uint8_t *scalar_value(const node * restrict scalar)
+uint8_t *scalar_value(const node *scalar)
 {
     PRECOND_NONNULL_ELSE_NULL(scalar);
     PRECOND_ELSE_NULL(SCALAR == node_kind(scalar));
@@ -111,126 +135,86 @@ uint8_t *scalar_value(const node * restrict scalar)
     return scalar->content.scalar.value;
 }
 
-enum scalar_kind scalar_kind(const node * restrict scalar)
+enum scalar_kind scalar_kind(const node *scalar)
 {
     return scalar->content.scalar.kind;
 }
 
-bool scalar_boolean_is_true(const node * restrict scalar)
+bool scalar_boolean_is_true(const node *scalar)
 {
     return 0 == memcmp("true", scalar_value(scalar), 4);
 }
 
-bool scalar_boolean_is_false(const node * restrict scalar)
+bool scalar_boolean_is_false(const node *scalar)
 {
     return 0 == memcmp("false", scalar_value(scalar), 5);
 }
 
-node *sequence_get(const node * restrict sequence, size_t index)
+node *sequence_get(const node *sequence, size_t index)
 {
     PRECOND_NONNULL_ELSE_NULL(sequence);
     PRECOND_ELSE_NULL(SEQUENCE == node_kind(sequence));
     PRECOND_ELSE_NULL(index < node_size(sequence));
 
-    return sequence->content.sequence.value[index];
+    return vector_get(sequence->content.sequence, index);
 }
 
-node **sequence_get_all(const node * restrict sequence)
+static bool sequence_iterator_adpater(void *each, void *context)
 {
-    PRECOND_NONNULL_ELSE_NULL(sequence);
-    PRECOND_ELSE_NULL(SEQUENCE == node_kind(sequence));
-
-    return sequence->content.sequence.value;
+    context_adapter *adapter = (context_adapter *)context;
+    return adapter->iterator.sequence((node *)each, adapter->context);
 }
 
-bool sequence_iterate(const node * restrict sequence, sequence_iterator iterator, void *context)
+bool sequence_iterate(const node *sequence, sequence_iterator iterator, void *context)
 {
     PRECOND_NONNULL_ELSE_FALSE(sequence, iterator);
     PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence));
 
-    for(size_t i = 0; i < node_size(sequence); i++)
-    {
-        if(!iterator(sequence->content.sequence.value[i], context))
-        {
-            return false;
-        }
-    }
-    return true;
+    context_adapter adapter = {.iterator.sequence=iterator, .context=context };
+    return vector_iterate(sequence->content.sequence, sequence_iterator_adpater, &adapter);
 }
 
-node *mapping_get(const node * restrict mapping, const char *key)
+node *mapping_get(const node *mapping, uint8_t *scalar, size_t length)
 {
-    PRECOND_NONNULL_ELSE_NULL(mapping, key);
+    PRECOND_NONNULL_ELSE_NULL(mapping, scalar);
     PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
+    PRECOND_ELSE_NULL(0 < length);
 
-    return mapping_get_scalar_key(mapping, (uint8_t *)key, strlen(key));
-}
-
-node *mapping_get_scalar_key(const node * restrict mapping, uint8_t *key, size_t key_length)
-{
-    PRECOND_NONNULL_ELSE_NULL(mapping, key);
-    PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
-    PRECOND_ELSE_NULL(0 < key_length);
-
-    node *scalar = make_scalar_node(key, key_length, SCALAR_STRING);
-    node *result = mapping_get_node_key(mapping, scalar);
-    node_free(scalar);
+    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
+    node *result = hashtable_get(mapping->content.mapping, key);
+    node_free(key);
     
     return result;
 }
 
-node *mapping_get_node_key(const node * restrict mapping, const node *key)
+bool mapping_contains(const node *mapping, uint8_t *scalar, size_t length)
 {
-    PRECOND_NONNULL_ELSE_NULL(mapping, key);
-    PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
+    PRECOND_NONNULL_ELSE_FALSE(mapping, scalar);
+    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping), 0 < length);
 
-    node *result = NULL;
-    for(size_t i = 0; i < mapping->content.size; i++)
-    {
-        if(node_equals(key, mapping->content.mapping.value[i]->key))
-        {
-            result = mapping->content.mapping.value[i]->value;
-            break;
-        }
-    }
-
+    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
+    bool result = hashtable_contains(mapping->content.mapping, key);
+    node_free(key);
+    
     return result;
 }
 
-bool mapping_contains_key(const node * restrict mapping, const char *key)
+static bool mapping_iterator_adpater(void *key, void *value, void *context)
 {
-    return NULL != mapping_get(mapping, key);
+    context_adapter *adapter = (context_adapter *)context;
+    return adapter->iterator.mapping((node *)key, (node *)value, adapter->context);
 }
 
-bool mapping_contains_node_key(const node * restrict mapping, const node *key)
-{
-    return NULL != mapping_get_node_key(mapping, key);
-}
-
-key_value_pair **mapping_get_all(const node * restrict mapping)
-{
-    PRECOND_NONNULL_ELSE_NULL(mapping);
-    PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
-
-    return mapping->content.mapping.value;
-}
-
-bool mapping_iterate(const node * restrict mapping, mapping_iterator iterator, void *context)
+bool mapping_iterate(const node *mapping, mapping_iterator iterator, void *context)
 {
     PRECOND_NONNULL_ELSE_FALSE(mapping, iterator);
     PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping));
 
-    for(size_t i = 0; i < node_size(mapping); i++)
-    {
-        if(!iterator(mapping->content.mapping.value[i]->key, mapping->content.mapping.value[i]->value, context))
-        {
-            return false;
-        }
-    }
-    return true;
+    context_adapter adapter = {.iterator.mapping=iterator, .context=context};
+    return hashtable_iterate(mapping->content.mapping, mapping_iterator_adpater, &adapter);
 }
 
-bool node_equals(const node * restrict one, const node * restrict two)
+bool node_equals(const node *one, const node *two)
 {
     if(one == two)
     {
@@ -242,11 +226,14 @@ bool node_equals(const node * restrict one, const node * restrict two)
         return false;
     }
 
-    bool result = 
-        node_kind(one) == node_kind(two) &&
+    bool result = node_kind(one) == node_kind(two) &&
         tag_equals(node_name(one), node_name(two)) &&
         node_size(one) == node_size(two);
-    
+
+    if(!result)
+    {
+        return result;
+    }
     switch(node_kind(one))
     {
         case DOCUMENT:
@@ -261,18 +248,26 @@ bool node_equals(const node * restrict one, const node * restrict two)
         case MAPPING:
             result &= mapping_equals(one, two);
             break;
+        case ALIAS:
+            result &= node_equals(alias_target(one), alias_target(two));
+            break;
     }
     return result;
 }
 
-static bool scalar_equals(const node * restrict one, const node * restrict two)
+static bool scalar_equals(const node *one, const node *two)
 {
     size_t n1 = node_size(one);
     size_t n2 = node_size(two);
-    return memcmp(scalar_value(one), scalar_value(two), n1 > n2 ? n2 : n1) == 0;
+
+    if(n1 != n2)
+    {
+        return false;
+    }
+    return memcmp(scalar_value(one), scalar_value(two), n1) == 0;
 }
 
-static bool tag_equals(const uint8_t * restrict one, const uint8_t * restrict two)
+static bool tag_equals(const uint8_t *one, const uint8_t *two)
 {
     if(NULL == one && NULL == two)
     {
@@ -287,29 +282,25 @@ static bool tag_equals(const uint8_t * restrict one, const uint8_t * restrict tw
     return memcmp(one, two, n1 > n2 ? n2 : n1) == 0;
 }
 
-static bool sequence_equals(const node * restrict one, const node * restrict two)
+static bool node_comparitor(const void *one, const void *two)
 {
-    for(size_t i = node_size(one); i < node_size(one); i++)
-    {
-        if(!node_equals(one->content.sequence.value[i], two->content.sequence.value[i]))
-        {
-            return false;
-        }
-    }
-    return true;
+    return node_equals((node *)one, (node *)two);
 }
 
-static bool mapping_equals(const node * restrict one, const node * restrict two)
+static bool sequence_equals(const node *one, const node *two)
 {
-    for(size_t i = node_size(one); i < node_size(one); i++)
-    {
-        if(!node_equals(one->content.mapping.value[i]->key, two->content.mapping.value[i]->key) ||
-           !node_equals(one->content.mapping.value[i]->value, two->content.mapping.value[i]->value))
-        {
-            return false;
-        }
-    }
-    return true;
+    return vector_equals(one->content.sequence, two->content.sequence, node_comparitor);
 }
 
+static bool mapping_equals(const node *one, const node *two)
+{
+    return hashtable_equals(one->content.mapping, two->content.mapping, node_comparitor);
+}
 
+node *alias_target(const node *alias)
+{
+    PRECOND_NONNULL_ELSE_NULL(alias);
+    PRECOND_ELSE_NULL(ALIAS == node_kind(alias));
+
+    return alias->content.target;
+}

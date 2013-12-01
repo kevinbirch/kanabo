@@ -1,0 +1,47 @@
+---
+order   : 123-1234567-7654321
+date    : 2013-11-29
+customer:
+  name: &id001 Ramond Hessel
+  given  : Raymond
+  family : Hessel
+payment:
+  billing-address: &id002
+    name: *id001
+    lines:
+      - 1320 SE Benning
+      - Apartment A
+    city    : Movie Town
+    state   : NA
+    postal  : "90210"
+    country : USA
+  method:
+    type: credit-card
+    brand: visa
+    digits: 1234
+  sub-total : 219.66
+  tax       : 17.57
+  shipping  : 0.00
+  total     : &id003 237.23
+items:
+  - &id004
+    isbn        : "1428312250"
+    quantity    : 1
+    description : Introduction to Veterinary Science
+    condition   : new
+    format      : hardcover
+    price       : 135.48
+  - &id005
+    isbn        : "0323073867"
+    quantity    : 1
+    description : Principles and Practice of Veterinary Technology, 3e
+    condition   : new
+    format      : hardcover
+    price       : 84.18
+shipments:
+  - estimate: 2013-12-2
+    shipping-address: *id002
+    total: *id003
+    items:
+      - *id004
+      - *id005

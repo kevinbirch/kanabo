@@ -43,7 +43,7 @@
 
 static bool emit_mapping_item(node *key, node *value, void *context);
 
-void emit_bash(const nodelist * restrict list, const struct settings * restrict settings)
+void emit_bash(const nodelist *list, const struct settings *settings)
 {
     log_debug("bash", "emitting...");
     emit_context context = 

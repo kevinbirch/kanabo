@@ -58,9 +58,9 @@ static const char * const LEVELS[] =
 };
 
 static bool LOGGING_ENABLED = false;
-static enum log_level LOG_LEVEL = ERROR;
+static enum log_level LOG_LEVEL = LVL_ERROR;
 
-int print_prelude(enum log_level level, const char * restrict component);
+int print_prelude(enum log_level level, const char *component);
 
 void enable_logging(void)
 {
@@ -82,37 +82,37 @@ void set_log_level_from_env(void)
     char *level = getenv("KANABO_LOG_LEVEL");
     if(NULL == level)
     {
-        set_log_level(INFO);
+        set_log_level(LVL_INFO);
     }
     else if(0 == memcmp("ERROR", level, 5))
     {
-        set_log_level(ERROR);
+        set_log_level(LVL_ERROR);
     }
     else if(0 == memcmp("WARNING", level, 7))
     {
-        set_log_level(WARNING);
+        set_log_level(LVL_WARNING);
     }
     else if(0 == memcmp("INFO", level, 4))
     {
-        set_log_level(INFO);
+        set_log_level(LVL_INFO);
     }
     else if(0 == memcmp("DEBUG", level, 5))
     {
-        set_log_level(DEBUG);
+        set_log_level(LVL_DEBUG);
     }
     else if(0 == memcmp("TRACE", level, 5))
     {
-        set_log_level(TRACE);
+        set_log_level(LVL_TRACE);
     }
     else
     {
-        set_log_level(INFO);
+        set_log_level(LVL_INFO);
     }
 }
 
 #define ensure_log_enabled(LEVEL) if(!LOGGING_ENABLED || LOG_LEVEL < LEVEL) return 0
 
-int logger(enum log_level level, const char * restrict component, const char * restrict format, ...)
+int logger(enum log_level level, const char *component, const char *format, ...)
 {
     ensure_log_enabled(level);
     va_list args;
@@ -122,7 +122,7 @@ int logger(enum log_level level, const char * restrict component, const char * r
     return result;
 }
 
-int vlogger(enum log_level level, const char * restrict component, const char * restrict format, va_list args)
+int vlogger(enum log_level level, const char *component, const char *format, va_list args)
 {
     ensure_log_enabled(level);
     int result = print_prelude(level, component);
@@ -138,7 +138,7 @@ int vlogger(enum log_level level, const char * restrict component, const char * 
     return result;
 }
 
-int print_prelude(enum log_level level, const char * restrict component)
+int print_prelude(enum log_level level, const char *component)
 {
     time_t now = time(NULL);
     struct tm now_tm;

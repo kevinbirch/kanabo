@@ -39,7 +39,7 @@
 
 const void * SENTINEL = (void *)"SENTINEL";
 
-bool is_null(const void * restrict first, ...)
+bool is_null(const void *first, ...)
 {
     va_list args;
     bool result = false;

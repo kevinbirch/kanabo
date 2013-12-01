@@ -39,6 +39,8 @@
 
 #include <getopt.h>
 
+#include "loader.h"
+
 enum emit_mode
 {
     BASH,
@@ -63,7 +65,8 @@ struct settings
     const char     *expression;
     const char     *input_file_name;
     enum command    command;
+    enum loader_duplicate_key_strategy duplicate_strategy;
 };
 
-enum command process_options(const int argc, char * const *argv, struct settings * restrict settings);
+enum command process_options(const int argc, char * const *argv, struct settings *settings);
 

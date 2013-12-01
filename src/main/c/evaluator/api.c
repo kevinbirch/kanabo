@@ -107,7 +107,7 @@ evaluator_context *make_evaluator(const document_model *model, const jsonpath *p
     return context;
 }
 
-enum evaluator_status_code evaluator_status(const evaluator_context * restrict context)
+enum evaluator_status_code evaluator_status(const evaluator_context *context)
 {
     return context->code;
 }

@@ -135,7 +135,7 @@ const char *predicate_kind_name(enum predicate_kind value)
     return PREDICATE_KIND_NAMES[value];
 }
 
-char *parser_status_message(const parser_context * restrict context)
+char *parser_status_message(const parser_context *context)
 {
     PRECOND_NONNULL_ELSE_NULL(context);
     char *message = NULL;

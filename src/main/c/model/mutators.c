@@ -41,75 +41,77 @@
 #include "model.h"
 #include "conditions.h"
 
-#define ensure_capacity(TYPE, ARRAY, SIZE, CAPACITY)                    \
-    if((SIZE) > (CAPACITY))                                             \
-    {                                                                   \
-        size_t new_capacity = ((SIZE) * 3) / 2 + 1;                     \
-        TYPE **array_cache = (ARRAY);                                   \
-        (ARRAY) = realloc((ARRAY), sizeof(TYPE *) * new_capacity);      \
-        if(NULL == (ARRAY))                                             \
-        {                                                               \
-            (ARRAY) = array_cache;                                      \
-            return false;                                               \
-        }                                                               \
-        (CAPACITY) = new_capacity;                                      \
+void node_set_tag(node *target, const uint8_t *value, size_t length)
+{
+    PRECOND_NONNULL_ELSE_VOID(target, value);
+    target->tag.name = (uint8_t *)calloc(1, length + 1);
+    if(NULL != target->tag.name)
+    {
+        memcpy(target->tag.name, value, length);
+        target->tag.name[length] = '\0';
     }
+}
 
-bool model_add(document_model * restrict model, node *document)
+void node_set_anchor(node *target, const uint8_t *value, size_t length)
+{
+    PRECOND_NONNULL_ELSE_VOID(target, value);
+    target->anchor = (uint8_t *)calloc(1, length + 1);
+    if(NULL != target->anchor)
+    {
+        memcpy(target->anchor, value, length);
+        target->anchor[length] = '\0';
+    }
+}
+
+bool model_add(document_model *model, node *document)
 {
     PRECOND_NONNULL_ELSE_FALSE(model, document);
     PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
 
-    ensure_capacity(node, model->documents, model->size + 1, model->capacity);
-    model->documents[model->size++] = document;
-    return true;
+    return vector_add(model->documents, document);
 }
 
-bool document_set_root(node * restrict document, node *root)
+bool document_set_root(node *document, node *root)
 {
     PRECOND_NONNULL_ELSE_FALSE(document, root);
     PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
 
-    document->content.document.root = root;
+    document->content.target = root;
+    root->parent = document;
     return true;
 }
 
-bool sequence_add(node * restrict sequence, node *item)
+bool sequence_add(node *sequence, node *item)
 {
     PRECOND_NONNULL_ELSE_FALSE(sequence, item);
     PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence));
 
-    ensure_capacity(node, sequence->content.sequence.value, sequence->content.size + 1, sequence->content.sequence.capacity);
-    sequence->content.sequence.value[sequence->content.size++] = item;
-
-    return true;
+    bool result = vector_add(sequence->content.sequence, item);
+    if(result)
+    {
+        sequence->content.size = vector_length(sequence->content.sequence);
+        item->parent = sequence;
+    }
+    return result;
 }
 
-bool sequence_set(node * restrict sequence, node *item, size_t index)
+bool mapping_put(node *mapping, uint8_t *scalar, size_t length, node *value)
 {
-    PRECOND_NONNULL_ELSE_FALSE(sequence, item);
-    PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence), index < sequence->content.size);
-
-    sequence->content.sequence.value[index] = item;
-
-    return true;
-}
-
-bool mapping_put(node * restrict mapping, node *key, node *value)
-{
-    PRECOND_NONNULL_ELSE_FALSE(mapping, key, value);
+    PRECOND_NONNULL_ELSE_FALSE(mapping, scalar, value);
     PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping));
 
-    ensure_capacity(key_value_pair, mapping->content.mapping.value, mapping->content.size + 1, mapping->content.mapping.capacity);
-
-    bool result = true;
-    key_value_pair *pair = (key_value_pair *)calloc(1, sizeof(key_value_pair));
-    ENSURE_NONNULL_ELSE_FALSE(errno, pair);
-
-    pair->key = key;
-    pair->value = value;
-    mapping->content.mapping.value[mapping->content.size++] = pair;
-
-    return result;
+    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
+    if(NULL == key)
+    {
+        return false;
+    }
+    errno = 0;
+    hashtable_put(mapping->content.mapping, key, value);
+    if(0 == errno)
+    {
+        mapping->content.size = hashtable_size(mapping->content.mapping);
+        value->parent = mapping;
+    }
+    return 0 == errno;
 }
 

@@ -60,11 +60,11 @@ typedef enum evaluator_status_code evaluator_status_code;
 typedef struct evaluator_context evaluator_context;
 
 evaluator_context *make_evaluator(const document_model *model, const jsonpath *path);
-evaluator_status_code evaluator_status(const evaluator_context * restrict context);
+evaluator_status_code evaluator_status(const evaluator_context *context);
 
 void evaluator_free(evaluator_context *context);
 
 nodelist *evaluate(evaluator_context *context);
 
-const char *evaluator_status_message(const evaluator_context * restrict context);
+const char *evaluator_status_message(const evaluator_context *context);
 

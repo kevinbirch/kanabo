@@ -1,14 +1,8 @@
 /*
- * 金棒 (kanabō)
- * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
- * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
- * made stronger.
- *
- * For more information, consult the README file in the project root.
+ * Copyright (c) 2013 Kevin Birch <kmb@pobox.com>.  All rights reserved.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -37,8 +31,36 @@
 
 #pragma once
 
-#include "nodelist.h"
-#include "options.h"
+#include <stdlib.h>
+#include <stdbool.h>
 
-void emit_yaml(const nodelist *list, const struct settings *settings);
+typedef struct vector_s Vector;
+
+typedef bool (*vector_iterator)(void *each, void *context);
+typedef bool (*vector_map_function)(void *each, void *context, Vector *target);
+typedef bool (*vector_item_comparitor)(const void *one, const void *two);
+
+Vector *make_vector(void);
+Vector *make_vector_with_capacity(size_t capacity);
+
+void    vector_free(Vector *value);
+        
+size_t  vector_length(const Vector *vector);
+size_t  vector_capacity(const Vector *vector);
+bool    vector_is_empty(const Vector *vector);
+        
+void   *vector_get(const Vector *vector, size_t index);
+bool    vector_add(Vector *vector,  void *value);
+bool    vector_add_all(Vector *vector,  Vector *value);
+void   *vector_set(Vector *vector, void *value, size_t index);
+void   *vector_remove(Vector *vector, size_t index);
+
+void    vector_clear(Vector *vector);
+bool    vector_trim(Vector *vector);
+        
+bool    vector_equals(const Vector *one, const Vector *two, vector_item_comparitor comparitor);
+bool    vector_iterate(const Vector *vector, vector_iterator iterator, void *context);
+
+Vector *vector_map(const Vector *vector, vector_map_function function, void *context);
+Vector *vector_map_into(const Vector *vector, vector_map_function function, void *context, Vector *target);
 

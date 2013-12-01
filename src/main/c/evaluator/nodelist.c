@@ -40,204 +40,58 @@
 #include "nodelist.h"
 #include "conditions.h"
 
-static bool allocate(nodelist * restrict list, size_t capacity);
-static inline bool ensure_capacity(nodelist *list, size_t min_capacity);
-
-nodelist *make_nodelist(void)
+struct context_adapter_s
 {
-    return make_nodelist_with_capacity(DEFAULT_CAPACITY);
-}
-
-nodelist *make_nodelist_with_capacity(size_t capacity)
-{
-    nodelist *result = (nodelist *)calloc(1, sizeof(nodelist));
-    if(NULL == result)
+    union
     {
-        return NULL;
-    }
+        nodelist_iterator foreach;
+        nodelist_map_function map;
+    } iterator;
+    void *context;
+};
 
-    if(allocate(result, capacity))
-    {
-        return result;
-    }
-    else
-    {
-        free(result);
-        result = NULL;
-        return NULL;
-    }
-}
+typedef struct context_adapter_s context_adapter;
 
-void nodelist_free(nodelist *list)
+static bool nodelist_iterator_adpater(void *each, void *context);
+static bool nodelist_map_adpater(void *each, void *context, Vector *target);
+
+
+bool nodelist_set(nodelist *list, void *value, size_t index)
 {
-    PRECOND_NONNULL_ELSE_VOID(list);
-
-    if(0 < list->length)
-    {
-        free(list->nodes);
-        list->nodes = NULL;
-    }
-    free(list);
+    errno = 0;
+    vector_set(list, value, index);
+    
+    return 0 == errno;
 }
 
-void nodelist_free_nodes(nodelist *list)
+static bool nodelist_iterator_adpater(void *each, void *context)
 {
-    PRECOND_NONNULL_ELSE_VOID(list);
-
-    for(int32_t i = (int32_t)list->length - 1; i >= 0; i--)
-    {
-        node_free(list->nodes[i]);
-        list->nodes[i] = NULL;
-        list->length--;
-    }
+    context_adapter *adapter = (context_adapter *)context;
+    return adapter->iterator.foreach((node *)each, adapter->context);
 }
 
-bool nodelist_clear(nodelist *list)
-{
-    PRECOND_NONNULL_ELSE_FALSE(list);
-
-    if(NULL != list->nodes)
-    {
-        free(list->nodes);
-        list->nodes = NULL;
-    }
-    return allocate(list, DEFAULT_CAPACITY);
-}
-
-size_t nodelist_length(const nodelist * restrict list)
-{
-    PRECOND_NONNULL_ELSE_ZERO(list);
-
-    return list->length;
-}
-
-bool nodelist_is_empty(const nodelist * restrict list)
-{
-    PRECOND_NONNULL_ELSE_TRUE(list);
-
-    return 0 == list->length;
-}
-
-node *nodelist_get(const nodelist * restrict list, size_t index)
-{
-    PRECOND_NONNULL_ELSE_NULL(list);
-    PRECOND_ELSE_NULL(index < list->length);
-
-    return list->nodes[index];
-}
-
-bool nodelist_add(nodelist * restrict list, node  * restrict value)
-{
-    PRECOND_NONNULL_ELSE_FALSE(list, value);
-    if(!ensure_capacity(list, list->length + 1))
-    {
-        return false;
-    }
-    list->nodes[list->length++] = value;
-    return true;
-}
-
-bool nodelist_add_all(nodelist * restrict list, nodelist * restrict value)
-{
-    PRECOND_NONNULL_ELSE_FALSE(list, value);
-    if(!ensure_capacity(list, list->length + value->length))
-    {
-        return false;
-    }
-    bool result = nodelist_iterate(value, add_to_nodelist_sequence_iterator, list);
-    return result;
-}
-
-bool nodelist_set(nodelist * restrict list, node *value, size_t index)
-{                                                                        
-    PRECOND_NONNULL_ELSE_FALSE(list, value);
-    PRECOND_ELSE_FALSE(index < list->length);
-
-    list->nodes[index] = value;
-    return true;
-}
-
-bool nodelist_iterate(const nodelist * restrict list, nodelist_iterator iterator, void *context)
+bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context)
 {
     PRECOND_NONNULL_ELSE_FALSE(list, iterator);
-
-    for(size_t i = 0; i < nodelist_length(list); i++)
-    {
-        if(!iterator(list->nodes[i], context))
-        {
-            return false;
-        }
-    }
-    return true;
+    return vector_iterate(list, nodelist_iterator_adpater, &(context_adapter){.iterator.foreach=iterator, context});
 }
 
-bool add_to_nodelist_sequence_iterator(node *each, void *context)
+static bool nodelist_map_adpater(void *each, void *context, Vector *target)
 {
-    nodelist *list = (nodelist *)context;
-    return nodelist_add(list, each);
+    context_adapter *adapter = (context_adapter *)context;
+    return adapter->iterator.map((node *)each, adapter->context, target);
 }
 
-nodelist *nodelist_map(const nodelist * restrict list, nodelist_map_function function, void *context)
+nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context)
 {
     PRECOND_NONNULL_ELSE_NULL(list, function);
 
-    nodelist *target = make_nodelist_with_capacity(nodelist_length(list));
-    if(NULL == target)
-    {
-        return NULL;
-    }
-    nodelist *result = nodelist_map_into(list, function, context, target);
-    if(NULL == result)
-    {
-        nodelist_free(target);
-        target = NULL;
-        return NULL;
-    }
-    return target;            
+    return vector_map(list, nodelist_map_adpater, &(context_adapter){.iterator.map=function, context});
 }
 
-nodelist *nodelist_map_into(const nodelist * restrict list, nodelist_map_function function, void *context, nodelist * restrict target)
+nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target)
 {
     PRECOND_NONNULL_ELSE_NULL(list, function, target);
 
-    for(size_t i = 0; i < nodelist_length(list); i++)
-    {
-        if(!function(list->nodes[i], context, target))
-        {
-            return NULL;
-        }
-    }
-
-    return target;
+    return vector_map_into(list, nodelist_map_adpater, &(context_adapter){.iterator.map=function, context}, target);
 }
-
-static bool allocate(nodelist * restrict list, size_t capacity)
-{
-    list->length = 0;
-    list->capacity = capacity;
-    list->nodes = (node **)calloc(1, sizeof(node *) * capacity);
-    if(NULL == list->nodes)
-    {
-        return false;
-    }
-    return true;
-}
-
-static inline bool ensure_capacity(nodelist *list, size_t min_capacity)
-{
-    if(list->capacity < min_capacity)
-    {
-        size_t new_capacity = (min_capacity * 3) / 2 + 1;
-        node **array_cache = list->nodes;
-        list->nodes = realloc(list->nodes, sizeof(node *) * new_capacity);
-        if(NULL == list->nodes)
-        {
-            list->nodes = array_cache;
-            return false;
-        }
-        list->capacity = new_capacity;
-    }
-    return true;
-}
-
-

@@ -41,39 +41,34 @@
 #include "model.h"
 #include "conditions.h"
 
-static bool model_init(document_model * restrict model, size_t capacity);
-
 static inline node *make_node(enum node_kind kind);
 
 static inline void sequence_free(node *sequence);
 static inline void mapping_free(node *mapping);
 
-node *make_document_node(node *root)
-{
-    PRECOND_NONNULL_ELSE_NULL(root);
+static bool scalar_comparitor(const void *one, const void *two);
+static hashcode scalar_hash(const void *key);
+static bool sequence_freedom_iterator(void *each, void *context __attribute__((unused)));
+static bool mapping_freedom_iterator(void *key, void *value, void *context);
 
+node *make_document_node(void)
+{
     node *result = make_node(DOCUMENT);
     if(NULL != result)
     {
-        result->content.size = 1;
-        result->content.document.root = root;
+        result->content.size = 0;
     }
 
     return result;
 }
 
-node *make_sequence_node(size_t capacity)
+node *make_sequence_node(void)
 {
-    PRECOND_ELSE_NULL(0 < capacity);
-
     node *result = make_node(SEQUENCE);
-
     if(NULL != result)
     {
-        result->content.size = 0;
-        result->content.sequence.capacity = capacity;
-        result->content.sequence.value = (node **)calloc(1, sizeof(node *) * capacity);
-        if(NULL == result->content.sequence.value)
+        result->content.sequence = make_vector();
+        if(NULL == result->content.sequence)
         {
             free(result);
             result = NULL;
@@ -84,22 +79,19 @@ node *make_sequence_node(size_t capacity)
     return result;
 }    
 
-node *make_mapping_node(size_t capacity)
+node *make_mapping_node(void)
 {
-    PRECOND_ELSE_NULL(0 < capacity);
-
     node *result = make_node(MAPPING);
     if(NULL != result)
     {
-        result->content.size = 0;
-        result->content.mapping.capacity = capacity;
-        result->content.mapping.value = (key_value_pair **)calloc(1, sizeof(key_value_pair *) * capacity);
-        if(NULL == result->content.mapping.value)
+        result->content.mapping = make_hashtable_with_function(scalar_comparitor, scalar_hash);
+        if(NULL == result->content.mapping)
         {
             free(result);
             result = NULL;
             return NULL;
         }        
+        result->content.size = 0;
     }
 
     return result;
@@ -107,22 +99,40 @@ node *make_mapping_node(size_t capacity)
 
 node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kind)
 {
-    PRECOND_NONNULL_ELSE_NULL(value);
-    PRECOND_ELSE_NULL(0 < length);
+    if(NULL == value && 0 != length)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
 
     node *result = make_node(SCALAR);
     if(NULL != result)
     {
         result->content.size = length;
         result->content.scalar.kind = kind;
-        result->content.scalar.value = (uint8_t *)calloc(1, length);
-        if(NULL == result->content.scalar.value)
+        if(NULL != value)
         {
-            free(result);
-            result = NULL;
-            return NULL;
+            result->content.scalar.value = (uint8_t *)calloc(1, length);
+            if(NULL == result->content.scalar.value)
+            {
+                free(result);
+                result = NULL;
+                return NULL;
+            }
+            memcpy(result->content.scalar.value, value, length);
         }
-        memcpy(result->content.scalar.value, value, length);
+    }
+
+    return result;
+}
+
+node *make_alias_node(node *target)
+{
+    node *result = make_node(ALIAS);
+    if(NULL != result)
+    {
+        result->content.size = 0;
+        result->content.target = target;
     }
 
     return result;
@@ -147,13 +157,8 @@ void model_free(document_model *model)
     {
         return;
     }
-    for(size_t i = 0; i < model->size; i++)
-    {
-        node_free(model->documents[i]);
-        model->documents[i] = NULL;
-    }
-    free(model->documents);
-    model->size = 0;
+    vector_iterate(model->documents, sequence_freedom_iterator, NULL);
+    vector_free(model->documents);
     model->documents = NULL;
     
     free(model);
@@ -168,8 +173,8 @@ void node_free(node *value)
     switch(node_kind(value))
     {
         case DOCUMENT:
-            node_free(value->content.document.root);
-            value->content.document.root = NULL;
+            node_free(value->content.target);
+            value->content.target = NULL;
             break;
         case SCALAR:
             free(value->content.scalar.value);
@@ -181,76 +186,75 @@ void node_free(node *value)
         case MAPPING:
             mapping_free(value);
             break;
+        case ALIAS:
+            break;
     }
     free(value->tag.name);
     free(value->anchor);
     free(value);
 }
 
+static bool sequence_freedom_iterator(void *each, void *context __attribute__((unused)))
+{
+    node_free((node *)each);
+
+    return true;
+}
 static inline void sequence_free(node *sequence)
 {
-    if(NULL == sequence_get_all(sequence))
+    if(NULL == sequence->content.sequence)
     {
         return;
     }
-    for(size_t i = 0; i < node_size(sequence); i++)
-    {
-        node_free(sequence->content.sequence.value[i]);
-        sequence->content.sequence.value[i] = NULL;
-    }
-    free(sequence->content.sequence.value);
-    sequence->content.sequence.value = NULL;
+    vector_iterate(sequence->content.sequence, sequence_freedom_iterator, NULL);
+    vector_free(sequence->content.sequence);
+    sequence->content.sequence = NULL;
+}
+
+static bool mapping_freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
+{
+    node_free((node *)key);
+    node_free((node *)value);
+    
+    return true;
 }
 
 static inline void mapping_free(node *mapping)
 {
-    if(NULL == mapping->content.mapping.value)
+    if(NULL == mapping->content.mapping)
     {
         return;
     }
-    for(size_t i = 0; i < node_size(mapping); i++)
-    {
-        node_free(mapping->content.mapping.value[i]->key);
-        mapping->content.mapping.value[i]->key = NULL;
-        node_free(mapping->content.mapping.value[i]->value);
-        mapping->content.mapping.value[i]->value = NULL;
-        free(mapping->content.mapping.value[i]);
-        mapping->content.mapping.value[i] = NULL;
-    }
-    free(mapping->content.mapping.value);
-    mapping->content.mapping.value = NULL;
+    
+    hashtable_iterate(mapping->content.mapping, mapping_freedom_iterator, NULL);
+    hashtable_free(mapping->content.mapping);
+    mapping->content.mapping = NULL;
 }
 
-document_model *make_model(size_t capacity)
+document_model *make_model(void)
 {
     document_model *result = (document_model *)calloc(1, sizeof(document_model));
-    bool initialized = false;
     if(NULL != result)
     {
-        initialized = model_init(result, capacity);
-    }
-
-    return NULL != result && initialized ? result : NULL;
-}
-
-static bool model_init(document_model * restrict model, size_t capacity)
-{
-    PRECOND_NONNULL_ELSE_FALSE(model);
-    PRECOND_ELSE_FALSE(0 < capacity);
-
-    bool result = true;
-    model->size = 0;
-    model->documents = (node **)calloc(1, sizeof(node *) * capacity);
-    if(NULL == model->documents)
-    {
-        model->capacity = 0;
-        result = false;
-    }
-    else
-    {
-        model->capacity = capacity;
+        result->documents = make_vector();
+        if(NULL == result->documents)
+        {
+            free(result);
+            result = NULL;
+            return NULL;
+        }
     }
 
     return result;
 }
 
+static hashcode scalar_hash(const void *key)
+{
+    node *scalar = (node *)key;
+    return shift_add_xor_string_buffer_hash(scalar_value(scalar), node_size(scalar));
+}
+
+static bool scalar_comparitor(const void *one, const void *two)
+{
+    return node_equals((node *)one, (node *)two);
+}
