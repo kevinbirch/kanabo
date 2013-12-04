@@ -84,6 +84,12 @@ Vector *make_vector_with_capacity(size_t capacity)
 
 Vector *make_vector_of(size_t count, ...)
 {
+    if(0 == count)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
     Vector *result = make_vector_with_capacity(count);
     if(NULL == result)
     {
@@ -109,6 +115,11 @@ Vector *vector_copy(const Vector *vector)
     {
         errno = EINVAL;
         return NULL;
+    }
+
+    if(0 == vector->length)
+    {
+        return make_vector_with_capacity(1);
     }
 
     Vector *result = make_vector_with_capacity(vector->length);
@@ -224,8 +235,14 @@ void *vector_first(const Vector *vector)
     return vector_get(vector, 0);
 }
 
-void   *vector_last(const Vector *vector)
+void *vector_last(const Vector *vector)
 {
+    if(NULL == vector || 0 == vector->length)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
     return vector_get(vector, vector->length - 1);
 }
 
@@ -303,7 +320,7 @@ bool vector_insert(Vector *vector, void *value, size_t index)
         {
             memcpy(target, vector->items, sizeof(uint8_t *) * index);
         }
-        memmove(target + index + 1, vector->items + index, 
+        memmove(target + index + 1, vector->items + index,
                 sizeof(uint8_t *) * (vector->length - index));
         target[index] = value;
     }
@@ -319,7 +336,7 @@ bool vector_insert(Vector *vector, void *value, size_t index)
 }
 
 void *vector_set(Vector *vector, void *value, size_t index)
-{                                                                        
+{
     if(NULL == vector || NULL == value || index >= vector->length)
     {
         errno = EINVAL;
@@ -355,7 +372,7 @@ void *vector_remove(Vector *vector, size_t index)
 
 bool vector_remove_item(Vector *vector, vector_comparitor comparitor, void *item)
 {
-    if(NULL == vector || NULL == comparitor)
+    if(NULL == vector || NULL == comparitor || NULL == item)
     {
         errno = EINVAL;
         return false;
@@ -373,25 +390,28 @@ bool vector_remove_item(Vector *vector, vector_comparitor comparitor, void *item
 
 void vector_clear(Vector *vector)
 {
-    if(NULL == vector)
+    if(NULL == vector || 0 == vector->length)
     {
         return;
     }
 
-    if(0 != vector->length)
-    {
-        memset(vector->items, 0, sizeof(uint8_t *) * vector->length);
-        vector->length = 0;
-    }
+    memset(vector->items, 0, sizeof(uint8_t *) * vector->length);
+    vector->length = 0;
 }
 
 bool vector_trim(Vector *vector)
 {
+    if(NULL == vector || 0 == vector->length)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
     if(vector->length == vector->capacity)
     {
         return false;
     }
-    
+
     return reallocate(vector, vector->length);
 }
 
@@ -415,7 +435,7 @@ void *vector_find(const Vector *vector, vector_iterator iterator, void *context)
 
 bool vector_contains(const Vector *vector, vector_comparitor comparitor, void *item)
 {
-    if(NULL == vector || NULL == comparitor)
+    if(NULL == vector || NULL == comparitor || NULL == item)
     {
         errno = EINVAL;
         return false;
@@ -506,11 +526,21 @@ size_t vector_count(const Vector *vector, vector_iterator iterator, void *contex
 
 bool vector_equals(const Vector *one, const Vector *two, vector_comparitor comparitor)
 {
+    if(NULL == one || NULL == two || NULL == comparitor)
+    {
+        errno = EINVAL;
+        return false;
+    }
+
     if(one == two)
     {
         return true;
     }
-    if(vector_length(one) != vector_length(two))
+    if(0 == one->length && 0 == two->length)
+    {
+        return true;
+    }
+    if(one->length != two->length)
     {
         return false;
     }
@@ -550,6 +580,11 @@ Vector *vector_map(const Vector *vector, vector_mapper function, void *context)
         return false;
     }
 
+    if(0 == vector->length)
+    {
+        return make_vector_with_capacity(1);
+    }
+
     Vector *target = make_vector_with_capacity(vector->length);
     if(NULL == target)
     {
@@ -562,7 +597,7 @@ Vector *vector_map(const Vector *vector, vector_mapper function, void *context)
         target = NULL;
         return NULL;
     }
-    return target;            
+    return target;
 }
 
 Vector *vector_map_into(const Vector *vector, vector_mapper function, void *context, Vector *target)
@@ -586,7 +621,7 @@ Vector *vector_map_into(const Vector *vector, vector_mapper function, void *cont
 
 void *vector_reduce(const Vector *vector, vector_reducer function, void *context)
 {
-    if(NULL == vector || NULL == function || vector_is_empty(vector))
+    if(NULL == vector || NULL == function || 0 == vector->length)
     {
         errno = EINVAL;
         return NULL;
@@ -614,9 +649,9 @@ Vector *vector_filter(const Vector *vector, vector_iterator function, void *cont
         return NULL;
     }
 
-    if(vector_is_empty(vector))
+    if(0 == vector->length)
     {
-        return make_vector();
+        return make_vector_with_capacity(1);
     }
 
     Vector *result = make_vector_with_capacity(vector->length);
@@ -643,9 +678,9 @@ Vector *vector_filter_not(const Vector *vector, vector_iterator function, void *
         return NULL;
     }
 
-    if(vector_is_empty(vector))
+    if(0 == vector->length)
     {
-        return make_vector();
+        return make_vector_with_capacity(1);
     }
 
     Vector *result = make_vector_with_capacity(vector->length);
