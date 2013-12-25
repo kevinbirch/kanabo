@@ -19,23 +19,38 @@ LICENSE file for more details.
 
 * https://www.securecoding.cert.org/confluence/display/seccode/CERT+C+Secure+Coding+Standard
 * valgrind
+* frama-c
+* cmbc - http://www.cprover.org/cbmc/
+* https://gitorious.org/linted/linted/source/8a9b2c7744af0e2d42419d0fea45c7b37b76930b:
 * performance co-pilot? http://oss.sgi.com/projects/pcp/
 * add completions for currently loaded model to linenoise
 * bug: `--help` option prints error message before help text
 * build: libtool integration?
 * build: shtool integration?
+* make 0.5 release
+* switch weather example to yaml config file
+* message formatting
+  * http://www.tin.org/bin/man.cgi?section=3&topic=snprintf
+  * http://stackoverflow.com/questions/69738/c-how-to-get-fprintf-results-as-a-stdstring-w-o-sprintf/69911#69911
+* use strlcpy over memcpy for c-strings?
+  * http://www.openbsd.org/cgi-bin/cvsweb/src/lib/libc/string/strlcpy.c?rev=1.11;content-type=text%2Fplain
 
 ### evaluator
 
+* test factory functions
 * negative subscript values
 * implement union predicates
 * implement filter predicates
 * support integer and timestamp scalar types
 * refactor iteration methods to use filter, tranform, fold
+* typeof operator in macros?
+  * http://gcc.gnu.org/onlinedocs/gcc/Typeof.html
 
 ### parser
 
+* test factory functions
 * implement lexer
+  * https://github.com/dylan-lang/opendylan/blob/master/sources/dfmc/reader/lexer-transitions.dylan
 * implement combinators
 * add full tracing
 * bug: `$...store` should not be accepted
@@ -67,10 +82,12 @@ LICENSE file for more details.
 
 ### loader
 
+* regex's can use '{}' repetition counts
 * support sets and ordered maps
 
 ### unit testing
 
+* http://code.google.com/p/cmockery/ ?
 * implement parameterized tests (some expression given to BEGIN_TEST that is inserted in the test boiler plate)
 * add more beautiful runner output
 * can ctest's style of test macros be used in check?
@@ -95,6 +112,8 @@ LICENSE file for more details.
   * jeckyl?
   * http://staticsitegenerators.net
   * site target
+  * http://jashkenas.github.io/docco/
+* http://www.reddit.com/r/sideprojectdemo
 
 ### build
 
@@ -105,6 +124,7 @@ LICENSE file for more details.
 * gnu make 4.0
   * try --trace to check out rule ordering
 * define, eval to create dynamic rules and shell?
+* CI - http://about.travis-ci.org/docs/user/build-configuration/
 
 [home]: https://github.com/kevinbirch/kanabo "project home"
 [license]: http://www.opensource.org/licenses/ncsa
