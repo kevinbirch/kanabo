@@ -35,25 +35,10 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <errno.h>
 
 #include "model.h"
 #include "conditions.h"
-
-struct context_adapter_s
-{
-    union
-    {
-        mapping_iterator mapping;
-        sequence_iterator sequence;
-    } iterator;
-    void *context;
-};
-
-typedef struct context_adapter_s context_adapter;
 
 static bool node_comparitor(const void *one, const void *two);
 static bool tag_equals(const uint8_t *one, const uint8_t *two);
@@ -62,45 +47,6 @@ static bool scalar_equals(const node *one, const node *two);
 static bool sequence_equals(const node *one, const node *two);
 static bool mapping_equals(const node *one, const node *two);
 
-static bool mapping_iterator_adpater(void *key, void *value, void *context);
-static bool sequence_iterator_adpater(void *each, void *context);
-
-
-node *model_document(const document_model *model, size_t index)
-{
-    PRECOND_NONNULL_ELSE_NULL(model);
-    PRECOND_ELSE_NULL(index < model_document_count(model));
-
-    return vector_get(model->documents, index);
-}
-
-node *model_document_root(const document_model *model, size_t index)
-{
-    node *document = model_document(model, index);
-    node *result = NULL;
-    
-    if(NULL != document)
-    {
-        result = document_root(document);
-    }
-
-    return result;
-}
-
-size_t model_document_count(const document_model *model)
-{
-    PRECOND_NONNULL_ELSE_ZERO(model);
-
-    return vector_length(model->documents);
-}
-
-node *document_root(const node *document)
-{
-    PRECOND_NONNULL_ELSE_NULL(document);
-    PRECOND_ELSE_NULL(DOCUMENT == node_kind(document));
-
-    return document->content.target;
-}
 
 enum node_kind node_kind(const node *value)
 {
@@ -127,91 +73,26 @@ node *node_parent(const node *value)
     return value->parent;
 }
 
-uint8_t *scalar_value(const node *scalar)
+void node_set_tag(node *target, const uint8_t *value, size_t length)
 {
-    PRECOND_NONNULL_ELSE_NULL(scalar);
-    PRECOND_ELSE_NULL(SCALAR == node_kind(scalar));
-
-    return scalar->content.scalar.value;
+    PRECOND_NONNULL_ELSE_VOID(target, value);
+    target->tag.name = (uint8_t *)calloc(1, length + 1);
+    if(NULL != target->tag.name)
+    {
+        memcpy(target->tag.name, value, length);
+        target->tag.name[length] = '\0';
+    }
 }
 
-enum scalar_kind scalar_kind(const node *scalar)
+void node_set_anchor(node *target, const uint8_t *value, size_t length)
 {
-    return scalar->content.scalar.kind;
-}
-
-bool scalar_boolean_is_true(const node *scalar)
-{
-    return 0 == memcmp("true", scalar_value(scalar), 4);
-}
-
-bool scalar_boolean_is_false(const node *scalar)
-{
-    return 0 == memcmp("false", scalar_value(scalar), 5);
-}
-
-node *sequence_get(const node *sequence, size_t index)
-{
-    PRECOND_NONNULL_ELSE_NULL(sequence);
-    PRECOND_ELSE_NULL(SEQUENCE == node_kind(sequence));
-    PRECOND_ELSE_NULL(index < node_size(sequence));
-
-    return vector_get(sequence->content.sequence, index);
-}
-
-static bool sequence_iterator_adpater(void *each, void *context)
-{
-    context_adapter *adapter = (context_adapter *)context;
-    return adapter->iterator.sequence((node *)each, adapter->context);
-}
-
-bool sequence_iterate(const node *sequence, sequence_iterator iterator, void *context)
-{
-    PRECOND_NONNULL_ELSE_FALSE(sequence, iterator);
-    PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence));
-
-    context_adapter adapter = {.iterator.sequence=iterator, .context=context };
-    return vector_iterate(sequence->content.sequence, sequence_iterator_adpater, &adapter);
-}
-
-node *mapping_get(const node *mapping, uint8_t *scalar, size_t length)
-{
-    PRECOND_NONNULL_ELSE_NULL(mapping, scalar);
-    PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
-    PRECOND_ELSE_NULL(0 < length);
-
-    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
-    node *result = hashtable_get(mapping->content.mapping, key);
-    node_free(key);
-    
-    return result;
-}
-
-bool mapping_contains(const node *mapping, uint8_t *scalar, size_t length)
-{
-    PRECOND_NONNULL_ELSE_FALSE(mapping, scalar);
-    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping), 0 < length);
-
-    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
-    bool result = hashtable_contains(mapping->content.mapping, key);
-    node_free(key);
-    
-    return result;
-}
-
-static bool mapping_iterator_adpater(void *key, void *value, void *context)
-{
-    context_adapter *adapter = (context_adapter *)context;
-    return adapter->iterator.mapping((node *)key, (node *)value, adapter->context);
-}
-
-bool mapping_iterate(const node *mapping, mapping_iterator iterator, void *context)
-{
-    PRECOND_NONNULL_ELSE_FALSE(mapping, iterator);
-    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping));
-
-    context_adapter adapter = {.iterator.mapping=iterator, .context=context};
-    return hashtable_iterate(mapping->content.mapping, mapping_iterator_adpater, &adapter);
+    PRECOND_NONNULL_ELSE_VOID(target, value);
+    target->anchor = (uint8_t *)calloc(1, length + 1);
+    if(NULL != target->anchor)
+    {
+        memcpy(target->anchor, value, length);
+        target->anchor[length] = '\0';
+    }
 }
 
 bool node_equals(const node *one, const node *two)
@@ -295,12 +176,4 @@ static bool sequence_equals(const node *one, const node *two)
 static bool mapping_equals(const node *one, const node *two)
 {
     return hashtable_equals(one->content.mapping, two->content.mapping, node_comparitor);
-}
-
-node *alias_target(const node *alias)
-{
-    PRECOND_NONNULL_ELSE_NULL(alias);
-    PRECOND_ELSE_NULL(ALIAS == node_kind(alias));
-
-    return alias->content.target;
 }

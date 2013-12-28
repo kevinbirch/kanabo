@@ -35,83 +35,90 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <string.h>
-#include <errno.h>
-
 #include "model.h"
-#include "conditions.h"
 
-void node_set_tag(node *target, const uint8_t *value, size_t length)
+static inline void sequence_free(node *sequence);
+static inline void mapping_free(node *mapping);
+
+static bool sequence_freedom_iterator(void *each, void *context);
+static bool mapping_freedom_iterator(void *key, void *value, void *context);
+
+void model_free(document_model *model)
 {
-    PRECOND_NONNULL_ELSE_VOID(target, value);
-    target->tag.name = (uint8_t *)calloc(1, length + 1);
-    if(NULL != target->tag.name)
+    if(NULL == model)
     {
-        memcpy(target->tag.name, value, length);
-        target->tag.name[length] = '\0';
+        return;
     }
+    vector_iterate(model->documents, sequence_freedom_iterator, NULL);
+    vector_free(model->documents);
+    model->documents = NULL;
+    
+    free(model);
 }
 
-void node_set_anchor(node *target, const uint8_t *value, size_t length)
+void node_free(node *value)
 {
-    PRECOND_NONNULL_ELSE_VOID(target, value);
-    target->anchor = (uint8_t *)calloc(1, length + 1);
-    if(NULL != target->anchor)
+    if(NULL == value)
     {
-        memcpy(target->anchor, value, length);
-        target->anchor[length] = '\0';
+        return;
     }
+    switch(node_kind(value))
+    {
+        case DOCUMENT:
+            node_free(value->content.target);
+            value->content.target = NULL;
+            break;
+        case SCALAR:
+            free(value->content.scalar.value);
+            value->content.scalar.value = NULL;
+            break;
+        case SEQUENCE:
+            sequence_free(value);
+            break;
+        case MAPPING:
+            mapping_free(value);
+            break;
+        case ALIAS:
+            break;
+    }
+    free(value->tag.name);
+    free(value->anchor);
+    free(value);
 }
 
-bool model_add(document_model *model, node *document)
+static bool sequence_freedom_iterator(void *each, void *context __attribute__((unused)))
 {
-    PRECOND_NONNULL_ELSE_FALSE(model, document);
-    PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
+    node_free((node *)each);
 
-    return vector_add(model->documents, document);
+    return true;
+}
+static inline void sequence_free(node *sequence)
+{
+    if(NULL == sequence->content.sequence)
+    {
+        return;
+    }
+    vector_iterate(sequence->content.sequence, sequence_freedom_iterator, NULL);
+    vector_free(sequence->content.sequence);
+    sequence->content.sequence = NULL;
 }
 
-bool document_set_root(node *document, node *root)
+static bool mapping_freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
 {
-    PRECOND_NONNULL_ELSE_FALSE(document, root);
-    PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
-
-    document->content.target = root;
-    root->parent = document;
+    node_free((node *)key);
+    node_free((node *)value);
+    
     return true;
 }
 
-bool sequence_add(node *sequence, node *item)
+static inline void mapping_free(node *mapping)
 {
-    PRECOND_NONNULL_ELSE_FALSE(sequence, item);
-    PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence));
-
-    bool result = vector_add(sequence->content.sequence, item);
-    if(result)
+    if(NULL == mapping->content.mapping)
     {
-        sequence->content.size = vector_length(sequence->content.sequence);
-        item->parent = sequence;
+        return;
     }
-    return result;
+    
+    hashtable_iterate(mapping->content.mapping, mapping_freedom_iterator, NULL);
+    hashtable_free(mapping->content.mapping);
+    mapping->content.mapping = NULL;
 }
-
-bool mapping_put(node *mapping, uint8_t *scalar, size_t length, node *value)
-{
-    PRECOND_NONNULL_ELSE_FALSE(mapping, scalar, value);
-    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping));
-
-    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
-    if(NULL == key)
-    {
-        return false;
-    }
-    errno = 0;
-    hashtable_put(mapping->content.mapping, key, value);
-    if(0 == errno)
-    {
-        mapping->content.size = hashtable_size(mapping->content.mapping);
-        value->parent = mapping;
-    }
-    return 0 == errno;
-}
-

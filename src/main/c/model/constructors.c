@@ -43,13 +43,26 @@
 
 static inline node *make_node(enum node_kind kind);
 
-static inline void sequence_free(node *sequence);
-static inline void mapping_free(node *mapping);
-
 static bool scalar_comparitor(const void *one, const void *two);
 static hashcode scalar_hash(const void *key);
-static bool sequence_freedom_iterator(void *each, void *context __attribute__((unused)));
-static bool mapping_freedom_iterator(void *key, void *value, void *context);
+
+
+document_model *make_model(void)
+{
+    document_model *result = (document_model *)calloc(1, sizeof(document_model));
+    if(NULL != result)
+    {
+        result->documents = make_vector();
+        if(NULL == result->documents)
+        {
+            free(result);
+            result = NULL;
+            return NULL;
+        }
+    }
+
+    return result;
+}
 
 node *make_document_node(void)
 {
@@ -61,23 +74,6 @@ node *make_document_node(void)
 
     return result;
 }
-
-node *make_sequence_node(void)
-{
-    node *result = make_node(SEQUENCE);
-    if(NULL != result)
-    {
-        result->content.sequence = make_vector();
-        if(NULL == result->content.sequence)
-        {
-            free(result);
-            result = NULL;
-            return NULL;
-        }
-    }
-
-    return result;
-}    
 
 node *make_mapping_node(void)
 {
@@ -146,103 +142,6 @@ static inline node *make_node(enum node_kind kind)
         result->tag.kind = kind;
         result->tag.name = NULL;
         result->anchor = NULL;
-    }
-
-    return result;
-}
-
-void model_free(document_model *model)
-{
-    if(NULL == model)
-    {
-        return;
-    }
-    vector_iterate(model->documents, sequence_freedom_iterator, NULL);
-    vector_free(model->documents);
-    model->documents = NULL;
-    
-    free(model);
-}
-
-void node_free(node *value)
-{
-    if(NULL == value)
-    {
-        return;
-    }
-    switch(node_kind(value))
-    {
-        case DOCUMENT:
-            node_free(value->content.target);
-            value->content.target = NULL;
-            break;
-        case SCALAR:
-            free(value->content.scalar.value);
-            value->content.scalar.value = NULL;
-            break;
-        case SEQUENCE:
-            sequence_free(value);
-            break;
-        case MAPPING:
-            mapping_free(value);
-            break;
-        case ALIAS:
-            break;
-    }
-    free(value->tag.name);
-    free(value->anchor);
-    free(value);
-}
-
-static bool sequence_freedom_iterator(void *each, void *context __attribute__((unused)))
-{
-    node_free((node *)each);
-
-    return true;
-}
-static inline void sequence_free(node *sequence)
-{
-    if(NULL == sequence->content.sequence)
-    {
-        return;
-    }
-    vector_iterate(sequence->content.sequence, sequence_freedom_iterator, NULL);
-    vector_free(sequence->content.sequence);
-    sequence->content.sequence = NULL;
-}
-
-static bool mapping_freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
-{
-    node_free((node *)key);
-    node_free((node *)value);
-    
-    return true;
-}
-
-static inline void mapping_free(node *mapping)
-{
-    if(NULL == mapping->content.mapping)
-    {
-        return;
-    }
-    
-    hashtable_iterate(mapping->content.mapping, mapping_freedom_iterator, NULL);
-    hashtable_free(mapping->content.mapping);
-    mapping->content.mapping = NULL;
-}
-
-document_model *make_model(void)
-{
-    document_model *result = (document_model *)calloc(1, sizeof(document_model));
-    if(NULL != result)
-    {
-        result->documents = make_vector();
-        if(NULL == result->documents)
-        {
-            free(result);
-            result = NULL;
-            return NULL;
-        }
     }
 
     return result;
