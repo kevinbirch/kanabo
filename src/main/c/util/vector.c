@@ -186,6 +186,22 @@ void vector_free(Vector *vector)
     free(vector);
 }
 
+void vector_destroy(Vector *vector, vector_item_destructor destructor)
+{
+    if(NULL == vector || NULL == destructor)
+    {
+        errno = EINVAL;
+        return;
+    }
+
+    for(size_t i = 0; i < vector->length; i++)
+    {
+        destructor(vector->items[i]);
+    }
+
+    vector_free(vector);
+}
+
 size_t vector_length(const Vector *vector)
 {
     if(NULL == vector)
