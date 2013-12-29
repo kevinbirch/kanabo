@@ -45,7 +45,7 @@ absolute path
     ;
 
 root step
-    = "$", [ predicate ]
+    = "$", [ predicate expression ]
     ;
 
 qualified step
@@ -62,16 +62,16 @@ relative step
     ;
 
 relative path
-    = relative head step | step, { qualified step }
+    = ( relative head step | step ), { qualified step }
     ;
 
 relative head step
-    = "@" , [ predicate ]
+    = "@" , [ predicate expression ]
     ;
 
 step
     = transformer
-    | selector, [ predicate ]
+    | ( selector, [ predicate expression ] )
     ;
 
 transformer
@@ -79,7 +79,7 @@ transformer
     ;
 
 mapping
-    = "{",  { key value, [ ",", key value ] }, "}"
+    = "{",  [ key value, { ",", key value } ], "}"
     ;
 
 key value
@@ -87,7 +87,7 @@ key value
     ;
 
 sequence
-    = "[", { value }, "]"
+    = "[", [ value, { ",", value } ], "]"
     ;
 
 vaue
@@ -154,16 +154,16 @@ name character
     | escape
     ;
 
-predicate
-    = "[", predicate expression , "]"
+predicate expression
+    = "[", predicate, "]"
     ;
 
-predicate expression
+predicate
     = wildcard
     | subscript
     | slice
-    | union
-    | filter
+    | join
+    | filter expression
     ;
 
 subscript
@@ -174,16 +174,12 @@ slice
     = [ signed integer ], ":", [ signed integer ], [ ":", [ non-zero signed integer ] ]
     ;
 
-union
+join
     = additive expr, ",", additive expr, { ",", additive expr }
     ;
 
-filter
-    = "?(", filter expression, ")"
-    ;
-
 filter expression
-    = or expr
+    = "?(", or expr, ")"
     ;
 
 or expr
@@ -191,7 +187,7 @@ or expr
     ;
 
 and expr
-    = relational expr, [ "and", and expr ]
+    = comparison expr, [ "and", and expr ]
     ;
 
 comparison expr
