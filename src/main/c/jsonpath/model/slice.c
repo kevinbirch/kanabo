@@ -35,32 +35,52 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include "jsonpath/model.h"
+#include "conditions.h"
 
-#include <stdlib.h>
-#include <stdbool.h>
+static bool slice_predicate_has(const predicate *value, enum slice_specifiers specifier);
 
-#include "model.h"
-#include "vector.h"
 
-typedef Vector nodelist;
+int_fast32_t slice_predicate_to(const predicate *value)
+{
+    PRECOND_NONNULL_ELSE_ZERO(value);
+    PRECOND_ELSE_ZERO(SLICE == value->kind);
+    return value->slice.to;
+}
 
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
+int_fast32_t slice_predicate_from(const predicate *value)
+{
+    PRECOND_NONNULL_ELSE_ZERO(value);
+    PRECOND_ELSE_ZERO(SLICE == value->kind);
+    return value->slice.from;
+}
 
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
+int_fast32_t slice_predicate_step(const predicate *value)
+{
+    PRECOND_NONNULL_ELSE_ZERO(value);
+    PRECOND_ELSE_ZERO(SLICE == value->kind);
+    return value->slice.step;
+}
 
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
+bool slice_predicate_has_to(const predicate *value)
+{
+    return slice_predicate_has(value, SLICE_TO);
+}
 
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
+bool slice_predicate_has_from(const predicate *value)
+{
+    return slice_predicate_has(value, SLICE_FROM);
+}
 
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
+bool slice_predicate_has_step(const predicate *value)
+{
+    return slice_predicate_has(value, SLICE_STEP);
+}
 
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
+static bool slice_predicate_has(const predicate *value, enum slice_specifiers specifier)
+{
+    PRECOND_NONNULL_ELSE_FALSE(value);
+    PRECOND_ELSE_FALSE(SLICE == value->kind);
+    return value->slice.specified & specifier;
+}
 

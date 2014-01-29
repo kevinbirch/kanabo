@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- *
+ * 
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -37,30 +37,17 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <stdbool.h>
-
 #include "model.h"
-#include "vector.h"
 
-typedef Vector nodelist;
+node *sequence_builder(node *one, ...);
+#define sequence(one, ...) sequence_builder(one, NULL)
+node *mapping_builder(const char *key, node *value, ...);
+#define mapping(key, value, ...) mapping_builder(key, value, NULL)
 
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
+node *string(const char *value);
 
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
-
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
-
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
-
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
-
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
-
+node *integer(int value);
+node *real(float value);
+node *timestamp(const char *value);
+node *boolean(bool value);
+node *null(void);

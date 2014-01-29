@@ -35,32 +35,48 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include "jsonpath/parsers.h"
+#include "jsonpath/logging.h"
 
-#include <stdlib.h>
-#include <stdbool.h>
+/* 
+   - bind function?
+   - can we do something clever with a maybe function that runs a parser returns the maybe struct, while the parser returns only ast?
+   - at what level do we create jsonpath entities? after the whole ast is ready? at each production?
+   - what is the ast?
+ */
 
-#include "model.h"
-#include "vector.h"
 
-typedef Vector nodelist;
+MaybeAst literal_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+{
+    return nothing(ERR_NULL_EXPRESSION);
+}
 
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
+MaybeAst number_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+{
+    return nothing(ERR_NULL_EXPRESSION);
+}
 
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
+MaybeAst integer_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+{
+    return nothing(ERR_NULL_EXPRESSION);
+}
 
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
+MaybeAst signed_integer_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+{
+    return nothing(ERR_NULL_EXPRESSION);
+}
 
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
+MaybeAst non_zero_signed_integer_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+{
+    return nothing(ERR_NULL_EXPRESSION);
+}
 
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
+MaybeAst string_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+{
+    return nothing(ERR_NULL_EXPRESSION);
+}
 
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
-
+MaybeAst quoted_string_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+{
+    return nothing(ERR_NULL_EXPRESSION);
+}

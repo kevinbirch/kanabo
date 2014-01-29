@@ -35,32 +35,58 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include "jsonpath/model.h"
+#include "conditions.h"
 
-#include <stdlib.h>
-#include <stdbool.h>
+static const char * const PATH_KIND_NAMES[] =
+{
+    "absolute path",
+    "relative path"
+};
 
-#include "model.h"
-#include "vector.h"
+struct context_adapter
+{
+    void *original_context;
+    path_iterator iterator;
+};
 
-typedef Vector nodelist;
+static bool iterator_adapter(void *each, void *context);
 
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
 
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
+enum path_kind path_kind(const jsonpath *path)
+{
+    return path->kind;
+}
 
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
+size_t path_length(const jsonpath *path)
+{
+    PRECOND_NONNULL_ELSE_ZERO(path);
+    return path->length;
+}
 
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
+step *path_get(const jsonpath *path, size_t index)
+{
+    PRECOND_NONNULL_ELSE_NULL(path);
+    PRECOND_NONNULL_ELSE_NULL(path->steps);
+    PRECOND_ELSE_NULL(0 != path->length, index < path->length);
+    return vector_get(path->steps, index);
+}
 
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
+static bool iterator_adapter(void *each, void *context)
+{
+    struct context_adapter *adapter = (struct context_adapter *)context;
+    return adapter->iterator((step *)each, adapter->original_context);
+}
 
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
+bool inline path_iterate(const jsonpath *path, path_iterator iterator, void *context)
+{
+    PRECOND_NONNULL_ELSE_FALSE(path, iterator);
+
+    return vector_iterate(path->steps, iterator_adapter, &(struct context_adapter){context, iterator});
+}
+
+const char *path_kind_name(enum path_kind value)
+{
+    return PATH_KIND_NAMES[value];
+}
 

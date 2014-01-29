@@ -35,32 +35,21 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include "jsonpath/model.h"
+#include "conditions.h"
 
-#include <stdlib.h>
-#include <stdbool.h>
 
-#include "model.h"
-#include "vector.h"
+uint8_t *name_test_step_name(const step *value)
+{
+    PRECOND_NONNULL_ELSE_NULL(value);
+    PRECOND_ELSE_NULL(NAME_TEST == value->test.kind);
+    return value->test.name.value;
+}
 
-typedef Vector nodelist;
-
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
-
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
-
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
-
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
-
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
-
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
+size_t name_test_step_length(const step *value)
+{
+    PRECOND_NONNULL_ELSE_ZERO(value);
+    PRECOND_ELSE_ZERO(NAME_TEST == value->test.kind);
+    return value->test.name.length;
+}
 

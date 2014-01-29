@@ -191,21 +191,21 @@ static int apply_expression(const struct settings *settings, document_model *mod
     nodelist *list = evaluate_expression(settings, model, path);
     if(NULL == list)
     {
-        path_free(path);
+        jsonpath_free(path);
         return EXIT_FAILURE;
     }
 
     emit_function emit = get_emitter(settings);
     if(NULL == emit)
     {
-        path_free(path);
+        jsonpath_free(path);
         nodelist_free(list);
         return EXIT_FAILURE;
     }
 
     emit(list, settings);
 
-    path_free(path);
+    jsonpath_free(path);
     nodelist_free(list);
 
     return EXIT_SUCCESS;
@@ -256,33 +256,15 @@ static document_model *load_model(const struct settings *settings)
 static jsonpath *parse_expression(const struct settings *settings, const char *expression)
 {
     log_trace("kanabo", "parsing expression");
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    if(NULL == parser)
+    MaybeJsonpath result = parse((uint8_t *)expression, strlen(expression));    
+    if(ERROR == result.tag)
     {
-        perror(settings->program_name);
-        return NULL;
-    }
-    if(parser_status(parser))
-    {
-        char *message = parser_status_message(parser);
-        error("while parsing the jsonpath expression", message, settings);
-        free(message);
-        parser_free(parser);
+        error("while parsing the jsonpath expression", result.error.message, settings);
+        maybe_jsonpath_free(result);
         return NULL;
     }
 
-    jsonpath *path = parse(parser);
-    if(parser_status(parser))
-    {
-        char *message = parser_status_message(parser);
-        error("while parsing the jsonpath expression", message, settings);
-        free(message);
-        path_free(path);
-        path = NULL;
-    }
-
-    parser_free(parser);
-    return path;
+    return result.path;
 }
 
 static nodelist *evaluate_expression(const struct settings *settings, const document_model *model, const jsonpath *path)

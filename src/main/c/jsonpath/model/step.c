@@ -35,32 +35,40 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include "jsonpath/model.h"
 
-#include <stdlib.h>
-#include <stdbool.h>
+static const char * const STEP_KIND_NAMES[] =
+{
+    "root step",
+    "single step",
+    "recursive step"
+};
 
-#include "model.h"
-#include "vector.h"
+static const char * const TEST_KIND_NAMES[] =
+{
+    "wildcard test",
+    "name test",
+    "type test"
+};
 
-typedef Vector nodelist;
 
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
+enum step_kind step_kind(const step *value)
+{
+    return value->kind;
+}
 
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
+enum test_kind step_test_kind(const step *value)
+{
+    return value->test.kind;
+}
 
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
+const char *step_kind_name(enum step_kind value)
+{
+    return STEP_KIND_NAMES[value];
+}
 
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
-
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
-
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
+const char *test_kind_name(enum test_kind value)
+{
+    return TEST_KIND_NAMES[value];
+}
 

@@ -210,7 +210,7 @@ static bool cache_mapping_key(loader_context *context, const yaml_event_t *event
     
     if(NULL != event->data.scalar.anchor)
     {
-        // this node will be held in the anchor hashtable
+        // N.B. - this node will be held in the anchor hashtable
         node *key = build_scalar_node(context, event);
         return NULL == key;
     }

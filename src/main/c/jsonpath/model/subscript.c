@@ -35,32 +35,13 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include "jsonpath/model.h"
+#include "conditions.h"
 
-#include <stdlib.h>
-#include <stdbool.h>
 
-#include "model.h"
-#include "vector.h"
-
-typedef Vector nodelist;
-
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
-
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
-
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
-
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
-
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
-
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
-
+size_t subscript_predicate_index(const predicate *value)
+{
+    PRECOND_NONNULL_ELSE_ZERO(value);
+    PRECOND_ELSE_ZERO(SUBSCRIPT == value->kind);
+    return value->subscript.index;
+}

@@ -39,7 +39,7 @@
 
 #include "evaluator.h"
 #include "evaluator/private.h"
-#include "log.h"           
+#include "log.h"
 
 evaluator_context *make_evaluator(const document_model *model, const jsonpath *path)
 {
@@ -125,4 +125,3 @@ void evaluator_free(evaluator_context *context)
 
     free(context);
 }
-

@@ -75,6 +75,23 @@ node *make_document_node(void)
     return result;
 }
 
+node *make_sequence_node(void)
+{
+    node *result = make_node(SEQUENCE);
+    if(NULL != result)
+    {
+        result->content.sequence = make_vector();
+        if(NULL == result->content.sequence)
+        {
+            free(result);
+            result = NULL;
+            return NULL;
+        }
+    }
+
+    return result;
+}    
+
 node *make_mapping_node(void)
 {
     node *result = make_node(MAPPING);

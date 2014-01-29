@@ -37,127 +37,8 @@
 
 #pragma once
 
-enum slice_specifiers
-{
-    SLICE_FROM = 1,
-    SLICE_TO   = 2,
-    SLICE_STEP = 4
-};
-
-struct predicate
-{
-    enum predicate_kind kind;
-    
-    union
-    {
-        struct
-        {
-            size_t index;
-        } subscript;
-        
-        struct
-        {
-            uint8_t      specified;
-            int_fast32_t from;
-            int_fast32_t to;
-            int_fast32_t step;
-        } slice;
-        
-        struct
-        {
-            jsonpath *left;
-            jsonpath *right;
-        } join;
-    };
-};
-
-struct step
-{
-    enum step_kind kind;
-    
-    struct
-    {
-        enum test_kind kind;
-
-        union
-        {
-            struct
-            {
-                uint8_t *value;
-                size_t  length;
-            } name;
-        
-            enum type_test_kind type;
-        };
-    } test;    
-
-    predicate *predicate;
-};
-
-struct jsonpath
-{
-    enum path_kind kind;
-    size_t length;
-    step **steps;
-
-};
-
-struct cell
-{
-    step *step;
-    struct cell *next;
-};
-
-typedef struct cell cell;
-
-enum state
-{
-    ST_START = 0,
-    ST_ABSOLUTE_PATH,
-    ST_QUALIFIED_PATH,
-    ST_RELATIVE_PATH,
-    ST_ABBREVIATED_RELATIVE_PATH,
-    ST_STEP,
-    ST_NAME_TEST,
-    ST_WILDCARD_NAME_TEST,
-    ST_NAME,
-    ST_NODE_TYPE_TEST,
-    ST_JSON_OBJECT_TYPE_TEST,
-    ST_JSON_ARRAY_TYPE_TEST,
-    ST_JSON_STRING_TYPE_TEST,
-    ST_JSON_NUMBER_TYPE_TEST,
-    ST_JSON_BOOLEAN_TYPE_TEST,
-    ST_JSON_NULL_TYPE_TEST,
-    ST_PREDICATE,
-    ST_WILDCARD_PREDICATE,
-    ST_SUBSCRIPT_PREDICATE,
-    ST_SLICE_PREDICATE,
-    ST_JOIN_PREDICATE,
-    ST_FILTER_PREDICATE,
-    ST_SCRIPT_PREDICATE
-};
-
-struct parser_context
-{
-    const uint8_t *input;
-    size_t         length;
-    size_t         cursor;
-    
-    jsonpath      *path;
-    cell          *steps;
-
-    enum state     state;
-    enum step_kind current_step_kind;
-
-    struct
-    {
-        parser_status_code code;
-        uint8_t expected_char;
-        uint8_t actual_char;
-    } result;
-};
-
-bool parse_expression(parser_context *context);
+#include "log.h"
+#include "jsonpath/combinators.h"
 
 #define component_name "parser"
 
@@ -168,4 +49,10 @@ bool parse_expression(parser_context *context);
 
 #define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 #define debug_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_DEBUG, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
+
+#ifdef USE_LOGGING
+void log_combinator(combinator *value);
+#else
+#define log_combinator(...)
+#endif
 

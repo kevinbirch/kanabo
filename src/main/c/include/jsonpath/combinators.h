@@ -37,30 +37,61 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <stdbool.h>
+#include <stddef.h>
 
-#include "model.h"
-#include "vector.h"
+#include "jsonpath/parsers.h"
 
-typedef Vector nodelist;
+enum combinator_kind
+{
+    ALTERNATION,
+    CONCATENATION,
+    OPTION,
+    REPETITION,
+    TERMINAL,
+    RULE,
+};
 
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
+struct combinator_s
+{
+    enum combinator_kind kind;
+    parser_function      parser;
+    void                *argument;
+};
 
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
+typedef struct combinator_s combinator;
 
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
+struct rule_context_s
+{
+    combinator *expression;
+    char       *name;
+};
 
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
+typedef struct rule_context_s rule_context;
 
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
+combinator *make_combinator(void);
+void combinator_free(combinator *value);
 
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
+/* Non-terminal Combinators */
+combinator *rule_combinator(char *name, combinator *expression);
+#define rule(COMBINATOR) rule_combinator(__func__, (COMBINATOR))
+
+combinator *alternation_combinator(combinator *one, combinator *two, ...);
+#define alternation(...) alternation_combinator(__VA_ARGS__, NULL)
+
+combinator *concatenation_combinator(combinator *one, combinator *two, ...);
+#define concatenation(...) concatenation_combinator(__VA_ARGS__, NULL)
+
+combinator *option(combinator *optional);
+combinator *repetition(combinator *repeated);
+
+/* Terminal Combinators */
+combinator *literal(char *value);
+
+combinator *number(void);
+combinator *integer(void);
+combinator *signed_integer(void);
+combinator *non_zero_signed_integer(void);
+
+combinator *quoted_string(void);
+combinator *string(void);
 

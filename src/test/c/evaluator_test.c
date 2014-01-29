@@ -48,6 +48,13 @@
 #include "test.h"
 #include "test_model.h"
 #include "test_nodelist.h"
+#include "nodelist_builders.h"
+
+
+bool node_destructor(node *each, void *context);
+void compare_nodelist(nodelist *expected, nodelist *actual);
+void assert_nodelist_is(nodelist *actual, ...);
+#define assert_nodelist_eq(nodelist, ...) assert_nodelist_is(nodelist, __VA_ARGS__, NULL)
 
 void inventory_setup(void);
 void invoice_setup(void);
@@ -428,6 +435,38 @@ void evaluator_teardown(void)
 {
     model_free(model);
     model = NULL;
+}
+
+void compare_nodelist(nodelist *expected, nodelist *actual)
+{
+    fail("implement me!")
+}
+
+bool node_destructor(node *each, void *context __attribute__((unused)))
+{
+    if(NULL == each->parent)
+    {
+        node_free(each);
+    }
+    return true;
+}
+
+void assert_nodelist_is(nodelist *actual, ...)
+{
+    nodelist *expected = make_nodelist();
+    
+    va_list nodes;
+    va_start(nodes, actual);
+    for(node *each = va_arg(nodes, node *); NULL != each; each = va_arg(nodes, node *))
+    {
+        nodelist_add(expected, each);
+    }
+    va_end(nodes);
+
+    compare_nodelist(expected, actual);
+    
+    nodelist_iterate(expected, node_destructor, NULL);
+    nodelist_free(expected);
 }
 
 START_TEST (dollar_only)

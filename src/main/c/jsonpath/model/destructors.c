@@ -35,32 +35,76 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include "jsonpath/model.h"
 
-#include <stdlib.h>
-#include <stdbool.h>
+static inline void step_destructor(void *each);
+static inline void step_free(step *step);
+static void predicate_free(predicate *predicate);
 
-#include "model.h"
-#include "vector.h"
 
-typedef Vector nodelist;
+void maybe_jsonpath_free(MaybeJsonpath result)
+{
+    switch(result.tag)
+    {
+        case ERROR:
+            free(result.error.message);
+            break;
+        case JSONPATH:
+            jsonpath_free(result.path);
+            break;
+    }
+}
 
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
+void jsonpath_free(jsonpath *path)
+{
+    if(NULL == path)
+    {
+        return;
+    }
+    vector_destroy(path->steps, step_destructor);
+    free(path->steps);
+    free(path);
+}
 
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
+static inline void step_destructor(void *each)
+{
+    step_free((step *)each);
+}
 
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
+static inline void step_free(step *value)
+{
+    if(NULL == value)
+    {
+        return;
+    }
+    if(NAME_TEST == value->test.kind)
+    {
+        if(NULL != value->test.name.value)
+        {
+            free(value->test.name.value);
+            value->test.name.value = NULL;
+            value->test.name.length = 0;
+        }
+    }
+    if(NULL != value->predicate)
+    {
+        predicate_free(value->predicate);
+    }
+    free(value);
+}
 
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
+static void predicate_free(predicate *value)
+{
+    if(NULL == value)
+    {
+        return;
+    }
+    if(JOIN == predicate_kind(value))
+    {
+        jsonpath_free(value->join.left);
+        jsonpath_free(value->join.right);
+    }
 
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
-
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
+    free(value);
+}
 

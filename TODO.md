@@ -17,9 +17,17 @@ LICENSE file for more details.
 
 ### global
 
+* jit compiler for evaluator?
+  * http://eli.thegreenplace.net/2013/10/17/getting-started-with-libjit-part-1/
+  * http://www.stephendiehl.com/llvm/
 * https://www.securecoding.cert.org/confluence/display/seccode/CERT+C+Secure+Coding+Standard
 * valgrind
 * frama-c
+* memory optimizations
+  * http://blog.libtorrent.org/2013/12/memory-cache-optimizations/
+  * http://www.reddit.com/r/programming/comments/1u660a/the_lost_art_of_c_structure_packing/
+  * http://linux.die.net/man/1/pahole
+  * https://github.com/arvidn/struct_layout
 * cmbc - http://www.cprover.org/cbmc/
 * https://gitorious.org/linted/linted/source/8a9b2c7744af0e2d42419d0fea45c7b37b76930b:
 * performance co-pilot? http://oss.sgi.com/projects/pcp/
@@ -34,6 +42,8 @@ LICENSE file for more details.
   * http://stackoverflow.com/questions/69738/c-how-to-get-fprintf-results-as-a-stdstring-w-o-sprintf/69911#69911
 * use strlcpy over memcpy for c-strings?
   * http://www.openbsd.org/cgi-bin/cvsweb/src/lib/libc/string/strlcpy.c?rev=1.11;content-type=text%2Fplain
+* invert order of static functions?
+  * http://www.reddit.com/r/C_Programming/comments/1u1ofw/is_this_code_clike/cednu4t
 
 ### evaluator
 
@@ -79,9 +89,13 @@ LICENSE file for more details.
   * can the union item ever be a or expr?
 * string functions
 * other built-in functions
+* pratt parser?
+  * http://l-lang.org/blog/TDOP---Pratt-parser-in-pictures/
 
 ### loader
 
+* simplify api with maybe result
+* break code into smaller files
 * regex's can use '{}' repetition counts
 * support sets and ordered maps
 
@@ -125,6 +139,8 @@ LICENSE file for more details.
   * try --trace to check out rule ordering
 * define, eval to create dynamic rules and shell?
 * CI - http://about.travis-ci.org/docs/user/build-configuration/
+* release step
+  * https://github.com/manuelbua/gitver
 
 [home]: https://github.com/kevinbirch/kanabo "project home"
 [license]: http://www.opensource.org/licenses/ncsa

@@ -35,32 +35,41 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include "jsonpath/model.h"
+#include "jsonpath/parsers.h"
+#include "jsonpath/logging.h"
+#include "conditions.h"
 
-#include <stdlib.h>
-#include <stdbool.h>
+static void parser_init(parser_context *context, const uint8_t *expression, size_t length);
 
-#include "model.h"
-#include "vector.h"
+#define PRECOND_ELSE_NOTHING(ERR_CODE, ...)                       \
+    if(is_false(__VA_ARGS__, -1))                                 \
+    {                                                             \
+        char *msg = parser_status_message((ERR_CODE), 0, NULL);   \
+        return (MaybeJsonpath){ERROR, .error.message=msg};        \
+    }
 
-typedef Vector nodelist;
 
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
+MaybeJsonpath parse(const uint8_t *expression, size_t length)
+{
+    PRECOND_ELSE_NOTHING(ERR_NULL_EXPRESSION, NULL != expression);
+    PRECOND_ELSE_NOTHING(ERR_ZERO_LENGTH, 0 != length);
 
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
+    debug_string("parsing expression: '%s'", expression, length);
 
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
+    parser_context context;
+    parser_init(&context, expression, length);
 
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
+    return (MaybeJsonpath){};
+}
 
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
-
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
+static void parser_init(parser_context *context, const uint8_t *expression, size_t length)
+{
+    context->input.expression = expression;
+    context->input.length = length;
+    context->input.cursor = 0;
+    context->input.mark = 0;
+    context->step = 0;
+    context->state = ST_START;    
+}
 

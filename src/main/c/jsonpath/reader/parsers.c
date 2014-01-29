@@ -35,32 +35,63 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include "jsonpath/parsers.h"
 
-#include <stdlib.h>
-#include <stdbool.h>
+static void ast_destructor(void *each);
 
-#include "model.h"
-#include "vector.h"
 
-typedef Vector nodelist;
+Ast *make_ast_node(enum ast_node_tag tag, void *value)
+{
+    Ast *result = calloc(1, sizeof(Ast));
 
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
+    if(NULL != result)
+    {
+        result->tag = tag;
+        result->value = value;
+    }
+    return result;
+}
 
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
+void ast_add_child(Ast *parent, Ast *child)
+{
+    if(NULL == parent || NULL == child)
+    {
+        return;
+    }
 
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
+    if(NULL == parent->children)
+    {
+        parent->children = make_vector();
+        if(NULL == parent->children)
+        {
+            return;
+        }
+    }
 
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
+    vector_add(parent->children, child);
+}
 
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
+static void ast_destructor(void *each)
+{
+    if(NULL == each)
+    {
+        return;
+    }
 
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
+    Ast *current = (Ast *)each;
+    free(current->value);
+    vector_destroy(current->children, ast_destructor);
+    free(current);
+}
 
+void ast_free(Ast *value)
+{
+    if(NULL == value)
+    {
+        return;
+    }
+
+    free(value->value);
+    vector_destroy(value->children, ast_destructor);
+    free(value);
+}

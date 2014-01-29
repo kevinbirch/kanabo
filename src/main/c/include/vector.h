@@ -41,6 +41,7 @@ typedef bool  (*vector_iterator)(void *each, void *context);
 typedef bool  (*vector_mapper)(void *each, void *context, Vector *target);
 typedef bool  (*vector_comparitor)(const void *one, const void *two);
 typedef void *(*vector_reducer)(const void *one, const void *two, void *context);
+typedef void  (*vector_item_destructor)(void *each);
 
 /* Constructors */
 Vector *make_vector(void);
@@ -50,8 +51,9 @@ Vector *vector_copy(const Vector *vector);
 Vector *vector_with(const Vector *vector, void *value);
 Vector *vector_with_all(const Vector *vector, const Vector *from);
 
-/* Destructor */
-void    vector_free(Vector *value);
+/* Destructors */
+void    vector_free(Vector *vector);
+void    vector_destroy(Vector *vector, vector_item_destructor destructor);
 
 /* Size API */
 size_t  vector_length(const Vector *vector);

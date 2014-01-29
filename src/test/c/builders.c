@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- *
+ * 
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -35,32 +35,81 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
+#include <stdarg.h>
+#include <string.h>
 
-#include <stdlib.h>
-#include <stdbool.h>
+#include "builders.h"
 
-#include "model.h"
-#include "vector.h"
 
-typedef Vector nodelist;
+node *sequence_builder(node *one, ...)
+{
+    node *sequence = make_sequence_node();
+    sequence_add(sequence, one);
 
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
+    va_list items;
+    va_start(items, one);
+    for(node *each = va_arg(items, node *); NULL != each; each = va_arg(items, node *))
+    {
+        sequence_add(sequence, each);
+    }
+    va_end(items);
 
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
+    return sequence;
+}
 
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
+node *mapping_builder(const char *key1, node *value1, ...)
+{
+    node *mapping = make_mapping_node();
+    mapping_put(mapping, (uint8_t *)key1, strlen(key1), value1);
+    
+    va_list values;
+    va_start(values, value1);
+    char *key = va_arg(values, char *);
+    while(NULL != key)
+    {
+        node *value = va_arg(values, node *);
+        mapping_put(mapping, (uint8_t *)key, strlen(key), value);
+    }
+    va_end(values);
 
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
+    return mapping;
+}
 
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
+node *string(const char *value)
+{
+    return make_scalar_node((uint8_t *)value, strlen(value), SCALAR_STRING);
+}
 
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
+node *integer(int value)
+{
+    char *scalar;
+    asprintf(&scalar, "%i", value);
+    node *result = make_scalar_node((uint8_t *)scalar, strlen(scalar), SCALAR_INTEGER);
+    free(scalar);
+    return result;
+}
 
+node *real(float value)
+{
+    char *scalar;
+    asprintf(&scalar, "%f", value);
+    node *result = make_scalar_node((uint8_t *)scalar, strlen(scalar), SCALAR_REAL);
+    free(scalar);
+    return result;
+}
+
+node *timestamp(const char *value)
+{
+    return make_scalar_node((uint8_t *)value, strlen(value), SCALAR_TIMESTAMP);
+}
+
+node *boolean(bool value)
+{
+    char *scalar = value ? "true" : "false";
+    return make_scalar_node((uint8_t *)scalar, strlen(scalar), SCALAR_BOOLEAN);
+}
+
+node *null(void)
+{
+    return make_scalar_node((uint8_t *)"null", 4ul, SCALAR_NULL);
+}

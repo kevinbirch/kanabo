@@ -37,30 +37,72 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <stdbool.h>
-
-#include "model.h"
+#include "jsonpath.h"
 #include "vector.h"
 
-typedef Vector nodelist;
 
-#define make_nodelist make_vector
-#define make_nodelist_of make_vector_of
-#define nodelist_free vector_free
+enum slice_specifiers
+{
+    SLICE_FROM = 1,
+    SLICE_TO   = 2,
+    SLICE_STEP = 4
+};
 
-#define nodelist_length   vector_length
-#define nodelist_is_empty vector_is_empty
+struct predicate
+{
+    enum predicate_kind kind;
+    
+    union
+    {
+        struct
+        {
+            size_t index;
+        } subscript;
+        
+        struct
+        {
+            uint8_t      specified;
+            int_fast32_t from;
+            int_fast32_t to;
+            int_fast32_t step;
+        } slice;
+        
+        struct
+        {
+            jsonpath *left;
+            jsonpath *right;
+        } join;
+    };
+};
 
-#define nodelist_get    vector_get
-#define nodelist_add    vector_add
-bool nodelist_set(nodelist *list, void *value, size_t index);
+struct step
+{
+    enum step_kind kind;
+    
+    struct
+    {
+        enum test_kind kind;
 
-typedef bool (*nodelist_iterator)(node *each, void *context);
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context);
+        union
+        {
+            struct
+            {
+                uint8_t *value;
+                size_t  length;
+            } name;
+        
+            enum type_test_kind type;
+        };
+    } test;    
 
-typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *target);
+    predicate *predicate;
+};
 
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
+struct jsonpath
+{
+    enum path_kind kind;
+    size_t length;
+    Vector *steps;
+};
+
 

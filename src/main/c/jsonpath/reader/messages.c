@@ -47,18 +47,17 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "jsonpath.h"
-#include "jsonpath/private.h"
+#include "jsonpath/parsers.h"
 #include "conditions.h"
 
 static const char * const MESSAGES[] = 
 {
     "Success.",
-    "Expression argument was NULL.",
+    "Expression was NULL.",
     "Expression length was 0.",
     "Unable to allocate memory.",
     "Not a JSONPath expression.",
-    "Premature end of input after position %d.",
+    "At position %d: premature end of input.",
     "At position %d: unexpected character '%c', was expecting '%c' instead.",
     "At position %d: empty predicate.",
     "At position %d: missing closing predicate delimiter `]' before end of step.",
@@ -71,80 +70,17 @@ static const char * const MESSAGES[] =
     "At position %d: slice step value must be non-zero."
 };
 
-static const char * const PATH_KIND_NAMES[] =
-{
-    "absolute path",
-    "relative path"
-};
 
-static const char * const STEP_KIND_NAMES[] =
-{
-    "root step",
-    "single step",
-    "recursive step"
-};
-
-static const char * const TEST_KIND_NAMES[] =
-{
-    "wildcard test",
-    "name test",
-    "type test"
-};
-
-static const char * const PREDICATE_KIND_NAMES[] =
-{
-    "wildcard predicate",
-    "subscript predicate",
-    "slice predicate",
-    "join predicate"
-};
-
-static const char * const TYPE_TEST_KIND_NAMES[] =
-{
-    "object test",
-    "array test",
-    "string test",
-    "number test",
-    "boolean test",
-    "null test"
-};
-
-
-const char *path_kind_name(enum path_kind value)
-{
-    return PATH_KIND_NAMES[value];
-}
-
-const char *step_kind_name(enum step_kind value)
-{
-    return STEP_KIND_NAMES[value];
-}
-
-const char *test_kind_name(enum test_kind value)
-{
-    return TEST_KIND_NAMES[value];
-}
-
-const char *type_test_kind_name(enum type_test_kind value)
-{
-    return TYPE_TEST_KIND_NAMES[value];
-}
-
-const char *predicate_kind_name(enum predicate_kind value)
-{
-    return PREDICATE_KIND_NAMES[value];
-}
-
-char *parser_status_message(const parser_context *context)
+char *parser_status_message(parser_result_code code, uint8_t argument, parser_context *context)
 {
     PRECOND_NONNULL_ELSE_NULL(context);
     char *message = NULL;
     int result = 0;
     
-    switch(context->result.code)
+    switch(code)
     {
         case ERR_PREMATURE_END_OF_INPUT:
-            result = asprintf(&message, MESSAGES[context->result.code], context->cursor);
+            result = asprintf(&message, MESSAGES[code], context->input.cursor);
             break;
         case ERR_EXPECTED_NODE_TYPE_TEST:
         case ERR_EMPTY_PREDICATE:
@@ -153,16 +89,23 @@ char *parser_status_message(const parser_context *context)
         case ERR_UNSUPPORTED_PRED_TYPE:
         case ERR_EXPECTED_INTEGER:
         case ERR_INVALID_NUMBER:
-            result = asprintf(&message, MESSAGES[context->result.code], context->cursor + 1);
+            result = asprintf(&message, MESSAGES[code], context->input.cursor + 1);
             break;
         case ERR_UNEXPECTED_VALUE:
-            result = asprintf(&message, MESSAGES[context->result.code], context->cursor + 1, context->result.actual_char, context->result.expected_char);
+            result = asprintf(&message, 
+                              MESSAGES[code], 
+                              context->input.cursor + 1, 
+                              context->input.expression[context->input.cursor], 
+                              argument);
             break;
         case ERR_EXPECTED_NAME_CHAR:
-            result = asprintf(&message, MESSAGES[context->result.code], context->cursor + 1, context->result.actual_char);
+            result = asprintf(&message, 
+                              MESSAGES[code], 
+                              context->input.cursor + 1, 
+                              context->input.expression[context->input.cursor]);
             break;
         default:
-            message = strdup(MESSAGES[context->result.code]);
+            message = strdup(MESSAGES[code]);
             break;
     }
     if(-1 == result)
@@ -172,4 +115,3 @@ char *parser_status_message(const parser_context *context)
 
     return message;
 }
-
