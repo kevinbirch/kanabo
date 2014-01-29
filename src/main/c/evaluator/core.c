@@ -167,28 +167,32 @@ static bool evaluate_root_step(evaluator_context *context)
     return nodelist_set(context->list, root, 0);
 }
 
+#define evaluate_nodelist(NAME, TEST, FUNCTION)                         \
+    evaluator_trace("evaluating %s across %zd nodes", (NAME), nodelist_length(context->list)); \
+    nodelist *result = nodelist_map(context->list, (FUNCTION), context); \
+    evaluator_trace("%s: %s", (TEST), NULL == result ? "failed" : "completed"); \
+    evaluator_trace("%s: added %zd nodes", (NAME), nodelist_length(result)); \
+    return NULL == result ? false : (nodelist_free(context->list), context->list = result, true);
+
 static bool evaluate_recursive_step(evaluator_context *context)
 {
-    return evaluate_nodelist(context, "recursive step", test_kind_name(step_test_kind(current_step(context))), apply_recursive_node_test);
+    evaluate_nodelist("recursive step",
+                      test_kind_name(step_test_kind(current_step(context))),
+                      apply_recursive_node_test);
 }
 
 static bool evaluate_single_step(evaluator_context *context)
 {
-    return evaluate_nodelist(context, "single step", test_kind_name(step_test_kind(current_step(context))), apply_node_test);
+    evaluate_nodelist("step",
+                      test_kind_name(step_test_kind(current_step(context))),
+                      apply_node_test);
 }
 
 static bool evaluate_predicate(evaluator_context *context)
 {
-    return evaluate_nodelist(context, "predicate", predicate_kind_name(predicate_kind(step_predicate(current_step(context)))), apply_predicate);
-}
-
-static inline bool evaluate_nodelist(evaluator_context *context, const char *name __attribute__((unused)), const char *test __attribute__((unused)), nodelist_map_function function)
-{
-    evaluator_trace("evaluating %s across %zd nodes", name, nodelist_length(context->list));
-    nodelist *result = nodelist_map(context->list, function, context);
-    evaluator_trace("%s: %s", test, NULL == result ? "failed" : "completed");
-    evaluator_trace("%s: added %zd nodes", name, nodelist_length(result));
-    return NULL == result ? false : (nodelist_free(context->list), context->list = result, true);
+    evaluate_nodelist("predicate",
+                      predicate_kind_name(predicate_kind(step_predicate(current_step(context)))),
+                      apply_predicate);
 }
 
 static bool apply_recursive_node_test(node *each, void *argument, nodelist *target)
