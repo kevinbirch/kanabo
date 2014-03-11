@@ -11,6 +11,12 @@ or interactively to walk a tree from within your script.
 
 This is a work in progress.
 
+## Donations
+
+If you are interested in helping this project, then why not send in a donation?
+
+Send [DogeCoin](http://dogecoin.com) donations to [DR13Gxci38nPLQYJC5m1js8iE8LP1KrMt3](dogecoin:DR13Gxci38nPLQYJC5m1js8iE8LP1KrMt3?amount=100&message=kanabo&label=kanabo)
+
 ## License
 
 Copyright (c) 2012 [Kevin Birch](mailto:kmb@pobox.com).  All rights reserved.
