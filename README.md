@@ -15,7 +15,7 @@ This is a work in progress.
 
 If you are interested in helping this project, then why not send in a donation?
 
-Send [DogeCoin](http://dogecoin.com) donations to [DR13Gxci38nPLQYJC5m1js8iE8LP1KrMt3](dogecoin:DR13Gxci38nPLQYJC5m1js8iE8LP1KrMt3?amount=100&message=kanabo&label=kanabo)
+Send [DogeCoin](http://dogecoin.com) donations to [DCebBka8DZxtsvn8Dxhh171HTJ6rhbXXvp](dogecoin:DCebBka8DZxtsvn8Dxhh171HTJ6rhbXXvp?amount=500&message=kanabo&label=kanabo)
 
 ## License
 
