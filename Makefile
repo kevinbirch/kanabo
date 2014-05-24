@@ -248,7 +248,7 @@ help:
 	echo "install  - install the target artifacts onto the local system"
 
 env:
-	@echo "--- environment settings for kanabo build ---"; \
+	@echo "--- environment settings for build ---"; \
 	echo "identifier: $(owner):$(package):$(version)"; \
 	echo "artifact: $(artifact)"; \
 	echo "build type: $(build)"; \
