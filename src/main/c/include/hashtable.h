@@ -90,3 +90,5 @@ void hashtable_clear(Hashtable *hashtable);
 bool hashtable_iterate(const Hashtable *hashtable, hashtable_iterator iterator, void *context);
 bool hashtable_iterate_keys(const Hashtable *hashtable, hashtable_item_iterator iterator, void *context);
 bool hashtable_iterate_values(const Hashtable *hashtable, hashtable_item_iterator iterator, void *context);
+
+void hashtable_summary(const Hashtable *hashtable, FILE *stream);

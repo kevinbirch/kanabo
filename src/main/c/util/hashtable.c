@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2013 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -28,10 +28,6 @@
  *
  * [license]: http://www.opensource.org/licenses/ncsa
  */
-
-#ifdef __linux__
-#define _POSIX_C_SOURCE 200809L
-#endif
 
 #include <math.h>
 #include <stdlib.h>
@@ -110,7 +106,7 @@ static void rehash(Hashtable *hashtable);
 static bool key_item_iterator(void *key, void *value __attribute__((unused)), void *context);
 static bool value_item_iterator(void *key __attribute__((unused)), void *value, void *context);
 static bool map_into(void *key, void *value, void *context);
-bool contains_key_value(void *key, void *value, void *context);
+static bool contains_key_value(void *key, void *value, void *context);
 
 static inline size_t hash_index(const Hashtable *hashtable, const void *key);
 
@@ -122,7 +118,7 @@ Hashtable *make_hashtable(compare_function comparitor)
 Hashtable *make_hashtable_with_function(compare_function comparitor,
                                         hash_function function)
 {
-    return make_hashtable_with_capacity_factor_function(comparitor, DEFAULT_CAPACITY, DEFAULT_LOAD_FACTOR, function);    
+    return make_hashtable_with_capacity_factor_function(comparitor, DEFAULT_CAPACITY, DEFAULT_LOAD_FACTOR, function);
 }
 
 Hashtable *make_hashtable_with_capacity(compare_function comparitor,
@@ -145,7 +141,7 @@ Hashtable *make_hashtable_with_capacity_factor(compare_function comparitor,
     return make_hashtable_with_capacity_factor_function(comparitor, capacity_hint, load_factor, identity_xor_hash);
 }
 
-Hashtable *make_hashtable_with_capacity_factor_function(compare_function comparitor, 
+Hashtable *make_hashtable_with_capacity_factor_function(compare_function comparitor,
                                                         size_t capacity_hint,
                                                         float load_factor,
                                                         hash_function function)
@@ -155,6 +151,7 @@ Hashtable *make_hashtable_with_capacity_factor_function(compare_function compari
         errno = EINVAL;
         return NULL;
     }
+
     size_t capacity = normalize_capacity(capacity_hint);
     Hashtable *result = alloc(capacity);
     if(NULL == result)
@@ -172,7 +169,7 @@ static inline size_t normalize_capacity(size_t hint)
     if(0 != (capacity & (capacity - 1)))
     {
         // ensure that capacity is a power of 2
-        capacity = 1ULL << (size_t)(log2f((float)capacity - 1) + 1);
+        capacity = 1ULL << (size_t)(log2(capacity - 1) + 1);
     }
     return capacity;
 }
@@ -198,17 +195,17 @@ static Hashtable *alloc(size_t capacity)
 static inline void alloc_table(Hashtable *hashtable, size_t capacity)
 {
     // the number of table cells allocated is 2x capacity to hold both keys and values
-    hashtable->entries = calloc(capacity << 1, sizeof(uint8_t *));    
+    hashtable->entries = calloc(capacity << 1, sizeof(uint8_t *));
 }
 
-static void init(Hashtable *hashtable, 
-                 compare_function comparitor, 
-                 size_t capacity, 
-                 float load_factor, 
+static void init(Hashtable *hashtable,
+                 compare_function comparitor,
+                 size_t capacity,
+                 float load_factor,
                  hash_function function)
 {
     hashtable->occupied = 0ul;
-    hashtable->capacity = (size_t)lroundf((float)capacity * load_factor);
+    hashtable->capacity = (size_t)lroundf(capacity * load_factor);
     hashtable->load_factor = load_factor;
     hashtable->mutable = true;
     hashtable->length = capacity << 1;
@@ -222,6 +219,7 @@ void hashtable_free(Hashtable *hashtable)
     {
         return;
     }
+
     for(size_t i = 0; i < hashtable->length; i += 2)
     {
         if(CHAINED_KEY == hashtable->entries[i])
@@ -279,6 +277,11 @@ bool hashtable_is_empty(const Hashtable *hashtable)
 
 void hashtable_clear(Hashtable *hashtable)
 {
+    if(NULL == hashtable || 0 == hashtable->occupied)
+    {
+        return;
+    }
+
     for(size_t i = 0; i < hashtable->length; i += 2)
     {
         if(CHAINED_KEY == hashtable->entries[i])
@@ -292,7 +295,7 @@ void hashtable_clear(Hashtable *hashtable)
     hashtable->occupied = 0;
 }
 
-bool contains_key_value(void *key, void *value, void *context)
+static bool contains_key_value(void *key, void *value, void *context)
 {
     equality_adapter *adapter = (equality_adapter *)context;
     void *other_value = hashtable_get(adapter->other, key);
@@ -305,11 +308,21 @@ bool contains_key_value(void *key, void *value, void *context)
 
 bool hashtable_equals(const Hashtable *one, const Hashtable *two, compare_function comparitor)
 {
+    if(NULL == one || NULL == two || NULL == comparitor)
+    {
+        errno = EINVAL;
+        return false;
+    }
+
     if(one == two)
     {
         return true;
     }
-    if(hashtable_size(one) != hashtable_size(two))
+    if(0 == one->occupied && 0 == two->occupied)
+    {
+        return true;
+    }
+    if(one->occupied != two->occupied)
     {
         return false;
     }
@@ -323,6 +336,12 @@ bool hashtable_contains(const Hashtable *hashtable, const void *key)
         errno = EINVAL;
         return false;
     }
+
+    if(0 == hashtable->occupied)
+    {
+        return false;
+    }
+
     size_t index = hash_index(hashtable, key);
     uint8_t *cur = hashtable->entries[index];
     if(NULL != cur)
@@ -364,6 +383,12 @@ void *hashtable_get(const Hashtable *hashtable, const void *key)
         errno = EINVAL;
         return NULL;
     }
+
+    if(0 == hashtable->occupied)
+    {
+        return NULL;
+    }
+
     size_t index = hash_index(hashtable, key);
     uint8_t *cur = hashtable->entries[index];
     if(NULL != cur)
@@ -412,6 +437,17 @@ static void *chained_get(const Hashtable *hashtable, size_t index, const void *k
 
 void *hashtable_get_if_absent(Hashtable *hashtable, void *key, void *value)
 {
+    if(NULL == hashtable || NULL == key || NULL == value)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    if(0 == hashtable->occupied)
+    {
+        return value;
+    }
+
     errno = 0;
     void *result = hashtable_get(hashtable, key);
     if(0 != errno)
@@ -427,6 +463,22 @@ void *hashtable_get_if_absent(Hashtable *hashtable, void *key, void *value)
 
 void *hashtable_get_if_absent_put(Hashtable *hashtable, void *key, void *value)
 {
+    if(NULL == hashtable || NULL == key || NULL == value)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    if(0 == hashtable->occupied)
+    {
+        hashtable_put(hashtable, key, value);
+        if(0 != errno)
+        {
+            return NULL;
+        }
+        return value;
+    }
+
     errno = 0;
     void *result = hashtable_get(hashtable, key);
     if(0 != errno)
@@ -562,11 +614,28 @@ static bool map_into(void *key, void *value, void *context)
 
 void hashtable_put_all(Hashtable *to, const Hashtable *from)
 {
+    if(NULL == to || NULL == from)
+    {
+        errno = EINVAL;
+        return;
+    }
+
+    if(0 == from->occupied)
+    {
+        return;
+    }
+
     hashtable_iterate(from, map_into, to);
 }
 
 Hashtable *hashtable_copy(const Hashtable *hashtable)
 {
+    if(NULL == hashtable)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
     Hashtable *result = make_hashtable_with_capacity_factor_function(
         hashtable->compare, hashtable->capacity, hashtable->load_factor, hashtable->hash);
     hashtable_put_all(result, hashtable);
@@ -580,6 +649,12 @@ void *hashtable_remove(Hashtable *hashtable, void *key)
         errno = EINVAL;
         return NULL;
     }
+
+    if(0 == hashtable->occupied)
+    {
+        return NULL;
+    }
+
     size_t index = hash_index(hashtable, key);
     uint8_t *cur = hashtable->entries[index];
     if(NULL != cur)
@@ -653,6 +728,7 @@ bool hashtable_iterate(const Hashtable *hashtable, hashtable_iterator iterator, 
         errno = EINVAL;
         return false;
     }
+
     for(size_t i = 0; i < hashtable->length; i += 2)
     {
         if(CHAINED_KEY == hashtable->entries[i])
@@ -703,7 +779,7 @@ bool hashtable_iterate_values(const Hashtable *hashtable, hashtable_item_iterato
 static inline size_t hash_index(const Hashtable *hashtable, const void * key)
 {
     hashcode h = hashtable->hash(key);
-    return (h & ((hashtable->length >> 1) - 1)) << 1;
+    return (h & (hashtable->length >> 1) - 1) << 1;
 }
 
 static void rehash(Hashtable *hashtable)
@@ -736,4 +812,45 @@ static void rehash(Hashtable *hashtable)
         }
     }
     free(table);
+}
+
+void hashtable_summary(const Hashtable *hashtable, FILE *stream)
+{
+    fprintf(stream, "hashtable summary:\n");
+    fprintf(stream, "mutable: %s\n", hashtable_is_mutable(hashtable) ? "yes" : "no");
+    fprintf(stream, "occupied: %zd of %zd\n", hashtable->occupied, hashtable->capacity);
+    fprintf(stream, "capacity: %zd (%zd * %g)\n", hashtable->capacity, hashtable->length >> 1, hashtable->load_factor);
+    fprintf(stream, "table length: %zd\n", hashtable->length);
+    fprintf(stream, "load factor: %g\n", hashtable->load_factor);
+    fprintf(stream, "bucket report:\n");
+    size_t count = 0ul, min = 0ul, max = 0ul, total = 0ul;
+    float avg = 0.0f;
+    for(size_t i = 0; i < hashtable->length; i += 2)
+    {
+        if(CHAINED_KEY == hashtable->entries[i])
+        {
+            count++;
+            Chain *chain = (Chain *)hashtable->entries[i + 1];
+            fprintf(stream, "[%zd]: chain (length: %zd, hash: 0x%zx)\n", i, chain->length, hashtable->hash(chain->entries[0]));
+            for(size_t j = 0; j < chain->length && NULL != chain->entries[j]; j += 2)
+            {
+                fprintf(stream, "  [%zd]: chained key: \"%s\"\n", j, chain->entries[j]);
+            }
+            if(max < chain->length)
+            {
+                max = chain->length;
+            }
+            if(0 == min || min > chain->length)
+            {
+                min = chain->length;
+            }
+            total += chain->length;
+            avg = total / count;
+        }
+        else if(NULL != hashtable->entries[i])
+        {
+            fprintf(stream, "[%zd]: key: \"%s\" hash: 0x%zx\n", i, hashtable->entries[i], hashtable->hash(hashtable->entries[i]));
+        }
+    }
+    fprintf(stream, "chains: %zd (length min: %zd, max: %zd, avg: %g)\n", count, min, max, avg);
 }
