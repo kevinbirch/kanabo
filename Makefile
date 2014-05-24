@@ -270,9 +270,9 @@ env:
 	echo "sources: $(SOURCE_DIR)"; \
 	echo "include: $(INCLUDE_DIR)"; \
 	echo "resources: $(RESOURCE_DIR)"; \
-	echo "test sources: $(SOURCE_DIR)"; \
-	echo "test include: $(INCLUDE_DIR)"; \
-	echo "test resources: $(RESOURCE_DIR)"; \
+	echo "test sources: $(TEST_SOURCE_DIR)"; \
+	echo "test include: $(TEST_INCLUDE_DIR)"; \
+	echo "test resources: $(TEST_RESOURCE_DIR)"; \
 	echo "target: $(TARGET_DIR)"; \
 	echo "objects: $(OBJECT_DIR)"; \
 	echo "test objects: $(TEST_OBJECT_DIR)"; \
