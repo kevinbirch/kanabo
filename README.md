@@ -11,6 +11,8 @@ or interactively to walk a tree from within your script.
 
 This is a work in progress.
 
+[![Build Status](https://drone.io/github.com/kevinbirch/kanabo/status.png)](https://drone.io/github.com/kevinbirch/kanabo/latest)
+
 ## Donations
 
 If you are interested in helping this project, then why not send in a donation?
