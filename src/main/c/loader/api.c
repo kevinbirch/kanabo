@@ -36,7 +36,7 @@
  */
 
 #define _POSIX_C_SOURCE 200809L /* for USE_POSIX feature macros */
-#define _BSD_SOURCE             /* for S_IFREG flag */
+#define _BSD_SOURCE             /* for S_IFREG flag on Linux */
 
 #include <stdio.h>            /* for fileno() */
 #include <sys/stat.h>         /* for fstat() */
