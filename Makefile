@@ -249,6 +249,7 @@ help:
 
 env:
 	@echo "--- environment settings for build ---"; \
+	echo -n "system: "; uname -a; \
 	echo "identifier: $(owner):$(package):$(version)"; \
 	echo "artifact: $(artifact)"; \
 	echo "build type: $(build)"; \
@@ -258,7 +259,8 @@ env:
 	$(CC) --version; \
 	echo "compiler command:"; \
 	echo "$(CC) $(CFLAGS) $(CDEFS) -c <in> -o <out>"; \
-	echo "hooks:"; \
+	echo "* hooks:"; \
+	echo "generate sources: $(GENERATE_SOURCES_HOOKS)"; \
 	echo "process sources: $(PROCESS_SOURCES_HOOKS)"; \
 	echo "generate resources: $(GENERATE_RESOURCES_HOOKS)"; \
 	echo "process resources: $(PROCESS_RESOURCES_HOOKS)"; \
@@ -266,7 +268,7 @@ env:
 	echo "process test sources: $(PROCESS_TEST_SOURCES_HOOKS)"; \
 	echo "generate test resources: $(GENERATE_TEST_RESOURCES_HOOKS)"; \
 	echo "process test resources: $(PROCESS_TEST_RESOURCES_HOOKS)"; \
-	echo "directories:"; \
+	echo "* directories:"; \
 	echo "sources: $(SOURCE_DIR)"; \
 	echo "include: $(INCLUDE_DIR)"; \
 	echo "resources: $(RESOURCE_DIR)"; \
@@ -281,7 +283,7 @@ env:
 	echo "generated depend: $(GENERATED_DEPEND_DIR)"; \
 	echo "generated test sources: $(GENERATED_TEST_SOURCE_DIR)"; \
 	echo "generated test depend: $(GENERATED_TEST_DEPEND_DIR)"; \
-	echo "artifacts:"; \
+	echo "* artifacts:"; \
 	echo "program: $(PROGRAM_NAME)"; \
 	echo "program target: $(PROGRAM_TARGET)"; \
 	echo "library: $(LIBRARY_NAME)"; \
