@@ -66,7 +66,6 @@ static bool evaluate_root_step(evaluator_context *context);
 static bool evaluate_single_step(evaluator_context *context);
 static bool evaluate_recursive_step(evaluator_context *context);
 static bool evaluate_predicate(evaluator_context *context);
-static inline bool evaluate_nodelist(evaluator_context *context, const char *name, const char *test, nodelist_map_function function);
 
 static bool apply_node_test(node *each, void *argument, nodelist *target);
 static bool apply_recursive_node_test(node *each, void *argument, nodelist *target);
