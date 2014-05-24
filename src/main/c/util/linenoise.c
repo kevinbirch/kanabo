@@ -95,7 +95,7 @@
  */
 
 #ifdef __linux__
-#define _POSIX_C_SOURCE = 200809L  /* for strdup */
+#define _POSIX_C_SOURCE 200809L  /* for strdup */
 #endif
 
 #include <termios.h>
