@@ -41,4 +41,3 @@
 #include "options.h"
 
 void emit_zsh(const nodelist *list, const struct settings *settings);
-

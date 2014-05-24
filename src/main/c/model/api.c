@@ -78,7 +78,7 @@ node *model_document_root(const document_model *model, size_t index)
 {
     node *document = model_document(model, index);
     node *result = NULL;
-    
+
     if(NULL != document)
     {
         result = document_root(document);
@@ -183,7 +183,7 @@ node *mapping_get(const node *mapping, uint8_t *scalar, size_t length)
     node *key = make_scalar_node(scalar, length, SCALAR_STRING);
     node *result = hashtable_get(mapping->content.mapping, key);
     node_free(key);
-    
+
     return result;
 }
 
@@ -195,7 +195,7 @@ bool mapping_contains(const node *mapping, uint8_t *scalar, size_t length)
     node *key = make_scalar_node(scalar, length, SCALAR_STRING);
     bool result = hashtable_contains(mapping->content.mapping, key);
     node_free(key);
-    
+
     return result;
 }
 
@@ -220,7 +220,7 @@ bool node_equals(const node *one, const node *two)
     {
         return true;
     }
-    
+
     if((NULL == one && NULL != two) || (NULL != one && NULL == two))
     {
         return false;

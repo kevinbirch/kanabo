@@ -87,5 +87,3 @@ extern const void * SENTINEL;
 
 bool is_null(const void *first, ...);
 bool is_false(int_fast8_t first, ...);
-
-

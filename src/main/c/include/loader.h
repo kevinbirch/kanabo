@@ -80,5 +80,3 @@ void loader_free(loader_context *context);
 document_model *load(loader_context *context);
 
 char *loader_status_message(const loader_context *context);
-
-

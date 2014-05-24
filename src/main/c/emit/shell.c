@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -65,14 +65,14 @@ bool emit_node(node *each, void *argument)
             break;
         case SEQUENCE:
             log_trace("shell", "emitting seqence");
-            MAYBE_EMIT("(");            
+            MAYBE_EMIT("(");
             result = sequence_iterate(each, emit_sequence_item, NULL);
             MAYBE_EMIT(")");
             EMIT("\n");
             break;
         case MAPPING:
             log_trace("shell", "emitting mapping");
-            MAYBE_EMIT("(");            
+            MAYBE_EMIT("(");
             result = mapping_iterate(each, context->emit_mapping_item, NULL);
             MAYBE_EMIT(")");
             EMIT("\n");
@@ -81,7 +81,7 @@ bool emit_node(node *each, void *argument)
             log_trace("shell", "resolving alias");
             result = emit_node(alias_target(each), NULL);
             break;
-            
+
     }
     fflush(stdout);
 

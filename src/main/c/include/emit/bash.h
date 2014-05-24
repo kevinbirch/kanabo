@@ -41,5 +41,3 @@
 #include "options.h"
 
 void emit_bash(const nodelist *list, const struct settings *settings);
-
-

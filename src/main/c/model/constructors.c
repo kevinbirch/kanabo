@@ -77,7 +77,7 @@ node *make_sequence_node(void)
     }
 
     return result;
-}    
+}
 
 node *make_mapping_node(void)
 {
@@ -90,12 +90,12 @@ node *make_mapping_node(void)
             free(result);
             result = NULL;
             return NULL;
-        }        
+        }
         result->content.size = 0;
     }
 
     return result;
-}    
+}
 
 node *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kind)
 {
@@ -160,7 +160,7 @@ void model_free(document_model *model)
     vector_iterate(model->documents, sequence_freedom_iterator, NULL);
     vector_free(model->documents);
     model->documents = NULL;
-    
+
     free(model);
 }
 
@@ -215,7 +215,7 @@ static bool mapping_freedom_iterator(void *key, void *value, void *context __att
 {
     node_free((node *)key);
     node_free((node *)value);
-    
+
     return true;
 }
 
@@ -225,7 +225,7 @@ static inline void mapping_free(node *mapping)
     {
         return;
     }
-    
+
     hashtable_iterate(mapping->content.mapping, mapping_freedom_iterator, NULL);
     hashtable_free(mapping->content.mapping);
     mapping->content.mapping = NULL;

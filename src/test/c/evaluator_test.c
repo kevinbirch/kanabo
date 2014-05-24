@@ -1438,7 +1438,7 @@ Suite *evaluator_suite(void)
     tcase_add_test(alias_case, recursive_alias);
     tcase_add_test(alias_case, wildcard_predicate_alias);
     tcase_add_test(alias_case, recursive_wildcard_alias);
-    
+
     Suite *evaluator = suite_create("Evaluator");
     suite_add_tcase(evaluator, bad_input_case);
     suite_add_tcase(evaluator, basic_case);
@@ -1448,4 +1448,3 @@ Suite *evaluator_suite(void)
 
     return evaluator;
 }
-

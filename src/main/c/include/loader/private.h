@@ -76,4 +76,3 @@ loader_status_code interpret_yaml_error(yaml_parser_t *parser);
 #define loader_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
 
 #define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
-

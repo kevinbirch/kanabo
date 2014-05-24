@@ -69,4 +69,3 @@ struct settings
 };
 
 enum command process_options(const int argc, char * const *argv, struct settings *settings);
-

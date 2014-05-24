@@ -333,5 +333,3 @@ static inline bool ensure_capacity(Vector *vector, size_t min_capacity)
     }
     return true;
 }
-
-

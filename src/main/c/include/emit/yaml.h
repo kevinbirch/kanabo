@@ -41,4 +41,3 @@
 #include "options.h"
 
 void emit_yaml(const nodelist *list, const struct settings *settings);
-

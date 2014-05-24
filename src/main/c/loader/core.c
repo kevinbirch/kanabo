@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -102,7 +102,7 @@ document_model *build_model(loader_context *context)
 
 static void event_loop(loader_context *context)
 {
-    yaml_event_t event;    
+    yaml_event_t event;
     memset(&event, 0, sizeof(event));
 
     loader_trace("entering event loop...");
@@ -123,22 +123,22 @@ static void event_loop(loader_context *context)
 static bool dispatch_event(yaml_event_t *event, loader_context *context)
 {
     bool done = false;
-    
+
     switch(event->type)
     {
         case YAML_NO_EVENT:
             loader_trace("received nop event");
             break;
-            
+
         case YAML_STREAM_START_EVENT:
             loader_trace("received stream start event");
             break;
-                
+
         case YAML_STREAM_END_EVENT:
             loader_trace("received stream end event");
             done = true;
             break;
-                
+
         case YAML_DOCUMENT_START_EVENT:
             loader_trace("received document start event");
             done = start_document(context);
@@ -148,27 +148,27 @@ static bool dispatch_event(yaml_event_t *event, loader_context *context)
             loader_trace("received document end event");
             done = end_document(context);
             break;
-                
+
         case YAML_ALIAS_EVENT:
             loader_trace("received alias event");
             done = add_alias(context, event);
             break;
-                
+
         case YAML_SCALAR_EVENT:
             loader_trace("received scalar event");
             done = add_scalar(context, event);
-            break;                
+            break;
 
         case YAML_SEQUENCE_START_EVENT:
             loader_trace("received sequence start event");
             done = start_sequence(context, event);
-            break;                
-                
+            break;
+
         case YAML_SEQUENCE_END_EVENT:
             loader_trace("received sequence end event");
             done = end_sequence(context);
             break;
-            
+
         case YAML_MAPPING_START_EVENT:
             loader_trace("received mapping start event");
             done = start_mapping(context, event);
@@ -177,7 +177,7 @@ static bool dispatch_event(yaml_event_t *event, loader_context *context)
         case YAML_MAPPING_END_EVENT:
             loader_trace("received mapping end event");
             done = end_mapping(context);
-            break;                
+            break;
     }
 
     return done;
@@ -207,7 +207,7 @@ static bool cache_mapping_key(loader_context *context, const yaml_event_t *event
     trace_string("caching scalar '%s' (%p) as mapping key", event->data.scalar.value, event->data.scalar.length, event->data.scalar.value);
     context->key_holder.value = event->data.scalar.value;
     context->key_holder.length = event->data.scalar.length;
-    
+
     if(NULL != event->data.scalar.anchor)
     {
         // this node will be held in the anchor hashtable
@@ -404,7 +404,7 @@ static bool start_sequence(loader_context *context, const yaml_event_t *event)
     set_anchor(context, sequence, event->data.sequence_start.anchor);
 
     loader_trace("started sequence (%p)", sequence);
-    
+
     bool done = add_node(context, sequence);
     context->target = sequence;
     return done;
@@ -417,7 +417,7 @@ static bool end_sequence(loader_context *context)
     loader_trace("added sequence (%p) of length: %zd", sequence, node_size(sequence));
     vector_trim(sequence->content.sequence);
     context->target = sequence->parent;
-    
+
     return false;
 }
 
@@ -467,11 +467,11 @@ static void set_anchor(loader_context *context, node *target, uint8_t *anchor)
     }
     node_set_anchor(target, anchor, strlen((char *)anchor));
 
-    hashtable_put(context->anchors, anchor, target);    
+    hashtable_put(context->anchors, anchor, target);
 }
 
 static bool add_node(loader_context *context, node *value)
-{    
+{
     switch(node_kind(context->target))
     {
         case DOCUMENT:

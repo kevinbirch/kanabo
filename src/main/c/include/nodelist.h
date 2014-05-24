@@ -62,4 +62,3 @@ typedef bool (*nodelist_map_function)(node *each, void *context, nodelist *targe
 
 nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context);
 nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target);
-

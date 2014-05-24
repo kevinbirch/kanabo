@@ -114,4 +114,3 @@ bool mapping_put(node *mapping, uint8_t *scalar, size_t length, node *value)
     }
     return 0 == errno;
 }
-

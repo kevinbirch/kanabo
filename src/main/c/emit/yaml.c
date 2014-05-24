@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -59,7 +59,7 @@ void emit_yaml(const nodelist *list, const struct settings *settings)
     log_debug(component, "emitting...");
     yaml_emitter_t emitter;
     yaml_event_t event;
-    
+
     yaml_emitter_initialize(&emitter);
     yaml_emitter_set_output_file(&emitter, stdout);
     yaml_emitter_set_unicode(&emitter, 1);
@@ -68,7 +68,7 @@ void emit_yaml(const nodelist *list, const struct settings *settings)
     yaml_stream_start_event_initialize(&event, YAML_UTF8_ENCODING);
     if (!yaml_emitter_emit(&emitter, &event))
         goto error;
-    
+
     log_trace(component, "document start");
     yaml_document_start_event_initialize(&event, &(yaml_version_directive_t){1, 1}, NULL, NULL, 0);
     if (!yaml_emitter_emit(&emitter, &event))
@@ -99,8 +99,8 @@ void emit_yaml(const nodelist *list, const struct settings *settings)
     log_trace(component, "stream end");
     yaml_stream_end_event_initialize(&event);
     if (!yaml_emitter_emit(&emitter, &event))
-        goto error;    
-    
+        goto error;
+
   error:
     yaml_emitter_delete(&emitter);
     fflush(stdout);
@@ -115,7 +115,7 @@ static bool emit_nodelist(const nodelist *list, yaml_emitter_t *emitter)
     yaml_sequence_start_event_initialize(&event, NULL, (yaml_char_t *)YAML_DEFAULT_SEQUENCE_TAG, 1, YAML_BLOCK_SEQUENCE_STYLE);
     if (!yaml_emitter_emit(emitter, &event))
         return false;
-    
+
     if(!nodelist_iterate(list, emit_sequence_item, emitter))
     {
         return false;
@@ -163,7 +163,7 @@ static bool emit_document(node *document, void *context)
     yaml_document_start_event_initialize(&event, &(yaml_version_directive_t){1, 1}, NULL, NULL, 0);
     if (!yaml_emitter_emit(emitter, &event))
         return false;
-    
+
     if(!emit_node(document_root(document), context))
     {
         return false;
@@ -188,7 +188,7 @@ static bool emit_sequence(node *sequence, void *context)
     yaml_sequence_start_event_initialize(&event, NULL, tag, NULL == name, YAML_BLOCK_SEQUENCE_STYLE);
     if (!yaml_emitter_emit(emitter, &event))
         return false;
-    
+
     if(!sequence_iterate(sequence, emit_sequence_item, context))
     {
         return false;
@@ -220,7 +220,7 @@ static bool emit_mapping(node *mapping, void *context)
     yaml_mapping_start_event_initialize(&event, NULL, tag, NULL == name, YAML_BLOCK_MAPPING_STYLE);
     if (!yaml_emitter_emit(emitter, &event))
         return false;
-    
+
     if(!mapping_iterate(mapping, emit_mapping_item, context))
     {
         return false;
@@ -248,7 +248,7 @@ static bool emit_scalar(const node *each, void *context)
 {
     yaml_char_t *tag = NULL;
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
-    
+
     switch(scalar_kind(each))
     {
         case SCALAR_STRING:
@@ -284,7 +284,6 @@ static bool emit_tagged_scalar(const node *scalar, yaml_char_t *tag, yaml_scalar
     yaml_scalar_event_initialize(&event, NULL, tag, scalar_value(scalar), (int)node_size(scalar), implicit, implicit, style);
     if (!yaml_emitter_emit(emitter, &event))
         return false;
-    
+
     return true;
 }
-

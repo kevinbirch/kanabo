@@ -108,7 +108,7 @@ nodelist *evaluate(evaluator_context *context)
     PRECOND_ELSE_NULL(0 != path_length(context->path));
 
     nodelist_add(context->list, model_document(context->model, 0));
-    
+
     return evaluate_steps(context);
 }
 
@@ -370,7 +370,7 @@ static bool apply_type_test(node *each, void *argument, nodelist *target)
             break;
     }
     if(match)
-    {        
+    {
         evaluator_trace("type test: match! adding node (%p)", value);
         return nodelist_add(target, value) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
     }
@@ -475,7 +475,7 @@ static bool apply_subscript_predicate(node *value, evaluator_context *context, n
     {
         evaluator_trace("subscript predicate: index %zd not valid for sequence (length: %zd), dropping (%p)", index, node_size(value), value);
         return true;
-    }    
+    }
     node *selected = sequence_get(value, index);
     evaluator_trace("subscript predicate: adding index %zd (%p) from sequence (%p) of %zd items", index, selected, value, node_size(value));
     return nodelist_add(target, selected) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
@@ -503,7 +503,7 @@ static bool apply_slice_predicate(node *value, evaluator_context *context, nodel
             context->code = ERR_EVALUATOR_OUT_OF_MEMORY;
             return false;
         }
-        evaluator_trace("slice predicate: adding index: %d (%p)", i, selected);         
+        evaluator_trace("slice predicate: adding index: %d (%p)", i, selected);
     }
     return true;
 }
@@ -518,7 +518,7 @@ static bool apply_join_predicate(node *value __attribute__((unused)), evaluator_
     return false;
 }
 
-/* 
+/*
  * Utility Functions
  * =================
  */
@@ -619,4 +619,3 @@ static int_fast32_t normalize_extent(bool specified_p, int_fast32_t given, int_f
     evaluator_trace("slice predicate: (normalizer) constrained to %zd", result);
     return result;
 }
-

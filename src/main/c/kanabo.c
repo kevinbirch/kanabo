@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -93,7 +93,7 @@ int main(const int argc, char * const *argv)
 static int dispatch(enum command cmd, const struct settings *settings)
 {
     int result = EXIT_SUCCESS;
-    
+
     switch(cmd)
     {
         case SHOW_HELP:
@@ -129,7 +129,7 @@ static int interactive_mode(const struct settings *settings)
         return EXIT_FAILURE;
     }
     char *prompt = NULL;
-    
+
     if(isatty(fileno(stdin)))
     {
         prompt = ">> ";
@@ -175,7 +175,7 @@ static int expression_mode(const struct settings *settings)
     {
         return EXIT_FAILURE;
     }
-    
+
     int result = apply_expression(settings, model, settings->expression);
     model_free(model);
 
@@ -222,7 +222,7 @@ static document_model *load_model(const struct settings *settings)
         perror(settings->program_name);
         return NULL;
     }
-    
+
     loader_context *loader = make_file_loader(input);
     if(NULL == loader)
     {
@@ -240,7 +240,7 @@ static document_model *load_model(const struct settings *settings)
     }
     loader_set_dupe_strategy(loader, settings->duplicate_strategy);
 
-    document_model *model = load(loader);    
+    document_model *model = load(loader);
     if(loader_status(loader))
     {
         char *message = loader_status_message(loader);
@@ -312,7 +312,7 @@ static nodelist *evaluate_expression(const struct settings *settings, const docu
         nodelist_free(list);
         list = NULL;
     }
-    
+
     evaluator_free(evaluator);
     return list;
 }

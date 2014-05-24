@@ -147,7 +147,7 @@ static void path(parser_context *context)
 {
     enter_state(context, ST_START);
     skip_ws(context);
-    
+
     absolute_path(context);
 
     if(ERR_UNEXPECTED_VALUE == context->result.code && '$' == context->result.expected_char)
@@ -342,7 +342,7 @@ static void node_type_test(parser_context *context)
         return;
     }
     current->test.type = (enum type_test_kind)kind;
-    
+
     consume_chars(context, length);
     context->result.code = JSONPATH_SUCCESS;
 }
@@ -350,7 +350,7 @@ static void node_type_test(parser_context *context)
 static int32_t node_type_test_value(parser_context *context, size_t length)
 {
     int32_t result;
-    
+
     switch(get_char(context))
     {
         case 'o':
@@ -417,7 +417,7 @@ static void name(parser_context *context, step *name_step)
 {
     enter_state(context, ST_NAME);
     size_t offset = context->cursor;
-    
+
     while(offset < context->length)
     {
         if('.' == context->input[offset] || '[' == context->input[offset])
@@ -625,7 +625,7 @@ static void slice_predicate(parser_context *context)
     }
     else
     {
-        parser_trace("slice: no to value specified");    
+        parser_trace("slice: no to value specified");
     }
     skip_ws(context);
     if(':' == get_char(context))
@@ -723,7 +723,7 @@ static int_fast32_t offset_of(parser_context *context, char *target)
         }
         offset++;
     }
-    
+
     return offset == context->length ? -1 : (int_fast32_t)offset;
 }
 
@@ -838,4 +838,3 @@ static inline void enter_state(parser_context *context, enum state state)
     context->state = state;
     parser_trace("entering state: '%s'", STATES[state]);
 }
-

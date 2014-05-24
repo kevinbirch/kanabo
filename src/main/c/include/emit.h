@@ -41,4 +41,3 @@
 #include "emit/yaml.h"
 
 typedef void (*emit_function)(const nodelist *list, const struct settings *settings);
-

@@ -59,6 +59,4 @@ typedef struct emit_context emit_context;
     {                                                                   \
         log_error("shell", "uh oh! couldn't emit literal %s", (STR));   \
         return false;                                                   \
-    }    
-
-
+    }

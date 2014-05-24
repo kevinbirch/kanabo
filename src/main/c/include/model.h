@@ -44,7 +44,7 @@
 #include "hashtable.h"
 #include "vector.h"
 
-enum node_kind 
+enum node_kind
 {
     DOCUMENT,
     SCALAR,
@@ -66,7 +66,7 @@ enum scalar_kind
 struct node
 {
     struct node *parent;
-    struct 
+    struct
     {
         enum node_kind  kind;
         uint8_t        *name;
@@ -83,7 +83,7 @@ struct node
                 enum scalar_kind kind;
                 uint8_t         *value;
             } scalar;
-        
+
             Vector      *sequence;
             Hashtable   *mapping;
             struct node *target;
@@ -184,4 +184,3 @@ bool mapping_iterate(const node *mapping, mapping_iterator iterator, void *conte
  */
 
 node *alias_target(const node *alias);
-

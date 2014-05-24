@@ -156,4 +156,3 @@ bool                slice_predicate_has_step(const predicate *value);
 
 jsonpath *          join_predicate_left(const predicate *value);
 jsonpath *          join_predicate_right(const predicate *value);
-

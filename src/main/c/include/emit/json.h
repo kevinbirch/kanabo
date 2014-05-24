@@ -41,4 +41,3 @@
 #include "options.h"
 
 void emit_json(const nodelist *list, const struct settings *settings);
-

@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -146,7 +146,7 @@ static loader_context *make_loader(void)
         free(context);
         return NULL;
     }
-    
+
     context->anchors = make_hashtable_with_function(string_comparitor, shift_add_xor_string_hash);
     if(NULL == context->anchors)
     {
@@ -170,7 +170,7 @@ static loader_context *make_loader(void)
     make_regex(decimal_regex, "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$");
     make_regex(integer_regex, "^-?(0|([1-9][[:digit:]]*))$");
     make_regex(timestamp_regex, "^[0-9][0-9][0-9][0-9]-[0-9][0-9]?-[0-9][0-9]?(([Tt]|[ \t]+)[0-9][0-9]?:[0-9][0-9](:[0-9][0-9])?([.][0-9]+)?([ \t]*(Z|([-+][0-9][0-9]?(:[0-9][0-9])?)))?)?$");
-    
+
     return context;
 }
 
@@ -217,4 +217,3 @@ document_model *load(loader_context *context)
     loader_debug("starting load...");
     return build_model(context);
 }
-

@@ -47,14 +47,14 @@ enum slice_specifiers
 struct predicate
 {
     enum predicate_kind kind;
-    
+
     union
     {
         struct
         {
             size_t index;
         } subscript;
-        
+
         struct
         {
             uint8_t      specified;
@@ -62,7 +62,7 @@ struct predicate
             int_fast32_t to;
             int_fast32_t step;
         } slice;
-        
+
         struct
         {
             jsonpath *left;
@@ -74,7 +74,7 @@ struct predicate
 struct step
 {
     enum step_kind kind;
-    
+
     struct
     {
         enum test_kind kind;
@@ -86,10 +86,10 @@ struct step
                 uint8_t *value;
                 size_t  length;
             } name;
-        
+
             enum type_test_kind type;
         };
-    } test;    
+    } test;
 
     predicate *predicate;
 };
@@ -142,7 +142,7 @@ struct parser_context
     const uint8_t *input;
     size_t         length;
     size_t         cursor;
-    
+
     jsonpath      *path;
     cell          *steps;
 
@@ -168,4 +168,3 @@ bool parse_expression(parser_context *context);
 
 #define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 #define debug_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_DEBUG, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
-

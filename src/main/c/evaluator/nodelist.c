@@ -60,7 +60,7 @@ bool nodelist_set(nodelist *list, void *value, size_t index)
 {
     errno = 0;
     vector_set(list, value, index);
-    
+
     return 0 == errno;
 }
 

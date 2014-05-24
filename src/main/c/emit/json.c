@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -53,12 +53,12 @@ static bool emit_json_mapping_item(node *key, node *value, void *context);
     {                                                                   \
         log_error(component, "uh oh! couldn't emit literal %s", (STR));    \
         return false;                                                   \
-    }    
+    }
 
 #define QEMIT(STR) if(-1 == fprintf(stdout, (STR)))                     \
     {                                                                   \
         log_error(component, "uh oh! couldn't emit literal %s", (STR));    \
-    }    
+    }
 
 void emit_json(const nodelist *list, const struct settings *settings)
 {
@@ -168,4 +168,3 @@ static bool emit_json_mapping_item(node *key, node *value, void *context)
     EMIT(":");
     return emit_json_node(value, NULL);
 }
-

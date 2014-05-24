@@ -172,4 +172,3 @@ char *parser_status_message(const parser_context *context)
 
     return message;
 }
-

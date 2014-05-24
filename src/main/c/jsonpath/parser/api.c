@@ -72,7 +72,7 @@ parser_context *make_parser(const uint8_t *expression, size_t length)
     }
 
     context->steps = NULL;
-    context->path = path;    
+    context->path = path;
     context->input = expression;
     context->length = length;
     context->cursor = 0;
@@ -125,7 +125,7 @@ jsonpath *parse(parser_context *context)
     }
     else
     {
-        context->result.actual_char = context->input[context->cursor];        
+        context->result.actual_char = context->input[context->cursor];
 #ifdef USE_LOGGING
         char *message = parser_status_message(context);
         parser_error("aborted. unable to create jsonpath model. status: %d (%s)", context->result.code, message);
@@ -136,4 +136,3 @@ jsonpath *parse(parser_context *context)
         return NULL;
     }
 }
-

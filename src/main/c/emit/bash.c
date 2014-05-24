@@ -51,7 +51,7 @@ void emit_bash(const nodelist *list, const struct settings *settings)
             .emit_mapping_item = emit_mapping_item,
             .wrap_collections = true
         };
-    
+
     if(!nodelist_iterate(list, emit_node, &context))
     {
         perror(settings->program_name);

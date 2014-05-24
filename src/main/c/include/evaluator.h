@@ -67,4 +67,3 @@ void evaluator_free(evaluator_context *context);
 nodelist *evaluate(evaluator_context *context);
 
 const char *evaluator_status_message(const evaluator_context *context);
-
