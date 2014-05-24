@@ -99,15 +99,12 @@ static inline int32_t check_one_node_type_test_value(parser_context *context, si
 
 // input stream handling
 static inline bool has_more_input(parser_context *context);
-static inline size_t remaining(parser_context *context);
 static bool look_for(parser_context *context, char *target);
 static int_fast32_t offset_of(parser_context *context, char *target);
 static inline uint8_t get_char(parser_context *context);
-static inline uint8_t peek(parser_context *context, size_t offset);
 static inline void skip_ws(parser_context *context);
 static inline void consume_char(parser_context *context);
 static inline void consume_chars(parser_context *context, size_t count);
-static inline void push_back(parser_context *context);
 static inline void reset(parser_context *context, size_t mark);
 
 // step constructors
@@ -735,11 +732,6 @@ static inline uint8_t get_char(parser_context *context)
     return context->input[context->cursor];
 }
 
-static inline uint8_t peek(parser_context *context, size_t offset)
-{
-    return context->input[context->cursor + offset];
-}
-
 static inline void skip_ws(parser_context *context)
 {
     while(isspace(get_char(context)))
@@ -764,22 +756,12 @@ static inline void consume_chars(parser_context *context, size_t count)
     }
 }
 
-static inline void push_back(parser_context *context)
-{
-    context->cursor--;
-}
-
 static inline void reset(parser_context *context, size_t mark)
 {
     if(mark < context->cursor)
     {
         context->cursor = mark;
     }
-}
-
-static inline size_t remaining(parser_context *context)
-{
-    return (context->length - 1) - context->cursor;
 }
 
 static inline bool has_more_input(parser_context *context)
