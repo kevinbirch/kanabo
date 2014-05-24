@@ -35,7 +35,8 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#define _POSIX_C_SOURCE 200809L
+#define _POSIX_C_SOURCE 200809L /* for USE_POSIX feature macros */
+#define _BSD_SOURCE             /* for S_IFREG flag */
 
 #include <stdio.h>            /* for fileno() */
 #include <sys/stat.h>         /* for fstat() */
