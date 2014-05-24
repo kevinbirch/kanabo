@@ -94,7 +94,9 @@
  * 
  */
 
+#ifdef __linux__
 #define _POSIX_C_SOURCE 200809L
+#endif
 
 #include <termios.h>
 #include <unistd.h>
