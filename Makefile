@@ -55,6 +55,7 @@ artifact ?= program
 build ?= debug
 INCLUDES ?=
 CFLAGS ?=
+LIBS ?=
 DEPENDENCIES ?=
 TEST_DEPENDENCIES ?=
 
@@ -170,7 +171,8 @@ DEPENDENCY_VALIDATIONS := $(addprefix dependency/,$(DEPENDENCIES))
 TEST_DEPENDENCY_VALIDATIONS := $(addprefix test-dependency/,$(TEST_DEPENDENCIES))
 INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR)
 CFLAGS := -I$(INCLUDE_DIR) $(INCLUDES) $(CFLAGS) $($(build)_CFLAGS)
-LDLIBS := $(addprefix -l, $(DEPENDENCIES))
+DEPLIBS := $(addprefix -l, $(DEPENDENCIES))
+LDLIBS := $(DEPLIBS) $(LIBS)
 
 ## Automation helper functions
 source_to_target = $(foreach s, $(1), $(2)/$(basename $(s)).$(3))
@@ -180,7 +182,8 @@ find_source_files = $(shell cd $(1) && $(FIND) . -type f \( -name '*.c' -or -nam
 
 ## Project test source compiler settings
 TEST_CFLAGS := -I$(TEST_INCLUDE_DIR) $(CFLAGS) $(TEST_CFLAGS)
-TEST_LDLIBS := $(addprefix -l, $(TEST_DEPENDENCIES)) $(LDLIBS)
+TEST_DEPLIBS := $(addprefix -l, $(TEST_DEPENDENCIES)) $(LDLIBS)
+TEST_LDLIBS := $(TEST_DEPLIBS) $(TEST_LIBS)
 
 ## Project source file locations
 SOURCES := $(call find_source_files,$(SOURCE_DIR))
