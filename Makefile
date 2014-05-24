@@ -41,13 +41,13 @@ all: help
 include project.mk
 
 ## Defaults for common shell commands
-CC = cc
-AR = ar
-RM = rm -f
-DIFF = diff
-TAR = tar
-FIND = find
-INSTALL = install
+CC ?= cc
+AR ?= ar
+RM ?= rm -f
+DIFF ?= diff
+TAR ?= tar
+FIND ?= find
+INSTALL ?= install
 
 ## Defaults for project settings
 version ?= 1.0.0-SNAPSHOT
