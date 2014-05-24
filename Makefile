@@ -247,6 +247,16 @@ help:
 	echo "package  - collect the target artifacts info a distributable bundle"; \
 	echo "install  - install the target artifacts onto the local system"
 
+env:
+	@echo "$(owner):$(package):$(version)"; \
+	echo "artifact: $(artifact)"; \
+	echo "build type: $(build)"; \
+	echo "dependencies: $(DEPENDENCIES)"; \
+	echo "test dependencies: $(TEST_DEPENDENCIES)"; \
+	echo "compiler"; \
+	$(CC) --version; \
+	echo "compiler command: $(CC) $(CFLAGS) $(CDEFS) -c <in> -o <out>";
+
 ## Suport Emacs flymake syntax checker
 check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS)
 	$(CC) $(TEST_CFLAGS) $(CDEFS) -fsyntax-only $(CHK_SOURCES)
@@ -507,4 +517,4 @@ install: verify
 	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
 	$(INSTALL) $(TARGET) $(DESTDIR)$(bindir)
 
-.PHONY: all check help check-syntax clean validate create-buid-directories announce-build ensure-dependencies initialize announce-compile-phase announce-generate-sources generate-sources process-sources announce-generate-resources generate-resources process-resources announce-compile-sources compile process-objects library target ensure-test-dependencies announce-test-phase announce-generate-test-sources generate-test-sources process-test-sources announce-generate-test-resources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(VALIDATION_HOOKS) $(DEPENDENCY_VADLIDATIONS) $(TEST_DEPENDENCY_VADLIDATIONS)
+.PHONY: all check help env check-syntax clean validate create-buid-directories announce-build ensure-dependencies initialize announce-compile-phase announce-generate-sources generate-sources process-sources announce-generate-resources generate-resources process-resources announce-compile-sources compile process-objects library target ensure-test-dependencies announce-test-phase announce-generate-test-sources generate-test-sources process-test-sources announce-generate-test-resources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(VALIDATION_HOOKS) $(DEPENDENCY_VADLIDATIONS) $(TEST_DEPENDENCY_VADLIDATIONS)
