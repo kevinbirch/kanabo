@@ -94,6 +94,10 @@
  * 
  */
 
+#ifdef __linux__
+#define _POSIX_C_SOURCE = 200809L  /* for strdup */
+#endif
+
 #include <termios.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -105,6 +109,9 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#ifdef __linux__
+#include <strings.h>  /* for strcasecmp */
+#endif
 #include "linenoise.h"
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
