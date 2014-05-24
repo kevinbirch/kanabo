@@ -47,7 +47,7 @@ static inline int32_t process_emit_mode(const char *argument);
 static inline int32_t process_dupe_strategy(const char *argument);
 static inline const char *process_program_name(const char *argv0);
 
-static struct option options[] = 
+static struct option options[] =
 {
     // meta commands:
     {"version",     no_argument,       NULL, 'v'}, // print version and exit
@@ -78,7 +78,8 @@ enum command process_options(const int argc, char * const *argv, struct settings
     int32_t strategy = -1;
     bool done = false;
     bool interaction_decided = false;
-    
+    bool meta = false;
+
     settings->program_name = process_program_name(argv[0]);
     settings->emit_mode = BASH;
     settings->duplicate_strategy = DUPE_CLOBBER;
@@ -92,16 +93,19 @@ enum command process_options(const int argc, char * const *argv, struct settings
             case 'v':
                 ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
                 settings->command = SHOW_VERSION;
+                meta = true;
                 done = true;
                 break;
             case 'h':
                 ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
                 settings->command = SHOW_HELP;
+                meta = true;
                 done = true;
                 break;
             case 'w':
                 ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
                 settings->command = SHOW_WARRANTY;
+                meta = true;
                 done = true;
                 break;
             case 'i':
@@ -147,7 +151,7 @@ enum command process_options(const int argc, char * const *argv, struct settings
         }
     }
 
-    if(!interaction_decided)
+    if(!meta && !interaction_decided)
     {
         fprintf(stderr, "%s: either `--query <expression>' or `--interactive' must be specified.\n", settings->program_name);
         settings->command = SHOW_HELP;

@@ -21,7 +21,6 @@ LICENSE file for more details.
 * valgrind
 * performance co-pilot? http://oss.sgi.com/projects/pcp/
 * add completions for currently loaded model to linenoise
-* bug: `--help` option prints error message before help text
 * build: libtool integration?
 * build: shtool integration?
 
@@ -90,7 +89,6 @@ LICENSE file for more details.
   * ronn? http://rtomayko.github.io/ronn/ronn-format.7.html
 * install file
 * readme file
-* double check ebnf
 * static site
   * http://tinytree.info
   * sphynx?
