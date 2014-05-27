@@ -54,11 +54,11 @@ CONFIG_H = $(GENERATED_HEADERS_DIR)/config.h
 
 $(VERSION_H): $(GENERATED_HEADERS_DIR)
 	@echo "Generating $(VERSION_H)"
-	@CC=$(CC) build/generate_version_header $(version) $(VERSION_H)
+	@CC=$(CC) build/generate_version_header.sh $(version) $(VERSION_H)
 
 $(CONFIG_H): $(GENERATED_HEADERS_DIR)
 	@echo "Generating $(CONFIG_H)"
-	@build/generate_config_header $(CONFIG_H) PREFX=$(prefix) LIBEXECDIR=$(package_libexecdir) DATADIR=$(package_datadir) LOGDIR=$(package_logdir) RUNDIR=$(package_rundir) MANDIR=$(man1dir) HTMLDIR=$(htmldir) INFODIR=$(infodir)
+	@build/generate_config_header.sh $(CONFIG_H) PREFX=$(prefix) LIBEXECDIR=$(package_libexecdir) DATADIR=$(package_datadir) LOGDIR=$(package_logdir) RUNDIR=$(package_rundir) MANDIR=$(man1dir) HTMLDIR=$(htmldir) INFODIR=$(infodir)
 
 generate-version-header: $(VERSION_H)
 generate-config-header: $(CONFIG_H)
