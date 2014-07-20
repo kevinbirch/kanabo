@@ -424,7 +424,7 @@ ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
 	@echo ""; \
 	echo " -- Generating sources"; \
 	echo "------------------------------------------------------------------------"; \
-	echo "Executing $(words $(GENERATE_SOURCES_HOOKS)) source hooks"
+	echo "Processing $(words $(GENERATE_SOURCES_HOOKS)) source hooks"
 endif
 
 generate-sources: initialize announce-compile-phase announce-generate-sources $(GENERATE_SOURCES_HOOKS) $(DEPENDS)
