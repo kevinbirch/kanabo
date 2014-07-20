@@ -29,7 +29,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <math.h>
+#include <tgmath.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -169,7 +169,7 @@ static inline size_t normalize_capacity(size_t hint)
     if(0 != (capacity & (capacity - 1)))
     {
         // ensure that capacity is a power of 2
-        capacity = 1ULL << (size_t)(log2(capacity - 1) + 1);
+        capacity = 1ULL << (size_t)(log2((float)(capacity - 1)) + 1);
     }
     return capacity;
 }
@@ -205,7 +205,7 @@ static void init(Hashtable *hashtable,
                  hash_function function)
 {
     hashtable->occupied = 0ul;
-    hashtable->capacity = (size_t)lroundf(capacity * load_factor);
+    hashtable->capacity = (size_t)lround((float)capacity * load_factor);
     hashtable->load_factor = load_factor;
     hashtable->mutable = true;
     hashtable->length = capacity << 1;
