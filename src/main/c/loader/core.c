@@ -88,7 +88,7 @@ document_model *build_model(loader_context *context)
     context->model = model;
 
     event_loop(context);
-    if(0 == model_document_count(context->model))
+    if(LOADER_SUCCESS == context->code && 0 == model_document_count(context->model))
     {
         loader_error("no documents found for the input!");
         context->code = ERR_NO_DOCUMENTS_FOUND;
