@@ -83,7 +83,7 @@ This can be best accompilshed as a one-shot query using the `--query` argument w
 To produce the above output using the Bash shell and the Bash output format (which is the default), use this script:
 
 ```bash
-exec 3< <(kanabo -f $1 -q '$.store.book.*')
+exec 3< <(kanabo -q '$.store.book.*' $1)
 while read -r -u 3 line
 do
   declare -A book="$line"
@@ -96,7 +96,7 @@ The first line opens a new file descriptor (number 3) for reading, and connects 
 An example of the Bash output format would be:
 
 ```bash
-$ kanabo -q '$.store.book[1]' -o bash < path/to/input.json
+$ kanabo -q '$.store.book[1]' -o bash path/to/input.json
 ([category]=fiction [author]='Evelyn Waugh' [title]='Sword of Honour' [price]=12.99 )
 ```
 
@@ -105,7 +105,7 @@ $ kanabo -q '$.store.book[1]' -o bash < path/to/input.json
 To produce the above output using the Zsh shell and the Zsh output format, use this script:
 
 ```sh
-exec 3< <(kanabo -o zsh -f $1 -q '$.store.book.*')
+exec 3< <(kanabo -o zsh -q '$.store.book.*' $1)
 typeset -A book
 while read -r -u 3 line
 do
@@ -119,7 +119,7 @@ The first line opens a new file descriptor (number 3) for reading, and connects 
 An example of the Zsh output format would be:
 
 ```sh
-$ kanabo -q '$.store.book[1]' -o zsh < path/to/input.json
+$ kanabo -q '$.store.book[1]' -o zsh path/to/input.json
 category fiction author 'Evelyn Waugh' title 'Sword of Honour' price 12.99
 ```
 
