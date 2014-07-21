@@ -54,8 +54,9 @@
 static const char * const MESSAGES[] =
 {
     "Success.",
-    "Input argument was NULL.",
-    "Input argument was zero length.",
+    "Input was NULL.",
+    "Input was zero length.",
+    "No documents found.",
     "Unable to allocate memory.",
     "An error occured reading the input: %s at %zd.",
     "An error occured scanning the input: %s at line %ld, column %ld.",

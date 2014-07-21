@@ -70,6 +70,14 @@ parser_context *make_parser(const uint8_t *expression, size_t length)
         context->result.code = ERR_PARSER_OUT_OF_MEMORY;
         return context;
     }
+    path->expression = (uint8_t *)calloc(1, length);
+    if(NULL == path->expression)
+    {
+        parser_error("uh oh! out of memory, can't allocate the parser context");
+        return NULL;
+    }
+    memcpy(path->expression, expression, length);
+    path->expr_length = length;
 
     context->steps = NULL;
     context->path = path;

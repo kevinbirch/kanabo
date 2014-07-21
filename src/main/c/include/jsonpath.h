@@ -125,6 +125,9 @@ char *parser_status_message(const parser_context *context);
 typedef bool (*path_iterator)(step *each, void *context);
 bool path_iterate(const jsonpath *path, path_iterator iterator, void *context);
 
+uint8_t *path_expression(const jsonpath *path);
+size_t path_expression_length(const jsonpath *path);
+
 enum path_kind path_kind(const jsonpath *path);
 const char *   path_kind_name(enum path_kind value);
 size_t         path_length(const jsonpath *path);

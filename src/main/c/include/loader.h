@@ -47,6 +47,7 @@ enum loader_status_code
     LOADER_SUCCESS = 0,
     ERR_INPUT_IS_NULL,         // the input argument given was NULL
     ERR_INPUT_SIZE_IS_ZERO,    // input length was 0
+    ERR_NO_DOCUMENTS_FOUND,    // no documents in input stream
     ERR_LOADER_OUT_OF_MEMORY,  // unable to allocate memory
     ERR_READER_FAILED,         // unable to read from the input
     ERR_SCANNER_FAILED,        // unable to lexically analyze the input
@@ -80,3 +81,5 @@ void loader_free(loader_context *context);
 document_model *load(loader_context *context);
 
 char *loader_status_message(const loader_context *context);
+const char * duplicate_strategy_name(enum loader_duplicate_key_strategy value);
+int32_t parse_duplicate_strategy(const char *value);

@@ -48,18 +48,18 @@ struct loader_context
     yaml_parser_t     *parser;
     loader_status_code code;
     enum loader_duplicate_key_strategy strategy;
-    
+
     document_model    *model;
 
     node              *target;
-    struct 
+    struct
     {
         uint8_t *value;
         size_t   length;
     } key_holder;
 
     Hashtable *anchors;
-    
+
     regex_t           *decimal_regex;
     regex_t           *integer_regex;
     regex_t           *timestamp_regex;

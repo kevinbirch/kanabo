@@ -54,7 +54,7 @@ static bool emit_tagged_scalar(const node *scalar, yaml_char_t *tag, yaml_scalar
 #define component "yaml"
 #define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 
-void emit_yaml(const nodelist *list, const struct settings *settings)
+void emit_yaml(const nodelist *list, const struct options *options)
 {
     log_debug(component, "emitting...");
     yaml_emitter_t emitter;
@@ -78,7 +78,7 @@ void emit_yaml(const nodelist *list, const struct settings *settings)
     {
         if(!emit_node(nodelist_get(list, 0), &emitter))
         {
-            fprintf(stderr, "%s: %s\n", settings->program_name, emitter.problem);
+            fprintf(stderr, "%s: %s\n", options->program_name, emitter.problem);
             goto error;
         }
     }
@@ -86,7 +86,7 @@ void emit_yaml(const nodelist *list, const struct settings *settings)
     {
         if(!emit_nodelist(list, &emitter))
         {
-            fprintf(stderr, "%s: %s\n", settings->program_name, emitter.problem);
+            fprintf(stderr, "%s: %s\n", options->program_name, emitter.problem);
             goto error;
         }
     }

@@ -40,4 +40,4 @@
 #include "nodelist.h"
 #include "options.h"
 
-void emit_json(const nodelist *list, const struct settings *settings);
+void emit_json(const nodelist *list, const struct options *options);

@@ -40,25 +40,33 @@
 #include <stdbool.h>
 #include <string.h>
 #include <sys/param.h>
+#include <libgen.h>
+#include <getopt.h>
 
 #include "options.h"
 
-static inline int32_t process_emit_mode(const char *argument);
-static inline int32_t process_dupe_strategy(const char *argument);
-static inline const char *process_program_name(const char *argv0);
+static const char * DEFAULT_PROGRAM_NAME = "kanabo";
 
-static struct option options[] =
+typedef struct option argument;
+
+static const char * const EMIT_MODES [] =
+{
+    "bash",
+    "zsh",
+    "json",
+    "yaml"
+};
+
+static argument arguments[] =
 {
     // meta commands:
     {"version",     no_argument,       NULL, 'v'}, // print version and exit
     {"no-warranty", no_argument,       NULL, 'w'}, // print no-warranty and exit
     {"help",        no_argument,       NULL, 'h'}, // print help and exit
     // operating modes:
-    {"interactive", no_argument,       NULL, 'i'}, // enter interactive mode (requres -f/--file), specify the shell to emit for
     {"query",       required_argument, NULL, 'q'}, // evaluate given expression and exit
     // optional arguments:
-    {"file",        required_argument, NULL, 'f'}, // read input from file instead of stdin (required for interactive mode)
-    {"output",      required_argument, NULL, 'o'}, // emit expressions for the given shell (the default is Bash)
+    {"output",      required_argument, NULL, 'o'}, // emit expressions for the given shell
     {"duplicate",   required_argument, NULL, 'd'}, // how to respond to duplicate mapping keys
     {0, 0, 0, 0}
 };
@@ -66,106 +74,12 @@ static struct option options[] =
 #define ENSURE_COMMAND_ORTHOGONALITY(test) \
     if((test))                             \
     {                                      \
-        settings->command = SHOW_HELP;     \
+        command = SHOW_HELP;     \
         done = true;                       \
         break;                             \
     }
 
-enum command process_options(const int argc, char * const *argv, struct settings *settings)
-{
-    int opt;
-    int32_t mode = -1;
-    int32_t strategy = -1;
-    bool done = false;
-    bool interaction_decided = false;
-    bool meta = false;
-
-    settings->program_name = process_program_name(argv[0]);
-    settings->emit_mode = BASH;
-    settings->duplicate_strategy = DUPE_CLOBBER;
-    settings->expression = NULL;
-    settings->input_file_name = NULL;
-
-    while(!done && (opt = getopt_long(argc, argv, "vwhiq:o:f:d:", options, NULL)) != -1)
-    {
-        switch(opt)
-        {
-            case 'v':
-                ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
-                settings->command = SHOW_VERSION;
-                meta = true;
-                done = true;
-                break;
-            case 'h':
-                ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
-                settings->command = SHOW_HELP;
-                meta = true;
-                done = true;
-                break;
-            case 'w':
-                ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
-                settings->command = SHOW_WARRANTY;
-                meta = true;
-                done = true;
-                break;
-            case 'i':
-                ENSURE_COMMAND_ORTHOGONALITY(interaction_decided);
-                settings->command = INTERACTIVE_MODE;
-                interaction_decided = true;
-                break;
-            case 'q':
-                ENSURE_COMMAND_ORTHOGONALITY(interaction_decided);
-                settings->command = EXPRESSION_MODE;
-                settings->expression = optarg;
-                interaction_decided = true;
-                break;
-            case 'o':
-                mode = process_emit_mode(optarg);
-                if(-1 == mode)
-                {
-                    fprintf(stderr, "%s: unsupported output format `%s'\n", settings->program_name, optarg);
-                    settings->command = SHOW_HELP;
-                    done = true;
-                }
-                settings->emit_mode = (enum emit_mode)mode;
-                break;
-            case 'f':
-                settings->input_file_name = optarg;
-                break;
-            case 'd':
-                strategy = process_dupe_strategy(optarg);
-                if(-1 == strategy)
-                {
-                    fprintf(stderr, "%s: unsupported duplicate strategy `%s'\n", settings->program_name, optarg);
-                    settings->command = SHOW_HELP;
-                    done = true;
-                }
-                settings->duplicate_strategy = (enum loader_duplicate_key_strategy)strategy;
-                break;
-            case ':':
-            case '?':
-            default:
-                settings->command = SHOW_HELP;
-                done = true;
-                break;
-        }
-    }
-
-    if(!meta && !interaction_decided)
-    {
-        fprintf(stderr, "%s: either `--query <expression>' or `--interactive' must be specified.\n", settings->program_name);
-        settings->command = SHOW_HELP;
-    }
-    else if(INTERACTIVE_MODE == settings->command && NULL == settings->input_file_name)
-    {
-        fprintf(stderr, "%s: using `--interactive' requires `--file <filename>' must also be specified.\n", settings->program_name);
-        settings->command = SHOW_HELP;
-    }
-
-    return settings->command;
-}
-
-static inline int32_t process_emit_mode(const char *argument)
+inline int32_t parse_emit_mode(const char *argument)
 {
     if(strncmp("bash", argument, 4) == 0)
     {
@@ -189,28 +103,102 @@ static inline int32_t process_emit_mode(const char *argument)
     }
 }
 
-static inline int32_t process_dupe_strategy(const char *argument)
+inline const char * emit_mode_name(enum emit_mode value)
 {
-    if(0 == strncmp("clobber", argument, 7ul))
-    {
-        return DUPE_CLOBBER;
-    }
-    else if(0 == strncmp("warn", argument, 4ul))
-    {
-        return DUPE_WARN;
-    }
-    else if(0 == strncmp("fail", argument, 4ul))
-    {
-        return DUPE_FAIL;
-    }
-    else
-    {
-        return -1;
-    }
+    return EMIT_MODES[value];
 }
 
-static inline const char *process_program_name(const char *argv0)
+static inline const char *get_program_name(const char *argv0)
 {
-    char *slash = strrchr(argv0, '/');
-    return NULL == slash ? argv0 : slash + 1;
+    char *name = basename((char *)argv0);
+    if(NULL == name)
+    {
+        return DEFAULT_PROGRAM_NAME;
+    }
+    return name;
+}
+
+enum command process_options(const int argc, char * const *argv, struct options *options)
+{
+    int opt;
+    bool done = false;
+    enum command command = INTERACTIVE_MODE;
+
+    options->program_name = get_program_name(argv[0]);
+    options->emit_mode = BASH;
+    options->duplicate_strategy = DUPE_CLOBBER;
+    options->input_file_name = NULL;
+    options->mode = INTERACTIVE_MODE;
+
+    while(!done && (opt = getopt_long(argc, argv, "vwhq:o:d:", arguments, NULL)) != -1)
+    {
+        switch(opt)
+        {
+            case 'v':
+                ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
+                command = SHOW_VERSION;
+                done = true;
+                break;
+            case 'h':
+                ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
+                command = SHOW_HELP;
+                done = true;
+                break;
+            case 'w':
+                ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
+                command = SHOW_WARRANTY;
+                done = true;
+                break;
+            case 'q':
+                command = EXPRESSION_MODE;
+                options->expression = optarg;
+                options->mode = EXPRESSION_MODE;
+                break;
+            case 'o':
+            {
+                int32_t mode = parse_emit_mode(optarg);
+                if(-1 == mode)
+                {
+                    fprintf(stderr, "error: %s: unsupported output format `%s'\n", options->program_name, optarg);
+                    command = SHOW_HELP;
+                    done = true;
+                    break;
+                }
+                options->emit_mode = (enum emit_mode)mode;
+                break;
+            }
+            case 'd':
+            {
+                int32_t strategy = parse_duplicate_strategy(optarg);
+                if(-1 == strategy)
+                {
+                    fprintf(stderr, "error: %s: unsupported duplicate strategy `%s'\n", options->program_name, optarg);
+                    command = SHOW_HELP;
+                    done = true;
+                    break;
+                }
+                options->duplicate_strategy = (enum loader_duplicate_key_strategy)strategy;
+                break;
+            }
+            case ':':
+            case '?':
+            default:
+                command = SHOW_HELP;
+                done = true;
+                break;
+        }
+    }
+
+    if(argc - optind)
+    {
+        options->input_file_name = argv[optind];
+    }
+    if(INTERACTIVE_MODE == options->mode &&
+       options->input_file_name &&
+       0 == memcmp("-", options->input_file_name, 1))
+    {
+        fprintf(stderr, "error: the standard in shortcut `-' can't be used with interactive evaluation\n");
+        command = SHOW_HELP;
+    }
+    return command;
 }

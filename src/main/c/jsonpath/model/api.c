@@ -57,6 +57,7 @@ void path_free(jsonpath *path)
         step_free(path->steps[i]);
     }
     free(path->steps);
+    free(path->expression);
     free(path);
 }
 
@@ -109,6 +110,18 @@ bool path_iterate(const jsonpath *path, path_iterator iterator, void *context)
         }
     }
     return true;
+}
+
+uint8_t *path_expression(const jsonpath *path)
+{
+    PRECOND_NONNULL_ELSE_NULL(path);
+    return path->expression;
+}
+
+size_t path_expression_length(const jsonpath *path)
+{
+    PRECOND_NONNULL_ELSE_ZERO(path);
+    return path->expr_length;
 }
 
 enum path_kind path_kind(const jsonpath *path)

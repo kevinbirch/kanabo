@@ -42,6 +42,13 @@
 #include "loader.h"
 #include "loader/private.h"
 
+static const char * const DUPLICATE_STRATEGIES [] =
+{
+    "clobber",
+    "warn",
+    "fail"
+};
+
 static void event_loop(loader_context *context);
 static bool dispatch_event(yaml_event_t *event, loader_context *context);
 
@@ -81,7 +88,12 @@ document_model *build_model(loader_context *context)
     context->model = model;
 
     event_loop(context);
-
+    if(0 == model_document_count(context->model))
+    {
+        loader_error("no documents found for the input!");
+        context->code = ERR_NO_DOCUMENTS_FOUND;
+        return NULL;
+    }
     if(LOADER_SUCCESS == context->code)
     {
         loader_debug("done. found %zd documents.", model_document_count(context->model));
@@ -519,4 +531,29 @@ static inline bool add_to_mapping_node(loader_context *context, node *value)
         context->key_holder.length = 0ul;
     }
     return done;
+}
+
+int32_t parse_duplicate_strategy(const char *argument)
+{
+    if(0 == strncmp("clobber", argument, 7ul))
+    {
+        return DUPE_CLOBBER;
+    }
+    else if(0 == strncmp("warn", argument, 4ul))
+    {
+        return DUPE_WARN;
+    }
+    else if(0 == strncmp("fail", argument, 4ul))
+    {
+        return DUPE_FAIL;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+const char * duplicate_strategy_name(enum loader_duplicate_key_strategy value)
+{
+    return DUPLICATE_STRATEGIES[value];
 }

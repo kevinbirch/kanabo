@@ -60,14 +60,14 @@ static bool emit_json_mapping_item(node *key, node *value, void *context);
         log_error(component, "uh oh! couldn't emit literal %s", (STR));    \
     }
 
-void emit_json(const nodelist *list, const struct settings *settings)
+void emit_json(const nodelist *list, const struct options *options)
 {
     log_debug(component, "emitting...");
     size_t count = 0;
     QEMIT("[");
     if(!nodelist_iterate(list, emit_json_sequence_item, &count))
     {
-        perror(settings->program_name);
+        perror(options->program_name);
     }
     QEMIT("]");
     QEMIT("\n");

@@ -96,6 +96,8 @@ struct step
 
 struct jsonpath
 {
+    uint8_t *expression;
+    size_t expr_length;
     enum path_kind kind;
     size_t length;
     step **steps;

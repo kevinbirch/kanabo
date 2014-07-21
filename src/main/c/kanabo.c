@@ -41,12 +41,13 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <sys/errno.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "warranty.h"
-#include "help.h"
 #include "options.h"
 #include "loader.h"
 #include "jsonpath.h"
@@ -56,41 +57,439 @@
 #include "version.h"
 #include "linenoise.h"
 
-static int dispatch(enum command cmd, const struct settings *settings);
+static const char * const DEFAULT_PROMPT = ">> ";
+static const char * const BANNER =
+    "kanabo " VERSION " (built: " BUILD_DATE ")\n"
+    "[" BUILD_COMPILER "] on " BUILD_HOSTNAME "\n";
+static const char * const INTERACTIVE_HELP =
+    "The following commands can be used, any other input is treated as JSONPath.\n"
+    "\n"
+    ":load <path>             Load JSON/YAML data from the file <path>.\n"
+    ":output [<format>]       Get/set the output format. (`bash', `zsh', `json' and `yaml' are supported).\n"
+    ":duplicate [<strategy>]  Get/set the strategy to handle duplicate mapping keys (`clobber' (default), `warn' or `fail').\n";
 
-static int interactive_mode(const struct settings *settings);
-static int expression_mode(const struct settings *settings);
-static int apply_expression(const struct settings *settings, document_model *model, const char *expression);
+#define is_stdin_filename(NAME) \
+    0 == memcmp("-", (NAME), 1)
 
-static document_model *load_model(const struct settings *settings);
-static jsonpath *parse_expression(const struct settings *settings, const char *expression);
-static nodelist *evaluate_expression(const struct settings *settings, const document_model *model, const jsonpath *path);
+#define use_stdin(NAME) \
+    NULL == (NAME) || is_stdin_filename((NAME))
 
-static FILE *open_input(const struct settings *settings);
-static void close_input(const struct settings *settings, FILE *input);
-static void error(const char *prelude, const char *message, const struct settings *settings);
+#define get_input_name(NAME) \
+    use_stdin((NAME)) ? "stdin" : (NAME)
 
-static emit_function get_emitter(const struct settings *settings);
-
-int main(const int argc, char * const *argv)
+__attribute__((__format__ (__printf__, 2, 3)))
+static void error(const struct options *options, const char *format, ...)
 {
-    if(NULL == argv || NULL == argv[0])
+    va_list rest;
+    if(INTERACTIVE_MODE != options->mode)
     {
-        fprintf(stderr, "error: whoa! something is wrong, there are no program arguments.\n");
+        fprintf(stderr, "%s: ", options->program_name);
+    }
+    va_start(rest, format);
+    vfprintf(stderr, format, rest);
+    va_end(rest);
+    fprintf(stderr, "\n");
+}
+
+static jsonpath *parse_expression(const struct options *options, const char *expression)
+{
+    log_trace(options->program_name, "parsing expression");
+    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    if(NULL == parser)
+    {
+        error(options, "while parsing the expression '%s': %s", expression, strerror(errno));
+        return NULL;
+    }
+    if(parser_status(parser))
+    {
+        char *message = parser_status_message(parser);
+        error(options, "while parsing the expression '%s': %s", expression, message);
+        free(message);
+        parser_free(parser);
+        return NULL;
+    }
+
+    jsonpath *path = parse(parser);
+    if(parser_status(parser))
+    {
+        char *message = parser_status_message(parser);
+        error(options, "while parsing the expression '%s': %s", expression, message);
+        free(message);
+        path_free(path);
+        path = NULL;
+    }
+
+    parser_free(parser);
+    return path;
+}
+
+static nodelist *evaluate_expression(const struct options *options, const document_model *model, const jsonpath *path)
+{
+    log_trace(options->program_name, "evaluating expression");
+    evaluator_context *evaluator = make_evaluator(model, path);
+    if(NULL == evaluator)
+    {
+        char *expression = (char *)path_expression(path);
+        error(options, "while evaluating the expression '%s': %s", expression, strerror(errno));
+        return NULL;
+    }
+    if(evaluator_status(evaluator))
+    {
+        char *expression = (char *)path_expression(path);
+        const char *message = evaluator_status_message(evaluator);
+        error(options, "while evaluating the expression '%s': %s", expression, message);
+        evaluator_free(evaluator);
+        return NULL;
+    }
+
+    nodelist *list = evaluate(evaluator);
+    if(evaluator_status(evaluator))
+    {
+        char *expression = (char *)path_expression(path);
+        const char *message = evaluator_status_message(evaluator);
+        error(options, "while evaluating the expression '%s': %s", expression, message);
+        nodelist_free(list);
+        list = NULL;
+    }
+
+    evaluator_free(evaluator);
+    return list;
+}
+
+static emit_function get_emitter(const struct options *options)
+{
+    emit_function result = NULL;
+    switch(options->emit_mode)
+    {
+        case BASH:
+            log_debug(options->program_name, "using bash emitter");
+            result = emit_bash;
+            break;
+        case ZSH:
+            log_debug(options->program_name, "using zsh emitter");
+            result = emit_zsh;
+            break;
+        case JSON:
+            log_debug(options->program_name, "using json emitter");
+            result = emit_json;
+            break;
+        case YAML:
+            log_debug(options->program_name, "using yaml emitter");
+            result = emit_yaml;
+            break;
+    }
+
+    return result;
+}
+
+static int apply_expression(const struct options *options, document_model *model, const char *expression)
+{
+    jsonpath *path = parse_expression(options, expression);
+    if(NULL == path)
+    {
         return EXIT_FAILURE;
     }
 
-    enable_logging();
-    set_log_level_from_env();
+    nodelist *list = evaluate_expression(options, model, path);
+    if(NULL == list)
+    {
+        path_free(path);
+        return EXIT_FAILURE;
+    }
 
-    struct settings settings;
-    memset(&settings, 0, sizeof(settings));
-    enum command cmd = process_options(argc, argv, &settings);
+    emit_function emit = get_emitter(options);
+    if(NULL == emit)
+    {
+        path_free(path);
+        nodelist_free(list);
+        return EXIT_FAILURE;
+    }
 
-    return dispatch(cmd, &settings);
+    emit(list, options);
+
+    path_free(path);
+    nodelist_free(list);
+
+    return EXIT_SUCCESS;
 }
 
-static int dispatch(enum command cmd, const struct settings *settings)
+static FILE *open_input(const struct options *options)
+{
+    if(use_stdin(options->input_file_name))
+    {
+        log_debug(options->program_name, "reading from stdin");
+        return stdin;
+    }
+    else
+    {
+        log_debug(options->program_name, "reading from file: '%s'", options->input_file_name);
+        return fopen(options->input_file_name, "r");
+    }
+}
+
+static void close_input(const struct options *options, FILE *input)
+{
+    if(stdin == input)
+    {
+        return;
+    }
+    log_trace(options->program_name, "closing input file");
+    errno = 0;
+    if(fclose(input))
+    {
+        const char *name = get_input_name(options->input_file_name);
+        error(options, "while reading '%s': %s", name, strerror(errno));
+    }
+}
+
+#define ensure_object(OBJ)                                              \
+    if(NULL == (OBJ))                                                   \
+    {                                                                   \
+        const char *name = get_input_name(options->input_file_name);    \
+        error(options, "while reading '%s': %s", name, strerror(errno)); \
+        return NULL;                                                    \
+    }
+
+#define ensure_loader(LOADER)                                   \
+    ensure_object((LOADER));                                    \
+    if(loader_status((LOADER)))                                 \
+    {                                                           \
+        close_input(options, input);                            \
+        const char *name = get_input_name(options->input_file_name);    \
+        char *message = loader_status_message((LOADER));        \
+        error(options, "while reading '%s': %s", name, message);  \
+        free(message);                                          \
+        loader_free(loader);                                    \
+        return NULL;                                            \
+    }
+
+static loader_context *prepare_loader(const struct options *options, FILE *input)
+{
+    log_trace(options->program_name, "creating loader...");
+    loader_context *loader = make_file_loader(input);
+    ensure_loader(loader);
+    loader_set_dupe_strategy(loader, options->duplicate_strategy);
+
+    return loader;
+}
+
+#define ensure_load(LOADER)                                     \
+    if(loader_status((LOADER)))                                 \
+    {                                                           \
+        const char *name = get_input_name(options->input_file_name);    \
+        char *message = loader_status_message((LOADER));        \
+        error(options, "while reading '%s': %s", name, message);  \
+        free(message);                                          \
+        loader_free(loader);                                    \
+        return NULL;                                            \
+    }
+
+static document_model *load_model(const struct options *options)
+{
+    FILE *input = open_input(options);
+    ensure_object(input);
+
+    loader_context *loader = prepare_loader(options, input);
+    if(NULL == loader)
+    {
+        return NULL;
+    }
+
+    log_trace(options->program_name, "loading model...");
+    document_model *model = load(loader);
+    ensure_load(loader);
+
+    close_input(options, input);
+    loader_free(loader);
+    log_trace(options->program_name, "model loaded.");
+
+    return model;
+}
+
+static void output_command(struct options *options, const char *argument)
+{
+    log_debug(options->program_name, "processing output command...");
+    if(!argument)
+    {
+        log_trace(options->program_name, "no command argument, printing current value");
+        fprintf(stdout, "%s\n", emit_mode_name(options->emit_mode));
+        return;
+    }
+    int32_t mode = parse_emit_mode(argument);
+    if(-1 == mode)
+    {
+        error(options, "unsupported output format `%s'", argument);
+    }
+    log_trace(options->program_name, "found command argument, setting value");
+    options->emit_mode = (enum emit_mode)mode;
+}
+
+static void duplicate_command(struct options *options, const char *argument)
+{
+    log_debug(options->program_name, "processing duplicate command...");
+    if(!argument)
+    {
+        log_trace(options->program_name, "no command argument, printing current value");
+        fprintf(stdout, "%s\n", duplicate_strategy_name(options->duplicate_strategy));
+        return;
+    }
+    int32_t strategy = parse_duplicate_strategy(argument);
+    if(-1 == strategy)
+    {
+        error(options, "unsupported duplicate stratety `%s'", argument);
+    }
+    log_trace(options->program_name, "found command argument, setting value");
+    options->duplicate_strategy = (enum loader_duplicate_key_strategy)strategy;
+}
+
+static void load_command(struct options *options, document_model **model, const char *argument)
+{
+    log_debug(options->program_name, "processing load command...");
+    if(!argument)
+    {
+        log_trace(options->program_name, "no command argument, aborting...");
+        error(options, ":load command requires an argument");
+        return;
+    }
+    log_trace(options->program_name, "found command argument, loading '%s'...", argument);
+    options->input_file_name = argument;
+    *model = load_model(options);
+}
+
+static const char *get_argument(const char *command)
+{
+    char *arg = (char *)command;
+    // find end of command
+    while(!isspace(*arg) && '\0' != *arg)
+    {
+        arg++;
+    }
+    // there is no argument
+    if('\0' == *arg)
+    {
+        return NULL;
+    }
+
+    // strip leading whitespace
+    while('\0' != *arg && isspace(*arg))
+    {
+        arg++;
+    }
+    // again, no argument
+    if('\0' == *arg)
+    {
+        return NULL;
+    }
+    return arg;
+
+}
+
+static void dispatch_command(struct options *options, document_model **model, const char *command)
+{
+    if(0 == memcmp("?", command, 1) || 0 == memcmp(":help", command, 5))
+    {
+        fprintf(stdout, INTERACTIVE_HELP);
+        return;
+    }
+    else if(0 == memcmp(":output", command, 7))
+    {
+        output_command(options, get_argument(command));
+        return;
+    }
+    else if(0 == memcmp(":duplicate", command, 10))
+    {
+        duplicate_command(options, get_argument(command));
+        return;
+    }
+    else if(0 == memcmp(":load", command, 5))
+    {
+        load_command(options, model, get_argument(command));
+        return;
+    }
+    else
+    {
+        if(NULL == *model)
+        {
+            error(options, "no input loaded, use the `:load' command");
+            return;
+        }
+        apply_expression(options, *model, command);
+    }
+}
+
+static inline void print_banner(void)
+{
+    if(isatty(fileno(stdin)))
+    {
+        fprintf(stdout, BANNER);
+    }
+}
+
+static inline char *make_prompt(void)
+{
+    char *prompt = NULL;
+
+    if(isatty(fileno(stdin)))
+    {
+        prompt = (char *)DEFAULT_PROMPT;
+    }
+    return prompt;
+}
+
+static int interactive_mode(struct options *options)
+{
+    print_banner();
+
+    document_model *model = NULL;
+    if(options->input_file_name)
+    {
+        model = load_model(options);
+    }
+
+    char *prompt = make_prompt();
+    char *input;
+    while(true)
+    {
+        input = linenoise(prompt);
+        if(NULL == input)
+        {
+            break;
+        }
+        if('\0' == input[0])
+        {
+            free(input);
+            continue;
+        }
+        linenoiseHistoryAdd(input);
+        if(!isatty(fileno(stdin)))
+        {
+            fprintf(stdout, "EOD\n");
+            fflush(stdout);
+        }
+        dispatch_command(options, &model, input);
+        free(input);
+    }
+    model_free(model);
+
+    return EXIT_SUCCESS;
+}
+
+static int expression_mode(const struct options *options)
+{
+    document_model *model = load_model(options);
+    if(NULL == model)
+    {
+        return EXIT_FAILURE;
+    }
+
+    log_debug(options->program_name, "evaluating expression: \"%s\"", options->expression);
+    int result = apply_expression(options, model, options->expression);
+    model_free(model);
+
+    return result;
+}
+
+static int execute_mode(enum command cmd, struct options *options)
 {
     int result = EXIT_SUCCESS;
 
@@ -106,282 +505,35 @@ static int dispatch(enum command cmd, const struct settings *settings)
             fprintf(stdout, "%s", NO_WARRANTY);
             break;
         case INTERACTIVE_MODE:
-            result = interactive_mode(settings);
+            result = interactive_mode(options);
             break;
         case EXPRESSION_MODE:
-            result = expression_mode(settings);
+            result = expression_mode(options);
             break;
     }
 
     return result;
 }
 
-static int interactive_mode(const struct settings *settings)
+static int run(const int argc, char * const *argv)
 {
-    document_model *model = load_model(settings);
-    if(NULL == model)
-    {
-        return EXIT_FAILURE;
-    }
-    if(NULL == model_document(model, 0))
-    {
-        error("", "No document data was loaded", settings);
-        return EXIT_FAILURE;
-    }
-    char *prompt = NULL;
+    struct options options;
+    memset(&options, 0, sizeof(struct options));
+    enum command cmd = process_options(argc, argv, &options);
 
-    if(isatty(fileno(stdin)))
-    {
-        prompt = ">> ";
-        fprintf(stdout, "kanabo %s (built: %s)\n", VERSION, BUILD_DATE);
-        fprintf(stdout, "[%s] on %s\n", BUILD_COMPILER, BUILD_HOSTNAME);
-    }
-
-    char *input;
-    while(true)
-    {
-        input = linenoise(prompt);
-        if(NULL == input)
-        {
-            break;
-        }
-        if('\0' == input[0])
-        {
-            free(input);
-            continue;
-        }
-        linenoiseHistoryAdd(input);
-        if(apply_expression(settings, model, input))
-        {
-            return EXIT_FAILURE;
-        }
-        if(!isatty(fileno(stdin)))
-        {
-            fprintf(stdout, "EOD\n");
-            fflush(stdout);
-        }
-        free(input);
-    }
-    model_free(model);
-
-    return EXIT_SUCCESS;
+    return execute_mode(cmd, &options);
 }
 
-static int expression_mode(const struct settings *settings)
+int main(const int argc, char * const *argv)
 {
-    log_debug("kanabo", "evaluating expression: \"%s\"", settings->expression);
-    document_model *model = load_model(settings);
-    if(NULL == model)
+    if(NULL == argv || NULL == argv[0])
     {
+        fprintf(stderr, "error: whoa! something is wrong, there are no program arguments.\n");
         return EXIT_FAILURE;
     }
 
-    int result = apply_expression(settings, model, settings->expression);
-    model_free(model);
+    enable_logging();
+    set_log_level_from_env();
 
-    return result;
-}
-
-static int apply_expression(const struct settings *settings, document_model *model, const char *expression)
-{
-    jsonpath *path = parse_expression(settings, expression);
-    if(NULL == path)
-    {
-        return EXIT_FAILURE;
-    }
-
-    nodelist *list = evaluate_expression(settings, model, path);
-    if(NULL == list)
-    {
-        path_free(path);
-        return EXIT_FAILURE;
-    }
-
-    emit_function emit = get_emitter(settings);
-    if(NULL == emit)
-    {
-        path_free(path);
-        nodelist_free(list);
-        return EXIT_FAILURE;
-    }
-
-    emit(list, settings);
-
-    path_free(path);
-    nodelist_free(list);
-
-    return EXIT_SUCCESS;
-}
-
-static document_model *load_model(const struct settings *settings)
-{
-    log_trace("kanabo", "loading model");
-    FILE *input = open_input(settings);
-    if(NULL == input)
-    {
-        perror(settings->program_name);
-        return NULL;
-    }
-
-    loader_context *loader = make_file_loader(input);
-    if(NULL == loader)
-    {
-        perror(settings->program_name);
-        return NULL;
-    }
-    if(loader_status(loader))
-    {
-        char *message = loader_status_message(loader);
-        error("while loading the data", message, settings);
-        free(message);
-        close_input(settings, input);
-        loader_free(loader);
-        return NULL;
-    }
-    loader_set_dupe_strategy(loader, settings->duplicate_strategy);
-
-    document_model *model = load(loader);
-    if(loader_status(loader))
-    {
-        char *message = loader_status_message(loader);
-        error("while loading the data", message, settings);
-        free(message);
-        model_free(model);
-        model = NULL;
-    }
-
-    close_input(settings, input);
-    loader_free(loader);
-    return model;
-}
-
-static jsonpath *parse_expression(const struct settings *settings, const char *expression)
-{
-    log_trace("kanabo", "parsing expression");
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    if(NULL == parser)
-    {
-        perror(settings->program_name);
-        return NULL;
-    }
-    if(parser_status(parser))
-    {
-        char *message = parser_status_message(parser);
-        error("while parsing the jsonpath expression", message, settings);
-        free(message);
-        parser_free(parser);
-        return NULL;
-    }
-
-    jsonpath *path = parse(parser);
-    if(parser_status(parser))
-    {
-        char *message = parser_status_message(parser);
-        error("while parsing the jsonpath expression", message, settings);
-        free(message);
-        path_free(path);
-        path = NULL;
-    }
-
-    parser_free(parser);
-    return path;
-}
-
-static nodelist *evaluate_expression(const struct settings *settings, const document_model *model, const jsonpath *path)
-{
-    log_trace("kanabo", "evaluating expression");
-    evaluator_context *evaluator = make_evaluator(model, path);
-    if(NULL == evaluator)
-    {
-        perror(settings->program_name);
-        return NULL;
-    }
-    if(evaluator_status(evaluator))
-    {
-        const char *message = evaluator_status_message(evaluator);
-        error("while evaluating the jsonpath expression", message, settings);
-        evaluator_free(evaluator);
-        return NULL;
-    }
-
-    nodelist *list = evaluate(evaluator);
-    if(evaluator_status(evaluator))
-    {
-        const char *message = evaluator_status_message(evaluator);
-        error("while evaluating the jsonpath expression", message, settings);
-        nodelist_free(list);
-        list = NULL;
-    }
-
-    evaluator_free(evaluator);
-    return list;
-}
-
-static FILE *open_input(const struct settings *settings)
-{
-    if(NULL == settings->input_file_name)
-    {
-        log_debug("kanabo", "reading from stdin");
-        return stdin;
-    }
-    else
-    {
-        log_debug("kanabo", "reading from file: '%s'", settings->input_file_name);
-        return fopen(settings->input_file_name, "r");
-    }
-}
-
-static void close_input(const struct settings *settings, FILE *input)
-{
-    if(NULL != settings->input_file_name)
-    {
-        log_trace("kanabo", "closing input file");
-        errno = 0;
-        if(fclose(input))
-        {
-            perror(settings->program_name);
-        }
-    }
-}
-
-static void error(const char *prelude, const char *message, const struct settings *settings)
-{
-    if(!isatty(fileno(stdin)))
-    {
-        return;
-    }
-    if(INTERACTIVE_MODE == settings->command)
-    {
-        fprintf(stderr, "%s\n", message);
-    }
-    else
-    {
-        fprintf(stderr, "%s: %s - %s\n", settings->program_name, prelude, message);
-    }
-}
-
-static emit_function get_emitter(const struct settings *settings)
-{
-    emit_function result = NULL;
-    switch(settings->emit_mode)
-    {
-        case BASH:
-            log_debug("kanabo", "using bash emitter");
-            result = emit_bash;
-            break;
-        case ZSH:
-            log_debug("kanabo", "using zsh emitter");
-            result = emit_zsh;
-            break;
-        case JSON:
-            log_debug("kanabo", "using json emitter");
-            result = emit_json;
-            break;
-        case YAML:
-            log_debug("kanabo", "using yaml emitter");
-            result = emit_yaml;
-            break;
-    }
-
-    return result;
+    return run(argc, argv);
 }
