@@ -2,8 +2,14 @@
 
 TAX_RATE=0.08875
 
+trap 'yow! trapper keeper' CHLD PIPE
+
 # start kanabo as a named coprocess, in interactive mode loading the file from the 1st argument
-coproc kanabo { kanabo -f $1 -i ;}
+coproc kanabo { kanabo $1 ;}
+
+echo "pausing ..."
+read
+echo "resuming..."
 
 # create an empty array to hold the bookstore menu items
 choices=()
@@ -11,6 +17,7 @@ choices=()
 echo '$.store.book.*' >&${kanabo[1]}
 while read -ru ${kanabo[0]} line
 do
+  echo "line: ${line}"
   # EOD is the sentinal value printed on a line by itself after all other data is printed
   if [ "EOD" == "$line" ]; then
       break

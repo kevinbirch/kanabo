@@ -3,7 +3,7 @@
 TAX_RATE=0.08875
 
 # start kanabo as a named coprocess, in interactive mode loading the file from the 1st argument
-coproc kanabo -f $1 -i -o zsh
+coproc kanabo -o zsh $1
 
 # create an empty array to hold the bookstore menu items
 choices=()
@@ -12,6 +12,7 @@ print -p '$.store.book.*'
 typeset -A book
 while read -rp line
 do
+  echo "line: $line"
   # EOD is the sentinal value printed on a line by itself after all other data is printed
   if [[ "EOD" == "$line" ]]; then
       break
