@@ -7,10 +7,6 @@ trap 'yow! trapper keeper' CHLD PIPE
 # start kanabo as a named coprocess, in interactive mode loading the file from the 1st argument
 coproc kanabo { kanabo $1 ;}
 
-echo "pausing ..."
-read
-echo "resuming..."
-
 # create an empty array to hold the bookstore menu items
 choices=()
 # send the query to the coprocess' stdin fd
