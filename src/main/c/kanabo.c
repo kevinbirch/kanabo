@@ -320,7 +320,7 @@ static void output_command(struct options *options, const char *argument)
     {
         error(options, "unsupported output format `%s'", argument);
     }
-    log_trace(options->program_name, "found command argument, setting value");
+    log_debug(options->program_name, "setting value to: %s", argument);
     options->emit_mode = (enum emit_mode)mode;
 }
 
@@ -338,7 +338,7 @@ static void duplicate_command(struct options *options, const char *argument)
     {
         error(options, "unsupported duplicate stratety `%s'", argument);
     }
-    log_trace(options->program_name, "found command argument, setting value");
+    log_debug(options->program_name, "setting value to: %s", argument);
     options->duplicate_strategy = (enum loader_duplicate_key_strategy)strategy;
 }
 
@@ -351,7 +351,7 @@ static void load_command(struct options *options, document_model **model, const 
         error(options, ":load command requires an argument");
         return;
     }
-    log_trace(options->program_name, "found command argument, loading '%s'...", argument);
+    log_debug(options->program_name, "found command argument, loading '%s'...", argument);
     options->input_file_name = argument;
     *model = load_model(options);
 }

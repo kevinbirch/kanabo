@@ -45,17 +45,17 @@ static bool emit_mapping_item(node *key, node *value, void *context);
 
 void emit_bash(const nodelist *list, const struct options *options)
 {
-    log_debug("bash", "emitting...");
-    emit_context context = 
-        {
+    log_debug("bash", "emitting %zd items...", nodelist_length(list));
+    emit_context context = {
             .emit_mapping_item = emit_mapping_item,
             .wrap_collections = true
-        };
+    };
 
     if(!nodelist_iterate(list, emit_node, &context))
     {
         perror(options->program_name);
     }
+    log_debug("bash", "finished emitting, flushing output buffers...");
     fflush(stdout);
 }
 
@@ -65,12 +65,14 @@ static bool emit_mapping_item(node *key, node *value, void *context __attribute_
     {
         log_trace("bash", "emitting mapping item");
         EMIT("[");
+        log_trace("bash", "emitting mapping item key");
         if(!emit_raw_scalar(key))
         {
             log_error("bash", "uh oh! couldn't emit mapping key");
             return false;
         }
         EMIT("]=");
+        log_trace("bash", "emitting mapping item value");
         if(!emit_scalar(value))
         {
             log_error("bash", "uh oh! couldn't emit mapping value");

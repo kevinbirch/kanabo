@@ -52,6 +52,7 @@ bool emit_node(node *each, void *argument)
 {
     emit_context *context = (emit_context *)argument;
 
+    log_debug("shell", "emitting node...");
     bool result = true;
     switch(node_kind(each))
     {
