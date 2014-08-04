@@ -472,10 +472,11 @@ static void pipe_interactive_model(struct context *context)
     log_debug(context->options->program_name, "entering non-tty interative mode");
     while((read = getline(&input, &len, stdin)) != -1)
     {
-        if(0 == read)
+        if(0 == read || '\n' == input[0])
         {
             continue;
         }
+        input[read - 1] = '\0';
         dispatch_interactive_command(context, input);
         fprintf(stdout, "EOD\n");
         fflush(stdout);
