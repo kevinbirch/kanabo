@@ -103,7 +103,6 @@ void emit_yaml(const nodelist *list, const struct options *options)
 
   error:
     yaml_emitter_delete(&emitter);
-    fflush(stdout);
 }
 
 static bool emit_nodelist(const nodelist *list, yaml_emitter_t *emitter)

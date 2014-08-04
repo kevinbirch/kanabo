@@ -56,7 +56,6 @@ void emit_bash(const nodelist *list, const struct options *options)
         perror(options->program_name);
     }
     log_debug("bash", "finished emitting, flushing output buffers...");
-    fflush(stdout);
 }
 
 static bool emit_mapping_item(node *key, node *value, void *context __attribute__((unused)))

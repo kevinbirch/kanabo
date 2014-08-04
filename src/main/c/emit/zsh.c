@@ -56,7 +56,6 @@ void emit_zsh(const nodelist *list, const struct options *options)
     {
         perror(options->program_name);
     }
-    fflush(stdout);
 }
 
 static bool emit_mapping_item(node *key, node *value, void * context __attribute__((unused)))
