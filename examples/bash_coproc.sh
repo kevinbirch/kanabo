@@ -11,7 +11,6 @@ choices=()
 echo '$.store.book.*' >&${kanabo[1]}
 while read -ru ${kanabo[0]} line
 do
-  echo "line: ${line}"
   # EOD is the sentinal value printed on a line by itself after all other data is printed
   if [ "EOD" == "$line" ]; then
       break
