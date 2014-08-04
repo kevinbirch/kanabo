@@ -2,8 +2,6 @@
 
 TAX_RATE=0.08875
 
-trap 'yow! trapper keeper' CHLD PIPE
-
 # start kanabo as a named coprocess, in interactive mode loading the file from the 1st argument
 coproc kanabo { kanabo $1 ;}
 
