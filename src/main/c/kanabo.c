@@ -367,6 +367,10 @@ static void load_command(struct context *context, const char *argument)
 
     log_debug(context->options->program_name, "found command argument, loading '%s'...", argument);
     context->options->input_file_name = argument;
+    if(context->model)
+    {
+        model_free(context->model);
+    }
     context->model = load_model(context->options);
 }
 
