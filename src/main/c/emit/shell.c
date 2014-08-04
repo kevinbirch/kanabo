@@ -84,7 +84,6 @@ bool emit_node(node *each, void *argument)
             break;
 
     }
-    fflush(stdout);
 
     return result;
 }
