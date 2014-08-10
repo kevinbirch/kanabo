@@ -487,11 +487,11 @@ static bool apply_slice_predicate(node *value, evaluator_context *context, nodel
     }
 
     predicate *slice = step_predicate(current_step(context));
-    int_fast32_t from = 0, to = 0, increment = 0;
+    int from = 0, to = 0, increment = 0;
     normalize_interval(value, slice, &from, &to, &increment);
     evaluator_trace("slice predicate: using normalized interval [%d:%d:%d]", from, to, increment);
 
-    for(int_fast32_t i = from; 0 > increment ? i >= to : i < to; i += increment)
+    for(int i = from; 0 > increment ? i >= to : i < to; i += increment)
     {
         node *selected = sequence_get(value, (size_t)i);
         if(NULL == selected || !nodelist_add(target, selected))
@@ -598,7 +598,7 @@ static int normalize_to(predicate *slice, node *value)
     return normalize_extent(slice_predicate_has_to(slice), slice_predicate_to(slice), length, length);
 }
 
-static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *increment)
+static void normalize_interval(node *value, predicate *slice, int *from, int *to, int *increment)
 {
 #ifdef USE_LOGGING
     char *from_fmt = NULL, *to_fmt = NULL, *increment_fmt = NULL;
