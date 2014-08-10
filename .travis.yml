@@ -7,7 +7,10 @@ before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test 2>&1 > /dev/null
   - wget -q -O - http://llvm.org/apt/llvm-snapshot.gpg.key | sudo apt-key add -
   - sudo apt-get -qq update 2>&1 > /dev/null
-  - sudo apt-get -qq install libyaml-dev check clang-3.4 2>&1 > /dev/null
+  
+install:
+  - sudo apt-get -qq install libyaml-dev check clang-3.4 gcc-4.8
 
-# script: make package
-script: gcc --version
+script:
+  - cc --version
+  - make package
