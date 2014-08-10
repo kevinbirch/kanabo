@@ -85,9 +85,6 @@ static bool apply_join_predicate(node *value, evaluator_context *context, nodeli
 static bool add_to_nodelist_sequence_iterator(node *each, void *context);
 static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context);
 static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *step);
-static int_fast32_t normalize_from(predicate *predicate, node *value);
-static int_fast32_t normalize_to(predicate *predicate, node *value);
-static int_fast32_t normalize_extent(bool specified_p, int_fast32_t actual, int_fast32_t fallback, int_fast32_t length);
 
 #define current_step(CONTEXT) path_get((CONTEXT)->path, (CONTEXT)->current_step)
 #ifdef USE_LOGGING
@@ -565,40 +562,7 @@ static bool add_values_to_nodelist_map_iterator(node *key __attribute__((unused)
     return result;
 }
 
-static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *increment)
-{
-#ifdef USE_LOGGING
-    char *from_fmt = NULL, *to_fmt = NULL, *increment_fmt = NULL;
-    int from_result  = 0;
-    int to_result = 0;
-    int inc_result = 0;
-    evaluator_trace("slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items",
-                    slice_predicate_has_from(slice) ? (from_result = asprintf(&from_fmt, "%d", slice_predicate_from(slice)), -1 == from_result ? "?" : from_fmt) : "_",
-                    slice_predicate_has_to(slice) ? (to_result = asprintf(&to_fmt, "%d", slice_predicate_to(slice)), -1 == to_result ? "?" : to_fmt) : "_",
-                    slice_predicate_has_step(slice) ? (inc_result = asprintf(&increment_fmt, "%d", slice_predicate_step(slice)), -1 == inc_result ? "?" : increment_fmt) : "_",
-                    value, node_size(value));
-    free(from_fmt); free(to_fmt); free(increment_fmt);
-#endif
-    *increment = slice_predicate_has_step(slice) ? slice_predicate_step(slice) : 1;
-    *from = 0 > *increment ? normalize_to(slice, value) - 1 : normalize_from(slice, value);
-    *to   = 0 > *increment ? normalize_from(slice, value) : normalize_to(slice, value);
-}
-
-static int_fast32_t normalize_from(predicate *slice, node *value)
-{
-    evaluator_trace("slice predicate: normalizing from, specified: %s, value: %d", slice_predicate_has_from(slice) ? "yes" : "no", slice_predicate_from(slice));
-    int_fast32_t length = (int_fast32_t)node_size(value);
-    return normalize_extent(slice_predicate_has_from(slice), slice_predicate_from(slice), 0, length);
-}
-
-static int_fast32_t normalize_to(predicate *slice, node *value)
-{
-    evaluator_trace("slice predicate: normalizing to, specified: %s, value: %d", slice_predicate_has_to(slice) ? "yes" : "no", slice_predicate_to(slice));
-    int_fast32_t length = (int_fast32_t)node_size(value);
-    return normalize_extent(slice_predicate_has_to(slice), slice_predicate_to(slice), length, length);
-}
-
-static int_fast32_t normalize_extent(bool specified_p, int_fast32_t given, int_fast32_t fallback, int_fast32_t limit)
+static int normalize_extent(bool specified_p, int_fast32_t given, int_fast32_t fallback, int_fast32_t limit)
 {
     if(!specified_p)
     {
@@ -618,4 +582,37 @@ static int_fast32_t normalize_extent(bool specified_p, int_fast32_t given, int_f
     }
     evaluator_trace("slice predicate: (normalizer) constrained to %zd", result);
     return result;
+}
+
+static int normalize_from(predicate *slice, node *value)
+{
+    evaluator_trace("slice predicate: normalizing from, specified: %s, value: %d", slice_predicate_has_from(slice) ? "yes" : "no", slice_predicate_from(slice));
+    int_fast32_t length = (int_fast32_t)node_size(value);
+    return normalize_extent(slice_predicate_has_from(slice), slice_predicate_from(slice), 0, length);
+}
+
+static int normalize_to(predicate *slice, node *value)
+{
+    evaluator_trace("slice predicate: normalizing to, specified: %s, value: %d", slice_predicate_has_to(slice) ? "yes" : "no", slice_predicate_to(slice));
+    int_fast32_t length = (int_fast32_t)node_size(value);
+    return normalize_extent(slice_predicate_has_to(slice), slice_predicate_to(slice), length, length);
+}
+
+static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *increment)
+{
+#ifdef USE_LOGGING
+    char *from_fmt = NULL, *to_fmt = NULL, *increment_fmt = NULL;
+    int from_result  = 0;
+    int to_result = 0;
+    int inc_result = 0;
+    evaluator_trace("slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items",
+                    slice_predicate_has_from(slice) ? (from_result = asprintf(&from_fmt, "%d", slice_predicate_from(slice)), -1 == from_result ? "?" : from_fmt) : "_",
+                    slice_predicate_has_to(slice) ? (to_result = asprintf(&to_fmt, "%d", slice_predicate_to(slice)), -1 == to_result ? "?" : to_fmt) : "_",
+                    slice_predicate_has_step(slice) ? (inc_result = asprintf(&increment_fmt, "%d", slice_predicate_step(slice)), -1 == inc_result ? "?" : increment_fmt) : "_",
+                    value, node_size(value));
+    free(from_fmt); free(to_fmt); free(increment_fmt);
+#endif
+    *increment = slice_predicate_has_step(slice) ? slice_predicate_step(slice) : 1;
+    *from = 0 > *increment ? normalize_to(slice, value) - 1 : normalize_from(slice, value);
+    *to   = 0 > *increment ? normalize_from(slice, value) : normalize_to(slice, value);
 }
