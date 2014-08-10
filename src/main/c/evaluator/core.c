@@ -588,14 +588,14 @@ static int normalize_from(predicate *slice, node *value)
 {
     evaluator_trace("slice predicate: normalizing from, specified: %s, value: %d", slice_predicate_has_from(slice) ? "yes" : "no", slice_predicate_from(slice));
     int length = (int)node_size(value);
-    return normalize_extent(slice_predicate_has_from(slice), slice_predicate_from(slice), 0, length);
+    return normalize_extent(slice_predicate_has_from(slice), (int)slice_predicate_from(slice), 0, length);
 }
 
 static int normalize_to(predicate *slice, node *value)
 {
     evaluator_trace("slice predicate: normalizing to, specified: %s, value: %d", slice_predicate_has_to(slice) ? "yes" : "no", slice_predicate_to(slice));
     int length = (int)node_size(value);
-    return normalize_extent(slice_predicate_has_to(slice), slice_predicate_to(slice), length, length);
+    return normalize_extent(slice_predicate_has_to(slice), (int)slice_predicate_to(slice), length, length);
 }
 
 static void normalize_interval(node *value, predicate *slice, int *from, int *to, int *increment)
@@ -612,7 +612,7 @@ static void normalize_interval(node *value, predicate *slice, int *from, int *to
                     value, node_size(value));
     free(from_fmt); free(to_fmt); free(increment_fmt);
 #endif
-    *increment = slice_predicate_has_step(slice) ? slice_predicate_step(slice) : 1;
+    *increment = slice_predicate_has_step(slice) ? (int)slice_predicate_step(slice) : 1;
     *from = 0 > *increment ? normalize_to(slice, value) - 1 : normalize_from(slice, value);
     *to   = 0 > *increment ? normalize_from(slice, value) : normalize_to(slice, value);
 }
