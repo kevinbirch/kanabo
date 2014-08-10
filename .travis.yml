@@ -16,14 +16,9 @@ install:
 before_script:
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 99
   - sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.4 99
+  - echo $PATH
+  - env: PATH=/usr/bin:$PATH
 
 script:
   - $CC --version
   - make package
-
-matrix:
-  include:
-    - compiler: clang
-      env: CC=/usr/bin/clang
-    - compiler: gcc
-      env: CC=gcc
