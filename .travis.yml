@@ -16,6 +16,6 @@ before_script:
   -  sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.4 99
 
 script:
-  - which clang
+  - /usr/bin/clang --version
   - $CC --version
   - make package
