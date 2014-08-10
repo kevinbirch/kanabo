@@ -406,7 +406,7 @@ static void dispatch_interactive_command(struct context *context, const char *co
 {
     if(0 == memcmp("?", command, 1) || 0 == memcmp(":help", command, 5))
     {
-        fprintf(stdout, INTERACTIVE_HELP);
+        fwrite(INTERACTIVE_HELP, strlen(INTERACTIVE_HELP), 1, stdout);
         return;
     }
     else if(0 == memcmp(":output", command, 7))
@@ -439,7 +439,7 @@ static void tty_interctive_mode(struct context *context)
 {
     log_debug(context->options->program_name, "entering tty interative mode");
 
-    fprintf(stdout, BANNER);
+    fwrite(BANNER, strlen(BANNER), 1, stdout);
     char *prompt = (char *)DEFAULT_PROMPT;
 
     char *input;

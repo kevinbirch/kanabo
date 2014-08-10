@@ -779,7 +779,7 @@ bool hashtable_iterate_values(const Hashtable *hashtable, hashtable_item_iterato
 static inline size_t hash_index(const Hashtable *hashtable, const void * key)
 {
     hashcode h = hashtable->hash(key);
-    return (h & (hashtable->length >> 1) - 1) << 1;
+    return (h & ((hashtable->length >> 1) - 1)) << 1;
 }
 
 static void rehash(Hashtable *hashtable)
@@ -845,7 +845,7 @@ void hashtable_summary(const Hashtable *hashtable, FILE *stream)
                 min = chain->length;
             }
             total += chain->length;
-            avg = total / count;
+            avg = (float)total / (float)count;
         }
         else if(NULL != hashtable->entries[i])
         {

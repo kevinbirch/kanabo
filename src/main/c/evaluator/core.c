@@ -573,9 +573,9 @@ static void normalize_interval(node *value, predicate *slice, int_fast32_t *from
     int to_result = 0;
     int inc_result = 0;
     evaluator_trace("slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items",
-                    slice_predicate_has_from(slice) ? (from_result = asprintf(&from_fmt, "%zd", slice_predicate_from(slice)), -1 == from_result ? "?" : from_fmt) : "_",
-                    slice_predicate_has_to(slice) ? (to_result = asprintf(&to_fmt, "%zd", slice_predicate_to(slice)), -1 == to_result ? "?" : to_fmt) : "_",
-                    slice_predicate_has_step(slice) ? (inc_result = asprintf(&increment_fmt, "%zd", slice_predicate_step(slice)), -1 == inc_result ? "?" : increment_fmt) : "_",
+                    slice_predicate_has_from(slice) ? (from_result = asprintf(&from_fmt, "%d", slice_predicate_from(slice)), -1 == from_result ? "?" : from_fmt) : "_",
+                    slice_predicate_has_to(slice) ? (to_result = asprintf(&to_fmt, "%d", slice_predicate_to(slice)), -1 == to_result ? "?" : to_fmt) : "_",
+                    slice_predicate_has_step(slice) ? (inc_result = asprintf(&increment_fmt, "%d", slice_predicate_step(slice)), -1 == inc_result ? "?" : increment_fmt) : "_",
                     value, node_size(value));
     free(from_fmt); free(to_fmt); free(increment_fmt);
 #endif

@@ -79,21 +79,21 @@ static argument arguments[] =
         break;                             \
     }
 
-inline int32_t parse_emit_mode(const char *argument)
+inline int32_t parse_emit_mode(const char *value)
 {
-    if(strncmp("bash", argument, 4) == 0)
+    if(strncmp("bash", value, 4) == 0)
     {
         return BASH;
     }
-    else if(strncmp("zsh", argument, 3) == 0)
+    else if(strncmp("zsh", value, 3) == 0)
     {
         return ZSH;
     }
-    else if(strncmp("json", argument, 4) == 0)
+    else if(strncmp("json", value, 4) == 0)
     {
         return JSON;
     }
-    else if(strncmp("yaml", argument, 4) == 0)
+    else if(strncmp("yaml", value, 4) == 0)
     {
         return YAML;
     }
