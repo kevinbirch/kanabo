@@ -11,7 +11,7 @@ or interactively to walk a tree from within your script.
 
 This is a work in progress.
 
-[![Drone.io Build Status](https://drone.io/github.com/kevinbirch/kanabo/status.png)](https://drone.io/github.com/kevinbirch/kanabo/latest) [![Travis Build Status](https://travis-ci.org/kevinbirch/kanabo.svg?branch=master)](https://travis-ci.org/kevinbirch/kanabo)
+[![Drone.io Build Status](https://drone.io/github.com/kevinbirch/kanabo/status.png)](https://drone.io/github.com/kevinbirch/kanabo/latest) [![Travis Build Status](https://travis-ci.org/kevinbirch/kanabo.svg?branch=master)](https://travis-ci.org/kevinbirch/kanabo) ![Circle CI Build Status](https://circleci.com/gh/kevinbirch/kanabo.svg?style=shield&circle-token=e10d86e6d5107376b8b59c4e73ff7f9f791991e8)]
 
 ## Donations
 
