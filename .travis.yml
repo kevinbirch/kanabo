@@ -11,6 +11,10 @@ before_install:
 install:
   - sudo apt-get -qq install libyaml-dev check clang-3.4 gcc-4.8 2>&1 > /dev/null
 
+before_script:
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/clang 99
+
 script:
+  - ls -l '/usr/bin/clang*'
   - $CC --version
   - make package
