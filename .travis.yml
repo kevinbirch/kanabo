@@ -1,7 +1,9 @@
 language: c
+
 compiler:
   - gcc
   - clang
+
 before_install:
   - sudo add-apt-repository -y 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.4 main'
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
@@ -12,10 +14,10 @@ install:
   - sudo apt-get -qq install libyaml-dev check clang-3.4 gcc-4.8
 
 before_script:
-  -  sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 99
-  -  sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.4 99
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 99
+  - sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.4 99
+  - export CC=/usr/bin/clang
 
 script:
-  - /usr/bin/clang --version
   - $CC --version
   - make package
