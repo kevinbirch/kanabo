@@ -84,7 +84,7 @@ static bool apply_join_predicate(node *value, evaluator_context *context, nodeli
 
 static bool add_to_nodelist_sequence_iterator(node *each, void *context);
 static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context);
-static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *step);
+static void normalize_interval(node *value, predicate *slice, int *from, int *to, int *step);
 
 #define current_step(CONTEXT) path_get((CONTEXT)->path, (CONTEXT)->current_step)
 #ifdef USE_LOGGING
