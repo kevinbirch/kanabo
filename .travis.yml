@@ -15,6 +15,6 @@ before_script:
   -  sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 99
 
 script:
-  - whereis clang
+  - which clang-3.4
   - $CC --version
   - make package
