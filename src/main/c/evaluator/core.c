@@ -562,14 +562,14 @@ static bool add_values_to_nodelist_map_iterator(node *key __attribute__((unused)
     return result;
 }
 
-static int normalize_extent(bool specified_p, int_fast32_t given, int_fast32_t fallback, int_fast32_t limit)
+static int normalize_extent(bool specified_p, int given, int fallback, int limit)
 {
     if(!specified_p)
     {
         evaluator_trace("slice predicate: (normalizer) no value specified, defaulting to %zd", fallback);
         return fallback;
     }
-    int_fast32_t result = 0 > given ? given + limit: given;
+    int result = 0 > given ? given + limit: given;
     if(0 > result)
     {
         evaluator_trace("slice predicate: (normalizer) negative value, clamping to zero");
@@ -587,14 +587,14 @@ static int normalize_extent(bool specified_p, int_fast32_t given, int_fast32_t f
 static int normalize_from(predicate *slice, node *value)
 {
     evaluator_trace("slice predicate: normalizing from, specified: %s, value: %d", slice_predicate_has_from(slice) ? "yes" : "no", slice_predicate_from(slice));
-    int_fast32_t length = (int_fast32_t)node_size(value);
+    int length = (int)node_size(value);
     return normalize_extent(slice_predicate_has_from(slice), slice_predicate_from(slice), 0, length);
 }
 
 static int normalize_to(predicate *slice, node *value)
 {
     evaluator_trace("slice predicate: normalizing to, specified: %s, value: %d", slice_predicate_has_to(slice) ? "yes" : "no", slice_predicate_to(slice));
-    int_fast32_t length = (int_fast32_t)node_size(value);
+    int length = (int)node_size(value);
     return normalize_extent(slice_predicate_has_to(slice), slice_predicate_to(slice), length, length);
 }
 
