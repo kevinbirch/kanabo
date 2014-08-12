@@ -11,7 +11,9 @@ dependencies:
     - sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.4 99
     - gcc --version
     - clang --version
-    - export CC=clang
+
+environment:
+  CC: clang
 
 test:
   override:
