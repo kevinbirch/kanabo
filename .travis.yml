@@ -21,3 +21,4 @@ before_script:
 script:
   - $CC --version
   - make test
+  - target/kanabo --version
