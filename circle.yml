@@ -19,7 +19,8 @@ dependencies:
 test:
   override:
     - make package
-  
+    - target/kanabo --version
+
 general:
   artifacts:
     - "target/kanabo"
