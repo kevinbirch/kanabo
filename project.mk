@@ -47,7 +47,11 @@ CFLAGS = -std=c11 -fstrict-aliasing -Wall -Wextra -Werror -Wformat -Wformat-secu
 debug_CFLAGS = -DUSE_LOGGING
 release_CFLAGS = -O3 -flto
 LIBS = -lm
-TEST_LIBS = -lm
+TEST_LIBS = 
+
+ifeq ($(shell uname -s),Linux)
+TEST_LIBS += -pthread -lrt
+endif
 
 VERSION_H = $(GENERATED_HEADERS_DIR)/version.h
 CONFIG_H = $(GENERATED_HEADERS_DIR)/config.h
