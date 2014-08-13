@@ -10,5 +10,6 @@ build:
         - script:
             name: make
             code: |
+                $CC --version
                 make package
                 target/kanabo --version
