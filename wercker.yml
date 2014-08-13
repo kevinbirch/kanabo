@@ -1,4 +1,4 @@
-box: kanabo@0.0.1
+box: invalidname/cpp11@0.0.3
 
 build:
     steps:
