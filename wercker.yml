@@ -2,10 +2,9 @@ box: invalidname/cpp11@0.0.3
 
 build:
     steps:
-        -script:
+        - script:
             name: install deps
-            code: |
-                sudo apt-get install -y libyaml-dev check
+            code: sudo apt-get install -y libyaml-dev check
         - script:
             name: make
             code: |
