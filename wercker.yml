@@ -1,0 +1,9 @@
+box: invalidname/cpp11@0.0.3
+
+build:
+    steps:
+        - script:
+            name: make
+            code: |
+                make package
+                target/kanabo --version
