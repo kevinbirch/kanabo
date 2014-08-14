@@ -8,8 +8,16 @@ build:
                 sudo apt-get update
                 sudo apt-get install -y libyaml-dev check
         - script:
-            name: make
+            name: build with GCC
             code: |
+                export CC=gcc
                 $CC --version
-                make package
+                make clean test
+                target/kanabo --version
+        - script:
+            name: build with Clang
+            code: |
+                export CC=clang
+                $CC --version
+                make clean test
                 target/kanabo --version

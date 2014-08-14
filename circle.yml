@@ -1,6 +1,3 @@
-machine:
-  environment:
-    CC: clang
 
 dependencies:
   pre:
@@ -18,9 +15,7 @@ dependencies:
 
 test:
   override:
-    - make package
+    - make CC=gcc clean test
     - target/kanabo --version
-
-general:
-  artifacts:
-    - "target/kanabo"
+    - make CC=clang clean test
+    - target/kanabo --version
