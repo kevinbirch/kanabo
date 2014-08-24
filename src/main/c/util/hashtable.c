@@ -165,6 +165,10 @@ Hashtable *make_hashtable_with_capacity_factor_function(compare_function compari
 
 static inline size_t normalize_capacity(size_t hint)
 {
+    if(DEFAULT_CAPACITY > hint)
+    {
+        return DEFAULT_CAPACITY;
+    }
     size_t capacity = hint;
     if(0 != (capacity & (capacity - 1)))
     {
@@ -700,18 +704,18 @@ static void *chained_remove(Hashtable *hashtable, size_t index, void *key)
                 chain->entries[chain->length - 1] = NULL;
                 chain->entries[chain->length - 2] = NULL;
             }
-            if(NULL == chain->entries[2])
-            {
-                // N.B. - chains with only one entry can be collapsed into a bucket
-                hashtable->entries[index] = chain->entries[0];
-                hashtable->entries[index + 1] = chain->entries[1];
-                free(chain);
-            }
-            else if(NULL == chain->entries[0])
+            if(NULL == chain->entries[0])
             {
                 // N.B. - empty chains can be removed and the bucket can be freed
                 hashtable->entries[index] = NULL;
                 hashtable->entries[index + 1] = NULL;
+                free(chain);
+            }
+            else if(NULL == chain->entries[2])
+            {
+                // N.B. - chains with only one entry can be collapsed into a bucket
+                hashtable->entries[index] = chain->entries[0];
+                hashtable->entries[index + 1] = chain->entries[1];
                 free(chain);
             }
             hashtable->occupied--;
