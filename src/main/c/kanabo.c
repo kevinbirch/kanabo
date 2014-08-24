@@ -476,7 +476,7 @@ static void pipe_interactive_mode(struct context *context)
         {
             continue;
         }
-        input[read - 1] = '\0';
+        input[read - 1] = '\0';  // N.B. `read` should always be positive here
         dispatch_interactive_command(context, input);
         fprintf(stdout, "EOD\n");
         fflush(stdout);
