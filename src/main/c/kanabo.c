@@ -463,7 +463,7 @@ static void tty_interctive_mode(struct context *context)
 }
 
 
-static void pipe_interactive_model(struct context *context)
+static void pipe_interactive_mode(struct context *context)
 {
     char *input= NULL;
     size_t len = 0;
@@ -500,7 +500,7 @@ static int interactive_mode(struct options *options)
     }
     else
     {
-        pipe_interactive_model(&context);
+        pipe_interactive_mode(&context);
     }
     model_free(context.model);
 
