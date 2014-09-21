@@ -117,6 +117,10 @@ void set_log_level_from_env(void)
 int logger(enum log_level level, const char *component, const char *format, ...)
 {
     ensure_log_enabled(level);
+    if(NULL == format || 0 == strlen(format))
+    {
+        return -1;
+    }
     va_list args;
     va_start(args, format);
     int result = vlogger(level, component, format, args);
@@ -127,13 +131,17 @@ int logger(enum log_level level, const char *component, const char *format, ...)
 int vlogger(enum log_level level, const char *component, const char *format, va_list args)
 {
     ensure_log_enabled(level);
+    if(NULL == format || 0 == strlen(format))
+    {
+        return -1;
+    }
     int result = print_prelude(level, component);
     if(!result)
     {
         return result;
     }
     result += vfprintf(stderr, format, args);
-    if('\n' != format[strlen(format) - 1])
+    if('\n' != format[strlen(format) - 1])  // strlen will be non-zero here
     {
         result += fprintf(stderr, "\n");
     }
@@ -145,7 +153,8 @@ int print_prelude(enum log_level level, const char *component)
     time_t now = time(NULL);
     struct tm now_tm;
     localtime_r(&now, &now_tm);
-    return fprintf(stderr, "%d-%d-%d %02d:%02d:%02d %s %s - ", now_tm.tm_year + 1900, now_tm.tm_mon + 1, now_tm.tm_mday, 
+    return fprintf(stderr, "%d-%d-%d %02d:%02d:%02d %s %s - ",
+                   now_tm.tm_year + 1900, now_tm.tm_mon + 1, now_tm.tm_mday,
                    now_tm.tm_hour, now_tm.tm_min, now_tm.tm_sec, LEVELS[level], component);
 }
 
