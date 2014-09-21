@@ -522,7 +522,7 @@ static int expression_mode(const struct options *options)
     return result;
 }
 
-static int execute_mode(enum command cmd, struct options *options)
+static int execute_command(enum command cmd, struct options *options)
 {
     int result = EXIT_SUCCESS;
 
@@ -554,7 +554,7 @@ static int run(const int argc, char * const *argv)
     memset(&options, 0, sizeof(struct options));
     enum command cmd = process_options(argc, argv, &options);
 
-    return execute_mode(cmd, &options);
+    return execute_command(cmd, &options);
 }
 
 int main(const int argc, char * const *argv)
