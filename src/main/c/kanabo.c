@@ -559,7 +559,7 @@ static int run(const int argc, char * const *argv)
 
 int main(const int argc, char * const *argv)
 {
-    if(NULL == argv || NULL == argv[0])
+    if(1 > argc || NULL == argv || NULL == argv[0])
     {
         fprintf(stderr, "error: whoa! something is wrong, there are no program arguments.\n");
         return EXIT_FAILURE;

@@ -188,7 +188,11 @@ enum command process_options(const int argc, char * const *argv, struct options 
                 break;
         }
     }
-
+    if(optind > argc)
+    {
+        fprintf(stderr, "uh oh! something went wrong handing arguments!\n");
+        return SHOW_HELP;
+    }
     if(argc - optind)
     {
         options->input_file_name = argv[optind];
