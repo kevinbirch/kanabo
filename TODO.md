@@ -21,6 +21,9 @@ LICENSE file for more details.
 * valgrind
 * performance co-pilot? http://oss.sgi.com/projects/pcp/
 * add completions for currently loaded model to linenoise
+* add safe arithmetic functions
+  * http://lists.nongnu.org/archive/html/qemu-devel/2013-01/msg05387.html
+  * https://sourceware.org/ml/libc-alpha/2013-12/msg00098.html
 * build: libtool integration?
 * build: shtool integration?
 
