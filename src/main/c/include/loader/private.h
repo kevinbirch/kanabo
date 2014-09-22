@@ -45,7 +45,7 @@
 
 struct loader_context
 {
-    yaml_parser_t     *parser;
+    yaml_parser_t      parser;
     loader_status_code code;
     enum loader_duplicate_key_strategy strategy;
 
@@ -58,15 +58,18 @@ struct loader_context
         size_t   length;
     } key_holder;
 
-    Hashtable *anchors;
+    Hashtable        *anchors;
 
-    regex_t           *decimal_regex;
-    regex_t           *integer_regex;
-    regex_t           *timestamp_regex;
+    regex_t           decimal_regex;
+    regex_t           integer_regex;
+    regex_t           timestamp_regex;
 };
 
-document_model *build_model(loader_context *context);
+typedef struct loader_context loader_context;
+
+void build_model(struct loader_context *context);
 loader_status_code interpret_yaml_error(yaml_parser_t *parser);
+char *loader_status_message(const loader_context *context);
 
 #define component_name "loader"
 

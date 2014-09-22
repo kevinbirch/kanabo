@@ -74,8 +74,7 @@ static void set_anchor(loader_context *context, node *target, uint8_t *anchor);
 static bool add_node(loader_context *context, node *value);
 static inline bool add_to_mapping_node(loader_context *context, node *value);
 
-
-document_model *build_model(loader_context *context)
+void build_model(struct loader_context *context)
 {
     loader_debug("building model...");
     document_model *model = make_model();
@@ -83,7 +82,7 @@ document_model *build_model(loader_context *context)
     {
         loader_error("uh oh! out of memory, can't allocate the document model, aborting...");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return NULL;
+        return;
     }
     context->model = model;
 
@@ -92,7 +91,7 @@ document_model *build_model(loader_context *context)
     {
         loader_error("no documents found for the input!");
         context->code = ERR_NO_DOCUMENTS_FOUND;
-        return NULL;
+        return;
     }
     if(LOADER_SUCCESS == context->code)
     {
@@ -108,8 +107,6 @@ document_model *build_model(loader_context *context)
         model_free(context->model);
         context->model = NULL;
     }
-
-    return context->model;
 }
 
 static void event_loop(loader_context *context)
@@ -122,9 +119,9 @@ static void event_loop(loader_context *context)
     bool done = false;
     while(!done)
     {
-        if(!yaml_parser_parse(context->parser, &event))
+        if(!yaml_parser_parse(&context->parser, &event))
         {
-            context->code = interpret_yaml_error(context->parser);
+            context->code = interpret_yaml_error(&context->parser);
             break;
         }
         done = dispatch_event(&event, context);
@@ -274,17 +271,17 @@ static enum scalar_kind resolve_scalar_kind(const loader_context *context, const
         trace_string("found scalar boolean '%s'", event->data.scalar.value, event->data.scalar.length);
         kind = SCALAR_BOOLEAN;
     }
-    else if(regex_test(event, context->integer_regex))
+    else if(regex_test(event, &context->integer_regex))
     {
         trace_string("found scalar integer '%s'", event->data.scalar.value, event->data.scalar.length);
         kind = SCALAR_INTEGER;
     }
-    else if(regex_test(event, context->decimal_regex))
+    else if(regex_test(event, &context->decimal_regex))
     {
         trace_string("found scalar real '%s'", event->data.scalar.value, event->data.scalar.length);
         kind = SCALAR_REAL;
     }
-    else if(regex_test(event, context->timestamp_regex))
+    else if(regex_test(event, &context->timestamp_regex))
     {
         trace_string("found scalar timestamp '%s'", event->data.scalar.value, event->data.scalar.length);
         kind = SCALAR_TIMESTAMP;

@@ -47,104 +47,25 @@
 #include "loader.h"
 #include "loader/private.h"
 
-#define make_regex(MEMBER, PATTERN) context->MEMBER = (regex_t *)malloc(sizeof(regex_t)); \
-    if(NULL == context->MEMBER)                                         \
-    {                                                                   \
-        loader_error("uh oh! out of memory, can't allocate a regex");   \
-        context->code = ERR_LOADER_OUT_OF_MEMORY;                       \
-        return context;                                                 \
-    }                                                                   \
-    if(regcomp(context->MEMBER, PATTERN, REG_EXTENDED | REG_NOSUB))     \
-    {                                                                   \
-        loader_error("uh oh! can't compile a regex");                   \
-        context->code = ERR_OTHER;                                      \
-        return context;                                                 \
-    }
+#define make_regex(MEMBER, PATTERN) (0 == regcomp((MEMBER), (PATTERN), REG_EXTENDED | REG_NOSUB))
 
-static loader_context *make_loader(void);
+#define nothing(CONTEXT) (MaybeDocument){.tag=NOTHING, .nothing.code=(CONTEXT)->code, .nothing.message=loader_status_message((CONTEXT))}
+#define just(MODEL) (MaybeDocument){.tag=JUST, .just=(MODEL)}
 
-loader_context *make_string_loader(const unsigned char *input, size_t size)
-{
-    loader_debug("creating string loader context");
-    loader_context *context = make_loader();
-    if(NULL == context || LOADER_SUCCESS != context->code)
-    {
-        return context;
-    }
-    if(NULL == input)
-    {
-        loader_error("input is null");
-        context->code = ERR_INPUT_IS_NULL;
-        errno = EINVAL;
-        return context;
-    }
-    if(0 == size)
-    {
-        loader_error("input is empty");
-        context->code = ERR_INPUT_SIZE_IS_ZERO;
-        errno = EINVAL;
-        return context;
-    }
+static const char * const DECIMAL_PATTERN = "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$";
+static const char * const INTEGER_PATTERN = "^-?(0|([1-9][[:digit:]]*))$";
+static const char * const TIMESTAMP_PATTERN = "^[0-9][0-9][0-9][0-9]-[0-9][0-9]?-[0-9][0-9]?(([Tt]|[ \t]+)[0-9][0-9]?:[0-9][0-9](:[0-9][0-9])?([.][0-9]+)?([ \t]*(Z|([-+][0-9][0-9]?(:[0-9][0-9])?)))?)?$";
 
-    yaml_parser_set_input_string(context->parser, input, size);
-
-    return context;
-}
-
-loader_context *make_file_loader(FILE *input)
-{
-    loader_debug("creating file loader context");
-    loader_context *context = make_loader();
-    if(NULL == context || LOADER_SUCCESS != context->code)
-    {
-        return context;
-    }
-    if(NULL == input)
-    {
-        loader_error("input is null");
-        context->code = ERR_INPUT_IS_NULL;
-        errno = EINVAL;
-        return context;
-    }
-    struct stat file_info;
-    if(-1 == fstat(fileno(input), &file_info))
-    {
-        loader_error("fstat failed on input file");
-        context->code = ERR_READER_FAILED;
-        errno = EINVAL;
-        return context;
-    }
-    if(file_info.st_mode & S_IFREG && (feof(input) || 0 == file_info.st_size))
-    {
-        loader_error("input is empty");
-        context->code = ERR_INPUT_SIZE_IS_ZERO;
-        errno = EINVAL;
-        return context;
-    }
-
-    yaml_parser_set_input_file(context->parser, input);
-    return context;
-}
-
-static loader_context *make_loader(void)
+static void make_loader(loader_context *context, enum loader_duplicate_key_strategy value)
 {
     loader_debug("creating common loader context");
-    loader_context *context = (loader_context *)calloc(1, sizeof(loader_context));
-    if(NULL == context)
-    {
-        loader_error("uh oh! out of memory, can't allocate the loader context");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return NULL;
-    }
-    context->strategy = DUPE_CLOBBER;
+    context->strategy = value;
 
-    context->parser = (yaml_parser_t *)calloc(1, sizeof(yaml_parser_t));
-    if(NULL == context->parser)
+    if(!yaml_parser_initialize(&context->parser))
     {
-        loader_error("uh oh! out of memory, can't allocate the yaml parser");
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        free(context);
-        return NULL;
+        loader_error("uh oh! can't initialize the yaml parser");
+        context->code = interpret_yaml_error(&context->parser);
+        return;
     }
 
     context->anchors = make_hashtable_with_function(string_comparitor, shift_add_xor_string_hash);
@@ -152,39 +73,38 @@ static loader_context *make_loader(void)
     {
         loader_error("uh oh! out of memory, can't allocate the anchor table");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
-        free(context->parser);
-        free(context);
-        return NULL;
+        return;
     }
 
-    if(!yaml_parser_initialize(context->parser))
+    if(!make_regex(&context->decimal_regex, DECIMAL_PATTERN))
     {
-        loader_error("uh oh! can't initialize the yaml parser");
-        context->code = interpret_yaml_error(context->parser);
-        free(context->parser);
-        free(context->anchors);
-        free(context);
-        return NULL;
+        loader_error("uh oh! can't compile a regex");
+        context->code = ERR_OTHER;
+        hashtable_free(context->anchors);
+        return;
     }
 
-    make_regex(decimal_regex, "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$");
-    make_regex(integer_regex, "^-?(0|([1-9][[:digit:]]*))$");
-    make_regex(timestamp_regex, "^[0-9][0-9][0-9][0-9]-[0-9][0-9]?-[0-9][0-9]?(([Tt]|[ \t]+)[0-9][0-9]?:[0-9][0-9](:[0-9][0-9])?([.][0-9]+)?([ \t]*(Z|([-+][0-9][0-9]?(:[0-9][0-9])?)))?)?$");
+    if(!make_regex(&context->integer_regex, INTEGER_PATTERN))
+    {
+        loader_error("uh oh! can't compile a regex");
+        context->code = ERR_OTHER;
+        hashtable_free(context->anchors);
+        regfree(&context->integer_regex);
+        return;
+    }
 
-    return context;
+    if(!make_regex(&context->timestamp_regex, TIMESTAMP_PATTERN))
+    {
+        loader_error("uh oh! can't compile a regex");
+        context->code = ERR_OTHER;
+        hashtable_free(context->anchors);
+        regfree(&context->integer_regex);
+        regfree(&context->timestamp_regex);
+        return;
+    }
 }
 
-enum loader_status_code loader_status(const loader_context *context)
-{
-    return context->code;
-}
-
-void loader_set_dupe_strategy(loader_context *context, enum loader_duplicate_key_strategy value)
-{
-    context->strategy = value;
-}
-
-void loader_free(loader_context *context)
+static void loader_free(loader_context *context)
 {
     loader_debug("destroying loader context");
     if(NULL == context)
@@ -192,28 +112,98 @@ void loader_free(loader_context *context)
         return;
     }
 
-    yaml_parser_delete(context->parser);
-    free(context->parser);
-    context->parser = NULL;
+    yaml_parser_delete(&context->parser);
 
     hashtable_free(context->anchors);
     context->anchors = NULL;
 
-    regfree(context->decimal_regex);
-    free(context->decimal_regex);
-    regfree(context->integer_regex);
-    free(context->integer_regex);
-    regfree(context->timestamp_regex);
-    free(context->timestamp_regex);
-
-    free(context);
+    regfree(&context->decimal_regex);
+    regfree(&context->integer_regex);
+    regfree(&context->timestamp_regex);
 }
 
-document_model *load(loader_context *context)
+static inline MaybeDocument load(loader_context *context)
 {
-    PRECOND_NONNULL_ELSE_NULL(context);
-    PRECOND_NONNULL_ELSE_NULL(context->parser);
-
     loader_debug("starting load...");
-    return build_model(context);
+    build_model(context);
+    if(LOADER_SUCCESS != context->code)
+    {
+        MaybeDocument result = nothing(context);
+        loader_free(context);
+        return result;
+    }
+    else
+    {
+        MaybeDocument result = just(context->model);
+        loader_free(context);
+        return result;
+    }
+}
+
+MaybeDocument load_string(const unsigned char *input, size_t size, enum loader_duplicate_key_strategy value)
+{
+    loader_context context;
+    memset(&context, 0, sizeof(loader_context));
+
+    if(NULL == input)
+    {
+        loader_error("input is null");
+        context.code = ERR_INPUT_IS_NULL;
+        errno = EINVAL;
+        return nothing(&context);
+    }
+    if(0 == size)
+    {
+        loader_error("input is empty");
+        context.code = ERR_INPUT_SIZE_IS_ZERO;
+        errno = EINVAL;
+        return nothing(&context);
+    }
+
+    loader_debug("creating string loader context");
+    make_loader(&context, value);
+    if(LOADER_SUCCESS != context.code)
+    {
+        return nothing(&context);
+    }
+    yaml_parser_set_input_string(&context.parser, input, size);
+    return load(&context);
+}
+
+MaybeDocument load_file(FILE *input, enum loader_duplicate_key_strategy value)
+{
+    loader_context context;
+    memset(&context, 0, sizeof(loader_context));
+
+    if(NULL == input)
+    {
+        loader_error("input is null");
+        context.code = ERR_INPUT_IS_NULL;
+        errno = EINVAL;
+        return nothing(&context);
+    }
+    struct stat file_info;
+    if(-1 == fstat(fileno(input), &file_info))
+    {
+        loader_error("fstat failed on input file");
+        context.code = ERR_READER_FAILED;
+        errno = EINVAL;
+        return nothing(&context);
+    }
+    if(file_info.st_mode & S_IFREG && (feof(input) || 0 == file_info.st_size))
+    {
+        loader_error("input is empty");
+        context.code = ERR_INPUT_SIZE_IS_ZERO;
+        errno = EINVAL;
+        return nothing(&context);
+    }
+
+    loader_debug("creating file loader context");
+    make_loader(&context, value);
+    if(LOADER_SUCCESS != context.code)
+    {
+        return nothing(&context);
+    }
+    yaml_parser_set_input_file(&context.parser, input);
+    return load(&context);
 }

@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 
     int failures = srunner_ntests_failed(runner);
     srunner_free(runner);
-    
+
     return 0 == failures ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -96,7 +96,7 @@ void handle_segv(int sigval)
 {
     void *stack[20];
     int depth;
-    
+
     if(SIGSEGV == sigval)
     {
         depth = backtrace(stack, 20);
@@ -104,6 +104,6 @@ void handle_segv(int sigval)
         backtrace_symbols_fd(stack, depth, fileno(stderr));
         signal(SIGSEGV, SIG_DFL);
     }
-    
+
     raise(sigval);
 }

@@ -46,6 +46,8 @@
 #include <sys/errno.h>
 #include <string.h>
 #include <ctype.h>
+#include <signal.h>
+#include <execinfo.h>
 
 #include "warranty.h"
 #include "options.h"
@@ -77,12 +79,6 @@ static const char * const INTERACTIVE_HELP =
 #define get_input_name(NAME) \
     use_stdin((NAME)) ? "stdin" : (NAME)
 
-struct context
-{
-    struct options *options;
-    document_model *model;
-};
-
 __attribute__((__format__ (__printf__, 2, 3)))
 static void error(const struct options *options, const char *format, ...)
 {
@@ -97,7 +93,7 @@ static void error(const struct options *options, const char *format, ...)
     fprintf(stderr, "\n");
 }
 
-static jsonpath *parse_expression(const struct options *options, const char *expression)
+static jsonpath *parse_expression(const char *expression, const struct options *options)
 {
     log_trace(options->program_name, "parsing expression");
     parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
@@ -130,7 +126,7 @@ static jsonpath *parse_expression(const struct options *options, const char *exp
     return path;
 }
 
-static nodelist *evaluate_expression(const struct options *options, const document_model *model, const jsonpath *path)
+static nodelist *evaluate_expression(const jsonpath *path, const document_model *model, const struct options *options)
 {
     log_trace(options->program_name, "evaluating expression");
     evaluator_context *evaluator = make_evaluator(model, path);
@@ -190,15 +186,16 @@ static emit_function get_emitter(const struct options *options)
     return result;
 }
 
-static int apply_expression(const struct options *options, document_model *model, const char *expression)
+static int apply_expression(const char *expression, document_model *model, const struct options *options)
 {
-    jsonpath *path = parse_expression(options, expression);
+    log_debug(options->program_name, "evaluating expression: \"%s\"", expression);
+    jsonpath *path = parse_expression(expression, options);
     if(NULL == path)
     {
         return EXIT_FAILURE;
     }
 
-    nodelist *list = evaluate_expression(options, model, path);
+    nodelist *list = evaluate_expression(path, model, options);
     if(NULL == list)
     {
         path_free(path);
@@ -235,7 +232,7 @@ static FILE *open_input(const struct options *options)
     }
 }
 
-static void close_input(const struct options *options, FILE *input)
+static void close_input(FILE *input, const struct options *options)
 {
     if(stdin == input)
     {
@@ -251,127 +248,85 @@ static void close_input(const struct options *options, FILE *input)
     }
 }
 
-#define ensure_object(OBJ)                                              \
-    if(NULL == (OBJ))                                                   \
-    {                                                                   \
-        const char *name = get_input_name(options->input_file_name);    \
-        error(options, "while reading '%s': %s", name, strerror(errno)); \
-        return NULL;                                                    \
-    }
-
-#define ensure_loader(LOADER)                                   \
-    ensure_object((LOADER));                                    \
-    if(loader_status((LOADER)))                                 \
-    {                                                           \
-        close_input(options, input);                            \
-        const char *name = get_input_name(options->input_file_name);    \
-        char *message = loader_status_message((LOADER));        \
-        error(options, "while reading '%s': %s", name, message);  \
-        free(message);                                          \
-        loader_free(loader);                                    \
-        return NULL;                                            \
-    }
-
-static loader_context *prepare_loader(const struct options *options, FILE *input)
-{
-    log_trace(options->program_name, "creating loader...");
-    loader_context *loader = make_file_loader(input);
-    ensure_loader(loader);
-    loader_set_dupe_strategy(loader, options->duplicate_strategy);
-
-    return loader;
-}
-
-#define ensure_load(LOADER)                                     \
-    if(loader_status((LOADER)))                                 \
-    {                                                           \
-        const char *name = get_input_name(options->input_file_name);    \
-        char *message = loader_status_message((LOADER));        \
-        error(options, "while reading '%s': %s", name, message);  \
-        free(message);                                          \
-        loader_free(loader);                                    \
-        return NULL;                                            \
-    }
-
-static document_model *load_model(const struct options *options)
+static document_model *load_document(struct options *options)
 {
     FILE *input = open_input(options);
-    ensure_object(input);
-
-    loader_context *loader = prepare_loader(options, input);
-    if(NULL == loader)
+    if(NULL == input)
     {
+        const char *name = get_input_name(options->input_file_name);
+        error(options, "while reading '%s': %s", name, strerror(errno));
         return NULL;
     }
 
-    log_trace(options->program_name, "loading model...");
-    document_model *model = load(loader);
-    ensure_load(loader);
+    MaybeDocument maybe = load_file(input, options->duplicate_strategy);
+    close_input(input, options);
+    if(NOTHING == maybe.tag)
+    {
+        const char *name = get_input_name(options->input_file_name);
+        error(options, "while reading '%s': %s", name, maybe.nothing.message);
+        free(maybe.nothing.message);
 
-    close_input(options, input);
-    loader_free(loader);
-    log_trace(options->program_name, "model loaded.");
-
-    return model;
+        return NULL;
+    }
+    else
+    {
+        return maybe.just;
+    }
 }
 
-static void output_command(struct context *context, const char *argument)
+static void output_command(const char *argument, struct options *options)
 {
-    log_debug(context->options->program_name, "processing output command...");
+    log_debug(options->program_name, "processing output command...");
     if(!argument)
     {
-        log_trace(context->options->program_name, "no command argument, printing current value");
-        fprintf(stdout, "%s\n", emit_mode_name(context->options->emit_mode));
+        log_trace(options->program_name, "no command argument, printing current value");
+        fprintf(stdout, "%s\n", emit_mode_name(options->emit_mode));
         return;
     }
 
     int32_t mode = parse_emit_mode(argument);
     if(-1 == mode)
     {
-        error(context->options, "unsupported output format `%s'", argument);
+        error(options, "unsupported output format `%s'", argument);
     }
 
-    log_debug(context->options->program_name, "setting value to: %s", argument);
-    context->options->emit_mode = (enum emit_mode)mode;
+    log_debug(options->program_name, "setting value to: %s", argument);
+    options->emit_mode = (enum emit_mode)mode;
 }
 
-static void duplicate_command(struct context *context, const char *argument)
+static void duplicate_command(const char *argument, struct options *options)
 {
-    log_debug(context->options->program_name, "processing duplicate command...");
+    log_debug(options->program_name, "processing duplicate command...");
     if(!argument)
     {
-        log_trace(context->options->program_name, "no command argument, printing current value");
-        fprintf(stdout, "%s\n", duplicate_strategy_name(context->options->duplicate_strategy));
+        log_trace(options->program_name, "no command argument, printing current value");
+        fprintf(stdout, "%s\n", duplicate_strategy_name(options->duplicate_strategy));
         return;
     }
 
     int32_t strategy = parse_duplicate_strategy(argument);
     if(-1 == strategy)
     {
-        error(context->options, "unsupported duplicate stratety `%s'", argument);
+        error(options, "unsupported duplicate stratety `%s'", argument);
     }
 
-    log_debug(context->options->program_name, "setting value to: %s", argument);
-    context->options->duplicate_strategy = (enum loader_duplicate_key_strategy)strategy;
+    log_debug(options->program_name, "setting value to: %s", argument);
+    options->duplicate_strategy = (enum loader_duplicate_key_strategy)strategy;
 }
 
-static void load_command(struct context *context, const char *argument)
+static document_model *load_command(const char *argument, struct options *options)
 {
-    log_debug(context->options->program_name, "processing load command...");
+    log_debug(options->program_name, "processing load command...");
     if(!argument)
     {
-        log_trace(context->options->program_name, "no command argument, aborting...");
-        error(context->options, ":load command requires an argument");
-        return;
+        log_trace(options->program_name, "no command argument, aborting...");
+        error(options, ":load command requires an argument");
+        return NULL;
     }
 
-    log_debug(context->options->program_name, "found command argument, loading '%s'...", argument);
-    context->options->input_file_name = argument;
-    if(context->model)
-    {
-        model_free(context->model);
-    }
-    context->model = load_model(context->options);
+    log_debug(options->program_name, "found command argument, loading '%s'...", argument);
+    options->input_file_name = argument;
+    return load_document(options);
 }
 
 static const char *get_argument(const char *command)
@@ -402,45 +357,52 @@ static const char *get_argument(const char *command)
     return arg;
 }
 
-static void dispatch_interactive_command(struct context *context, const char *command)
+static void dispatch_interactive_command(const char *command, struct options *options, document_model **model)
 {
     if(0 == memcmp("?", command, 1) || 0 == memcmp(":help", command, 5))
     {
         fwrite(INTERACTIVE_HELP, strlen(INTERACTIVE_HELP), 1, stdout);
-        return;
     }
     else if(0 == memcmp(":output", command, 7))
     {
-        output_command(context, get_argument(command));
-        return;
+        output_command(get_argument(command), options);
     }
     else if(0 == memcmp(":duplicate", command, 10))
     {
-        duplicate_command(context, get_argument(command));
-        return;
+        duplicate_command(get_argument(command), options);
     }
     else if(0 == memcmp(":load", command, 5))
     {
-        load_command(context, get_argument(command));
-        return;
+        document_model *new_model = load_command(get_argument(command), options);
+        if(new_model)
+        {
+            model_free(*model);
+        }
+        *model = new_model;
     }
     else
     {
-        if(NULL == context->model)
+        if(NULL == *model)
         {
-            error(context->options, "no input loaded, use the `:load' command");
+            error(options, "no input loaded, use the `:load' command");
             return;
         }
-        apply_expression(context->options, context->model, command);
+        apply_expression(command, *model, options);
     }
 }
 
-static void tty_interctive_mode(struct context *context)
+static void tty_interctive_mode(struct options *options)
 {
-    log_debug(context->options->program_name, "entering tty interative mode");
+    log_debug(options->program_name, "entering tty interative mode");
 
     fwrite(BANNER, strlen(BANNER), 1, stdout);
     char *prompt = (char *)DEFAULT_PROMPT;
+
+    document_model *model = NULL;
+    if(options->input_file_name)
+    {
+        model = load_document(options);
+    }
 
     char *input;
     while(true)
@@ -457,19 +419,26 @@ static void tty_interctive_mode(struct context *context)
         }
 
         linenoiseHistoryAdd(input);
-        dispatch_interactive_command(context, input);
+        dispatch_interactive_command(input, options, &model);
         free(input);
     }
+    model_free(model);
 }
 
 
-static void pipe_interactive_mode(struct context *context)
+static void pipe_interactive_mode(struct options *options)
 {
     char *input= NULL;
     size_t len = 0;
     ssize_t read;
 
-    log_debug(context->options->program_name, "entering non-tty interative mode");
+    document_model *model = NULL;
+    if(options->input_file_name)
+    {
+        model = load_document(options);
+    }
+
+    log_debug(options->program_name, "entering non-tty interative mode");
     while((read = getline(&input, &len, stdin)) != -1)
     {
         if(0 == read || '\n' == input[0])
@@ -477,49 +446,44 @@ static void pipe_interactive_mode(struct context *context)
             continue;
         }
         input[read - 1] = '\0';  // N.B. `read` should always be positive here
-        dispatch_interactive_command(context, input);
+        dispatch_interactive_command(input, options, &model);
         fprintf(stdout, "EOD\n");
         fflush(stdout);
     }
     free(input);
+    model_free(model);
 }
 
 static int interactive_mode(struct options *options)
 {
-    struct context context;
-    memset(&context, 0, sizeof(struct context));
-    if(options->input_file_name)
-    {
-        context.model = load_model(options);
-    }
-    context.options = options;
-
     if(isatty(fileno(stdin)))
     {
-        tty_interctive_mode(&context);
+        tty_interctive_mode(options);
     }
     else
     {
-        pipe_interactive_mode(&context);
+        pipe_interactive_mode(options);
     }
-    model_free(context.model);
 
     return EXIT_SUCCESS;
 }
 
-static int expression_mode(const struct options *options)
+static int expression_mode(struct options *options)
 {
-    document_model *model = load_model(options);
+    document_model *model = load_document(options);
     if(NULL == model)
     {
         return EXIT_FAILURE;
     }
+    else
+    {
+        log_trace(options->program_name, "model loaded.");
 
-    log_debug(options->program_name, "evaluating expression: \"%s\"", options->expression);
-    int result = apply_expression(options, model, options->expression);
-    model_free(model);
+        int result = apply_expression(options->expression, model, options);
+        model_free(model);
 
-    return result;
+        return result;
+    }
 }
 
 static int execute_command(enum command cmd, struct options *options)
@@ -557,6 +521,36 @@ static int run(const int argc, char * const *argv)
     return execute_command(cmd, &options);
 }
 
+static void handle_signal(int sigval)
+{
+    void *stack[20];
+    int depth;
+
+    if(SIGSEGV == sigval || SIGABRT == sigval)
+    {
+        depth = backtrace(stack, 20);
+        fprintf(stderr, "Backtrace follows (most recent first):\n");
+        backtrace_symbols_fd(stack, depth, fileno(stderr));
+        signal(sigval, SIG_DFL);
+    }
+
+    raise(sigval);
+}
+
+static void install_handlers(const char * argv0)
+{
+    if(SIG_ERR == signal(SIGSEGV, handle_signal))
+    {
+        perror(argv0);
+        exit(EXIT_FAILURE);
+    }
+    if(SIG_ERR == signal(SIGABRT, handle_signal))
+    {
+        perror(argv0);
+        exit(EXIT_FAILURE);
+    }
+}
+
 int main(const int argc, char * const *argv)
 {
     if(1 > argc || NULL == argv || NULL == argv[0])
@@ -564,6 +558,8 @@ int main(const int argc, char * const *argv)
         fprintf(stderr, "error: whoa! something is wrong, there are no program arguments.\n");
         return EXIT_FAILURE;
     }
+
+    install_handlers(argv[0]);
 
     enable_logging();
     set_log_level_from_env();
