@@ -24,6 +24,7 @@ LICENSE file for more details.
 * add safe arithmetic functions
   * http://lists.nongnu.org/archive/html/qemu-devel/2013-01/msg05387.html
   * https://sourceware.org/ml/libc-alpha/2013-12/msg00098.html
+* libbacktrace instead of execinfo?
 * build: libtool integration?
 * build: shtool integration?
 
