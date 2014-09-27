@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -123,64 +123,68 @@ static const unsigned char * const DUPLICATE_KEY_YAML = (unsigned char *)
     "three: baz\n";
 
 
-static document_model *tagged_model = NULL;
-static node *tagged_mapping_root = NULL;
+static document_model *model_fixture = NULL;
+static node *root_node_fixture = NULL;
 
-static void assert_model_state(loader_context *loader, document_model *model);
-
-void tag_setup(void);
-void tag_teardown(void);
-
-document_model *anchor_setup(const unsigned char *yaml);
-document_model *duplicate_setup(enum loader_duplicate_key_strategy value);
-
-#define assert_loader_failure(CONTEXT, EXPECTED_RESULT)                 \
+#define assert_loader_failure(MAYBE, EXPECTED_RESULT)                   \
     do                                                                  \
     {                                                                   \
-        assert_not_null((CONTEXT));                                     \
-        assert_int_eq((EXPECTED_RESULT), loader_status((CONTEXT)));     \
-        char *_assert_message = loader_status_message((CONTEXT));       \
-        assert_not_null(_assert_message);                               \
-        log_info("loader test", "received expected failure message: '%s'", _assert_message); \
-        free(_assert_message);                                          \
+        assert_int_eq(NOTHING, (MAYBE).tag);                            \
+        assert_int_eq((EXPECTED_RESULT), (MAYBE).nothing.code);         \
+        assert_not_null((MAYBE).nothing.message);                       \
+        free((MAYBE).nothing.message);                                  \
     } while(0)
+
+
+static void model_setup(const unsigned char *data, size_t length, enum loader_duplicate_key_strategy value)
+{
+    MaybeDocument maybe = load_string(data, length, value);
+    assert_not_null(maybe.just);
+    model_fixture = maybe.just;
+
+    reset_errno();
+    assert_uint_eq(1, model_document_count(model_fixture));
+
+    reset_errno();
+    root_node_fixture = model_document_root(model_fixture, 0);
+    assert_noerr();
+    assert_not_null(root_node_fixture);
+}
+
+static void model_teardown(void)
+{
+    model_free(model_fixture);
+    model_fixture = NULL;
+    root_node_fixture = NULL;
+}
 
 START_TEST (null_string_input)
 {
     reset_errno();
-    loader_context *loader = make_string_loader(NULL, 50);
-    assert_not_null(loader);
+    MaybeDocument maybe = load_string(NULL, 50, DUPE_CLOBBER);
     assert_errno(EINVAL);
 
-    assert_loader_failure(loader, ERR_INPUT_IS_NULL);
-
-    loader_free(loader);
+    assert_loader_failure(maybe, ERR_INPUT_IS_NULL);
 }
 END_TEST
 
 START_TEST (zero_string_input_length)
 {
     reset_errno();
-    loader_context *loader = make_string_loader((unsigned char *)"", 0);
-    assert_not_null(loader);
+    MaybeDocument maybe = load_string((unsigned char *)"", 0, DUPE_CLOBBER);
     assert_errno(EINVAL);
 
-    assert_loader_failure(loader, ERR_INPUT_SIZE_IS_ZERO);
-
-    loader_free(loader);
+    assert_loader_failure(maybe, ERR_INPUT_SIZE_IS_ZERO);
 }
 END_TEST
 
 START_TEST (null_file_input)
 {
     reset_errno();
-    loader_context *loader = make_file_loader(NULL);
-    assert_not_null(loader);
+    MaybeDocument maybe = load_file(NULL, DUPE_CLOBBER);
     assert_errno(EINVAL);
 
-    assert_loader_failure(loader, ERR_INPUT_IS_NULL);    
-
-    loader_free(loader);
+    assert_loader_failure(maybe, ERR_INPUT_IS_NULL);
 }
 END_TEST
 
@@ -190,35 +194,12 @@ START_TEST (eof_file_input)
     fseek(input, 0, SEEK_END);
 
     reset_errno();
-    loader_context *loader = make_file_loader(input);
-    assert_not_null(loader);
+    MaybeDocument maybe = load_file(input, DUPE_CLOBBER);
     assert_errno(EINVAL);
 
-    assert_loader_failure(loader, ERR_INPUT_SIZE_IS_ZERO);    
+    assert_loader_failure(maybe, ERR_INPUT_SIZE_IS_ZERO);
 
     fclose(input);
-    loader_free(loader);
-}
-END_TEST
-
-START_TEST (null_context)
-{
-    reset_errno();
-    assert_null(load(NULL));
-    assert_errno(EINVAL);    
-}
-END_TEST
-
-START_TEST (null_context_parser)
-{
-    loader_context *loader = (loader_context *)calloc(1, sizeof(loader_context));
-    loader->parser = NULL;
-
-    reset_errno();
-    assert_null(load(loader));
-    assert_errno(EINVAL);    
-
-    free(loader);
 }
 END_TEST
 
@@ -226,13 +207,8 @@ START_TEST (non_scalar_key)
 {
     size_t yaml_size = strlen((char *)NON_SCALAR_KEY_YAML);
 
-    loader_context *loader = make_string_loader(NON_SCALAR_KEY_YAML, yaml_size);
-    assert_not_null(loader);
-    assert_null(load(loader));
-
-    assert_loader_failure(loader, ERR_NON_SCALAR_KEY);
-
-    loader_free(loader);
+    MaybeDocument maybe = load_string(NON_SCALAR_KEY_YAML, yaml_size, DUPE_CLOBBER);
+    assert_loader_failure(maybe, ERR_NON_SCALAR_KEY);
 }
 END_TEST
 
@@ -240,13 +216,8 @@ START_TEST (alias_loop)
 {
     size_t yaml_size = strlen((char *)ALIAS_LOOP_YAML);
 
-    loader_context *loader = make_string_loader(ALIAS_LOOP_YAML, yaml_size);
-    assert_not_null(loader);
-    assert_null(load(loader));
-
-    assert_loader_failure(loader, ERR_ALIAS_LOOP);
-
-    loader_free(loader);
+    MaybeDocument maybe = load_string(ALIAS_LOOP_YAML, yaml_size, DUPE_CLOBBER);
+    assert_loader_failure(maybe, ERR_ALIAS_LOOP);
 }
 END_TEST
 
@@ -254,62 +225,13 @@ START_TEST (missing_anchor)
 {
     size_t yaml_size = strlen((char *)MISSING_ANCHOR_YAML);
 
-    loader_context *loader = make_string_loader(MISSING_ANCHOR_YAML, yaml_size);
-    assert_not_null(loader);
-    assert_null(load(loader));
-
-    assert_loader_failure(loader, ERR_NO_ANCHOR_FOR_ALIAS);
-
-    loader_free(loader);
+    MaybeDocument maybe = load_string(MISSING_ANCHOR_YAML, yaml_size, DUPE_CLOBBER);
+    assert_loader_failure(maybe, ERR_NO_ANCHOR_FOR_ALIAS);
 }
 END_TEST
 
-START_TEST (load_from_file)
+static void assert_model_state(document_model *model)
 {
-    size_t yaml_size = strlen((char *)YAML);
-
-    FILE *input = tmpfile();
-    size_t written = fwrite(YAML, sizeof(char), yaml_size, input);
-    assert_uint_eq(written, yaml_size);
-    int ret = fflush(input);
-    assert_int_eq(0, ret);
-
-    rewind(input);
-
-    loader_context *loader = make_file_loader(input);    
-    assert_not_null(loader);
-    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
-    document_model *model = load(loader);
-    assert_not_null(model);
-
-    assert_model_state(loader, model);
-
-    fclose(input);
-    model_free(model);
-    loader_free(loader);
-}
-END_TEST
-
-START_TEST (load_from_string)
-{
-    size_t yaml_size = strlen((char *)YAML);
-
-    loader_context *loader = make_string_loader(YAML, yaml_size);
-    assert_not_null(loader);
-    document_model *model = load(loader);
-    assert_not_null(model);
-    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
-
-    assert_model_state(loader, model);
-
-    model_free(model);
-    loader_free(loader);
-}
-END_TEST
-
-static void assert_model_state(loader_context *loader, document_model *model)
-{
-    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
     assert_not_null(model);
     assert_uint_eq(1, model_document_count(model));
 
@@ -317,7 +239,7 @@ static void assert_model_state(loader_context *loader, document_model *model)
     node *root = model_document_root(model, 0);
     assert_noerr();
     assert_not_null(root);
-    
+
     assert_node_kind(root, MAPPING);
     assert_node_size(root, 5);
 
@@ -405,56 +327,74 @@ static void assert_model_state(loader_context *loader, document_model *model)
     reset_errno();
 }
 
-void tag_setup(void)
+START_TEST (load_from_file)
 {
-    size_t yaml_size = strlen((char *)TAGGED_YAML);
+    size_t yaml_size = strlen((char *)YAML);
 
-    loader_context *loader = make_string_loader(TAGGED_YAML, yaml_size);
-    assert_not_null(loader);
-    tagged_model = load(loader);
-    assert_not_null(tagged_model);
-    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
+    FILE *input = tmpfile();
+    size_t written = fwrite(YAML, sizeof(char), yaml_size, input);
+    assert_uint_eq(written, yaml_size);
+    int ret = fflush(input);
+    assert_int_eq(0, ret);
 
-    reset_errno();
-    tagged_mapping_root = model_document_root(tagged_model, 0);
-    assert_noerr();
-    assert_not_null(tagged_mapping_root);
-    
-    assert_node_kind(tagged_mapping_root, MAPPING);
-    assert_node_size(tagged_mapping_root, 7);
+    rewind(input);
 
-    loader_free(loader);
+    MaybeDocument maybe = load_file(input, DUPE_CLOBBER);
+    assert_int_eq(JUST, maybe.tag);
+    assert_not_null(maybe.just);
+
+    assert_model_state(maybe.just);
+
+    fclose(input);
+    model_free(maybe.just);
 }
+END_TEST
 
-void tag_teardown(void)
+START_TEST (load_from_string)
 {
-    model_free(tagged_model);
-    tagged_model = NULL;
-    tagged_mapping_root = NULL;
+    size_t yaml_size = strlen((char *)YAML);
+
+    MaybeDocument maybe = load_string(YAML, yaml_size, DUPE_CLOBBER);
+    assert_int_eq(JUST, maybe.tag);
+    assert_not_null(maybe.just);
+
+    assert_model_state(maybe.just);
+
+    model_free(maybe.just);
+}
+END_TEST
+
+static void tagged_yaml_setup(void)
+{
+    model_setup(TAGGED_YAML, strlen((char *)TAGGED_YAML), DUPE_CLOBBER);
+
+    assert_node_kind(root_node_fixture, MAPPING);
+    assert_node_size(root_node_fixture, 7);
 }
 
 START_TEST (shorthand_tags)
 {
-    assert_node_tag(tagged_mapping_root, "tag:vampire-squid.com,2008:instrument");
+    reset_errno();
+    assert_node_tag(root_node_fixture, "tag:vampire-squid.com,2008:instrument");
 
     reset_errno();
-    node *asset_class = mapping_get(tagged_mapping_root, (uint8_t *)"asset-class", 11ul);
+    node *asset_class = mapping_get(root_node_fixture, (uint8_t *)"asset-class", 11ul);
     assert_noerr();
     assert_not_null(asset_class);
     assert_node_kind(asset_class, SCALAR);
     assert_scalar_kind(asset_class, SCALAR_STRING);
     assert_node_tag(asset_class, "tag:vampire-squid.com,2008:asset-class");
-    
+
     reset_errno();
-    node *type = mapping_get(tagged_mapping_root, (uint8_t *)"type", 4ul);
+    node *type = mapping_get(root_node_fixture, (uint8_t *)"type", 4ul);
     assert_noerr();
     assert_not_null(type);
     assert_node_kind(type, SCALAR);
     assert_scalar_kind(type, SCALAR_STRING);
     assert_node_tag(type, "tag:vampire-squid.com,2008:instrument/type");
-    
+
     reset_errno();
-    node *symbol = mapping_get(tagged_mapping_root, (uint8_t *)"symbol", 6ul);
+    node *symbol = mapping_get(root_node_fixture, (uint8_t *)"symbol", 6ul);
     assert_noerr();
     assert_not_null(symbol);
     assert_node_kind(symbol, SCALAR);
@@ -466,31 +406,31 @@ END_TEST
 START_TEST (explicit_tags)
 {
     reset_errno();
-    node *name = mapping_get(tagged_mapping_root, (uint8_t *)"name", 4ul);
+    node *name = mapping_get(root_node_fixture, (uint8_t *)"name", 4ul);
     assert_noerr();
     assert_not_null(name);
     assert_node_kind(name, SCALAR);
     assert_scalar_kind(name, SCALAR_STRING);
     assert_node_tag(name, "tag:yaml.org,2002:str");
-    
+
     reset_errno();
-    node *exchange_rate = mapping_get(tagged_mapping_root, (uint8_t *)"exchange-rate", 13ul);
+    node *exchange_rate = mapping_get(root_node_fixture, (uint8_t *)"exchange-rate", 13ul);
     assert_noerr();
     assert_not_null(exchange_rate);
     assert_node_kind(exchange_rate, SCALAR);
     assert_scalar_kind(exchange_rate, SCALAR_REAL);
     assert_node_tag(exchange_rate, "tag:yaml.org,2002:float");
-    
+
     reset_errno();
-    node *spot_date = mapping_get(tagged_mapping_root, (uint8_t *)"spot-date", 9ul);
+    node *spot_date = mapping_get(root_node_fixture, (uint8_t *)"spot-date", 9ul);
     assert_noerr();
     assert_not_null(spot_date);
     assert_node_kind(spot_date, SCALAR);
     assert_scalar_kind(spot_date, SCALAR_TIMESTAMP);
     assert_node_tag(spot_date, "tag:yaml.org,2002:timestamp");
-    
+
     reset_errno();
-    node *settlement_date = mapping_get(tagged_mapping_root, (uint8_t *)"settlement-date", 15ul);
+    node *settlement_date = mapping_get(root_node_fixture, (uint8_t *)"settlement-date", 15ul);
     assert_noerr();
     assert_not_null(settlement_date);
     assert_node_kind(settlement_date, SCALAR);
@@ -499,39 +439,25 @@ START_TEST (explicit_tags)
 }
 END_TEST
 
-document_model *anchor_setup(const unsigned char *yaml)
+static void anchor_yaml_setup(void)
 {
-    loader_context *loader = make_string_loader(yaml, strlen((const char *)yaml));
-    assert_not_null(loader);
-    document_model *result = load(loader);
-    assert_not_null(result);
-    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
+    model_setup(ANCHOR_YAML, strlen((char *)ANCHOR_YAML), DUPE_CLOBBER);
 
-    reset_errno();
-    node *root = model_document_root(result, 0);
-    assert_noerr();
-    assert_not_null(root);
-    
-    assert_node_kind(root, MAPPING);
-
-    loader_free(loader);
-    return result;
+    assert_node_kind(root_node_fixture, MAPPING);
+    assert_node_size(root_node_fixture, 2);
 }
 
 START_TEST (anchor)
 {
-    document_model *model = anchor_setup(ANCHOR_YAML);
-    node *root = model_document_root(model, 0);
-    
     reset_errno();
-    node *one = mapping_get(root, (uint8_t *)"one", 3ul);
+    node *one = mapping_get(root_node_fixture, (uint8_t *)"one", 3ul);
     assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
 
     reset_errno();
-    node *alias = mapping_get(root, (uint8_t *)"two", 3ul);
+    node *alias = mapping_get(root_node_fixture, (uint8_t *)"two", 3ul);
     assert_noerr();
     assert_not_null(alias);
     assert_node_kind(alias, ALIAS);
@@ -541,18 +467,21 @@ START_TEST (anchor)
     assert_node_kind(two, SCALAR);
     assert_scalar_kind(two, SCALAR_STRING);
     assert_scalar_value(two, "bar1");
-
-    model_free(model);
 }
 END_TEST
 
+static void key_anchor_yaml_setup(void)
+{
+    model_setup(KEY_ANCHOR_YAML, strlen((char *)KEY_ANCHOR_YAML), DUPE_CLOBBER);
+
+    assert_node_kind(root_node_fixture, MAPPING);
+    assert_node_size(root_node_fixture, 2);
+}
+
 START_TEST (key_anchor)
 {
-    document_model *model = anchor_setup(KEY_ANCHOR_YAML);
-    node *root = model_document_root(model, 0);
-
     reset_errno();
-    node *one = mapping_get(root, (uint8_t *)"one", 3ul);
+    node *one = mapping_get(root_node_fixture, (uint8_t *)"one", 3ul);
     assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
@@ -572,7 +501,7 @@ START_TEST (key_anchor)
     assert_scalar_value(one_1, "one");
     reset_errno();
 
-    node *alias2 = mapping_get(root, (uint8_t *)"two", 3ul);
+    node *alias2 = mapping_get(root_node_fixture, (uint8_t *)"two", 3ul);
     assert_noerr();
     assert_not_null(alias2);
 
@@ -583,56 +512,45 @@ START_TEST (key_anchor)
 }
 END_TEST
 
-document_model *duplicate_setup(enum loader_duplicate_key_strategy value)
+static void duplicate_setup(enum loader_duplicate_key_strategy value)
 {
-    size_t yaml_size = strlen((char *)DUPLICATE_KEY_YAML);
+    model_setup(DUPLICATE_KEY_YAML, strlen((char *)DUPLICATE_KEY_YAML), value);
 
-    loader_context *loader = make_string_loader(DUPLICATE_KEY_YAML, yaml_size);
-    assert_not_null(loader);
-    loader_set_dupe_strategy(loader, value);
+    assert_node_kind(root_node_fixture, MAPPING);
+    assert_node_size(root_node_fixture, 3);
+}
 
-    document_model *result = load(loader);
-    assert_not_null(result);
-    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
-
-    reset_errno();
-    node *root = model_document_root(result, 0);
-    assert_noerr();
-    assert_not_null(root);
-    
-    assert_node_kind(root, MAPPING);
-    loader_free(loader);
-
-    return result;
+static void duplicate_clobber_setup(void)
+{
+    duplicate_setup(DUPE_CLOBBER);
 }
 
 START_TEST (duplicate_clobber)
 {
-    document_model *model = duplicate_setup(DUPE_CLOBBER);
-    node *root = model_document_root(model, 0);
-    node *one = mapping_get(root, (uint8_t *)"one", 3ul);
+    reset_errno();
+    node *one = mapping_get(root_node_fixture, (uint8_t *)"one", 3ul);
     assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SCALAR);
     assert_scalar_value(one, "bar");
     assert_scalar_kind(one, SCALAR_STRING);
-
-    model_free(model);
 }
 END_TEST
 
+static void duplicate_warn_setup(void)
+{
+    duplicate_setup(DUPE_WARN);
+}
+
 START_TEST (duplicate_warn)
 {
-    document_model *model = duplicate_setup(DUPE_WARN);
-    node *root = model_document_root(model, 0);
-    node *one = mapping_get(root, (uint8_t *)"one", 3ul);
+    reset_errno();
+    node *one = mapping_get(root_node_fixture, (uint8_t *)"one", 3ul);
     assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SCALAR);
     assert_scalar_value(one, "bar");
     assert_scalar_kind(one, SCALAR_STRING);
-
-    model_free(model);
 }
 END_TEST
 
@@ -640,15 +558,8 @@ START_TEST (duplicate_fail)
 {
     size_t yaml_size = strlen((char *)DUPLICATE_KEY_YAML);
 
-    loader_context *loader = make_string_loader(DUPLICATE_KEY_YAML, yaml_size);
-    assert_not_null(loader);
-    loader_set_dupe_strategy(loader, DUPE_FAIL);
-
-    document_model *model = load(loader);
-    assert_loader_failure(loader, ERR_DUPLICATE_KEY);
-
-    model_free(model);
-    loader_free(loader);
+    MaybeDocument maybe = load_string(DUPLICATE_KEY_YAML, yaml_size, DUPE_FAIL);
+    assert_loader_failure(maybe, ERR_DUPLICATE_KEY);
 }
 END_TEST
 
@@ -659,8 +570,6 @@ Suite *loader_suite(void)
     tcase_add_test(bad_input_case, zero_string_input_length);
     tcase_add_test(bad_input_case, null_file_input);
     tcase_add_test(bad_input_case, eof_file_input);
-    tcase_add_test(bad_input_case, null_context);
-    tcase_add_test(bad_input_case, null_context_parser);
     tcase_add_test(bad_input_case, non_scalar_key);
     tcase_add_test(bad_input_case, alias_loop);
     tcase_add_test(bad_input_case, missing_anchor);
@@ -672,18 +581,28 @@ Suite *loader_suite(void)
     tcase_add_test(string_case, load_from_string);
 
     TCase *tag_case = tcase_create("tag");
-    tcase_add_unchecked_fixture(tag_case, tag_setup, tag_teardown);
+    tcase_add_unchecked_fixture(tag_case, tagged_yaml_setup, model_teardown);
     tcase_add_test(tag_case, shorthand_tags);
     tcase_add_test(tag_case, explicit_tags);
 
     TCase *anchor_case = tcase_create("anchor");
+    tcase_add_unchecked_fixture(anchor_case, anchor_yaml_setup, model_teardown);
     tcase_add_test(anchor_case, anchor);
-    tcase_add_test(anchor_case, key_anchor);
 
-    TCase *duplicate_case = tcase_create("duplicate");
-    tcase_add_test(duplicate_case, duplicate_clobber);
-    tcase_add_test(duplicate_case, duplicate_warn);
-    tcase_add_test(duplicate_case, duplicate_fail);
+    TCase *key_anchor_case = tcase_create("key_anchor");
+    tcase_add_unchecked_fixture(key_anchor_case, key_anchor_yaml_setup, model_teardown);
+    tcase_add_test(key_anchor_case, key_anchor);
+
+    TCase *duplicate_clobber_case = tcase_create("duplicate_clobber");
+    tcase_add_unchecked_fixture(duplicate_clobber_case, duplicate_clobber_setup, model_teardown);
+    tcase_add_test(duplicate_clobber_case, duplicate_clobber);
+
+    TCase *duplicate_warn_case = tcase_create("duplicate_warn_clobber");
+    tcase_add_unchecked_fixture(duplicate_warn_case, duplicate_warn_setup, model_teardown);
+    tcase_add_test(duplicate_warn_case, duplicate_warn);
+
+    TCase *duplicate_fail_case = tcase_create("duplicate_fail_clobber");
+    tcase_add_test(duplicate_fail_case, duplicate_fail);
 
     Suite *loader = suite_create("Loader");
     suite_add_tcase(loader, bad_input_case);
@@ -691,7 +610,9 @@ Suite *loader_suite(void)
     suite_add_tcase(loader, string_case);
     suite_add_tcase(loader, tag_case);
     suite_add_tcase(loader, anchor_case);
-    suite_add_tcase(loader, duplicate_case);
+    suite_add_tcase(loader, duplicate_clobber_case);
+    suite_add_tcase(loader, duplicate_warn_case);
+    suite_add_tcase(loader, duplicate_fail_case);
 
     return loader;
 }

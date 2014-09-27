@@ -377,8 +377,8 @@ static void dispatch_interactive_command(const char *command, struct options *op
         if(new_model)
         {
             model_free(*model);
+            *model = new_model;
         }
-        *model = new_model;
     }
     else
     {
