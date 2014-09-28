@@ -106,11 +106,7 @@ static void make_loader(loader_context *context, enum loader_duplicate_key_strat
 
 static void loader_free(loader_context *context)
 {
-    loader_debug("destroying loader context");
-    if(NULL == context)
-    {
-        return;
-    }
+    loader_debug("destroying loader context...");
 
     yaml_parser_delete(&context->parser);
 
@@ -147,14 +143,14 @@ MaybeDocument load_string(const unsigned char *input, size_t size, enum loader_d
 
     if(NULL == input)
     {
-        loader_error("input is null");
+        loader_error("input string is null");
         context.code = ERR_INPUT_IS_NULL;
         errno = EINVAL;
         return nothing(&context);
     }
     if(0 == size)
     {
-        loader_error("input is empty");
+        loader_error("input string is empty");
         context.code = ERR_INPUT_SIZE_IS_ZERO;
         errno = EINVAL;
         return nothing(&context);
@@ -177,7 +173,7 @@ MaybeDocument load_file(FILE *input, enum loader_duplicate_key_strategy value)
 
     if(NULL == input)
     {
-        loader_error("input is null");
+        loader_error("input file is null");
         context.code = ERR_INPUT_IS_NULL;
         errno = EINVAL;
         return nothing(&context);
@@ -192,7 +188,7 @@ MaybeDocument load_file(FILE *input, enum loader_duplicate_key_strategy value)
     }
     if(file_info.st_mode & S_IFREG && (feof(input) || 0 == file_info.st_size))
     {
-        loader_error("input is empty");
+        loader_error("input file is empty");
         context.code = ERR_INPUT_SIZE_IS_ZERO;
         errno = EINVAL;
         return nothing(&context);
