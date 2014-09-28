@@ -49,7 +49,7 @@
 
 #define make_regex(MEMBER, PATTERN) (0 == regcomp((MEMBER), (PATTERN), REG_EXTENDED | REG_NOSUB))
 
-#define nothing(CONTEXT) (MaybeDocument){.tag=NOTHING, .nothing.code=(CONTEXT)->code, .nothing.message=loader_status_message((CONTEXT))}
+#define nothing(CONTEXT) (MaybeDocument){.tag=NOTHING, .nothing={(CONTEXT)->code, loader_status_message((CONTEXT))}}
 #define just(MODEL) (MaybeDocument){.tag=JUST, .just=(MODEL)}
 
 static const char * const DECIMAL_PATTERN = "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$";
