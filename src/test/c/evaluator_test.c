@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -49,13 +49,6 @@
 #include "test_model.h"
 #include "test_nodelist.h"
 
-void inventory_setup(void);
-void invoice_setup(void);
-document_model *load_file(char *name);
-
-void evaluator_teardown(void);
-
-bool scalar_true(node *each, void *context);
 
 static document_model *model = NULL;
 
@@ -66,6 +59,38 @@ static document_model *model = NULL;
         assert_int_eq((EXPECTED_RESULT), evaluator_status((CONTEXT)));  \
         log_debug("evaluator test", "received expected failure message: '%s'", evaluator_status_message((CONTEXT))); \
     } while(0)
+
+static document_model *load_document(const char *filename)
+{
+    assert_not_null(filename);
+    FILE *input = fopen(filename, "r");
+    assert_not_null(input);
+
+    MaybeDocument maybe = load_file(input, DUPE_CLOBBER);
+    assert_noerr();
+    assert_int_eq(0, fclose(input));
+
+    assert_int_eq(JUST, maybe.tag);
+    assert_not_null(maybe.just);
+
+    return maybe.just;
+}
+
+static void inventory_setup(void)
+{
+    model = load_document("inventory.json");
+}
+
+static void invoice_setup(void)
+{
+    model = load_document("invoice.yaml");
+}
+
+static void evaluator_teardown(void)
+{
+    model_free(model);
+    model = NULL;
+}
 
 START_TEST (null_model)
 {
@@ -213,7 +238,7 @@ START_TEST (null_context)
 {
     reset_errno();
     assert_null(evaluate(NULL));
-    assert_errno(EINVAL);    
+    assert_errno(EINVAL);
 }
 END_TEST
 
@@ -396,40 +421,6 @@ START_TEST (empty_context_path)
 }
 END_TEST
 
-void inventory_setup(void)
-{
-    model = load_file("inventory.json");
-}
-
-void invoice_setup(void)
-{
-    model = load_file("invoice.yaml");
-}
-
-document_model *load_file(char *name)
-{
-    FILE *input = fopen(name, "r");
-    assert_not_null(input);
-    
-    loader_context *loader = make_file_loader(input);    
-    assert_not_null(loader);
-    document_model *result = load(loader);
-    assert_not_null(result);
-    assert_int_eq(LOADER_SUCCESS, loader_status(loader));
-
-    int closed = fclose(input);
-    assert_int_eq(0, closed);
-    loader_free(loader);
-
-    return result;
-}
-
-void evaluator_teardown(void)
-{
-    model_free(model);
-    model = NULL;
-}
-
 START_TEST (dollar_only)
 {
     char *expression = "$";
@@ -443,7 +434,7 @@ START_TEST (dollar_only)
 
     evaluator_context *evaluator = make_evaluator(model, path);
     assert_not_null(evaluator);
-    
+
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
@@ -551,7 +542,7 @@ START_TEST (compound_recursive_step)
     assert_scalar_kind(nodelist_get(list, 3), SCALAR_REAL);
     assert_scalar_kind(nodelist_get(list, 4), SCALAR_REAL);
     assert_scalar_kind(nodelist_get(list, 5), SCALAR_REAL);
-    
+
     nodelist_free(list);
 }
 END_TEST
@@ -737,18 +728,10 @@ START_TEST (number_test)
     assert_scalar_value(nodelist_get(list, 1), "12.99");
     assert_scalar_value(nodelist_get(list, 2), "8.99");
     assert_scalar_value(nodelist_get(list, 3), "22.99");
-    
+
     nodelist_free(list);
 }
 END_TEST
-
-bool scalar_true(node *each, void *context __attribute__((unused)))
-{
-
-    return SCALAR == node_kind(each) &&
-        SCALAR_BOOLEAN == scalar_kind(each) &&
-        scalar_boolean_is_true(each);
-}
 
 START_TEST (wildcard_predicate)
 {
