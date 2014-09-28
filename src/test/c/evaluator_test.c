@@ -68,7 +68,8 @@ static document_model *load_document(const char *filename)
 
     MaybeDocument maybe = load_file(input, DUPE_CLOBBER);
     assert_noerr();
-    assert_int_eq(0, fclose(input));
+    int result = fclose(input);
+    assert_int_eq(0, result);
 
     assert_int_eq(JUST, maybe.tag);
     assert_not_null(maybe.just);
