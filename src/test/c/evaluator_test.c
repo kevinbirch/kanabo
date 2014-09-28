@@ -50,7 +50,7 @@
 #include "test_nodelist.h"
 
 
-static document_model *model = NULL;
+static document_model *model_fixture = NULL;
 
 #define assert_evaluator_failure(CONTEXT, EXPECTED_RESULT)              \
     do                                                                  \
@@ -79,18 +79,18 @@ static document_model *load_document(const char *filename)
 
 static void inventory_setup(void)
 {
-    model = load_document("inventory.json");
+    model_fixture = load_document("inventory.json");
 }
 
 static void invoice_setup(void)
 {
-    model = load_document("invoice.yaml");
+    model_fixture = load_document("invoice.yaml");
 }
 
 static void evaluator_teardown(void)
 {
-    model_free(model);
-    model = NULL;
+    model_free(model_fixture);
+    model_fixture = NULL;
 }
 
 START_TEST (null_model)
@@ -433,7 +433,7 @@ START_TEST (dollar_only)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -462,7 +462,7 @@ START_TEST (single_name_step)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -495,7 +495,7 @@ START_TEST (simple_recursive_step)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -526,7 +526,7 @@ START_TEST (compound_recursive_step)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -559,7 +559,7 @@ START_TEST (long_path)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -590,7 +590,7 @@ START_TEST (wildcard)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -622,7 +622,7 @@ START_TEST (recursive_wildcard)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -650,7 +650,7 @@ START_TEST (object_test)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -683,7 +683,7 @@ START_TEST (array_test)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -714,7 +714,7 @@ START_TEST (number_test)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -745,7 +745,7 @@ START_TEST (wildcard_predicate)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -776,7 +776,7 @@ START_TEST (wildcard_predicate_on_mapping)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -806,7 +806,7 @@ START_TEST (wildcard_predicate_on_scalar)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -836,7 +836,7 @@ START_TEST (subscript_predicate)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -872,7 +872,7 @@ START_TEST (recursive_subscript_predicate)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -908,7 +908,7 @@ START_TEST (slice_predicate)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -956,7 +956,7 @@ START_TEST (recursive_slice_predicate)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -1004,7 +1004,7 @@ START_TEST (slice_predicate_with_step)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -1041,7 +1041,7 @@ START_TEST (slice_predicate_negative_from)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -1078,7 +1078,7 @@ START_TEST (recursive_slice_predicate_negative_from)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -1115,7 +1115,7 @@ START_TEST (slice_predicate_copy)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -1154,7 +1154,7 @@ START_TEST (slice_predicate_reverse)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -1196,7 +1196,7 @@ START_TEST (name_alias)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -1225,7 +1225,7 @@ START_TEST (type_alias)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -1254,7 +1254,7 @@ START_TEST (greedy_wildcard_alias)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -1291,7 +1291,7 @@ START_TEST (recursive_alias)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -1320,7 +1320,7 @@ START_TEST (wildcard_predicate_alias)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
@@ -1349,7 +1349,7 @@ START_TEST (recursive_wildcard_alias)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(model, path);
+    evaluator_context *evaluator = make_evaluator(model_fixture, path);
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
