@@ -47,8 +47,6 @@ extern const void * SENTINEL;
 
 #define VOID_RETURN
 
-#define STRINGIFY(x) #x
-
 #define ENSURE_NONNULL(ERR_RESULT, ERRNO, ...)                          \
     if(is_null(__VA_ARGS__, SENTINEL))                                  \
     {                                                                   \

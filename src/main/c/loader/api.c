@@ -63,7 +63,6 @@ static void make_loader(loader_context *context, enum loader_duplicate_key_strat
 
     if(!yaml_parser_initialize(&context->parser))
     {
-        loader_error("uh oh! can't initialize the yaml parser");
         context->code = interpret_yaml_error(&context->parser);
         return;
     }
@@ -71,14 +70,12 @@ static void make_loader(loader_context *context, enum loader_duplicate_key_strat
     context->anchors = make_hashtable_with_function(string_comparitor, shift_add_xor_string_hash);
     if(NULL == context->anchors)
     {
-        loader_error("uh oh! out of memory, can't allocate the anchor table");
         context->code = ERR_LOADER_OUT_OF_MEMORY;
         return;
     }
 
     if(!make_regex(&context->decimal_regex, DECIMAL_PATTERN))
     {
-        loader_error("uh oh! can't compile a regex");
         context->code = ERR_OTHER;
         hashtable_free(context->anchors);
         return;
@@ -86,7 +83,6 @@ static void make_loader(loader_context *context, enum loader_duplicate_key_strat
 
     if(!make_regex(&context->integer_regex, INTEGER_PATTERN))
     {
-        loader_error("uh oh! can't compile a regex");
         context->code = ERR_OTHER;
         hashtable_free(context->anchors);
         regfree(&context->integer_regex);
@@ -95,7 +91,6 @@ static void make_loader(loader_context *context, enum loader_duplicate_key_strat
 
     if(!make_regex(&context->timestamp_regex, TIMESTAMP_PATTERN))
     {
-        loader_error("uh oh! can't compile a regex");
         context->code = ERR_OTHER;
         hashtable_free(context->anchors);
         regfree(&context->integer_regex);
@@ -143,14 +138,12 @@ MaybeDocument load_string(const unsigned char *input, size_t size, enum loader_d
 
     if(NULL == input)
     {
-        loader_error("input string is null");
         context.code = ERR_INPUT_IS_NULL;
         errno = EINVAL;
         return nothing(&context);
     }
     if(0 == size)
     {
-        loader_error("input string is empty");
         context.code = ERR_INPUT_SIZE_IS_ZERO;
         errno = EINVAL;
         return nothing(&context);
@@ -173,7 +166,6 @@ MaybeDocument load_file(FILE *input, enum loader_duplicate_key_strategy value)
 
     if(NULL == input)
     {
-        loader_error("input file is null");
         context.code = ERR_INPUT_IS_NULL;
         errno = EINVAL;
         return nothing(&context);
@@ -181,14 +173,12 @@ MaybeDocument load_file(FILE *input, enum loader_duplicate_key_strategy value)
     struct stat file_info;
     if(-1 == fstat(fileno(input), &file_info))
     {
-        loader_error("fstat failed on input file");
         context.code = ERR_READER_FAILED;
         errno = EINVAL;
         return nothing(&context);
     }
     if(file_info.st_mode & S_IFREG && (feof(input) || 0 == file_info.st_size))
     {
-        loader_error("input file is empty");
         context.code = ERR_INPUT_SIZE_IS_ZERO;
         errno = EINVAL;
         return nothing(&context);

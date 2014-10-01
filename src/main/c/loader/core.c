@@ -99,11 +99,6 @@ void build_model(struct loader_context *context)
     }
     else
     {
-#ifdef USE_LOGGING
-        char *message = loader_status_message(context);
-        loader_error("aborted. unable to create document model. status: %d (%s)", context->code, message);
-        free(message);
-#endif
         model_free(context->model);
         context->model = NULL;
     }

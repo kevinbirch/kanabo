@@ -49,6 +49,6 @@ Suite *master_suite(void)
 
     Suite *master = suite_create("Master");
     suite_add_tcase(master, options);
-    
+
     return master;
 }

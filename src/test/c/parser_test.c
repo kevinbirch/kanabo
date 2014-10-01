@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -69,7 +69,6 @@
         assert_int_eq((EXPECTED_RESULT), parser_status((CONTEXT)));     \
         char *_assert_message = parser_status_message((CONTEXT));       \
         assert_not_null(_assert_message);                               \
-        log_info("parser test", "for expression: '%s', received expected failure message: '%s'", (EXPRESSION), _assert_message); \
         free(_assert_message);                                          \
         assert_uint_eq((EXPECTED_POSITION), (CONTEXT)->cursor);         \
     } while(0)
@@ -149,7 +148,7 @@ START_TEST (null_expression)
     parser_context *context = make_parser((uint8_t *)expression, 50);
     assert_not_null(context);
     assert_errno(EINVAL);
-    
+
     assert_parser_failure(expression, context, NULL, ERR_NULL_EXPRESSION, 0);
     parser_free(context);
 }
@@ -179,12 +178,12 @@ END_TEST
 START_TEST (bogus_context_path)
 {
     uint8_t bogus_input = 64;
-    
+
     parser_context context;
     context.path = NULL;
     context.input = &bogus_input;
     context.length = 5;
-    
+
     reset_errno();
     assert_null(parse(&context));
     assert_errno(EINVAL);
@@ -194,7 +193,7 @@ END_TEST
 START_TEST (bogus_context_input)
 {
     jsonpath bogus_path;
-    
+
     parser_context context;
     context.path = &bogus_path;
     context.input = NULL;
@@ -210,7 +209,7 @@ START_TEST (bogus_context_length)
 {
     jsonpath bogus_path;
     uint8_t bogus_input = 64;
-    
+
     parser_context context;
     context.path = &bogus_path;
     context.input = &bogus_input;
@@ -231,7 +230,7 @@ START_TEST (missing_step_test)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_PREMATURE_END_OF_INPUT, 2);
     parser_free(context);
     path_free(path);
@@ -247,7 +246,7 @@ START_TEST (missing_recursive_step_test)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_PREMATURE_END_OF_INPUT, 3);
     parser_free(context);
     path_free(path);
@@ -263,7 +262,7 @@ START_TEST (missing_dot)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_UNEXPECTED_VALUE, 1);
     parser_free(context);
     path_free(path);
@@ -279,7 +278,7 @@ START_TEST (relative_path_begins_with_dot)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EXPECTED_NAME_CHAR, 0);
     parser_free(context);
     path_free(path);
@@ -295,9 +294,9 @@ START_TEST (quoted_empty_step)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EXPECTED_NAME_CHAR, 7);
-    
+
     parser_free(context);
     path_free(path);
 }
@@ -312,7 +311,7 @@ START_TEST (empty_predicate)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EMPTY_PREDICATE, 6);
     parser_free(context);
     path_free(path);
@@ -328,7 +327,7 @@ START_TEST (extra_junk_in_predicate)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EXTRA_JUNK_AFTER_PREDICATE, 9);
     parser_free(context);
     path_free(path);
@@ -344,7 +343,7 @@ START_TEST (whitespace_predicate)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EMPTY_PREDICATE, 9);
     parser_free(context);
     path_free(path);
@@ -360,7 +359,7 @@ START_TEST (bogus_predicate)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_UNSUPPORTED_PRED_TYPE, 6);
     parser_free(context);
     path_free(path);
@@ -376,7 +375,7 @@ START_TEST (bogus_type_test_name)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     parser_free(context);
     path_free(path);
@@ -392,7 +391,7 @@ START_TEST (bogus_type_test_name_oblong)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     parser_free(context);
     path_free(path);
@@ -408,7 +407,7 @@ START_TEST (bogus_type_test_name_alloy)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     parser_free(context);
     path_free(path);
@@ -424,7 +423,7 @@ START_TEST (bogus_type_test_name_strong)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     parser_free(context);
     path_free(path);
@@ -440,7 +439,7 @@ START_TEST (bogus_type_test_name_numbered)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     parser_free(context);
     path_free(path);
@@ -456,7 +455,7 @@ START_TEST (bogus_type_test_name_booger)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     parser_free(context);
     path_free(path);
@@ -472,7 +471,7 @@ START_TEST (bogus_type_test_name_narl)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     parser_free(context);
     path_free(path);
@@ -488,7 +487,7 @@ START_TEST (empty_type_test_name)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_failure(expression, context, path, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     parser_free(context);
     path_free(path);
@@ -504,7 +503,7 @@ START_TEST (dollar_only)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 1);
     assert_root_step(path);
 
@@ -522,13 +521,13 @@ START_TEST (absolute_single_step)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 2);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
     assert_no_predicate(path, 0);
 
-    path_free(path);    
+    path_free(path);
     parser_free(context);
 }
 END_TEST
@@ -542,13 +541,13 @@ START_TEST (absolute_recursive_step)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 2);
     assert_root_step(path);
     assert_recursive_name_step(path, 1, "foo");
     assert_no_predicate(path, 0);
 
-    path_free(path);    
+    path_free(path);
     parser_free(context);
 }
 END_TEST
@@ -562,7 +561,7 @@ START_TEST (absolute_multi_step)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 5);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -574,7 +573,7 @@ START_TEST (absolute_multi_step)
     assert_no_predicate(path, 3);
     assert_no_predicate(path, 4);
 
-    path_free(path);    
+    path_free(path);
     parser_free(context);
 }
 END_TEST
@@ -588,7 +587,7 @@ START_TEST (relative_multi_step)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, RELATIVE_PATH, 3);
     assert_single_name_step(path, 0, "foo");
     assert_single_name_step(path, 1, "bar");
@@ -597,7 +596,7 @@ START_TEST (relative_multi_step)
     assert_no_predicate(path, 1);
     assert_no_predicate(path, 2);
 
-    path_free(path);    
+    path_free(path);
     parser_free(context);
 }
 END_TEST
@@ -611,7 +610,7 @@ START_TEST (quoted_multi_step)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 4);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -621,7 +620,7 @@ START_TEST (quoted_multi_step)
     assert_no_predicate(path, 2);
     assert_no_predicate(path, 3);
 
-    path_free(path);    
+    path_free(path);
     parser_free(context);
 }
 END_TEST
@@ -635,7 +634,7 @@ START_TEST (wildcard)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -657,7 +656,7 @@ START_TEST (recursive_wildcard)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -701,7 +700,7 @@ START_TEST (whitespace)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 4);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -711,7 +710,7 @@ START_TEST (whitespace)
     assert_no_predicate(path, 2);
     assert_no_predicate(path, 3);
 
-    path_free(path);    
+    path_free(path);
     parser_free(context);
 }
 END_TEST
@@ -725,7 +724,7 @@ START_TEST (type_test_missing_closing_paren)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -747,7 +746,7 @@ START_TEST (recursive_type_test)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -769,7 +768,7 @@ START_TEST (object_type_test)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -791,7 +790,7 @@ START_TEST (array_type_test)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -813,7 +812,7 @@ START_TEST (string_type_test)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -835,7 +834,7 @@ START_TEST (number_type_test)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -857,7 +856,7 @@ START_TEST (boolean_type_test)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -879,7 +878,7 @@ START_TEST (null_type_test)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -901,7 +900,7 @@ START_TEST (wildcard_predicate)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 4);
     assert_root_step(path);
     assert_single_name_step(path, 1, "store");
@@ -925,7 +924,7 @@ START_TEST (wildcard_predicate_with_whitespace)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -947,7 +946,7 @@ START_TEST (subscript_predicate)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -969,7 +968,7 @@ START_TEST (subscript_predicate_with_whitespace)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -991,7 +990,7 @@ START_TEST (type_test_with_subscript_predicate)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -1013,7 +1012,7 @@ START_TEST (negative_subscript_predicate)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     // xxx - fixme! this should be ERR_EXPECTED_INTEGER instead!
     assert_parser_failure(expression, context, path, ERR_UNSUPPORTED_PRED_TYPE, 7);
     path_free(path);
@@ -1030,7 +1029,7 @@ START_TEST (slice_predicate_form1)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -1052,7 +1051,7 @@ START_TEST (slice_predicate_form1_with_step)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -1074,7 +1073,7 @@ START_TEST (slice_predicate_form2)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -1096,7 +1095,7 @@ START_TEST (slice_predicate_form2_with_step)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -1118,7 +1117,7 @@ START_TEST (slice_predicate_form3)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -1140,7 +1139,7 @@ START_TEST (slice_predicate_form3_with_step)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -1162,7 +1161,7 @@ START_TEST (slice_predicate_with_whitespace)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -1184,7 +1183,7 @@ START_TEST (negative_step_slice_predicate)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
     assert_root_step(path);
     assert_single_name_step(path, 1, "foo");
@@ -1206,7 +1205,7 @@ START_TEST (zero_step_slice_predicate)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     // xxx - fix me! this should be ERR_STEP_CANNOT_BE_ZERO instead
     // xxx - fix me! this should be position 8 instead, need a non-zero signed int parser
     assert_parser_failure(expression, context, path, ERR_UNSUPPORTED_PRED_TYPE, 9);
@@ -1225,7 +1224,7 @@ START_TEST (iteration)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
 
     unsigned long counter = 0;
@@ -1253,7 +1252,7 @@ START_TEST (fail_iteration)
     assert_noerr();
 
     jsonpath *path = parse(context);
-    
+
     assert_parser_success(expression, context, path, ABSOLUTE_PATH, 3);
 
     unsigned long counter = 0;
@@ -1284,7 +1283,7 @@ START_TEST (bad_path_input)
     reset_errno();
     assert_null(path_get(NULL, 0));
     assert_errno(EINVAL);
-    
+
     reset_errno();
     char *expression = "$";
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
@@ -1312,7 +1311,7 @@ START_TEST (bad_step_input)
     reset_errno();
     assert_null(step_predicate(NULL));
     assert_errno(EINVAL);
-    
+
     reset_errno();
     char *expression = "$.foo.array()";
     parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
@@ -1368,7 +1367,7 @@ START_TEST (bad_predicate_input)
 
     reset_errno();
     char *expression = "$.foo[42].bar[*]";
-    parser_context *context = make_parser((uint8_t *)expression, strlen(expression));    
+    parser_context *context = make_parser((uint8_t *)expression, strlen(expression));
     assert_not_null(context);
     assert_noerr();
 
@@ -1475,7 +1474,7 @@ Suite *jsonpath_suite(void)
     tcase_add_test(api_case, iteration);
     tcase_add_test(api_case, fail_iteration);
 
-    Suite *suite = suite_create("JSONPath");
+    Suite *suite = suite_create("Parser");
     suite_add_tcase(suite, bad_input_case);
     suite_add_tcase(suite, basic_case);
     suite_add_tcase(suite, node_type_case);

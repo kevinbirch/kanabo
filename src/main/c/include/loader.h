@@ -37,7 +37,6 @@
 
 #pragma once
 
-#include <stdio.h>
 #include <yaml.h>
 
 #include "model.h"

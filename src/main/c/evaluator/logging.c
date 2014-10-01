@@ -37,7 +37,6 @@
 
 #include "evaluator.h"
 #include "evaluator/private.h"
-#include "conditions.h"
 
 static const char * const MESSAGES[] =
 {
@@ -53,9 +52,8 @@ static const char * const MESSAGES[] =
     "The path is not supported",
 };
 
-const char *evaluator_status_message(const evaluator_context *context)
-{
-    PRECOND_NONNULL_ELSE_NULL(context);
 
-    return MESSAGES[context->code];
+const char *evaluator_status_message(evaluator_status_code code)
+{
+    return MESSAGES[code];
 }

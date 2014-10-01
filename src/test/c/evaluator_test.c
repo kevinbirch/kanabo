@@ -52,12 +52,11 @@
 
 static document_model *model_fixture = NULL;
 
-#define assert_evaluator_failure(CONTEXT, EXPECTED_RESULT)              \
+#define assert_evaluator_failure(CONTEXT, CODE)                         \
     do                                                                  \
     {                                                                   \
-        assert_not_null((CONTEXT));                                     \
-        assert_int_eq((EXPECTED_RESULT), evaluator_status((CONTEXT)));  \
-        log_debug("evaluator test", "received expected failure message: '%s'", evaluator_status_message((CONTEXT))); \
+        assert_int_eq((CODE), (CONTEXT).nothing.code);                  \
+        log_debug("evaluator test", "received expected failure message: '%s'", evaluator_status_message((CODE))); \
     } while(0)
 
 static document_model *load_document(const char *filename)
@@ -66,6 +65,7 @@ static document_model *load_document(const char *filename)
     FILE *input = fopen(filename, "r");
     assert_not_null(input);
 
+    reset_errno();
     MaybeDocument maybe = load_file(input, DUPE_CLOBBER);
     assert_noerr();
     int result = fclose(input);
@@ -104,26 +104,25 @@ START_TEST (null_model)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    evaluator_context *evaluator = make_evaluator(NULL, path);
-    assert_not_null(evaluator);
+    reset_errno();
+    MaybeNodelist maybe = evaluate(NULL, path);
     assert_errno(EINVAL);
+    assert_evaluator_failure(maybe, ERR_MODEL_IS_NULL);
 
-    assert_evaluator_failure(evaluator, ERR_MODEL_IS_NULL);
     path_free(path);
-    evaluator_free(evaluator);
 }
 END_TEST
 
 START_TEST (null_path)
 {
     document_model *bad_model = make_model();
-    evaluator_context *evaluator = make_evaluator(bad_model, NULL);
-    assert_not_null(evaluator);
-    assert_errno(EINVAL);
 
-    assert_evaluator_failure(evaluator, ERR_PATH_IS_NULL);
+    reset_errno();
+    MaybeNodelist maybe = evaluate(bad_model, NULL);
+    assert_errno(EINVAL);
+    assert_evaluator_failure(maybe, ERR_PATH_IS_NULL);
+
     model_free(bad_model);
-    evaluator_free(evaluator);
 }
 END_TEST
 
@@ -139,14 +138,14 @@ START_TEST (null_document)
     parser_free(parser);
 
     document_model *bad_model = make_model();
-    evaluator_context *evaluator = make_evaluator(bad_model, path);
-    assert_not_null(evaluator);
-    assert_errno(EINVAL);
 
-    assert_evaluator_failure(evaluator, ERR_NO_DOCUMENT_IN_MODEL);
+    reset_errno();
+    MaybeNodelist maybe = evaluate(bad_model, path);
+    assert_errno(EINVAL);
+    assert_evaluator_failure(maybe, ERR_NO_DOCUMENT_IN_MODEL);
+
     model_free(bad_model);
     path_free(path);
-    evaluator_free(evaluator);
 }
 END_TEST
 
@@ -170,14 +169,13 @@ START_TEST (null_document_root)
     document->content.target = NULL;
     model_add(bad_model, document);
 
-    evaluator_context *evaluator = make_evaluator(bad_model, path);
-    assert_not_null(evaluator);
+    reset_errno();
+    MaybeNodelist maybe = evaluate(bad_model, path);
     assert_errno(EINVAL);
+    assert_evaluator_failure(maybe, ERR_NO_ROOT_IN_DOCUMENT);
 
-    assert_evaluator_failure(evaluator, ERR_NO_ROOT_IN_DOCUMENT);
     model_free(bad_model);
     path_free(path);
-    evaluator_free(evaluator);
 }
 END_TEST
 
@@ -198,14 +196,13 @@ START_TEST (relative_path)
     document_set_root(document, root);
     model_add(bad_model, document);
 
-    evaluator_context *evaluator = make_evaluator(bad_model, path);
-    assert_not_null(evaluator);
+    reset_errno();
+    MaybeNodelist maybe = evaluate(bad_model, path);
     assert_errno(EINVAL);
+    assert_evaluator_failure(maybe, ERR_PATH_IS_NOT_ABSOLUTE);
 
-    assert_evaluator_failure(evaluator, ERR_PATH_IS_NOT_ABSOLUTE);
     model_free(bad_model);
     path_free(path);
-    evaluator_free(evaluator);
 }
 END_TEST
 
@@ -224,81 +221,19 @@ START_TEST (empty_path)
     document_set_root(document, root);
     model_add(bad_model, document);
 
-    evaluator_context *evaluator = make_evaluator(bad_model, path);
-    assert_not_null(evaluator);
-    assert_errno(EINVAL);
-
-    assert_evaluator_failure(evaluator, ERR_PATH_IS_EMPTY);
-    model_free(bad_model);
-    free(path);
-    evaluator_free(evaluator);
-}
-END_TEST
-
-START_TEST (null_context)
-{
     reset_errno();
-    assert_null(evaluate(NULL));
+    MaybeNodelist maybe = evaluate(bad_model, path);
     assert_errno(EINVAL);
-}
-END_TEST
-
-START_TEST (null_context_model)
-{
-    evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
-    evaluator->model = NULL;
-    evaluator->path = NULL;
-    evaluator->list = NULL;
-
-    reset_errno();
-    assert_null(evaluate(evaluator));
-    assert_errno(EINVAL);
-
-    free(evaluator);
-}
-END_TEST
-
-START_TEST (null_context_path)
-{
-    document_model *bad_model = make_model();
-    evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
-    evaluator->model = bad_model;
-    evaluator->path = NULL;
-    evaluator->list = NULL;
-
-    reset_errno();
-    assert_null(evaluate(evaluator));
-    assert_errno(EINVAL);
-
-    model_free(bad_model);
-    free(evaluator);
-}
-END_TEST
-
-START_TEST (null_context_list)
-{
-    document_model *bad_model = make_model();
-    jsonpath *path = (jsonpath *)calloc(1, sizeof(jsonpath));
-
-    evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
-    evaluator->model = bad_model;
-    evaluator->path = path;
-    evaluator->list = NULL;
-
-    reset_errno();
-    assert_null(evaluate(evaluator));
-    assert_errno(EINVAL);
+    assert_evaluator_failure(maybe, ERR_PATH_IS_EMPTY);
 
     model_free(bad_model);
     free(path);
-    free(evaluator);
 }
 END_TEST
 
-START_TEST (null_context_document)
+static nodelist *evaluate_expression(const char *expression)
 {
-    char *expression = "foo";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
+    parser_context *parser = make_parser((const uint8_t *)expression, strlen(expression));
     assert_not_null(parser);
 
     jsonpath *path = parse(parser);
@@ -306,141 +241,18 @@ START_TEST (null_context_document)
     assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
     parser_free(parser);
 
-    document_model *bad_model = make_model();
-    evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
-    evaluator->model = bad_model;
-    evaluator->path = path;
-    evaluator->list = make_nodelist();
-
     reset_errno();
-    assert_null(evaluate(evaluator));
-    assert_errno(EINVAL);
-
-    model_free(bad_model);
+    MaybeNodelist maybe = evaluate(model_fixture, path);
+    assert_noerr();
+    assert_int_eq(JUST, maybe.tag);
+    assert_not_null(maybe.just);
     path_free(path);
-    free(evaluator);
+    return maybe.just;
 }
-END_TEST
-
-START_TEST (null_context_document_root)
-{
-    char *expression = "foo";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    node *document = (node *)calloc(1, sizeof(struct node));
-    assert_not_null(document);
-    document->tag.kind = DOCUMENT;
-    document->tag.name = NULL;
-    document->content.size = 0;
-    document->content.target = NULL;
-
-    document_model *bad_model = make_model();
-    model_add(bad_model, document);
-
-    evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
-    evaluator->model = bad_model;
-    evaluator->path = path;
-    evaluator->list = make_nodelist();
-
-    reset_errno();
-    assert_null(evaluate(evaluator));
-    assert_errno(EINVAL);
-
-    model_free(bad_model);
-    nodelist_free(evaluator->list);
-    path_free(path);
-    free(evaluator);
-}
-END_TEST
-
-START_TEST (relative_context_path)
-{
-    char *expression = "foo";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    document_model *bad_model = make_model();
-    node *root = make_mapping_node();
-    node *document = make_document_node();
-    document_set_root(document, root);
-    model_add(bad_model, document);
-
-    evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
-    evaluator->model = bad_model;
-    evaluator->path = path;
-    evaluator->list = make_nodelist();
-
-    reset_errno();
-    assert_null(evaluate(evaluator));
-    assert_errno(EINVAL);
-
-    model_free(bad_model);
-    nodelist_free(evaluator->list);
-    path_free(path);
-    free(evaluator);
-}
-END_TEST
-
-START_TEST (empty_context_path)
-{
-    jsonpath *path = (jsonpath *)calloc(1, sizeof(jsonpath));
-    assert_not_null(path);
-    path->kind = ABSOLUTE_PATH;
-    path->length = 0;
-    path->steps = NULL;
-
-    document_model *bad_model = make_model();
-    node *root = make_mapping_node();
-    node *document = make_document_node();
-    document_set_root(document, root);
-    model_add(bad_model, document);
-
-    evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
-    evaluator->model = bad_model;
-    evaluator->path = path;
-    evaluator->list = make_nodelist();
-
-    reset_errno();
-    assert_null(evaluate(evaluator));
-    assert_errno(EINVAL);
-
-    model_free(bad_model);
-    nodelist_free(evaluator->list);
-    free(path);
-    free(evaluator);
-}
-END_TEST
 
 START_TEST (dollar_only)
 {
-    char *expression = "$";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$");
 
     assert_nodelist_length(list, 1);
     assert_node_kind(nodelist_get(list, 0), MAPPING);
@@ -453,23 +265,7 @@ END_TEST
 
 START_TEST (single_name_step)
 {
-    char *expression = "$.store";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store");
 
     assert_nodelist_length(list, 1);
     node *store = nodelist_get(list, 0);
@@ -486,23 +282,7 @@ END_TEST
 
 START_TEST (simple_recursive_step)
 {
-    char *expression = "$..author";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$..author");
 
     assert_nodelist_length(list, 5);
 
@@ -517,23 +297,7 @@ END_TEST
 
 START_TEST (compound_recursive_step)
 {
-    char * expression = "$.store..price";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store..price");
 
     assert_nodelist_length(list, 6);
 
@@ -550,23 +314,7 @@ END_TEST
 
 START_TEST (long_path)
 {
-    char *expression = "$.store.bicycle.color";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.bicycle.color");
 
     assert_nodelist_length(list, 1);
     node *color = nodelist_get(list, 0);
@@ -581,23 +329,7 @@ END_TEST
 
 START_TEST (wildcard)
 {
-    char *expression = "$.store.*";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.*");
 
     assert_nodelist_length(list, 6);
 
@@ -613,23 +345,7 @@ END_TEST
 
 START_TEST (recursive_wildcard)
 {
-    char *expression = "$..*";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$..*");
 
     assert_nodelist_length(list, 34);
 
@@ -641,23 +357,7 @@ END_TEST
 
 START_TEST (object_test)
 {
-    char *expression = "$.store.object()";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.object()");
 
     assert_nodelist_length(list, 1);
 
@@ -674,23 +374,7 @@ END_TEST
 
 START_TEST (array_test)
 {
-    char * expression = "$.store.book.array()";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.book.array()");
 
     assert_nodelist_length(list, 1);
 
@@ -705,23 +389,7 @@ END_TEST
 
 START_TEST (number_test)
 {
-    char * expression = "$.store.book[*].price.number()";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.book[*].price.number()");
 
     assert_nodelist_length(list, 5);
 
@@ -736,23 +404,7 @@ END_TEST
 
 START_TEST (wildcard_predicate)
 {
-    char *expression = "$.store.book[*].author";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.book[*].author");
 
     assert_nodelist_length(list, 5);
 
@@ -767,23 +419,7 @@ END_TEST
 
 START_TEST (wildcard_predicate_on_mapping)
 {
-    char *expression = "$.store.bicycle[*].color";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.bicycle[*].color");
 
     assert_nodelist_length(list, 1);
 
@@ -797,23 +433,7 @@ END_TEST
 
 START_TEST (wildcard_predicate_on_scalar)
 {
-    char *expression = "$.store.bicycle.color[*]";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.bicycle.color[*]");
 
     assert_nodelist_length(list, 1);
 
@@ -827,23 +447,7 @@ END_TEST
 
 START_TEST (subscript_predicate)
 {
-    char *expression = "$.store.book[2]";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.book[2]");
 
     assert_nodelist_length(list, 1);
 
@@ -863,23 +467,7 @@ END_TEST
 
 START_TEST (recursive_subscript_predicate)
 {
-    char *expression = "$..book[2]";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$..book[2]");
 
     assert_nodelist_length(list, 1);
 
@@ -899,23 +487,7 @@ END_TEST
 
 START_TEST (slice_predicate)
 {
-    char *expression = "$.store.book[:2]";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.book[:2]");
 
     assert_nodelist_length(list, 2);
 
@@ -947,23 +519,7 @@ END_TEST
 
 START_TEST (recursive_slice_predicate)
 {
-    char *expression = "$..book[:2]";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$..book[:2]");
 
     assert_nodelist_length(list, 2);
 
@@ -995,23 +551,7 @@ END_TEST
 
 START_TEST (slice_predicate_with_step)
 {
-    char *expression = "$.store.book[:2:2]";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.book[:2:2]");
 
     assert_nodelist_length(list, 1);
 
@@ -1032,23 +572,7 @@ END_TEST
 
 START_TEST (slice_predicate_negative_from)
 {
-    char *expression = "$.store.book[-1:]";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.book[-1:]");
 
     assert_nodelist_length(list, 1);
 
@@ -1069,23 +593,7 @@ END_TEST
 
 START_TEST (recursive_slice_predicate_negative_from)
 {
-    char *expression = "$..book[-1:]";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$..book[-1:]");
 
     assert_nodelist_length(list, 1);
 
@@ -1106,23 +614,7 @@ END_TEST
 
 START_TEST (slice_predicate_copy)
 {
-    char *expression = "$.store.book[::]";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.book[::]");
 
     assert_nodelist_length(list, 5);
 
@@ -1145,23 +637,7 @@ END_TEST
 
 START_TEST (slice_predicate_reverse)
 {
-    char *expression = "$.store.book[::-1]";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.store.book[::-1]");
 
     assert_nodelist_length(list, 5);
 
@@ -1187,23 +663,7 @@ END_TEST
 
 START_TEST (name_alias)
 {
-    char *expression = "$.payment.billing-address.name";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.payment.billing-address.name");
 
     assert_nodelist_length(list, 1);
     reset_errno();
@@ -1216,23 +676,7 @@ END_TEST
 
 START_TEST (type_alias)
 {
-    char *expression = "$.shipments[0].*.number()";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.shipments[0].*.number()");
 
     assert_nodelist_length(list, 1);
     reset_errno();
@@ -1245,23 +689,7 @@ END_TEST
 
 START_TEST (greedy_wildcard_alias)
 {
-    char *expression = "$.shipments[0].items.*";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.shipments[0].items.*");
 
     assert_nodelist_length(list, 2);
 
@@ -1282,23 +710,7 @@ END_TEST
 
 START_TEST (recursive_alias)
 {
-    char *expression = "$.shipments..isbn";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.shipments..isbn");
 
     assert_nodelist_length(list, 2);
 
@@ -1311,23 +723,7 @@ END_TEST
 
 START_TEST (wildcard_predicate_alias)
 {
-    char *expression = "$.shipments[0].items[*].price";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.shipments[0].items[*].price");
 
     assert_nodelist_length(list, 2);
 
@@ -1340,23 +736,7 @@ END_TEST
 
 START_TEST (recursive_wildcard_alias)
 {
-    char *expression = "$.shipments[0].items..*";
-    parser_context *parser = make_parser((uint8_t *)expression, strlen(expression));
-    assert_not_null(parser);
-
-    jsonpath *path = parse(parser);
-    assert_not_null(path);
-    assert_int_eq(JSONPATH_SUCCESS, parser_status(parser));
-    parser_free(parser);
-
-    evaluator_context *evaluator = make_evaluator(model_fixture, path);
-    assert_not_null(evaluator);
-
-    nodelist *list = evaluate(evaluator);
-    assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
-    assert_not_null(list);
-    evaluator_free(evaluator);
-    path_free(path);
+    nodelist *list = evaluate_expression("$.shipments[0].items..*");
 
     assert_nodelist_length(list, 15);
 
@@ -1373,14 +753,6 @@ Suite *evaluator_suite(void)
     tcase_add_test(bad_input_case, null_document_root);
     tcase_add_test(bad_input_case, relative_path);
     tcase_add_test(bad_input_case, empty_path);
-    tcase_add_test(bad_input_case, null_context);
-    tcase_add_test(bad_input_case, null_context_model);
-    tcase_add_test(bad_input_case, null_context_path);
-    tcase_add_test(bad_input_case, null_context_list);
-    tcase_add_test(bad_input_case, null_context_document);
-    tcase_add_test(bad_input_case, null_context_document_root);
-    tcase_add_test(bad_input_case, relative_context_path);
-    tcase_add_test(bad_input_case, empty_context_path);
 
     TCase *basic_case = tcase_create("basic");
     tcase_add_unchecked_fixture(basic_case, inventory_setup, evaluator_teardown);

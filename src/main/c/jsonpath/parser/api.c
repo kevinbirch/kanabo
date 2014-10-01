@@ -46,19 +46,16 @@ parser_context *make_parser(const uint8_t *expression, size_t length)
     parser_context *context = (parser_context *)calloc(1, sizeof(parser_context));
     if(NULL == context)
     {
-        parser_error("uh oh! out of memory, can't allocate the parser context");
         return NULL;
     }
     if(NULL == expression)
     {
-        parser_error("expression is null");
         context->result.code = ERR_NULL_EXPRESSION;
         errno = EINVAL;
         return context;
     }
     if(0 == length)
     {
-        parser_error("expression is empty");
         context->result.code = ERR_ZERO_LENGTH;
         errno = EINVAL;
         return context;
@@ -66,14 +63,12 @@ parser_context *make_parser(const uint8_t *expression, size_t length)
     jsonpath *path = (jsonpath *)calloc(1, sizeof(jsonpath));
     if(NULL == path)
     {
-        parser_error("uh oh! out of memory, can't allocate the result nodelist");
         context->result.code = ERR_PARSER_OUT_OF_MEMORY;
         return context;
     }
     path->expression = (uint8_t *)calloc(1, length);
     if(NULL == path->expression)
     {
-        parser_error("uh oh! out of memory, can't allocate the parser context");
         return NULL;
     }
     memcpy(path->expression, expression, length);
@@ -134,11 +129,6 @@ jsonpath *parse(parser_context *context)
     else
     {
         context->result.actual_char = context->input[context->cursor];
-#ifdef USE_LOGGING
-        char *message = parser_status_message(context);
-        parser_error("aborted. unable to create jsonpath model. status: %d (%s)", context->result.code, message);
-        free(message);
-#endif
         path_free(context->path);
         context->path = NULL;
         return NULL;

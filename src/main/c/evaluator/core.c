@@ -60,7 +60,6 @@ struct meta_context
 
 typedef struct meta_context meta_context;
 
-static nodelist *evaluate_steps(evaluator_context *context);
 static bool evaluate_step(step* each, void *context);
 static bool evaluate_root_step(evaluator_context *context);
 static bool evaluate_single_step(evaluator_context *context);
@@ -87,42 +86,38 @@ static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *co
 static void normalize_interval(node *value, predicate *slice, int *from, int *to, int *step);
 
 #define current_step(CONTEXT) path_get((CONTEXT)->path, (CONTEXT)->current_step)
-#ifdef USE_LOGGING
-#define guard(EXPR) EXPR ? true : (evaluator_error("uh oh! out of memory, aborting. (line: " S(__LINE__) ")"), context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false)
-#else
 #define guard(EXPR) EXPR ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false)
-#endif
 
-nodelist *evaluate(evaluator_context *context)
+
+evaluator_status_code evaluate_steps(const document_model *model, const jsonpath *path, nodelist **list)
 {
-    PRECOND_NONNULL_ELSE_NULL(context);
-    PRECOND_NONNULL_ELSE_NULL(context->list);
-    PRECOND_NONNULL_ELSE_NULL(context->model);
-    PRECOND_NONNULL_ELSE_NULL(context->path);
-    PRECOND_NONNULL_ELSE_NULL(model_document(context->model, 0));
-    PRECOND_NONNULL_ELSE_NULL(model_document_root(context->model, 0));
-    PRECOND_ELSE_NULL(ABSOLUTE_PATH == path_kind(context->path));
-    PRECOND_ELSE_NULL(0 != path_length(context->path));
+    evaluator_debug("beginning evaluation of %d steps", path_length(path));
 
-    nodelist_add(context->list, model_document(context->model, 0));
+    evaluator_context context;
+    memset(&context, 0, sizeof(evaluator_context));
 
-    return evaluate_steps(context);
-}
-
-static nodelist *evaluate_steps(evaluator_context *context)
-{
-    evaluator_debug("beginning evaluation of %d steps", path_length(context->path));
-
-    if(!path_iterate(context->path, evaluate_step, context))
+    *list = NULL;
+    context.list = make_nodelist();
+    if(NULL == context.list)
     {
-        evaluator_error("aborted, step: %d, code: %d (%s)", context->current_step, context->code, evaluator_status_message(context));
-        nodelist_free(context->list);
-        context->list = NULL;
-        return NULL;
+        evaluator_debug("uh oh! out of memory, can't allocate the result nodelist");
+        return ERR_EVALUATOR_OUT_OF_MEMORY;
     }
 
-    evaluator_debug("done, found %d matching nodes", nodelist_length(context->list));
-    return context->list;
+    context.model = model;
+    context.path = path;
+
+    nodelist_add(context.list, model_document(model, 0));
+
+    if(!path_iterate(path, evaluate_step, &context))
+    {
+        evaluator_error("aborted, step: %d, code: %d (%s)", context.current_step, context.code, evaluator_status_message(context.code));
+        return context.code;
+    }
+
+    evaluator_debug("done, found %d matching nodes", nodelist_length(context.list));
+    *list = context.list;
+    return context.code;
 }
 
 static bool evaluate_step(step* each, void *argument)

@@ -37,6 +37,9 @@
 
 #pragma once
 
+#include "evaluator.h"
+#include "log.h"
+
 struct evaluator_context
 {
     enum evaluator_status_code code;
@@ -45,6 +48,11 @@ struct evaluator_context
     const jsonpath            *path;
     nodelist                  *list;
 };
+
+typedef struct evaluator_context evaluator_context;
+
+evaluator_status_code evaluate_steps(const document_model *model, const jsonpath *path, nodelist **list);
+const char *evaluator_status_message(evaluator_status_code code);
 
 #define component_name "evaluator"
 

@@ -129,35 +129,14 @@ static jsonpath *parse_expression(const char *expression, const struct options *
 static nodelist *evaluate_expression(const jsonpath *path, const document_model *model, const struct options *options)
 {
     log_trace(options->program_name, "evaluating expression");
-    evaluator_context *evaluator = make_evaluator(model, path);
-    if(NULL == evaluator)
+    MaybeNodelist maybe = evaluate(model, path);
+    if(NOTHING == maybe.tag)
     {
         char *expression = (char *)path_expression(path);
-        error(options, "while evaluating the expression '%s': %s", expression, strerror(errno));
+        error(options, "while evaluating the expression '%s': %s", expression, maybe.nothing.message);
         return NULL;
     }
-
-    if(evaluator_status(evaluator))
-    {
-        char *expression = (char *)path_expression(path);
-        const char *message = evaluator_status_message(evaluator);
-        error(options, "while evaluating the expression '%s': %s", expression, message);
-        evaluator_free(evaluator);
-        return NULL;
-    }
-
-    nodelist *list = evaluate(evaluator);
-    if(evaluator_status(evaluator))
-    {
-        char *expression = (char *)path_expression(path);
-        const char *message = evaluator_status_message(evaluator);
-        error(options, "while evaluating the expression '%s': %s", expression, message);
-        nodelist_free(list);
-        list = NULL;
-    }
-
-    evaluator_free(evaluator);
-    return list;
+    return maybe.just;
 }
 
 static emit_function get_emitter(const struct options *options)
