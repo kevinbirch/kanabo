@@ -43,19 +43,16 @@
 
 static bool emit_mapping_item(node *key, node *value, void *context);
 
-void emit_zsh(const nodelist *list, const struct options *options)
+bool emit_zsh(const nodelist *list)
 {
     log_debug("zsh", "emitting...");
-    emit_context context = 
+    emit_context context =
         {
             .emit_mapping_item = emit_mapping_item,
             .wrap_collections = false
         };
 
-    if(!nodelist_iterate(list, emit_node, &context))
-    {
-        perror(options->program_name);
-    }
+    return nodelist_iterate(list, emit_node, &context);
 }
 
 static bool emit_mapping_item(node *key, node *value, void * context __attribute__((unused)))

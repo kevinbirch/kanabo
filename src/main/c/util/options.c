@@ -40,12 +40,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <sys/param.h>
-#include <libgen.h>
 #include <getopt.h>
 
 #include "options.h"
-
-static const char * DEFAULT_PROGRAM_NAME = "kanabo";
 
 typedef struct option argument;
 
@@ -108,23 +105,12 @@ inline const char * emit_mode_name(enum emit_mode value)
     return EMIT_MODES[value];
 }
 
-static inline const char *get_program_name(const char *argv0)
-{
-    char *name = basename((char *)argv0);
-    if(NULL == name)
-    {
-        return DEFAULT_PROGRAM_NAME;
-    }
-    return name;
-}
-
 enum command process_options(const int argc, char * const *argv, struct options *options)
 {
     int opt;
     bool done = false;
     enum command command = INTERACTIVE_MODE;
 
-    options->program_name = get_program_name(argv[0]);
     options->emit_mode = BASH;
     options->duplicate_strategy = DUPE_CLOBBER;
     options->input_file_name = NULL;
@@ -159,7 +145,7 @@ enum command process_options(const int argc, char * const *argv, struct options 
                 int32_t mode = parse_emit_mode(optarg);
                 if(-1 == mode)
                 {
-                    fprintf(stderr, "error: %s: unsupported output format `%s'\n", options->program_name, optarg);
+                    fprintf(stderr, "error: %s: unsupported output format `%s'\n", argv[0], optarg);
                     command = SHOW_HELP;
                     done = true;
                     break;
@@ -172,7 +158,7 @@ enum command process_options(const int argc, char * const *argv, struct options 
                 int32_t strategy = parse_duplicate_strategy(optarg);
                 if(-1 == strategy)
                 {
-                    fprintf(stderr, "error: %s: unsupported duplicate strategy `%s'\n", options->program_name, optarg);
+                    fprintf(stderr, "error: %s: unsupported duplicate strategy `%s'\n", argv[0], optarg);
                     command = SHOW_HELP;
                     done = true;
                     break;

@@ -54,11 +54,12 @@ static bool emit_tagged_scalar(const node *scalar, yaml_char_t *tag, yaml_scalar
 #define component "yaml"
 #define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 
-void emit_yaml(const nodelist *list, const struct options *options)
+bool emit_yaml(const nodelist *list)
 {
     log_debug(component, "emitting...");
     yaml_emitter_t emitter;
     yaml_event_t event;
+    bool result = true;
 
     yaml_emitter_initialize(&emitter);
     yaml_emitter_set_output_file(&emitter, stdout);
@@ -67,42 +68,43 @@ void emit_yaml(const nodelist *list, const struct options *options)
     log_trace(component, "stream start");
     yaml_stream_start_event_initialize(&event, YAML_UTF8_ENCODING);
     if (!yaml_emitter_emit(&emitter, &event))
-        goto error;
+    {
+        result = false;
+        goto end;
+    }
 
     log_trace(component, "document start");
     yaml_document_start_event_initialize(&event, &(yaml_version_directive_t){1, 1}, NULL, NULL, 0);
     if (!yaml_emitter_emit(&emitter, &event))
-        goto error;
-
-    if(1 == nodelist_length(list))
     {
-        if(!emit_node(nodelist_get(list, 0), &emitter))
-        {
-            fprintf(stderr, "%s: %s\n", options->program_name, emitter.problem);
-            goto error;
-        }
+        result = false;
+        goto end;
     }
-    else
+
+    if(!emit_nodelist(list, &emitter))
     {
-        if(!emit_nodelist(list, &emitter))
-        {
-            fprintf(stderr, "%s: %s\n", options->program_name, emitter.problem);
-            goto error;
-        }
+        result = false;
+        goto end;
     }
 
     log_trace(component, "document end");
     yaml_document_end_event_initialize(&event, 1);
     if (!yaml_emitter_emit(&emitter, &event))
-        goto error;
+    {
+        result = false;
+        goto end;
+    }
 
     log_trace(component, "stream end");
     yaml_stream_end_event_initialize(&event);
     if (!yaml_emitter_emit(&emitter, &event))
-        goto error;
+    {
+        result = false;
+    }
 
-  error:
+  end:
     yaml_emitter_delete(&emitter);
+    return result;
 }
 
 static bool emit_nodelist(const nodelist *list, yaml_emitter_t *emitter)

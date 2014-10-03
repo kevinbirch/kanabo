@@ -43,7 +43,7 @@
 
 static bool emit_mapping_item(node *key, node *value, void *context);
 
-void emit_bash(const nodelist *list, const struct options *options)
+bool emit_bash(const nodelist *list)
 {
     log_debug("bash", "emitting %zd items...", nodelist_length(list));
     emit_context context = {
@@ -51,11 +51,7 @@ void emit_bash(const nodelist *list, const struct options *options)
             .wrap_collections = true
     };
 
-    if(!nodelist_iterate(list, emit_node, &context))
-    {
-        perror(options->program_name);
-    }
-    log_debug("bash", "finished emitting, flushing output buffers...");
+    return nodelist_iterate(list, emit_node, &context);
 }
 
 static bool emit_mapping_item(node *key, node *value, void *context __attribute__((unused)))

@@ -60,17 +60,16 @@ static bool emit_json_mapping_item(node *key, node *value, void *context);
         log_error(component, "uh oh! couldn't emit literal %s", (STR));    \
     }
 
-void emit_json(const nodelist *list, const struct options *options)
+bool emit_json(const nodelist *list)
 {
     log_debug(component, "emitting...");
     size_t count = 0;
     QEMIT("[");
-    if(!nodelist_iterate(list, emit_json_sequence_item, &count))
-    {
-        perror(options->program_name);
-    }
+    bool result = nodelist_iterate(list, emit_json_sequence_item, &count);
     QEMIT("]");
     QEMIT("\n");
+
+    return result;
 }
 
 static bool emit_json_node(node *each, void *context __attribute__((unused)))
@@ -138,7 +137,7 @@ static bool emit_json_quoted_scalar(const node *each)
 
 static bool emit_json_raw_scalar(const node *each)
 {
-    return fwrite(scalar_value(each), node_size(each), 1, stdout);
+    return 1 == fwrite(scalar_value(each), node_size(each), 1, stdout);
 }
 
 static bool emit_json_sequence_item(node *each, void *context)

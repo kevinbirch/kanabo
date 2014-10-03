@@ -39,20 +39,6 @@
 
 #include "loader.h"
 
-static const char * const HELP =
-    "usage: kanabo [-o <format>] [-d <strategy>] -q <jsonpath> [<file> | '-']\n"
-    "       kanabo [-o <format>] [-d <strategy>] [<file>]\n"
-    "\n"
-    "OPTIONS:\n"
-    "-q, --query <jsonpath>      Specify a single JSONPath query to execute against the input document and exit.\n"
-    "-o, --output <format>       Specify the output format (`bash' (default), `zsh', `json' or `yaml').\n"
-    "-d, --duplicate <strategy>  Specify how to handle duplicate mapping keys (`clobber' (default), `warn' or `fail').\n"
-    "\n"
-    "STANDALONE OPTIONS:\n"
-    "-v, --version               Print the version information and exit.\n"
-    "-w, --no-warranty           Print the no-warranty information and exit.\n"
-    "-h, --help                  Print the usage summary and exit.\n";
-
 enum emit_mode
 {
     BASH,
@@ -74,7 +60,6 @@ typedef enum loader_duplicate_key_strategy dup_strategy;
 
 struct options
 {
-    const char     *program_name;
     const char     *input_file_name;
     const char     *expression;
     enum command    mode;

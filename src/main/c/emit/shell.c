@@ -117,7 +117,7 @@ bool emit_quoted_scalar(const node *each)
 
 bool emit_raw_scalar(const node *each)
 {
-    return fwrite(scalar_value(each), node_size(each), 1, stdout);
+    return 1 == fwrite(scalar_value(each), node_size(each), 1, stdout);
 }
 
 bool emit_sequence_item(node *each, void *context __attribute__((unused)))
