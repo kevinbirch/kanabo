@@ -206,7 +206,7 @@ static int apply_expression(const char *expression, document_model *model, enum 
     }
 
     emit_function emitter = get_emitter(emit_mode);
-    if(emitter(list))
+    if(!emitter(list))
     {
         error("unable to emit results");
     }
