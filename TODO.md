@@ -27,6 +27,8 @@ LICENSE file for more details.
 * libbacktrace instead of execinfo?
 * build: libtool integration?
 * build: shtool integration?
+* build: http://www.gnu.org/software/make/manual/html_node/Canned-Recipes.html#Canned-Recipes
+* fuzzing: https://code.google.com/p/american-fuzzy-lop/
 
 ### evaluator
 
@@ -35,6 +37,14 @@ LICENSE file for more details.
 * implement filter predicates
 * support integer and timestamp scalar types
 * refactor iteration methods to use filter, tranform, fold
+* jit? http://eli.thegreenplace.net/2013/10/17/getting-started-with-libjit-part-1
+* streaming mode
+  * https://github.com/fizx/sit
+  * http://stackoverflow.com/questions/13083491/looking-for-big-sample-dummy-json-data-file
+  * https://github.com/udp/json-parser
+  * https://github.com/zeMirco/sf-city-lots-json
+  * https://github.com/seductiveapps/largeJSON
+* interesting features? http://trentm.com/json/
 
 ### parser
 
@@ -103,10 +113,12 @@ LICENSE file for more details.
 
 ### build
 
+* pkg-config - http://www.freedesktop.org/wiki/Software/pkg-config/
 * http://code.google.com/p/qi-make/
 * http://google-engtools.blogspot.fr/2011/08/build-in-cloud-how-build-system-works.html
 * http://facebook.github.io/buck/
 * http://aosabook.org/en/posa/ninja.html
+* https://github.com/mkpankov/qake
 * gnu make 4.0
   * try --trace to check out rule ordering
 * define, eval to create dynamic rules and shell?
