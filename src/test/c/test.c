@@ -56,7 +56,7 @@ static void handle_signal(int sigval)
     if(SIGSEGV == sigval || SIGABRT == sigval)
     {
         depth = backtrace(stack, 20);
-        fprintf(stderr, "Backtrace follows (most recent first):\n");
+        fputs("Backtrace follows (most recent first):\n", stderr);
         backtrace_symbols_fd(stack, depth, fileno(stderr));
         signal(sigval, SIG_DFL);
     }

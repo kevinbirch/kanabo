@@ -358,6 +358,7 @@ bool transform(node *each, void *context, nodelist *target)
     assert_not_null(each);
     size_t *count = (size_t *)context;
     (*count)++;
+    // xxx - is this pointer leaking?
     char *value;
     int result = asprintf(&value, "%zd", *count);
     assert_int_ne(-1, result);

@@ -44,6 +44,8 @@
 #define _DARWIN_SOURCE
 #endif
 
+#include <tgmath.h>
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -593,21 +595,51 @@ static int normalize_to(predicate *slice, node *value)
     return normalize_extent(slice_predicate_has_to(slice), (int)slice_predicate_to(slice), length, length);
 }
 
-static void normalize_interval(node *value, predicate *slice, int *from, int *to, int *increment)
+#ifdef USE_LOGGING
+static inline void log_interval(node *value, predicate *slice)
+{
+    const char * const fmt = "slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items";
+    size_t len = (unsigned)lrint(floor(log10((float)ULLONG_MAX))) + 1;
+    char from_repr[len + 1];
+    if(slice_predicate_has_from(slice))
+    {
+        snprintf(from_repr, len, "%d", slice_predicate_from(slice));
+    }
+    else
+    {
+        from_repr[0] = '_';
+        from_repr[1] = '\0';
+    }
+    char to_repr[len + 1];
+    if(slice_predicate_has_to(slice))
+    {
+        snprintf(to_repr, len, "%d", slice_predicate_to(slice));
+    }
+    else
+    {
+        to_repr[0] = '_';
+        to_repr[1] = '\0';
+    }
+    char step_repr[len + 1];
+    if(slice_predicate_has_step(slice))
+    {
+        snprintf(step_repr, len, "%d", slice_predicate_step(slice));
+    }
+    else
+    {
+        step_repr[0] = '_';
+        step_repr[1] = '\0';
+    }
+    evaluator_trace(fmt, from_repr, to_repr, step_repr, value, node_size(value));
+}
+#endif
+
+static void normalize_interval(node *value, predicate *slice, int *from_val, int *to_val, int *step_val)
 {
 #ifdef USE_LOGGING
-    char *from_fmt = NULL, *to_fmt = NULL, *increment_fmt = NULL;
-    int from_result  = 0;
-    int to_result = 0;
-    int inc_result = 0;
-    evaluator_trace("slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items",
-                    slice_predicate_has_from(slice) ? (from_result = asprintf(&from_fmt, "%d", (int)slice_predicate_from(slice)), -1 == from_result ? "?" : from_fmt) : "_",
-                    slice_predicate_has_to(slice) ? (to_result = asprintf(&to_fmt, "%d", (int)slice_predicate_to(slice)), -1 == to_result ? "?" : to_fmt) : "_",
-                    slice_predicate_has_step(slice) ? (inc_result = asprintf(&increment_fmt, "%d", (int)slice_predicate_step(slice)), -1 == inc_result ? "?" : increment_fmt) : "_",
-                    value, node_size(value));
-    free(from_fmt); free(to_fmt); free(increment_fmt);
+    log_interval(value, slice);
 #endif
-    *increment = slice_predicate_has_step(slice) ? (int)slice_predicate_step(slice) : 1;
-    *from = 0 > *increment ? normalize_to(slice, value) - 1 : normalize_from(slice, value);
-    *to   = 0 > *increment ? normalize_from(slice, value) : normalize_to(slice, value);
+    *step_val = slice_predicate_has_step(slice) ? (int)slice_predicate_step(slice) : 1;
+    *from_val = 0 > *step_val ? normalize_to(slice, value) - 1 : normalize_from(slice, value);
+    *to_val   = 0 > *step_val ? normalize_from(slice, value) : normalize_to(slice, value);
 }

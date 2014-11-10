@@ -55,7 +55,7 @@ struct emit_context
 
 typedef struct emit_context emit_context;
 
-#define EMIT(STR) if(-1 == fprintf(stdout, (STR)))                      \
+#define EMIT(STR) if(EOF == fputs((STR), stdout))                       \
     {                                                                   \
         log_error("shell", "uh oh! couldn't emit literal %s", (STR));   \
         return false;                                                   \

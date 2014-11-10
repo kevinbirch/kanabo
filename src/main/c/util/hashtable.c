@@ -820,13 +820,13 @@ static void rehash(Hashtable *hashtable)
 
 void hashtable_summary(const Hashtable *hashtable, FILE *stream)
 {
-    fprintf(stream, "hashtable summary:\n");
+    fputs("hashtable summary:\n", stream);
     fprintf(stream, "mutable: %s\n", hashtable_is_mutable(hashtable) ? "yes" : "no");
     fprintf(stream, "occupied: %zd of %zd\n", hashtable->occupied, hashtable->capacity);
     fprintf(stream, "capacity: %zd (%zd * %g)\n", hashtable->capacity, hashtable->length >> 1, hashtable->load_factor);
     fprintf(stream, "table length: %zd\n", hashtable->length);
     fprintf(stream, "load factor: %g\n", hashtable->load_factor);
-    fprintf(stream, "bucket report:\n");
+    fputs("bucket report:\n", stream);
     size_t count = 0ul, min = 0ul, max = 0ul, total = 0ul;
     float avg = 0.0f;
     for(size_t i = 0; i < hashtable->length; i += 2)

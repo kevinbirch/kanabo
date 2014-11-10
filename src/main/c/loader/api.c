@@ -49,54 +49,57 @@
 
 #define make_regex(MEMBER, PATTERN) (0 == regcomp((MEMBER), (PATTERN), REG_EXTENDED | REG_NOSUB))
 
-#define nothing(CONTEXT) (MaybeDocument){.tag=NOTHING, .nothing={(CONTEXT)->code, loader_status_message((CONTEXT))}}
+#define _nothing(CODE, MESSAGE) (MaybeDocument){.tag=NOTHING, .nothing={(CODE), (MESSAGE)}}
+
+#define nothing(CONTEXT) _nothing((CONTEXT)->code, loader_status_message((CONTEXT)))
 #define just(MODEL) (MaybeDocument){.tag=JUST, .just=(MODEL)}
+
+#define PRECOND_ELSE_NOTHING(COND, CODE) ENSURE_THAT(_nothing(CODE, loader_simple_status_message(CODE)), EINVAL, (COND))
+#define PRECOND_NONNULL_ELSE_NOTHING(VALUE, CODE) ENSURE_NONNULL(_nothing(CODE, loader_simple_status_message(CODE)), EINVAL, (VALUE))
+#define PRECOND_NONZERO_ELSE_NOTHING(VALUE, CODE) ENSURE_THAT(_nothing(CODE, loader_simple_status_message(CODE)), EINVAL, 0 != (VALUE))
 
 static const char * const DECIMAL_PATTERN = "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$";
 static const char * const INTEGER_PATTERN = "^-?(0|([1-9][[:digit:]]*))$";
 static const char * const TIMESTAMP_PATTERN = "^[0-9][0-9][0-9][0-9]-[0-9][0-9]?-[0-9][0-9]?(([Tt]|[ \t]+)[0-9][0-9]?:[0-9][0-9](:[0-9][0-9])?([.][0-9]+)?([ \t]*(Z|([-+][0-9][0-9]?(:[0-9][0-9])?)))?)?$";
 
-static void make_loader(loader_context *context, enum loader_duplicate_key_strategy value)
+static loader_status_code make_loader(loader_context *context, enum loader_duplicate_key_strategy value)
 {
     loader_debug("creating common loader context");
     context->strategy = value;
 
     if(!yaml_parser_initialize(&context->parser))
     {
-        context->code = interpret_yaml_error(&context->parser);
-        return;
+        return interpret_yaml_error(&context->parser);
     }
 
     context->anchors = make_hashtable_with_function(string_comparitor, shift_add_xor_string_hash);
     if(NULL == context->anchors)
     {
-        context->code = ERR_LOADER_OUT_OF_MEMORY;
-        return;
+        return ERR_LOADER_OUT_OF_MEMORY;
     }
 
     if(!make_regex(&context->decimal_regex, DECIMAL_PATTERN))
     {
-        context->code = ERR_OTHER;
         hashtable_free(context->anchors);
-        return;
+        return ERR_OTHER;
     }
 
     if(!make_regex(&context->integer_regex, INTEGER_PATTERN))
     {
-        context->code = ERR_OTHER;
         hashtable_free(context->anchors);
-        regfree(&context->integer_regex);
-        return;
+        regfree(&context->decimal_regex);
+        return ERR_OTHER;
     }
 
     if(!make_regex(&context->timestamp_regex, TIMESTAMP_PATTERN))
     {
-        context->code = ERR_OTHER;
         hashtable_free(context->anchors);
+        regfree(&context->decimal_regex);
         regfree(&context->integer_regex);
-        regfree(&context->timestamp_regex);
-        return;
+        return ERR_OTHER;
     }
+
+    return LOADER_SUCCESS;
 }
 
 static void loader_free(loader_context *context)
@@ -119,77 +122,58 @@ static inline MaybeDocument load(loader_context *context)
     build_model(context);
     if(LOADER_SUCCESS != context->code)
     {
-        MaybeDocument result = nothing(context);
-        loader_free(context);
-        return result;
+        return nothing(context);
     }
     else
     {
-        MaybeDocument result = just(context->model);
-        loader_free(context);
-        return result;
+        return just(context->model);
     }
 }
 
 MaybeDocument load_string(const unsigned char *input, size_t size, enum loader_duplicate_key_strategy value)
 {
+    PRECOND_NONNULL_ELSE_NOTHING(input, ERR_INPUT_IS_NULL);
+    PRECOND_NONZERO_ELSE_NOTHING(size, ERR_INPUT_SIZE_IS_ZERO);
+
+    loader_debug("creating string loader context");
     loader_context context;
     memset(&context, 0, sizeof(loader_context));
 
-    if(NULL == input)
+    loader_status_code code = make_loader(&context, value);
+    if(LOADER_SUCCESS != code)
     {
-        context.code = ERR_INPUT_IS_NULL;
-        errno = EINVAL;
-        return nothing(&context);
-    }
-    if(0 == size)
-    {
-        context.code = ERR_INPUT_SIZE_IS_ZERO;
-        errno = EINVAL;
         return nothing(&context);
     }
 
-    loader_debug("creating string loader context");
-    make_loader(&context, value);
-    if(LOADER_SUCCESS != context.code)
-    {
-        return nothing(&context);
-    }
     yaml_parser_set_input_string(&context.parser, input, size);
-    return load(&context);
+    MaybeDocument result = load(&context);
+    loader_free(&context);
+    return result;
 }
 
 MaybeDocument load_file(FILE *input, enum loader_duplicate_key_strategy value)
 {
+    PRECOND_NONNULL_ELSE_NOTHING(input, ERR_INPUT_IS_NULL);
+
+    struct stat file_info;
+    int syscall_result = fstat(fileno(input), &file_info);
+    PRECOND_ELSE_NOTHING(-1 != syscall_result, ERR_READER_FAILED);
+
+    bool is_readable = !(file_info.st_mode & S_IFREG && (feof(input) || 0 == file_info.st_size));
+    PRECOND_ELSE_NOTHING(is_readable, ERR_INPUT_SIZE_IS_ZERO);
+
+    loader_debug("creating file loader context");
     loader_context context;
     memset(&context, 0, sizeof(loader_context));
 
-    if(NULL == input)
+    loader_status_code code = make_loader(&context, value);
+    if(LOADER_SUCCESS != code)
     {
-        context.code = ERR_INPUT_IS_NULL;
-        errno = EINVAL;
-        return nothing(&context);
-    }
-    struct stat file_info;
-    if(-1 == fstat(fileno(input), &file_info))
-    {
-        context.code = ERR_READER_FAILED;
-        errno = EINVAL;
-        return nothing(&context);
-    }
-    if(file_info.st_mode & S_IFREG && (feof(input) || 0 == file_info.st_size))
-    {
-        context.code = ERR_INPUT_SIZE_IS_ZERO;
-        errno = EINVAL;
         return nothing(&context);
     }
 
-    loader_debug("creating file loader context");
-    make_loader(&context, value);
-    if(LOADER_SUCCESS != context.code)
-    {
-        return nothing(&context);
-    }
     yaml_parser_set_input_file(&context.parser, input);
-    return load(&context);
+    MaybeDocument result = load(&context);
+    loader_free(&context);
+    return result;
 }

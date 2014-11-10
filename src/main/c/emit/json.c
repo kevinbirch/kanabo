@@ -49,15 +49,15 @@ static bool emit_json_mapping_item(node *key, node *value, void *context);
 
 #define component "json"
 
-#define EMIT(STR) if(-1 == fprintf(stdout, (STR)))                      \
+#define EMIT(STR) if(EOF == fputs((STR), stdout))                       \
     {                                                                   \
-        log_error(component, "uh oh! couldn't emit literal %s", (STR));    \
+        log_error(component, "uh oh! couldn't emit literal %s", (STR)); \
         return false;                                                   \
     }
 
-#define QEMIT(STR) if(-1 == fprintf(stdout, (STR)))                     \
+#define QEMIT(STR) if(EOF == fputs((STR), stdout))                      \
     {                                                                   \
-        log_error(component, "uh oh! couldn't emit literal %s", (STR));    \
+        log_error(component, "uh oh! couldn't emit literal %s", (STR)); \
     }
 
 bool emit_json(const nodelist *list)

@@ -87,6 +87,25 @@ loader_status_code interpret_yaml_error(yaml_parser_t *parser)
     }
 }
 
+char *loader_simple_status_message(loader_status_code code)
+{
+    char *message = NULL;
+    switch (code)
+    {
+        case LOADER_SUCCESS:
+        case ERR_INPUT_IS_NULL:
+        case ERR_INPUT_SIZE_IS_ZERO:
+        case ERR_NO_DOCUMENTS_FOUND:
+        case ERR_LOADER_OUT_OF_MEMORY:
+        case ERR_OTHER:
+            message = strdup(MESSAGES[code]);
+            break;
+        default:
+            message = strdup(MESSAGES[ERR_OTHER]);
+    }
+    return message;
+}
+
 char *loader_status_message(const struct loader_context *context)
 {
     PRECOND_NONNULL_ELSE_NULL(context);

@@ -69,6 +69,7 @@ typedef struct loader_context loader_context;
 
 void build_model(struct loader_context *context);
 loader_status_code interpret_yaml_error(yaml_parser_t *parser);
+char *loader_simple_status_message(loader_status_code code);
 char *loader_status_message(const loader_context *context);
 
 #define component_name "loader"

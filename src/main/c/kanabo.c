@@ -109,12 +109,13 @@ static void error(const char *format, ...)
     va_list rest;
     if(is_interactive)
     {
-        fprintf(stderr, "%s: ", program_name);
+        fputs(program_name, stderr);
+        fputs(": ", stderr);
     }
     va_start(rest, format);
     vfprintf(stderr, format, rest);
     va_end(rest);
-    fprintf(stderr, "\n");
+    fputc('\n', stderr);
 }
 
 static jsonpath *parse_expression(const char *expression)
@@ -276,7 +277,8 @@ static void output_command(const char *argument, struct options *options)
     if(!argument)
     {
         kanabo_trace("no command argument, printing current value");
-        fprintf(stdout, "%s\n", emit_mode_name(options->emit_mode));
+        fputs(emit_mode_name(options->emit_mode), stdout);
+        fputc('\n', stdout);
         return;
     }
 
@@ -296,7 +298,8 @@ static void duplicate_command(const char *argument, struct options *options)
     if(!argument)
     {
         kanabo_trace("no command argument, printing current value");
-        fprintf(stdout, "%s\n", duplicate_strategy_name(options->duplicate_strategy));
+        fputs(duplicate_strategy_name(options->duplicate_strategy), stdout);
+        fputc('\n', stdout);
         return;
     }
 
@@ -441,7 +444,7 @@ static void pipe_interactive_mode(struct options *options)
         }
         input[read - 1] = '\0';  // N.B. `read` should always be positive here
         dispatch_interactive_command(input, options, &model);
-        fprintf(stdout, "EOD\n");
+        fputs("EOD\n", stdout);
         fflush(stdout);
     }
     free(input);
@@ -488,13 +491,13 @@ static int execute_command(enum command cmd, struct options *options)
     switch(cmd)
     {
         case SHOW_HELP:
-            fprintf(stdout, "%s", HELP);
+            fputs(HELP, stdout);
             break;
         case SHOW_VERSION:
-            fprintf(stdout, "kanabo %s\n", VERSION);
+            fputs("kanabo " VERSION "\n", stdout);
             break;
         case SHOW_WARRANTY:
-            fprintf(stdout, "%s", NO_WARRANTY);
+            fputs(NO_WARRANTY, stdout);
             break;
         case INTERACTIVE_MODE:
             result = interactive_mode(options);
@@ -560,7 +563,7 @@ int main(const int argc, char * const *argv)
 {
     if(1 > argc || NULL == argv || NULL == argv[0])
     {
-        fprintf(stderr, "error: whoa! something is wrong, there are no program arguments.\n");
+        fputs("error: whoa! something is wrong, there are no program arguments.\n", stderr);
         return EXIT_FAILURE;
     }
     program_name = get_program_name(argv[0]);

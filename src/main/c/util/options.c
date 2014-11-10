@@ -176,7 +176,7 @@ enum command process_options(const int argc, char * const *argv, struct options 
     }
     if(optind > argc)
     {
-        fprintf(stderr, "uh oh! something went wrong handing arguments!\n");
+        fputs("uh oh! something went wrong handing arguments!\n", stderr);
         return SHOW_HELP;
     }
     if(argc - optind)
@@ -187,7 +187,7 @@ enum command process_options(const int argc, char * const *argv, struct options 
        options->input_file_name &&
        0 == memcmp("-", options->input_file_name, 1))
     {
-        fprintf(stderr, "error: the standard in shortcut `-' can't be used with interactive evaluation\n");
+        fputs("error: the standard in shortcut `-' can't be used with interactive evaluation\n", stderr);
         command = SHOW_HELP;
     }
     return command;
