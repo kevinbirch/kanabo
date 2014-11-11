@@ -598,12 +598,13 @@ static int normalize_to(predicate *slice, node *value)
 #ifdef USE_LOGGING
 static inline void log_interval(node *value, predicate *slice)
 {
-    const char * const fmt = "slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items";
+    static const char * fmt = "slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items";
     size_t len = (unsigned)lrint(floor(log10((float)ULLONG_MAX))) + 1;
+    static const char * extent_fmt = 8 == sizeof(int_fast32_t) ? "%d" : "%ld";
     char from_repr[len + 1];
     if(slice_predicate_has_from(slice))
     {
-        snprintf(from_repr, len, "%d", slice_predicate_from(slice));
+        snprintf(from_repr, len, extent_fmt, slice_predicate_from(slice));
     }
     else
     {
@@ -613,7 +614,7 @@ static inline void log_interval(node *value, predicate *slice)
     char to_repr[len + 1];
     if(slice_predicate_has_to(slice))
     {
-        snprintf(to_repr, len, "%d", slice_predicate_to(slice));
+        snprintf(to_repr, len, extent_fmt, slice_predicate_to(slice));
     }
     else
     {
@@ -623,7 +624,7 @@ static inline void log_interval(node *value, predicate *slice)
     char step_repr[len + 1];
     if(slice_predicate_has_step(slice))
     {
-        snprintf(step_repr, len, "%d", slice_predicate_step(slice));
+        snprintf(step_repr, len, extent_fmt, slice_predicate_step(slice));
     }
     else
     {
