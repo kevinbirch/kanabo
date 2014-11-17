@@ -29,6 +29,7 @@ LICENSE file for more details.
 * build: shtool integration?
 * build: http://www.gnu.org/software/make/manual/html_node/Canned-Recipes.html#Canned-Recipes
 * fuzzing: https://code.google.com/p/american-fuzzy-lop/
+* vagrant boxen for linux, solaris, openbsd
 
 ### evaluator
 
@@ -122,6 +123,7 @@ LICENSE file for more details.
 * gnu make 4.0
   * try --trace to check out rule ordering
 * define, eval to create dynamic rules and shell?
+* guix? http://dthompson.us/reproducible-development-environments-with-gnu-guix.html
 
 [home]: https://github.com/kevinbirch/kanabo "project home"
 [license]: http://www.opensource.org/licenses/ncsa
