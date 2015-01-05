@@ -35,63 +35,110 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <errno.h>
 
-#include "nodelist.h"
+#include <string.h>
+
+#include "model.h"
+#include "model/private.h"
 #include "conditions.h"
 
-struct context_adapter_s
+
+static const char * const SCALAR_KINDS [] =
 {
-    union
-    {
-        nodelist_iterator foreach;
-        nodelist_map_function map;
-    } iterator;
-    void *context;
+    "string",
+    "integer",
+    "real",
+    "timestamp",
+    "boolean",
+    "null"
 };
 
-typedef struct context_adapter_s context_adapter;
-
-static bool nodelist_iterator_adpater(void *each, void *context);
-static bool nodelist_map_adpater(void *each, void *context, Vector *target);
-
-
-bool nodelist_set(nodelist *list, void *value, size_t index)
+const char *scalar_kind_name(const Scalar *self)
 {
-    errno = 0;
-    vector_set(list, value, index);
-
-    return 0 == errno;
+    return SCALAR_KINDS[scalar_kind(self)];
 }
 
-static bool nodelist_iterator_adpater(void *each, void *context)
+static bool scalar_equals(const Node *one, const Node *two)
 {
-    context_adapter *adapter = (context_adapter *)context;
-    return adapter->iterator.foreach((Node *)each, adapter->context);
+    size_t n1 = node_size(one);
+    size_t n2 = node_size(two);
+
+    if(n1 != n2)
+    {
+        return false;
+    }
+    return 0 == memcmp(scalar_value((const Scalar *)one),
+                       scalar_value((const Scalar *)two), n1);
 }
 
-bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context)
+static size_t scalar_size(const Node *self)
 {
-    PRECOND_NONNULL_ELSE_FALSE(list, iterator);
-    return vector_iterate(list, nodelist_iterator_adpater, &(context_adapter){.iterator.foreach=iterator, context});
+    return ((Scalar *)self)->length;
 }
 
-static bool nodelist_map_adpater(void *each, void *context, Vector *target)
+static void scalar_free(Node *value)
 {
-    context_adapter *adapter = (context_adapter *)context;
-    return adapter->iterator.map((Node *)each, adapter->context, target);
+    Scalar *self = (Scalar *)value;
+    free(self->value);
+    self->value = NULL;
+    basic_node_free(value);
 }
 
-nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context)
+static const struct vtable_s scalar_vtable = 
 {
-    PRECOND_NONNULL_ELSE_NULL(list, function);
+    scalar_free,
+    scalar_size,
+    scalar_equals
+};
 
-    return vector_map(list, nodelist_map_adpater, &(context_adapter){.iterator.map=function, context});
+Scalar *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kind)
+{
+    if(NULL == value && 0 != length)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    Scalar *result = calloc(1, sizeof(Scalar));
+    if(NULL != result)
+    {
+        node_init((Node *)result, SCALAR);
+        result->length = length;
+        result->kind = kind;
+        result->value = (uint8_t *)calloc(1, length);
+        if(NULL == result->value)
+        {
+            free(result);
+            result = NULL;
+            return NULL;
+        }
+        memcpy(result->value, value, length);
+        result->base.vtable = &scalar_vtable;
+    }
+
+    return result;
 }
 
-nodelist *nodelist_map_into(const nodelist *list, nodelist_map_function function, void *context, nodelist *target)
+uint8_t *scalar_value(const Scalar *self)
 {
-    PRECOND_NONNULL_ELSE_NULL(list, function, target);
+    PRECOND_NONNULL_ELSE_NULL(self);
 
-    return vector_map_into(list, nodelist_map_adpater, &(context_adapter){.iterator.map=function, context}, target);
+    return self->value;
 }
+
+enum scalar_kind scalar_kind(const Scalar *self)
+{
+    return self->kind;
+}
+
+bool scalar_boolean_is_true(const Scalar *self)
+{
+    return 0 == memcmp("true", scalar_value(self), 4);
+}
+
+bool scalar_boolean_is_false(const Scalar *self)
+{
+    return 0 == memcmp("false", scalar_value(self), 5);
+}
+
+

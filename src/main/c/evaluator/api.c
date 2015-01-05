@@ -49,7 +49,7 @@
 #define PRECOND_NONZERO_ELSE_NOTHING(VALUE, CODE) ENSURE_THAT(nothing(CODE), EINVAL, 0 != (VALUE))
 
 
-MaybeNodelist evaluate(const document_model *model, const jsonpath *path)
+MaybeNodelist evaluate(const DocumentModel *model, const jsonpath *path)
 {
     PRECOND_NONNULL_ELSE_NOTHING(model, ERR_MODEL_IS_NULL);
     PRECOND_NONNULL_ELSE_NOTHING(path, ERR_PATH_IS_NULL);

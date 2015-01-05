@@ -44,14 +44,14 @@ struct evaluator_context
 {
     enum evaluator_status_code code;
     size_t                     current_step;
-    const document_model      *model;
+    const DocumentModel       *model;
     const jsonpath            *path;
     nodelist                  *list;
 };
 
 typedef struct evaluator_context evaluator_context;
 
-evaluator_status_code evaluate_steps(const document_model *model, const jsonpath *path, nodelist **list);
+evaluator_status_code evaluate_steps(const DocumentModel *model, const jsonpath *path, nodelist **list);
 const char *evaluator_status_message(evaluator_status_code code);
 
 #define component_name "evaluator"

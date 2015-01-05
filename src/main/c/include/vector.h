@@ -65,7 +65,7 @@ void   *vector_first(const Vector *vector);
 void   *vector_last(const Vector *vector);
 
 /* Mutation API */
-bool    vector_add(Vector *vector, void *value);
+bool    vector_add(Vector *vector, const void *value);
 #define vector_append vector_add
 bool    vector_add_all(Vector *vector, const Vector *value);
 bool    vector_insert(Vector *vector, void *value, size_t index);

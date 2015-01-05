@@ -74,4 +74,4 @@ struct maybe_nodelist_s
 
 typedef struct maybe_nodelist_s MaybeNodelist;
 
-MaybeNodelist evaluate(const document_model *model, const jsonpath *path);
+MaybeNodelist evaluate(const DocumentModel *model, const jsonpath *path);

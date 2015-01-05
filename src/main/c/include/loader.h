@@ -76,7 +76,7 @@ struct maybe_document_s
     enum maybe_tag tag;
     union
     {
-        document_model *just;
+        DocumentModel *just;
         struct
         {
             loader_status_code code;

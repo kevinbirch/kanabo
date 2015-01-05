@@ -39,7 +39,7 @@
 
 const void * SENTINEL = (void *)"SENTINEL";
 
-bool is_null(const void *first, ...)
+bool precond_is_null(const void *first, ...)
 {
     va_list args;
     bool result = false;
@@ -58,7 +58,7 @@ bool is_null(const void *first, ...)
     return result;
 }
 
-bool is_false(int_fast8_t first, ...)
+bool precond_is_false(int_fast8_t first, ...)
 {
     va_list args;
     bool result = false;

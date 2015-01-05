@@ -151,7 +151,7 @@ static jsonpath *parse_expression(const char *expression)
     return path;
 }
 
-static nodelist *evaluate_expression(const jsonpath *path, const document_model *model)
+static nodelist *evaluate_expression(const jsonpath *path, const DocumentModel *model)
 {
     kanabo_trace("evaluating expression");
     MaybeNodelist maybe = evaluate(model, path);
@@ -190,7 +190,7 @@ static emit_function get_emitter(enum emit_mode emit_mode)
     return result;
 }
 
-static int apply_expression(const char *expression, document_model *model, enum emit_mode emit_mode)
+static int apply_expression(const char *expression, DocumentModel *model, enum emit_mode emit_mode)
 {
     kanabo_debug("evaluating expression: \"%s\"", expression);
     jsonpath *path = parse_expression(expression);
@@ -245,7 +245,7 @@ static void close_input(FILE *input)
     fclose(input);
 }
 
-static document_model *load_document(const char *input_file_name, dup_strategy strategy)
+static DocumentModel *load_document(const char *input_file_name, dup_strategy strategy)
 {
     FILE *input = open_input(input_file_name);
     if(NULL == input)
@@ -313,7 +313,7 @@ static void duplicate_command(const char *argument, struct options *options)
     options->duplicate_strategy = (enum loader_duplicate_key_strategy)strategy;
 }
 
-static document_model *load_command(const char *argument, struct options *options)
+static DocumentModel *load_command(const char *argument, struct options *options)
 {
     kanabo_debug("processing load command...");
     if(!argument)
@@ -355,7 +355,7 @@ static const char *get_argument(const char *command)
     return arg;
 }
 
-static void dispatch_interactive_command(const char *command, struct options *options, document_model **model)
+static void dispatch_interactive_command(const char *command, struct options *options, DocumentModel **model)
 {
     if(0 == memcmp("?", command, 1) || 0 == memcmp(":help", command, 5))
     {
@@ -371,7 +371,7 @@ static void dispatch_interactive_command(const char *command, struct options *op
     }
     else if(0 == memcmp(":load", command, 5))
     {
-        document_model *new_model = load_command(get_argument(command), options);
+        DocumentModel *new_model = load_command(get_argument(command), options);
         if(new_model)
         {
             model_free(*model);
@@ -396,7 +396,7 @@ static void tty_interctive_mode(struct options *options)
     fwrite(BANNER, strlen(BANNER), 1, stdout);
     char *prompt = (char *)DEFAULT_PROMPT;
 
-    document_model *model = NULL;
+    DocumentModel *model = NULL;
     if(options->input_file_name)
     {
         model = load_document(options->input_file_name, options->duplicate_strategy);
@@ -429,7 +429,7 @@ static void pipe_interactive_mode(struct options *options)
     size_t len = 0;
     ssize_t read;
 
-    document_model *model = NULL;
+    DocumentModel *model = NULL;
     if(options->input_file_name)
     {
         model = load_document(options->input_file_name, options->duplicate_strategy);
@@ -468,7 +468,7 @@ static int interactive_mode(struct options *options)
 
 static int expression_mode(struct options *options)
 {
-    document_model *model = load_document(options->input_file_name, options->duplicate_strategy);
+    DocumentModel *model = load_document(options->input_file_name, options->duplicate_strategy);
     if(NULL == model)
     {
         return EXIT_FAILURE;

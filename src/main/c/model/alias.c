@@ -35,28 +35,47 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
-
-#include <stdbool.h>
 
 #include "model.h"
+#include "model/private.h"
+#include "conditions.h"
 
-bool emit_node(Node *value, void *context);
-bool emit_scalar(const Scalar *each);
-bool emit_quoted_scalar(const Scalar *each);
-bool emit_raw_scalar(const Scalar *each);
-bool emit_sequence_item(Node *each, void *context);
 
-struct emit_context
+static bool alias_equals(const Node *one, const Node *two)
 {
-    mapping_iterator emit_mapping_item;
-    bool wrap_collections;
+    return node_equals(alias_target((const Alias *)one),
+                       alias_target((const Alias *)two));
+}
+
+static size_t alias_size(const Node *self __attribute__((unused)))
+{
+    return 0;
+}
+
+static const struct vtable_s alias_vtable = 
+{
+    basic_node_free,
+    alias_size,
+    alias_equals
 };
 
-typedef struct emit_context emit_context;
-
-#define EMIT(STR) if(EOF == fputs((STR), stdout))                       \
-    {                                                                   \
-        log_error("shell", "uh oh! couldn't emit literal %s", (STR));   \
-        return false;                                                   \
+Alias *make_alias_node(Node *target)
+{
+    Alias *self = calloc(1, sizeof(Alias));
+    if(NULL != self)
+    {
+        node_init(node(self), ALIAS);
+        self->target = target;
+        self->base.vtable = &alias_vtable;
     }
+
+    return self;
+}
+
+Node *alias_target(const Alias *self)
+{
+    PRECOND_NONNULL_ELSE_NULL(self);
+
+    return self->target;
+}
+

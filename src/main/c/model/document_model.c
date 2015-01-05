@@ -35,28 +35,47 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#pragma once
-
-#include <stdbool.h>
+#include <string.h>
+#include <errno.h>
 
 #include "model.h"
+#include "vector.h"
+#include "conditions.h"
 
-bool emit_node(Node *value, void *context);
-bool emit_scalar(const Scalar *each);
-bool emit_quoted_scalar(const Scalar *each);
-bool emit_raw_scalar(const Scalar *each);
-bool emit_sequence_item(Node *each, void *context);
 
-struct emit_context
+static bool freedom_iterator(void *each, void *context __attribute__((unused)))
 {
-    mapping_iterator emit_mapping_item;
-    bool wrap_collections;
-};
+    node_free(node(each));
 
-typedef struct emit_context emit_context;
+    return true;
+}
 
-#define EMIT(STR) if(EOF == fputs((STR), stdout))                       \
-    {                                                                   \
-        log_error("shell", "uh oh! couldn't emit literal %s", (STR));   \
-        return false;                                                   \
+void model_free(DocumentModel *self)
+{
+    if(NULL == self)
+    {
+        return;
     }
+    vector_iterate(self, freedom_iterator, NULL);
+    vector_free(self);
+}
+
+Node *model_document_root(const DocumentModel *self, size_t index)
+{
+    Document *doc = model_document(self, index);
+    Node *result = NULL;
+
+    if(NULL != doc)
+    {
+        result = document_root(doc);
+    }
+
+    return result;
+}
+
+bool model_add(DocumentModel *self, Document *doc)
+{
+    PRECOND_NONNULL_ELSE_FALSE(self, doc);
+
+    return vector_add(self, doc);
+}

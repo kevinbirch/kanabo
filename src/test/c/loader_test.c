@@ -123,8 +123,8 @@ static const unsigned char * const DUPLICATE_KEY_YAML = (unsigned char *)
     "three: baz\n";
 
 
-static document_model *model_fixture = NULL;
-static node *root_node_fixture = NULL;
+static DocumentModel *model_fixture = NULL;
+static Node *root_node_fixture = NULL;
 
 #define assert_loader_failure(MAYBE, EXPECTED_RESULT)                   \
     do                                                                  \
@@ -143,7 +143,7 @@ static void model_setup(const unsigned char *data, size_t length, enum loader_du
     model_fixture = maybe.just;
 
     reset_errno();
-    assert_uint_eq(1, model_document_count(model_fixture));
+    assert_uint_eq(1, model_size(model_fixture));
 
     reset_errno();
     root_node_fixture = model_document_root(model_fixture, 0);
@@ -230,13 +230,13 @@ START_TEST (missing_anchor)
 }
 END_TEST
 
-static void assert_model_state(document_model *model)
+static void assert_model_state(DocumentModel *model)
 {
     assert_not_null(model);
-    assert_uint_eq(1, model_document_count(model));
+    assert_uint_eq(1, model_size(model));
 
     reset_errno();
-    node *root = model_document_root(model, 0);
+    Node *root = model_document_root(model, 0);
     assert_noerr();
     assert_not_null(root);
 
@@ -244,82 +244,82 @@ static void assert_model_state(document_model *model)
     assert_node_size(root, 5);
 
     reset_errno();
-    node *one = mapping_get(root, (uint8_t *)"one", 3ul);
+    Node *one = mapping_get(mapping(root), (uint8_t *)"one", 3ul);
     assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
 
     reset_errno();
-    node *one_0 = sequence_get(one, 0);
+    Node *one_0 = sequence_get(sequence(one), 0);
     assert_noerr();
     assert_node_kind(one_0, SCALAR);
-    assert_scalar_value(one_0, "foo1");
+    assert_scalar_value((one_0), "foo1");
     assert_scalar_kind(one_0, SCALAR_STRING);
     reset_errno();
-    node *one_1 = sequence_get(one, 1);
+    Node *one_1 = sequence_get(sequence(one), 1);
     assert_noerr();
     assert_node_kind(one_1, SCALAR);
-    assert_scalar_value(one_1, "bar1");
+    assert_scalar_value((one_1), "bar1");
     assert_scalar_kind(one_1, SCALAR_STRING);
 
     reset_errno();
-    node *two = mapping_get(root, (uint8_t *)"two", 3ul);
+    Node *two = mapping_get(mapping(root), (uint8_t *)"two", 3ul);
     assert_noerr();
     assert_not_null(two);
     assert_node_kind(two, SCALAR);
-    assert_scalar_value(two, "foo2");
+    assert_scalar_value((two), "foo2");
     assert_scalar_kind(two, SCALAR_STRING);
 
     reset_errno();
-    node *three = mapping_get(root, (uint8_t *)"three", 5ul);
+    Node *three = mapping_get(mapping(root), (uint8_t *)"three", 5ul);
     assert_noerr();
     assert_not_null(three);
     assert_node_kind(three, SCALAR);
-    assert_scalar_value(three, "null");
+    assert_scalar_value((three), "null");
     assert_scalar_kind(three, SCALAR_NULL);
 
     reset_errno();
-    node *four = mapping_get(root, (uint8_t *)"four", 4ul);
+    Node *four = mapping_get(mapping(root), (uint8_t *)"four", 4ul);
     assert_noerr();
     assert_not_null(four);
     assert_node_kind(four, SEQUENCE);
 
     reset_errno();
-    node *four_0 = sequence_get(four, 0);
+    Node *four_0 = sequence_get(sequence(four), 0);
     assert_noerr();
     assert_node_kind(four_0, SCALAR);
-    assert_scalar_value(four_0, "true");
+    assert_scalar_value((four_0), "true");
     assert_scalar_kind(four_0, SCALAR_BOOLEAN);
-    assert_true(scalar_boolean_is_true(four_0));
-    assert_false(scalar_boolean_is_false(four_0));
+    assert_true(scalar_boolean_is_true(scalar(four_0)));
+    assert_false(scalar_boolean_is_false(scalar(four_0)));
     reset_errno();
-    node *four_1 = sequence_get(four, 1);
+    Node *four_1 = sequence_get(sequence(four), 1);
     assert_noerr();
     assert_node_kind(four_0, SCALAR);
-    assert_scalar_value(four_1, "false");
+    assert_scalar_value((four_1), "false");
     assert_scalar_kind(four_1, SCALAR_BOOLEAN);
-    assert_true(scalar_boolean_is_false(four_1));
-    assert_false(scalar_boolean_is_true(four_1));
+    assert_true(scalar_boolean_is_false(scalar(four_1)));
+    assert_false(scalar_boolean_is_true(scalar(four_1)));
 
     reset_errno();
-    node *five = mapping_get(root, (uint8_t *)"five", 4ul);
+    Node *five = mapping_get(mapping(root), (uint8_t *)"five", 4ul);
     assert_noerr();
     assert_not_null(five);
     assert_node_kind(five, SEQUENCE);
-    node *five_0 = sequence_get(five, 0);
+    Node *five_0 = sequence_get(sequence(five), 0);
     assert_noerr();
     assert_node_kind(five_0, SCALAR);
-    assert_scalar_value(five_0, "1.5");
+    assert_scalar_value((five_0), "1.5");
     assert_scalar_kind(five_0, SCALAR_REAL);
     reset_errno();
-    node *five_1 = sequence_get(five, 1);
+    Node *five_1 = sequence_get(sequence(five), 1);
     assert_noerr();
     assert_node_kind(five_1, SCALAR);
-    assert_scalar_value(five_1, "42");
+    assert_scalar_value((five_1), "42");
     assert_scalar_kind(five_1, SCALAR_INTEGER);
     reset_errno();
-    node *five_2 = sequence_get(five, 2);
+    Node *five_2 = sequence_get(sequence(five), 2);
     assert_noerr();
     assert_node_kind(five_2, SCALAR);
     assert_scalar_value(five_2, "1978-07-26 10:15");
@@ -377,8 +377,10 @@ START_TEST (shorthand_tags)
     reset_errno();
     assert_node_tag(root_node_fixture, "tag:vampire-squid.com,2008:instrument");
 
+    Mapping *root = mapping(root_node_fixture);
+
     reset_errno();
-    node *asset_class = mapping_get(root_node_fixture, (uint8_t *)"asset-class", 11ul);
+    Node *asset_class = mapping_get(root, (uint8_t *)"asset-class", 11ul);
     assert_noerr();
     assert_not_null(asset_class);
     assert_node_kind(asset_class, SCALAR);
@@ -386,7 +388,7 @@ START_TEST (shorthand_tags)
     assert_node_tag(asset_class, "tag:vampire-squid.com,2008:asset-class");
 
     reset_errno();
-    node *type = mapping_get(root_node_fixture, (uint8_t *)"type", 4ul);
+    Node *type = mapping_get(root, (uint8_t *)"type", 4ul);
     assert_noerr();
     assert_not_null(type);
     assert_node_kind(type, SCALAR);
@@ -394,7 +396,7 @@ START_TEST (shorthand_tags)
     assert_node_tag(type, "tag:vampire-squid.com,2008:instrument/type");
 
     reset_errno();
-    node *symbol = mapping_get(root_node_fixture, (uint8_t *)"symbol", 6ul);
+    Node *symbol = mapping_get(root, (uint8_t *)"symbol", 6ul);
     assert_noerr();
     assert_not_null(symbol);
     assert_node_kind(symbol, SCALAR);
@@ -405,8 +407,10 @@ END_TEST
 
 START_TEST (explicit_tags)
 {
+    Mapping *root = mapping(root_node_fixture);
+
     reset_errno();
-    node *name = mapping_get(root_node_fixture, (uint8_t *)"name", 4ul);
+    Node *name = mapping_get(root, (uint8_t *)"name", 4ul);
     assert_noerr();
     assert_not_null(name);
     assert_node_kind(name, SCALAR);
@@ -414,7 +418,7 @@ START_TEST (explicit_tags)
     assert_node_tag(name, "tag:yaml.org,2002:str");
 
     reset_errno();
-    node *exchange_rate = mapping_get(root_node_fixture, (uint8_t *)"exchange-rate", 13ul);
+    Node *exchange_rate = mapping_get(root, (uint8_t *)"exchange-rate", 13ul);
     assert_noerr();
     assert_not_null(exchange_rate);
     assert_node_kind(exchange_rate, SCALAR);
@@ -422,7 +426,7 @@ START_TEST (explicit_tags)
     assert_node_tag(exchange_rate, "tag:yaml.org,2002:float");
 
     reset_errno();
-    node *spot_date = mapping_get(root_node_fixture, (uint8_t *)"spot-date", 9ul);
+    Node *spot_date = mapping_get(root, (uint8_t *)"spot-date", 9ul);
     assert_noerr();
     assert_not_null(spot_date);
     assert_node_kind(spot_date, SCALAR);
@@ -430,7 +434,7 @@ START_TEST (explicit_tags)
     assert_node_tag(spot_date, "tag:yaml.org,2002:timestamp");
 
     reset_errno();
-    node *settlement_date = mapping_get(root_node_fixture, (uint8_t *)"settlement-date", 15ul);
+    Node *settlement_date = mapping_get(root, (uint8_t *)"settlement-date", 15ul);
     assert_noerr();
     assert_not_null(settlement_date);
     assert_node_kind(settlement_date, SCALAR);
@@ -449,20 +453,22 @@ static void anchor_yaml_setup(void)
 
 START_TEST (anchor)
 {
+    Mapping *root = mapping(root_node_fixture);
+
     reset_errno();
-    node *one = mapping_get(root_node_fixture, (uint8_t *)"one", 3ul);
+    Node *one = mapping_get(root, (uint8_t *)"one", 3ul);
     assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
 
     reset_errno();
-    node *alias = mapping_get(root_node_fixture, (uint8_t *)"two", 3ul);
+    Node *a = mapping_get(root, (uint8_t *)"two", 3ul);
     assert_noerr();
-    assert_not_null(alias);
-    assert_node_kind(alias, ALIAS);
+    assert_not_null(a);
+    assert_node_kind(a, ALIAS);
 
-    node *two = alias_target(alias);
+    Node *two = alias_target(alias(a));
     assert_not_null(two);
     assert_node_kind(two, SCALAR);
     assert_scalar_kind(two, SCALAR_STRING);
@@ -480,20 +486,22 @@ static void key_anchor_yaml_setup(void)
 
 START_TEST (key_anchor)
 {
+    Mapping *root = mapping(root_node_fixture);
+
     reset_errno();
-    node *one = mapping_get(root_node_fixture, (uint8_t *)"one", 3ul);
+    Node *one = mapping_get(root, (uint8_t *)"one", 3ul);
     assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
 
     reset_errno();
-    node *alias1 = sequence_get(one, 1);
+    Node *alias1 = sequence_get(sequence(one), 1);
     assert_noerr();
     assert_not_null(alias1);
     assert_node_kind(alias1, ALIAS);
 
-    node *one_1 = alias_target(alias1);
+    Node *one_1 = alias_target(alias(alias1));
     assert_noerr();
     assert_not_null(one_1);
     assert_node_kind(one_1, SCALAR);
@@ -501,11 +509,11 @@ START_TEST (key_anchor)
     assert_scalar_value(one_1, "one");
     reset_errno();
 
-    node *alias2 = mapping_get(root_node_fixture, (uint8_t *)"two", 3ul);
+    Node *alias2 = mapping_get(root, (uint8_t *)"two", 3ul);
     assert_noerr();
     assert_not_null(alias2);
 
-    node *two = alias_target(alias2);
+    Node *two = alias_target(alias(alias2));
     assert_node_kind(two, SCALAR);
     assert_scalar_kind(two, SCALAR_STRING);
     assert_scalar_value(two, "one");
@@ -528,7 +536,7 @@ static void duplicate_clobber_setup(void)
 START_TEST (duplicate_clobber)
 {
     reset_errno();
-    node *one = mapping_get(root_node_fixture, (uint8_t *)"one", 3ul);
+    Node *one = mapping_get(mapping(root_node_fixture), (uint8_t *)"one", 3ul);
     assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SCALAR);
@@ -545,7 +553,7 @@ static void duplicate_warn_setup(void)
 START_TEST (duplicate_warn)
 {
     reset_errno();
-    node *one = mapping_get(root_node_fixture, (uint8_t *)"one", 3ul);
+    Node *one = mapping_get(mapping(root_node_fixture), (uint8_t *)"one", 3ul);
     assert_noerr();
     assert_not_null(one);
     assert_node_kind(one, SCALAR);

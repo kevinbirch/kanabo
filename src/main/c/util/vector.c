@@ -246,7 +246,7 @@ void *vector_last(const Vector *vector)
     return vector_get(vector, vector->length - 1);
 }
 
-bool vector_add(Vector *vector, void *value)
+bool vector_add(Vector *vector, const void *value)
 {
     if(NULL == vector || NULL == value)
     {
@@ -258,7 +258,7 @@ bool vector_add(Vector *vector, void *value)
     {
         return false;
     }
-    vector->items[vector->length++] = value;
+    vector->items[vector->length++] = (void *)value;
     return true;
 }
 

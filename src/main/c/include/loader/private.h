@@ -49,9 +49,9 @@ struct loader_context
     loader_status_code code;
     enum loader_duplicate_key_strategy strategy;
 
-    document_model    *model;
+    DocumentModel     *model;
 
-    node              *target;
+    Node              *target;
     struct
     {
         uint8_t *value;

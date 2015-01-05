@@ -40,14 +40,14 @@
 #include "model.h"
 
 // model assertions
-#define assert_node_kind(NODE, EXPECTED)      assert_int_eq((EXPECTED), node_kind((NODE)))
-#define assert_node_size(NODE, EXPECTED)      assert_uint_eq((EXPECTED), node_size((NODE)))
+#define assert_node_kind(VALUE, EXPECTED) assert_int_eq((EXPECTED), node_kind(node((VALUE))))
+#define assert_node_size(NODE, EXPECTED)  assert_uint_eq((EXPECTED), node_size(node((NODE))))
 
 #define assert_node_tag(NODE, TAG) do {                                 \
         assert_not_null(NODE);                                          \
         char    *_expected_tag = (TAG);                                 \
         size_t   _expected_len = strlen(_expected_tag);                 \
-        node    *_assert_node = (NODE);                                 \
+        Node    *_assert_node = (NODE);                                 \
         uint8_t *_assert_name = node_name(_assert_node);                \
         size_t   _assert_len = strlen((char *)_assert_name);            \
         assert_int_eq((intmax_t)_expected_len, (intmax_t)_assert_len);  \
@@ -63,16 +63,16 @@
 #define assert_mapping_has_key(NODE, KEY)     assert_not_null(mapping_get((NODE), (uint8_t *)(KEY), NULL == (KEY) ? 0 : strlen(KEY)))
 #define assert_mapping_has_no_key(NODE, KEY)  assert_null(mapping_get((NODE), (uint8_t *)(KEY), NULL == (KEY) ? 0 : strlen(KEY)))
 
-#define assert_scalar_kind(NODE, EXPECTED)    assert_int_eq(EXPECTED, scalar_kind((NODE)))
+#define assert_scalar_kind(NODE, EXPECTED)    assert_int_eq(EXPECTED, scalar_kind(scalar((NODE))))
 
 #define assert_scalar_value(NODE, VALUE) do {                           \
         assert_not_null(NODE);                                          \
         assert_node_kind(NODE, SCALAR);                                 \
         char    *_expected_value = (VALUE);                             \
         size_t   _expected_len = strlen(_expected_value);               \
-        node    *_assert_node = (NODE);                                 \
+        Scalar  *_assert_node = scalar(NODE);                           \
         uint8_t *_assert_value = scalar_value(_assert_node);            \
-        size_t   _actual_len = node_size(_assert_node);                 \
+        size_t   _actual_len = node_size(node(_assert_node));           \
         char     _actual_value[_actual_len + 1];                        \
         memcpy(&_actual_value, _assert_value, _actual_len);             \
         _actual_value[_actual_len] = '\0';                              \

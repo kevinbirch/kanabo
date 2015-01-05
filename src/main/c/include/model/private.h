@@ -35,28 +35,24 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
 #pragma once
 
-#include <stdbool.h>
 
-#include "model.h"
-
-bool emit_node(Node *value, void *context);
-bool emit_scalar(const Scalar *each);
-bool emit_quoted_scalar(const Scalar *each);
-bool emit_raw_scalar(const Scalar *each);
-bool emit_sequence_item(Node *each, void *context);
-
-struct emit_context
+struct context_adapter_s
 {
-    mapping_iterator emit_mapping_item;
-    bool wrap_collections;
+    union
+    {
+        mapping_iterator map;
+        sequence_iterator seq;
+    } iterator;
+    void *context;
 };
 
-typedef struct emit_context emit_context;
+typedef struct context_adapter_s context_adapter;
 
-#define EMIT(STR) if(EOF == fputs((STR), stdout))                       \
-    {                                                                   \
-        log_error("shell", "uh oh! couldn't emit literal %s", (STR));   \
-        return false;                                                   \
-    }
+
+void node_init(Node *value, enum node_kind kind);
+void basic_node_free(Node *value);
+bool node_comparitor(const void *one, const void *two);
+
