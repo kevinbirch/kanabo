@@ -65,6 +65,8 @@ enum scalar_kind
     SCALAR_NULL
 };
 
+typedef enum scalar_kind ScalarKind;
+
 struct node_s
 {
     struct
@@ -98,7 +100,7 @@ typedef struct document_s Document;
 struct scalar_s
 {
     struct node_s    base;
-    enum scalar_kind kind;
+    ScalarKind kind;
     uint8_t         *value;
     size_t           length;
 };
@@ -142,7 +144,7 @@ Node *narrow(Node *instance, NodeKind kind);
 Document *make_document_node(void);
 Sequence *make_sequence_node(void);
 Mapping  *make_mapping_node(void);
-Scalar   *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kind);
+Scalar   *make_scalar_node(const uint8_t *value, size_t length, ScalarKind kind);
 Alias    *make_alias_node(Node *target);
 #define   make_model() make_vector_with_capacity(1)
 
@@ -150,7 +152,8 @@ Alias    *make_alias_node(Node *target);
  * Destructors
  */
 
-void node_free(Node *value);
+void node_free_(Node *value);
+#define node_free(object) node_free_(node((object)))
 void model_free(DocumentModel *value);
 
 /*
@@ -207,10 +210,10 @@ bool  document_set_root(Document *doc, Node *root);
 
 const char *scalar_kind_name(const Scalar *value);
 
-uint8_t         *scalar_value(const Scalar *scalar);
-enum scalar_kind scalar_kind(const Scalar *scalar);
-bool             scalar_boolean_is_true(const Scalar *scalar);
-bool             scalar_boolean_is_false(const Scalar *scalar);
+uint8_t    *scalar_value(const Scalar *scalar);
+ScalarKind  scalar_kind(const Scalar *scalar);
+bool        scalar_boolean_is_true(const Scalar *scalar);
+bool        scalar_boolean_is_false(const Scalar *scalar);
 
 #define scalar(obj) (CHECKED_CAST((obj), SCALAR, Scalar))
 #define const_scalar(obj) (CONST_CHECKED_CAST((obj), SCALAR, Scalar))

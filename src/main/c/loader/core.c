@@ -53,8 +53,8 @@ static void event_loop(loader_context *context);
 static bool dispatch_event(yaml_event_t *event, loader_context *context);
 
 static bool add_scalar(loader_context *context, const yaml_event_t *event);
-static enum scalar_kind resolve_scalar_kind(const loader_context *context, const yaml_event_t *event);
-static enum scalar_kind tag_to_scalar_kind(const yaml_event_t *event);
+static ScalarKind resolve_scalar_kind(const loader_context *context, const yaml_event_t *event);
+static ScalarKind tag_to_scalar_kind(const yaml_event_t *event);
 static inline bool regex_test(const yaml_event_t *event, const regex_t *regex);
 
 static bool cache_mapping_key(loader_context *context, const yaml_event_t *event);
@@ -224,7 +224,7 @@ static bool cache_mapping_key(loader_context *context, const yaml_event_t *event
 
 static Scalar *build_scalar_node(loader_context *context, const yaml_event_t *event)
 {
-    enum scalar_kind kind = resolve_scalar_kind(context, event);
+    ScalarKind kind = resolve_scalar_kind(context, event);
     Scalar *result = make_scalar_node(event->data.scalar.value, event->data.scalar.length, kind);
     if(NULL == result)
     {
@@ -241,9 +241,9 @@ static Scalar *build_scalar_node(loader_context *context, const yaml_event_t *ev
     return result;
 }
 
-static enum scalar_kind resolve_scalar_kind(const loader_context *context, const yaml_event_t *event)
+static ScalarKind resolve_scalar_kind(const loader_context *context, const yaml_event_t *event)
 {
-    enum scalar_kind kind = SCALAR_STRING;
+    ScalarKind kind = SCALAR_STRING;
 
     if(NULL != event->data.scalar.tag)
     {
@@ -289,7 +289,7 @@ static enum scalar_kind resolve_scalar_kind(const loader_context *context, const
     return kind;
 }
 
-static enum scalar_kind tag_to_scalar_kind(const yaml_event_t *event)
+static ScalarKind tag_to_scalar_kind(const yaml_event_t *event)
 {
     const yaml_char_t * tag = event->data.scalar.tag;
     if(0 == memcmp(YAML_NULL_TAG, tag, strlen(YAML_NULL_TAG)))

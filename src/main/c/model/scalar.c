@@ -90,7 +90,7 @@ static const struct vtable_s scalar_vtable =
     scalar_equals
 };
 
-Scalar *make_scalar_node(const uint8_t *value, size_t length, enum scalar_kind kind)
+Scalar *make_scalar_node(const uint8_t *value, size_t length, ScalarKind kind)
 {
     if(NULL == value && 0 != length)
     {
@@ -125,7 +125,7 @@ uint8_t *scalar_value(const Scalar *self)
     return self->value;
 }
 
-enum scalar_kind scalar_kind(const Scalar *self)
+ScalarKind scalar_kind(const Scalar *self)
 {
     return self->kind;
 }
