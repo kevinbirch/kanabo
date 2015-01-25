@@ -39,6 +39,7 @@ LICENSE file for more details.
 * support integer and timestamp scalar types
 * refactor iteration methods to use filter, tranform, fold
 * jit? http://eli.thegreenplace.net/2013/10/17/getting-started-with-libjit-part-1
+  * https://pauladamsmith.com/blog/2015/01/how-to-get-started-with-llvm-c-api.html
 * streaming mode
   * https://github.com/fizx/sit
   * http://stackoverflow.com/questions/13083491/looking-for-big-sample-dummy-json-data-file
@@ -49,6 +50,7 @@ LICENSE file for more details.
 
 ### parser
 
+* can we mmap the input file and build a no-copy tree that points to strings by byte ranges?
 * implement lexer
 * implement combinators
 * add full tracing
