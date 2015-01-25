@@ -72,7 +72,6 @@ static void mapping_free(Node *value)
     hashtable_iterate(map->values, mapping_freedom_iterator, NULL);
     hashtable_free(map->values);
     map->values = NULL;
-    basic_node_free(value);
 }
 
 static hashcode scalar_hash(const void *key)

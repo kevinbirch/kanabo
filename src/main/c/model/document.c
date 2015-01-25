@@ -52,7 +52,6 @@ static void document_free(Node *value)
     Document *doc = (Document *)value;
     node_free(doc->root);
     doc->root = NULL;
-    basic_node_free(value);
 }
 
 static size_t document_size(const Node *self)

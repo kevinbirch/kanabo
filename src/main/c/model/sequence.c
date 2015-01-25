@@ -70,7 +70,6 @@ static void sequence_free(Node *value)
     vector_iterate(self->values, sequence_freedom_iterator, NULL);
     vector_free(self->values);
     self->values = NULL;
-    basic_node_free(value);
 }
 
 static const struct vtable_s sequence_vtable = 

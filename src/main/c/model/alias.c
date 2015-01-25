@@ -41,6 +41,11 @@
 #include "conditions.h"
 
 
+static void alias_free(Node *value)
+{
+
+}
+
 static bool alias_equals(const Node *one, const Node *two)
 {
     return node_equals(alias_target((const Alias *)one),
@@ -54,7 +59,7 @@ static size_t alias_size(const Node *self __attribute__((unused)))
 
 static const struct vtable_s alias_vtable = 
 {
-    basic_node_free,
+    alias_free,
     alias_size,
     alias_equals
 };

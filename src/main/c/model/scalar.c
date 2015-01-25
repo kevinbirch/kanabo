@@ -81,7 +81,6 @@ static void scalar_free(Node *value)
     Scalar *self = (Scalar *)value;
     free(self->value);
     self->value = NULL;
-    basic_node_free(value);
 }
 
 static const struct vtable_s scalar_vtable = 
