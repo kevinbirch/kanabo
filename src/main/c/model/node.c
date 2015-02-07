@@ -52,12 +52,12 @@ static const char * const NODE_KINDS [] =
     "alias"
 };
 
-const char *node_kind_name(const Node *self)
+const char *node_kind_name_(const Node *self)
 {
     return NODE_KINDS[node_kind(self)];
 }
 
-Node *narrow(Node *instance, enum node_kind kind)
+Node *narrow(Node *instance, NodeKind kind)
 {
     if(kind != node_kind(instance))
     {
@@ -67,7 +67,7 @@ Node *narrow(Node *instance, enum node_kind kind)
     return instance;
 }
 
-void node_init(Node *self, enum node_kind kind)
+void node_init_(Node *self, NodeKind kind)
 {
     if(NULL != self)
     {
@@ -77,48 +77,49 @@ void node_init(Node *self, enum node_kind kind)
     }
 }
 
-void basic_node_free(Node *value)
+static void basic_node_free(Node *value)
 {
     free(value->tag.name);
     free(value->anchor);
     free(value);
 }
 
-void node_free(Node *value)
+void node_free_(Node *value)
 {
     if(NULL == value)
     {
         return;
     }
     value->vtable->free(value);
+    basic_node_free(value);
 }
 
-size_t node_size(const Node *self)
+size_t node_size_(const Node *self)
 {
     PRECOND_NONNULL_ELSE_ZERO(self);
 
     return self->vtable->size(self);
 }
 
-enum node_kind node_kind(const Node *self)
+NodeKind node_kind_(const Node *self)
 {
     return self->tag.kind;
 }
 
-uint8_t *node_name(const Node *self)
+uint8_t *node_name_(const Node *self)
 {
     PRECOND_NONNULL_ELSE_NULL(self);
 
     return self->tag.name;
 }
 
-Node *node_parent(const Node *self)
+Node *node_parent_(const Node *self)
 {
     PRECOND_NONNULL_ELSE_NULL(self);
     return self->parent;
 }
 
-void node_set_tag(Node *self, const uint8_t *value, size_t length)
+void node_set_tag_(Node *self, const uint8_t *value, size_t length)
 {
     PRECOND_NONNULL_ELSE_VOID(self, value);
     self->tag.name = (uint8_t *)calloc(1, length + 1);
@@ -129,7 +130,7 @@ void node_set_tag(Node *self, const uint8_t *value, size_t length)
     }
 }
 
-void node_set_anchor(Node *self, const uint8_t *value, size_t length)
+void node_set_anchor_(Node *self, const uint8_t *value, size_t length)
 {
     PRECOND_NONNULL_ELSE_VOID(self, value);
     self->anchor = (uint8_t *)calloc(1, length + 1);
@@ -142,7 +143,7 @@ void node_set_anchor(Node *self, const uint8_t *value, size_t length)
 
 bool node_comparitor(const void *one, const void *two)
 {
-    return node_equals((Node *)one, (Node *)two);
+    return node_equals(one, two);
 }
 
 static bool tag_equals(const uint8_t *one, const uint8_t *two)
@@ -160,7 +161,7 @@ static bool tag_equals(const uint8_t *one, const uint8_t *two)
     return memcmp(one, two, n1 > n2 ? n2 : n1) == 0;
 }
 
-bool node_equals(const Node *one, const Node *two)
+bool node_equals_(const Node *one, const Node *two)
 {
     if(one == two)
     {

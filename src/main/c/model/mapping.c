@@ -55,8 +55,8 @@ static size_t mapping_size(const Node *self)
 
 static bool mapping_freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
 {
-    node_free(node(key));
-    node_free(node(value));
+    node_free(key);
+    node_free(value);
 
     return true;
 }
@@ -77,7 +77,7 @@ static void mapping_free(Node *value)
 static hashcode scalar_hash(const void *key)
 {
     const Scalar *value = (const Scalar *)key;
-    return shift_add_xor_string_buffer_hash(scalar_value(value), node_size(node(key)));
+    return shift_add_xor_string_buffer_hash(scalar_value(value), node_size(key));
 }
 
 static bool scalar_comparitor(const void *one, const void *two)
@@ -97,7 +97,7 @@ Mapping *make_mapping_node(void)
     Mapping *self = calloc(1, sizeof(Mapping));
     if(NULL != self)
     {
-        node_init(node(self), MAPPING);
+        node_init(self, MAPPING);
         self->values = make_hashtable_with_function(scalar_comparitor, scalar_hash);
         if(NULL == self->values)
         {
@@ -118,7 +118,7 @@ Node *mapping_get(const Mapping *self, uint8_t *value, size_t length)
 
     Scalar *key = make_scalar_node(value, length, SCALAR_STRING);
     Node *result = hashtable_get(self->values, key);
-    node_free(node(key));
+    node_free(key);
 
     return result;
 }
@@ -130,7 +130,7 @@ bool mapping_contains(const Mapping *self, uint8_t *value, size_t length)
 
     Scalar *key = make_scalar_node(value, length, SCALAR_STRING);
     bool result = hashtable_contains(self->values, key);
-    node_free(node(key));
+    node_free(key);
 
     return result;
 }

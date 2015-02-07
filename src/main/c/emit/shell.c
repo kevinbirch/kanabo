@@ -90,7 +90,7 @@ bool emit_node(Node *each, void *argument)
 static bool scalar_contains_space(const Scalar *each)
 {
     uint8_t *value = scalar_value(each);
-    for(size_t i = 0; i < node_size(node(each)); i++)
+    for(size_t i = 0; i < node_size(each); i++)
     {
         if(isspace(*(value + i)))
         {
@@ -130,7 +130,7 @@ bool emit_quoted_scalar(const Scalar *each)
 
 bool emit_raw_scalar(const Scalar *each)
 {
-    return 1 == fwrite(scalar_value(each), node_size(node(each)), 1, stdout);
+    return 1 == fwrite(scalar_value(each), node_size(each), 1, stdout);
 }
 
 bool emit_sequence_item(Node *each, void *context __attribute__((unused)))

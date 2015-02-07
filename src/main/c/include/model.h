@@ -183,7 +183,7 @@ size_t      node_size_(const Node *value);
 #define     node_size(object) node_size_(node((object)))
 
 bool        node_equals_(const Node *one, const Node *two);
-#define     node_equals(one, two) node_equals_(node((one)), node((two)))
+#define     node_equals(one, two) node_equals_(const_node((one)), const_node((two)))
 
 void        node_set_tag_(Node *target, const uint8_t *value, size_t length);
 #define     node_set_tag(object, value, length) node_set_tag_(node((object)), (value), (length))

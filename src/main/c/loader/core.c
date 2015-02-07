@@ -234,7 +234,7 @@ static Scalar *build_scalar_node(loader_context *context, const yaml_event_t *ev
     }
     if(NULL != event->data.scalar.tag)
     {
-        node_set_tag(node(result), event->data.scalar.tag, strlen((char *)event->data.scalar.tag));
+        node_set_tag(result, event->data.scalar.tag, strlen((char *)event->data.scalar.tag));
     }
     set_anchor(context, node(result), event->data.scalar.anchor);
 
@@ -403,7 +403,7 @@ static bool start_sequence(loader_context *context, const yaml_event_t *event)
     if(NULL != event->data.sequence_start.tag)
     {
         size_t len = strlen((char *)event->data.sequence_start.tag);
-        node_set_tag(node(seq), event->data.sequence_start.tag, len);
+        node_set_tag(seq, event->data.sequence_start.tag, len);
     }
     set_anchor(context, node(seq), event->data.sequence_start.anchor);
 
@@ -443,7 +443,7 @@ static bool start_mapping(loader_context *context, const yaml_event_t *event)
     if(NULL != event->data.mapping_start.tag)
     {
         size_t length = strlen((char *)event->data.mapping_start.tag);
-        node_set_tag(node(map), event->data.mapping_start.tag, length);
+        node_set_tag(map, event->data.mapping_start.tag, length);
     }
     set_anchor(context, node(map), event->data.mapping_start.anchor);
 

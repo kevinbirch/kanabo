@@ -45,7 +45,7 @@
 
 static bool freedom_iterator(void *each, void *context __attribute__((unused)))
 {
-    node_free(node(each));
+    node_free(each);
 
     return true;
 }

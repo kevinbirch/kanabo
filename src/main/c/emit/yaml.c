@@ -105,12 +105,12 @@ static bool emit_sequence(Sequence *value, void *context)
 
 static bool emit_tagged_scalar(const Scalar *value, yaml_char_t *tag, yaml_scalar_style_t style, int implicit, void *context)
 {
-    trace_string("emitting scalar \"%s\"", scalar_value(value), node_size(node(value)));
+    trace_string("emitting scalar \"%s\"", scalar_value(value), node_size(value));
     yaml_emitter_t *emitter = (yaml_emitter_t *)context;
     yaml_event_t event;
 
     yaml_scalar_event_initialize(&event, NULL, tag, scalar_value(value),
-                                 (int)node_size(node(value)), implicit, implicit, style);
+                                 (int)node_size(value), implicit, implicit, style);
     if (!yaml_emitter_emit(emitter, &event))
         return false;
 

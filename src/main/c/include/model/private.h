@@ -52,6 +52,8 @@ struct context_adapter_s
 typedef struct context_adapter_s context_adapter;
 
 
-void node_init(Node *value, NodeKind kind);
+void node_init_(Node *value, NodeKind kind);
+#define node_init(object, kind) node_init_(node((object)), (kind))
+
 bool node_comparitor(const void *one, const void *two);
 

@@ -55,7 +55,7 @@ static size_t sequence_size(const Node *self)
 
 static bool sequence_freedom_iterator(void *each, void *context __attribute__((unused)))
 {
-    node_free(node(each));
+    node_free(each);
 
     return true;
 }
@@ -84,7 +84,7 @@ Sequence *make_sequence_node(void)
     Sequence *self = calloc(1, sizeof(Sequence));
     if(NULL != self)
     {
-        node_init(node(self), SEQUENCE);
+        node_init(self, SEQUENCE);
         self->values = make_vector();
         if(NULL == self->values)
         {

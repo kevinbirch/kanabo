@@ -84,7 +84,7 @@ bool emit_json(const nodelist *list)
 
 static bool emit_json_raw_scalar(const Scalar *each)
 {
-    return 1 == fwrite(scalar_value(each), node_size(node(each)), 1, stdout);
+    return 1 == fwrite(scalar_value(each), node_size(each), 1, stdout);
 }
 
 static bool emit_json_quoted_scalar(const Scalar *each)

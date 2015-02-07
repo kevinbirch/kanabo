@@ -497,15 +497,15 @@ static bool apply_subscript_predicate(const Sequence *value, evaluator_context *
 {
     predicate *subscript = step_predicate(current_step(context));
     size_t index = subscript_predicate_index(subscript);
-    if(index > node_size(node(value)))
+    if(index > node_size(value))
     {
         evaluator_trace("subscript predicate: index %zd not valid for sequence (length: %zd), dropping (%p)",
-                        index, node_size(node(value)), value);
+                        index, node_size(value), value);
         return true;
     }
     Node *selected = sequence_get(value, index);
     evaluator_trace("subscript predicate: adding index %zd (%p) from sequence (%p) of %zd items",
-                    index, selected, value, node_size(node(value)));
+                    index, selected, value, node_size(value));
     return nodelist_add(target, selected) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
 }
 
@@ -617,14 +617,14 @@ static int normalize_extent(bool specified_p, int given, int fallback, int limit
 static int normalize_from(const predicate *slice, const Sequence *value)
 {
     evaluator_trace("slice predicate: normalizing from, specified: %s, value: %d", slice_predicate_has_from(slice) ? "yes" : "no", slice_predicate_from(slice));
-    int length = (int)node_size(node(value));
+    int length = (int)node_size(value);
     return normalize_extent(slice_predicate_has_from(slice), (int)slice_predicate_from(slice), 0, length);
 }
 
 static int normalize_to(const predicate *slice, const Sequence *value)
 {
     evaluator_trace("slice predicate: normalizing to, specified: %s, value: %d", slice_predicate_has_to(slice) ? "yes" : "no", slice_predicate_to(slice));
-    int length = (int)node_size(node(value));
+    int length = (int)node_size(value);
     return normalize_extent(slice_predicate_has_to(slice), (int)slice_predicate_to(slice), length, length);
 }
 
@@ -664,7 +664,7 @@ static inline void log_interval(const Sequence *value, predicate *slice)
         step_repr[0] = '_';
         step_repr[1] = '\0';
     }
-    evaluator_trace(fmt, from_repr, to_repr, step_repr, value, node_size(node(value)));
+    evaluator_trace(fmt, from_repr, to_repr, step_repr, value, node_size(value));
 }
 #endif
 

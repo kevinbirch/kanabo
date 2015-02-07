@@ -41,9 +41,9 @@
 #include "conditions.h"
 
 
-static void alias_free(Node *value)
+static void alias_free(Node *value __attribute__((unused)))
 {
-
+    // this space intentionally left blank
 }
 
 static bool alias_equals(const Node *one, const Node *two)
@@ -69,7 +69,7 @@ Alias *make_alias_node(Node *target)
     Alias *self = calloc(1, sizeof(Alias));
     if(NULL != self)
     {
-        node_init(node(self), ALIAS);
+        node_init(self, ALIAS);
         self->target = target;
         self->base.vtable = &alias_vtable;
     }

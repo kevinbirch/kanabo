@@ -71,7 +71,7 @@ Document *make_document_node(void)
     Document *self = calloc(1, sizeof(Document));
     if(NULL != self)
     {
-        node_init(node(self), DOCUMENT);
+        node_init(self, DOCUMENT);
         self->base.vtable = &document_vtable;
     }
 
