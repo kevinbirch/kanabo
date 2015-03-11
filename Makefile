@@ -173,6 +173,7 @@ INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR)
 CFLAGS := -I$(INCLUDE_DIR) $(INCLUDES) $(CFLAGS) $($(build)_CFLAGS)
 DEPLIBS := $(addprefix -l, $(DEPENDENCIES))
 LDLIBS := $(DEPLIBS) $(LIBS)
+LDFLAGS := $(LDFLAGS) $($(build)_LDFLAGS)
 
 ## Automation helper functions
 source_to_target = $(foreach s, $(1), $(2)/$(basename $(s)).$(3))
@@ -184,6 +185,7 @@ find_source_files = $(shell cd $(1) && $(FIND) . -type f \( -name '*.c' -or -nam
 TEST_CFLAGS := -I$(TEST_INCLUDE_DIR) $(CFLAGS) $(TEST_CFLAGS)
 TEST_DEPLIBS := $(addprefix -l, $(TEST_DEPENDENCIES)) $(LDLIBS)
 TEST_LDLIBS := $(TEST_DEPLIBS) $(TEST_LIBS)
+TEST_LDFLAGS := $(LDFLAGS) $(TEST_LDFLAGS)
 
 ## Project source file locations
 SOURCES := $(call find_source_files,$(SOURCE_DIR))
@@ -372,7 +374,7 @@ $(PROGRAM_TARGET): $(LIBRARY_TARGET) $(PROGRAM_OBJECTS)
 	@echo ""; \
 	echo " -- Building program $(PROGRAM_TARGET)"; \
 	echo "------------------------------------------------------------------------"
-	$(CC) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_NAME_BASE) $(LDLIBS) -o $(PROGRAM_TARGET)
+	$(CC) $(LDFLAGS) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_NAME_BASE) $(LDLIBS) -o $(PROGRAM_TARGET)
 
 $(PROGRAM_NAME): $(PROGRAM_TARGET)
 
@@ -381,7 +383,7 @@ $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	@echo ""; \
 	echo " -- Building test harness $(TEST_PROGRAM_TARGET)"; \
 	echo "------------------------------------------------------------------------"
-	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDLIBS) -o $(TEST_PROGRAM_TARGET)
+	$(CC) $(TEST_LDFLAGS) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDLIBS) -o $(TEST_PROGRAM_TARGET)
 
 $(TEST_PROGRAM): $(TEST_PROGRAM_TARGET)
 endif
