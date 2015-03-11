@@ -132,11 +132,19 @@ ScalarKind scalar_kind(const Scalar *self)
 
 bool scalar_boolean_is_true(const Scalar *self)
 {
+    if(4 != scalar_size(node(self)))
+    {
+        return false;
+    }
     return 0 == memcmp("true", scalar_value(self), 4);
 }
 
 bool scalar_boolean_is_false(const Scalar *self)
 {
+    if(5 != scalar_size(node(self)))
+    {
+        return false;
+    }
     return 0 == memcmp("false", scalar_value(self), 5);
 }
 
