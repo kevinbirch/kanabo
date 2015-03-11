@@ -44,11 +44,11 @@ build = debug
 DEPENDENCIES = yaml
 TEST_DEPENDENCIES = check
 CFLAGS = -std=c11 -fstrict-aliasing -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-gnu
-debug_CFLAGS = -DUSE_LOGGING -fsanitize=address,integer,undefined
+debug_CFLAGS = -DUSE_LOGGING -fsanitize=address,integer,undefined -fno-sanitize=unsigned-integer-overflow
 release_CFLAGS = -O3 -flto
 LIBS = -lm
 TEST_LIBS =
-TEST_LDFLAGS = -fsanitize=address,integer,undefined -flto
+TEST_LDFLAGS = -fsanitize=address,integer,undefined -fno-sanitize=unsigned-integer-overflow -flto
 release_LDFLAGS = -flto
 
 ifeq ($(shell uname -s),Linux)
