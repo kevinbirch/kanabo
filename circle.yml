@@ -15,5 +15,5 @@ dependencies:
 
 test:
   override:
-    - make CC=clang clean test
+    - ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer-3.4) make CC=clang clean test
     - target/kanabo --version
