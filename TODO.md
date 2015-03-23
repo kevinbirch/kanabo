@@ -97,6 +97,7 @@ LICENSE file for more details.
 * fuzz testing: https://en.wikipedia.org/wiki/API_Sanity_Checker
 * find undefined behavior code: http://css.csail.mit.edu/stack/
 * http://sourceforge.net/p/check/code/HEAD/tree/trunk/src/check_impl.h ?
+* https://github.com/nivox/quickcheck4c ?
 
 ### documentation
 
