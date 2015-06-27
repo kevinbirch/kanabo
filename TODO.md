@@ -47,6 +47,7 @@ LICENSE file for more details.
   * https://github.com/zeMirco/sf-city-lots-json
   * https://github.com/seductiveapps/largeJSON
 * interesting features? http://trentm.com/json/
+* computed goto dispatch table? http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables  
 
 ### parser
 
