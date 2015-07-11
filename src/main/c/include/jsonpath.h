@@ -106,12 +106,11 @@ struct maybe_jsonpath_s
     };
 };
 
-typedef struct maybe_jsonpath_s MaybeJsonpath;
+typedef struct maybe_jsonpath_s MaybeJsonPath;
 
-MaybeJsonpath parse(const uint8_t *expression, size_t length);
-void          maybe_jsonpath_free(MaybeJsonpath result);
+MaybeJsonPath parse(const uint8_t *expression, size_t length);
+void          path_free(MaybeJsonPath result);
 void          jsonpath_free(JsonPath *path);
-
 
 /* Path API */
 enum path_kind      path_kind(const JsonPath *path);
