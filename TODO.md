@@ -91,6 +91,7 @@ LICENSE file for more details.
 * other built-in functions
 * pratt parser?
   * http://l-lang.org/blog/TDOP---Pratt-parser-in-pictures/
+* parser combinator - https://github.com/orangeduck/mpc
 
 ### loader
 
@@ -135,6 +136,7 @@ LICENSE file for more details.
 * http://google-engtools.blogspot.fr/2011/08/build-in-cloud-how-build-system-works.html
 * http://facebook.github.io/buck/
 * http://aosabook.org/en/posa/ninja.html
+* http://www.reddit.com/r/programming/comments/204pau/what_are_your_gcc_flags/
 * gnu make 4.0
   * try --trace to check out rule ordering
 * define, eval to create dynamic rules and shell?
