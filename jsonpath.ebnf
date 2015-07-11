@@ -156,6 +156,7 @@ name character
 
 predicate expression
     = "[", predicate, "]"
+    | filter expression
     ;
 
 predicate
@@ -163,7 +164,6 @@ predicate
     | subscript
     | slice
     | join
-    | filter expression
     ;
 
 subscript
