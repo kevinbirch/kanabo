@@ -61,12 +61,11 @@ struct meta_context
 typedef struct meta_context meta_context;
 
 static nodelist *evaluate_steps(evaluator_context *context);
-static bool evaluate_step(step* each, void *context);
+static bool evaluate_step(Step* each, void *context);
 static bool evaluate_root_step(evaluator_context *context);
 static bool evaluate_single_step(evaluator_context *context);
 static bool evaluate_recursive_step(evaluator_context *context);
 static bool evaluate_predicate(evaluator_context *context);
-static inline bool evaluate_nodelist(evaluator_context *context, const char *name, const char *test, nodelist_map_function function);
 
 static bool apply_node_test(node *each, void *argument, nodelist *target);
 static bool apply_recursive_node_test(node *each, void *argument, nodelist *target);
@@ -85,9 +84,9 @@ static bool apply_join_predicate(node *value, evaluator_context *context, nodeli
 
 static bool add_to_nodelist_sequence_iterator(node *each, void *context);
 static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context);
-static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *step);
-static int_fast32_t normalize_from(predicate *predicate, node *value);
-static int_fast32_t normalize_to(predicate *predicate, node *value);
+static void normalize_interval(node *value, Predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *step);
+static int_fast32_t normalize_from(Predicate *predicate, node *value);
+static int_fast32_t normalize_to(Predicate *predicate, node *value);
 static int_fast32_t normalize_extent(bool specified_p, int_fast32_t actual, int_fast32_t fallback, int_fast32_t length);
 
 #define current_step(CONTEXT) path_get((CONTEXT)->path, (CONTEXT)->current_step)
@@ -129,7 +128,7 @@ static nodelist *evaluate_steps(evaluator_context *context)
     return context->list;
 }
 
-static bool evaluate_step(step* each, void *argument)
+static bool evaluate_step(Step* each, void *argument)
 {
     evaluator_context *context = (evaluator_context *)argument;
     evaluator_trace("step: %zd", context->current_step);
@@ -385,7 +384,7 @@ static bool apply_type_test(node *each, void *argument, nodelist *target)
 static bool apply_name_test(node *each, void *argument, nodelist *target)
 {
     evaluator_context *context = (evaluator_context *)argument;
-    step *context_step = current_step(context);
+    Step *context_step = current_step(context);
     trace_string("name test: using key '%s'", name_test_step_name(context_step), name_test_step_length(context_step));
 
     if(MAPPING != node_kind(each))
@@ -470,7 +469,7 @@ static bool apply_subscript_predicate(node *value, evaluator_context *context, n
         evaluator_trace("subscript predicate: node is not a sequence type, cannot use an index on it (kind: %d), dropping (%p)", node_kind(value), value);
         return true;
     }
-    predicate *subscript = step_predicate(current_step(context));
+    Predicate *subscript = step_predicate(current_step(context));
     size_t index = subscript_predicate_index(subscript);
     if(index > node_size(value))
     {
@@ -490,7 +489,7 @@ static bool apply_slice_predicate(node *value, evaluator_context *context, nodel
         return true;
     }
 
-    predicate *slice = step_predicate(current_step(context));
+    Predicate *slice = step_predicate(current_step(context));
     int_fast32_t from = 0, to = 0, increment = 0;
     normalize_interval(value, slice, &from, &to, &increment);
     evaluator_trace("slice predicate: using normalized interval [%d:%d:%d]", from, to, increment);
@@ -566,7 +565,7 @@ static bool add_values_to_nodelist_map_iterator(node *key __attribute__((unused)
     return result;
 }
 
-static void normalize_interval(node *value, predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *increment)
+static void normalize_interval(node *value, Predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *increment)
 {
     char *from_fmt = NULL, *to_fmt = NULL, *increment_fmt = NULL;
     int from_result __attribute__((unused)) = 0;
@@ -583,14 +582,14 @@ static void normalize_interval(node *value, predicate *slice, int_fast32_t *from
     *to   = 0 > *increment ? normalize_from(slice, value) : normalize_to(slice, value);
 }
 
-static int_fast32_t normalize_from(predicate *slice, node *value)
+static int_fast32_t normalize_from(Predicate *slice, node *value)
 {
     evaluator_trace("slice predicate: normalizing from, specified: %s, value: %d", slice_predicate_has_from(slice) ? "yes" : "no", slice_predicate_from(slice));
     int_fast32_t length = (int_fast32_t)node_size(value);
     return normalize_extent(slice_predicate_has_from(slice), slice_predicate_from(slice), 0, length);
 }
 
-static int_fast32_t normalize_to(predicate *slice, node *value)
+static int_fast32_t normalize_to(Predicate *slice, node *value)
 {
     evaluator_trace("slice predicate: normalizing to, specified: %s, value: %d", slice_predicate_has_to(slice) ? "yes" : "no", slice_predicate_to(slice));
     int_fast32_t length = (int_fast32_t)node_size(value);

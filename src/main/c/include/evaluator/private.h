@@ -42,7 +42,7 @@ struct evaluator_context
     enum evaluator_status_code code;
     size_t                     current_step;
     const document_model      *model;
-    const jsonpath            *path;
+    const JsonPath            *path;
     nodelist                  *list;
 };
 

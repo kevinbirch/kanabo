@@ -43,9 +43,9 @@
 
  /* JSONPath Entities */
 
-typedef struct jsonpath jsonpath;
-typedef struct step step;
-typedef struct predicate predicate;
+typedef struct jsonpath_s JsonPath;
+typedef struct step_s Step;
+typedef struct predicate_s Predicate;
 
 enum path_kind
 {
@@ -102,7 +102,7 @@ struct maybe_jsonpath_s
             char   *message;
             size_t  position;
         } error;
-        jsonpath *path;
+        JsonPath *path;
     };
 };
 
@@ -110,51 +110,50 @@ typedef struct maybe_jsonpath_s MaybeJsonpath;
 
 MaybeJsonpath parse(const uint8_t *expression, size_t length);
 void          maybe_jsonpath_free(MaybeJsonpath result);
-void          jsonpath_free(jsonpath *path);
+void          jsonpath_free(JsonPath *path);
 
 
 /* Path API */
-enum path_kind      path_kind(const jsonpath *path);
+enum path_kind      path_kind(const JsonPath *path);
 const char *        path_kind_name(enum path_kind value);
-size_t              path_length(const jsonpath *path);
-step *              path_get(const jsonpath *path, size_t index);
+size_t              path_length(const JsonPath *path);
+Step *              path_get(const JsonPath *path, size_t index);
 
-typedef bool (*path_iterator)(step *each, void *parser);
-bool path_iterate(const jsonpath *path, path_iterator iterator, void *context);
+typedef bool (*path_iterator)(Step *each, void *parser);
+bool path_iterate(const JsonPath *path, path_iterator iterator, void *context);
 
 /* Step API */
-enum step_kind      step_kind(const step *value);
+enum step_kind      step_kind(const Step *value);
 const char *        step_kind_name(enum step_kind value);
-enum test_kind      step_test_kind(const step *value);
+enum test_kind      step_test_kind(const Step *value);
 const char *        test_kind_name(enum test_kind value);
 
 /* Type Test API */
-enum type_test_kind type_test_step_kind(const step *value);
+enum type_test_kind type_test_step_kind(const Step *value);
 const char *        type_test_kind_name(enum type_test_kind value);
 
 /* Name Test API */
-uint8_t *           name_test_step_name(const step *value);
-size_t              name_test_step_length(const step *value);
+uint8_t *           name_test_step_name(const Step *value);
+size_t              name_test_step_length(const Step *value);
 
 /* Predicate API */
-bool                step_has_predicate(const step *value);
-predicate *         step_predicate(const step *value);
+bool                step_has_predicate(const Step *value);
+Predicate *         step_predicate(const Step *value);
 
-enum predicate_kind predicate_kind(const predicate *value);
+enum predicate_kind predicate_kind(const Predicate *value);
 const char *        predicate_kind_name(enum predicate_kind value);
 
 /* Subscript Predicate API */
-size_t              subscript_predicate_index(const predicate *value);
+size_t              subscript_predicate_index(const Predicate *value);
 
 /* Slice Predicate API */
-int_fast32_t        slice_predicate_to(const predicate *value);
-int_fast32_t        slice_predicate_from(const predicate *value);
-int_fast32_t        slice_predicate_step(const predicate *value);
-bool                slice_predicate_has_to(const predicate *value);
-bool                slice_predicate_has_from(const predicate *value);
-bool                slice_predicate_has_step(const predicate *value);
+int_fast32_t        slice_predicate_to(const Predicate *value);
+int_fast32_t        slice_predicate_from(const Predicate *value);
+int_fast32_t        slice_predicate_step(const Predicate *value);
+bool                slice_predicate_has_to(const Predicate *value);
+bool                slice_predicate_has_from(const Predicate *value);
+bool                slice_predicate_has_step(const Predicate *value);
 
 /* Join (Union) PredicateAPI */
-jsonpath *          join_predicate_left(const predicate *value);
-jsonpath *          join_predicate_right(const predicate *value);
-
+JsonPath *          join_predicate_left(const Predicate *value);
+JsonPath *          join_predicate_right(const Predicate *value);

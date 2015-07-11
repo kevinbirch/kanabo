@@ -41,7 +41,7 @@
 #include "evaluator/private.h"
 #include "log.h"
 
-evaluator_context *make_evaluator(const document_model *model, const jsonpath *path)
+evaluator_context *make_evaluator(const document_model *model, const JsonPath *path)
 {
     evaluator_debug("creating evaluator context");
     evaluator_context *context = (evaluator_context *)calloc(1, sizeof(evaluator_context));

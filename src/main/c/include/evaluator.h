@@ -59,7 +59,7 @@ typedef enum evaluator_status_code evaluator_status_code;
 
 typedef struct evaluator_context evaluator_context;
 
-evaluator_context *make_evaluator(const document_model *model, const jsonpath *path);
+evaluator_context *make_evaluator(const document_model *model, const JsonPath *path);
 evaluator_status_code evaluator_status(const evaluator_context *context);
 
 void evaluator_free(evaluator_context *context);
