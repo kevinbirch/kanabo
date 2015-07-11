@@ -179,15 +179,15 @@ join
     ;
 
 filter expression
-    = "?(", or expr, ")"
-    ;
-
-or expr
-    = and expr, [ "or", or expr ]
+    = "?(", and expr, ")"
     ;
 
 and expr
-    = comparison expr, [ "and", and expr ]
+    = or expr, [ "and", and expr ]
+    ;
+
+or expr
+    = comparison expr, [ "or", or expr ]
     ;
 
 comparison expr
