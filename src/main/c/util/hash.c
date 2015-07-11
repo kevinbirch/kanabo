@@ -56,7 +56,7 @@ hashcode identity_xor_hash(const void *key)
 hashcode shift_add_xor_string_hash(const void *key)
 {
     uint8_t *string = (uint8_t *)key;
-    size_t length = strlen((char *)string);
+    size_t length = strlen((const char *)string);
     return shift_add_xor_string_buffer_hash(string, length);
 }
 
