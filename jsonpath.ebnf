@@ -148,7 +148,7 @@ quoted name character
     ;
 
 name character
-    = ? any unicode character except " or [ or control characters ?
+    = ? any unicode character except \" or [ or control characters ?
     | "\."
     | "\["
     | escape
