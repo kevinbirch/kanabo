@@ -38,11 +38,20 @@
 #include "jsonpath/model.h"
 
 static inline void step_destructor(void *each);
-static inline void step_free(step *step);
-static void predicate_free(predicate *predicate);
 
 
-void maybe_jsonpath_free(MaybeJsonpath result)
+static inline void jsonpath_free(JsonPath *path)
+{
+    if(NULL == path)
+    {
+        return;
+    }
+    vector_destroy(path->steps, step_destructor);
+    free(path->steps);
+    free(path);
+}
+
+void path_free(MaybeJsonPath result)
 {
     switch(result.tag)
     {
@@ -55,23 +64,22 @@ void maybe_jsonpath_free(MaybeJsonpath result)
     }
 }
 
-void jsonpath_free(jsonpath *path)
+static void predicate_free(Predicate *value)
 {
-    if(NULL == path)
+    if(NULL == value)
     {
         return;
     }
-    vector_destroy(path->steps, step_destructor);
-    free(path->steps);
-    free(path);
+    if(JOIN == predicate_kind(value))
+    {
+        jsonpath_free(value->join.left);
+        jsonpath_free(value->join.right);
+    }
+
+    free(value);
 }
 
-static inline void step_destructor(void *each)
-{
-    step_free((step *)each);
-}
-
-static inline void step_free(step *value)
+static inline void step_free(Step *value)
 {
     if(NULL == value)
     {
@@ -93,18 +101,7 @@ static inline void step_free(step *value)
     free(value);
 }
 
-static void predicate_free(predicate *value)
+static inline void step_destructor(void *each)
 {
-    if(NULL == value)
-    {
-        return;
-    }
-    if(JOIN == predicate_kind(value))
-    {
-        jsonpath_free(value->join.left);
-        jsonpath_free(value->join.right);
-    }
-
-    free(value);
+    step_free((Step *)each);
 }
-
