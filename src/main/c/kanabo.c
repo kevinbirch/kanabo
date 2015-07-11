@@ -292,7 +292,7 @@ static nodelist *evaluate_expression(const struct settings *settings, const docu
         nodelist_free(list);
         list = NULL;
     }
-    
+
     evaluator_free(evaluator);
     return list;
 }
