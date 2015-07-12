@@ -182,33 +182,39 @@ static int expression_mode(const struct settings *settings)
 
 static int apply_expression(const struct settings *settings, document_model *model, const char *expression)
 {
-    jsonpath *path = parse_expression(settings, expression);
-    if(NULL == path)
+    int result = EXIT_SUCCESS;
+
+    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));    
+    if(ERROR == maybe.tag)
     {
-        return EXIT_FAILURE;
+        error("while parsing jsonpath expression", maybe.error.message, settings);
+        result = EXIT_FAILURE;
+        goto parse_error;
     }
 
-    nodelist *list = evaluate_expression(settings, model, path);
+    nodelist *list = evaluate_expression(settings, model, maybe.path);
     if(NULL == list)
     {
-        jsonpath_free(path);
-        return EXIT_FAILURE;
+        result = EXIT_FAILURE;
+        goto evaluation_error;
     }
 
     emit_function emit = get_emitter(settings);
     if(NULL == emit)
     {
-        jsonpath_free(path);
-        nodelist_free(list);
-        return EXIT_FAILURE;
+        error("", "internal error: no emitter configured!", settings);
+        result = EXIT_FAILURE;
+        goto evaluation_error;
     }
 
     emit(list, settings);
 
-    jsonpath_free(path);
+  evaluation_error:
     nodelist_free(list);
+  parse_error:
+    path_free(maybe);
 
-    return EXIT_SUCCESS;
+    return result;
 }
 
 static document_model *load_model(const struct settings *settings)
