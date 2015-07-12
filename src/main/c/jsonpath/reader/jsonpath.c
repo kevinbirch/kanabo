@@ -37,164 +37,168 @@
 
 #include "jsonpath/combinators.h"
 
-combinator *jsonpath(void);
-combinator *absolute_path(void);
-combinator *root_step(void);
-combinator *qualified_step(void);
-combinator *recursive_step(void);
-combinator *relative_step(void);
-combinator *relative_path(void);
-combinator *relative_head_step(void);
-combinator *step(void);
 
-combinator *transformer(void);
-combinator *mapping(void);
-combinator *key_value(void);
-combinator *sequence(void);
-combinator *value(void);
+Parser *jsonpath(void);
 
-combinator *selector(void);
-combinator *tag_selector(void);
-combinator *anchor_selector(void);
-combinator *type_selector(void);
-combinator *type(void);
+static Parser *absolute_path(void);
+static Parser *root_step(void);
+static Parser *qualified_step(void);
+static Parser *recursive_step(void);
+static Parser *relative_step(void);
+static Parser *relative_path(void);
+static Parser *relative_head_step(void);
+static Parser *step(void);
 
-combinator *name_selector(void);
-combinator *wildcard(void);
-combinator *name(void);
+static Parser *transformer(void);
+static Parser *object(void);
+static Parser *key_value(void);
+static Parser *array(void);
+static Parser *value(void);
 
-combinator *predicate_expression(void);
-combinator *predicate(void);
-combinator *subscript(void);
-combinator *slice(void);
-combinator *join(void);
+static Parser *selector(void);
+static Parser *tag_selector(void);
+static Parser *anchor_selector(void);
+static Parser *type_selector(void);
+static Parser *type(void);
 
-combinator *filter_expression(void);
-combinator *or_expression(void);
-combinator *and_expression(void);
-combinator *comparison_expression(void);
-combinator *comparison_op(void);
-combinator *addititve_expression(void);
-combinator *addititve_op(void);
-combinator *multiplicative_expression(void);
-combinator *multiplicative_op(void);
-combinator *unary_expression(void);
+static Parser *name_selector(void);
+static Parser *wildcard(void);
+static Parser *name(void);
 
-combinator *boolean(void);
+static Parser *predicate_expression(void);
+static Parser *predicate(void);
+static Parser *subscript(void);
+static Parser *slice(void);
+static Parser *join(void);
+
+static Parser *filter_expression(void);
+static Parser *or_expression(void);
+static Parser *and_expression(void);
+static Parser *comparison_expression(void);
+static Parser *comparison_op(void);
+static Parser *addititve_expression(void);
+static Parser *addititve_op(void);
+static Parser *multiplicative_expression(void);
+static Parser *multiplicative_op(void);
+static Parser *unary_expression(void);
+
+static Parser *boolean(void);
 
 
-combinator *jsonpath(void)
+Parser *jsonpath(void)
 {
-    return alternation(absolute_path(), 
-                       relative_path());
+    return rule(choice(absolute_path(),
+                       relative_path()));
 }
 
-combinator *absolute_path(void)
+static Parser *absolute_path(void)
 {
-    return concatenation(root_step(), repetition(qualified_step()));
+    return rule(sequence(root_step(), repetition(qualified_step())));
 }
 
-combinator *root_step(void)
+static Parser *root_step(void)
 {
-    return concatenation(literal("$"), option(predicate_expression()));
+    return rule(sequence(literal("$"), option(predicate_expression())));
 }
 
-combinator *qualified_step(void)
+static Parser *qualified_step(void)
 {
-    return alternation(recursive_step(), 
-                       relative_step());
+    return rule(choice(recursive_step(),
+                       relative_step()));
 }
 
-combinator *recursive_step(void)
+static Parser *recursive_step(void)
 {
-    return concatenation(literal(".."), step());
+    return rule(sequence(literal(".."), step()));
 }
 
-combinator *relative_step(void)
+static Parser *relative_step(void)
 {
-    return concatenation(literal("."), step());
+    return rule(sequence(literal("."), step()));
 }
 
-combinator *relative_path(void)
+static Parser *relative_path(void)
 {
-    return concatenation(alternation(relative_head_step(), step()), 
-                         repetition(qualified_step()));
+    return rule(sequence(choice(relative_head_step(), step()),
+                         repetition(qualified_step())));
 }
 
-combinator *relative_head_step(void)
+static Parser *relative_head_step(void)
 {
-    return concatenation(literal("@"), option(predicate_expression()));
+    return rule(sequence(literal("@"), option(predicate_expression())));
 }
 
-combinator *step(void)
+static Parser *step(void)
 {
-    return alternation(transformer(), 
-                       concatenation(selector(), option(predicate_expression())));
+    return choice(transformer(),
+                  sequence(selector(),
+                           option(predicate_expression())));
 }
 
-combinator *transformer(void)
+static Parser *transformer(void)
 {
-    return concatenation(literal("="), value());
+    return rule(sequence(literal("="), value()));
 }
 
-combinator *mapping(void)
+static Parser *object(void)
 {
-    return concatenation(literal("{"),
-                         option(concatenation(key_value(), 
-                                              repetition(
-                                                  concatenation(
-                                                      literal(","), key_value())))),
-                         literal("}"));
+    return rule(sequence(
+                    literal("{"),
+                    option(sequence(
+                               key_value(),
+                               repetition(sequence(literal(","),
+                                                   key_value())))),
+                    literal("}")));
 }
 
-combinator *key_value(void)
+static Parser *key_value(void)
 {
-    return concatenation(string(), literal(":"), value());
+    return rule(sequence(string(), literal(":"), value()));
 }
 
-combinator *sequence(void)
+static Parser *array(void)
 {
-    return concatenation(literal("["),
-                         option(concatenation(value(), 
-                                              repetition(
-                                                  concatenation(
-                                                      literal(","), value())))),
-                         literal("]"));
+    return rule(sequence(
+                    literal("["),
+                    option(sequence(value(),
+                                    repetition(sequence(literal(","),
+                                                        value())))),
+                    literal("]")));
 }
 
-combinator *value(void)
+static Parser *value(void)
 {
-    return alternation(sequence(), 
-                       mapping(), 
-                       addititve_expression());
+    return rule(choice(array(),
+                       object(),
+                       addititve_expression()));
 }
 
-combinator *selector(void)
+static Parser *selector(void)
 {
-    return alternation(tag_selector(),
+    return rule(choice(tag_selector(),
                        anchor_selector(),
                        type_selector(),
-                       name_selector());
+                       name_selector()));
 }
 
-combinator *tag_selector(void)
+static Parser *tag_selector(void)
 {
-    return concatenation(literal("!"), name());
+    return rule(sequence(literal("!"), name()));
 }
 
-combinator *anchor_selector(void)
+static Parser *anchor_selector(void)
 {
-    return concatenation(literal("&"), name());
+    return rule(sequence(literal("&"), name()));
 }
 
-combinator *type_selector(void)
+static Parser *type_selector(void)
 {
-    return concatenation(type(), literal("("), literal(")"));
+    return rule(sequence(type(), literal("("), literal(")")));
 }
 
-combinator *type(void)
+static Parser *type(void)
 {
-    return alternation(literal("object"),
+    return rule(choice(literal("object"),
                        literal("array"),
                        literal("string"),
                        literal("number"),
@@ -202,120 +206,133 @@ combinator *type(void)
                        literal("decimal"),
                        literal("timestamp"),
                        literal("boolean"),
-                       literal("null"));
+                       literal("null")));
 }
 
-combinator *name_selector(void)
+static Parser *name_selector(void)
 {
-    return alternation(wildcard(), name());
+    return rule(choice(wildcard(), name()));
 }
 
-combinator *wildcard(void)
+static Parser *wildcard(void)
 {
-    return literal("*");
+    return rule(literal("*"));
 }
 
-combinator *name(void)
+static Parser *name(void)
 {
-    return alternation(quoted_string(), string());
+    return rule(choice(quoted_string(), string()));
 }
 
-combinator *predicate_expression(void)
+static Parser *predicate_expression(void)
 {
-    return concatenation(literal("["), predicate(), literal("]"));
+    return rule(sequence(literal("["),
+                         predicate(),
+                         literal("]"),
+                         filter_expression()));
 }
 
-combinator *predicate(void)
+static Parser *predicate(void)
 {
-    return alternation(wildcard(),
+    return rule(choice(wildcard(),
                        subscript(),
                        slice(),
-                       join(),
-                       filter_expression());
+                       join()));
 }
 
-combinator *subscript(void)
+static Parser *subscript(void)
 {
-    return signed_integer();
+    return rule(signed_integer());
 }
 
-combinator *slice(void)
+static Parser *slice(void)
 {
-    return concatenation(option(signed_integer()), literal(":"), option(signed_integer()), 
-                         option(concatenation(literal(":"), option(non_zero_signed_integer()))));
+    return rule(sequence(option(signed_integer()),
+                         literal(":"),
+                         option(signed_integer()),
+                         option(sequence(literal(":"),
+                                         option(non_zero_signed_integer())))));
 }
 
-combinator *join(void)
+static Parser *join(void)
 {
-    return concatenation(addititve_expression(), literal(","), addititve_expression(), 
-                         repetition(concatenation(literal(","), addititve_expression())));
+    return rule(sequence(addititve_expression(),
+                         literal(","),
+                         addititve_expression(),
+                         repetition(sequence(literal(","),
+                                             addititve_expression()))));
 }
 
-combinator *filter_expression(void)
+static Parser *filter_expression(void)
 {
-    return concatenation(literal("?("), or_expression(), literal(")"));
+    return rule(sequence(literal("?("),
+                         or_expression(),
+                         literal(")")));
 }
 
-combinator *or_expression(void)
+static Parser *or_expression(void)
 {
-    return concatenation(and_expression(), 
-                         option(concatenation(literal("or"), or_expression())));
+    return rule(sequence(and_expression(),
+                              option(sequence(literal("or"), or_expression()))));
 }
 
-combinator *and_expression(void)
+static Parser *and_expression(void)
 {
-    return concatenation(comparison_expression(),
-                         option(concatenation(literal("and"), and_expression())));
+    return rule(sequence(comparison_expression(),
+                              option(sequence(literal("and"), and_expression()))));
 }
 
-combinator *comparison_expression(void)
+static Parser *comparison_expression(void)
 {
-    return concatenation(addititve_expression(),
-                         option(concatenation(comparison_op(), comparison_expression())));
+    return rule(sequence(addititve_expression(),
+                              option(sequence(comparison_op(),
+                                              comparison_expression()))));
 }
 
-combinator *comparison_op(void)
+static Parser *comparison_op(void)
 {
-    return alternation(literal(">"),
-                       literal("<"),
-                       literal(">="),
-                       literal(">="),
-                       literal("="),
-                       literal("!="));
+    return rule(choice(literal(">"),
+                            literal("<"),
+                            literal(">="),
+                            literal(">="),
+                            literal("="),
+                            literal("!=")));
 }
 
-combinator *addititve_expression(void)
+static Parser *addititve_expression(void)
 {
-    return concatenation(multiplicative_expression(),
-                         option(concatenation(addititve_op(), addititve_expression())));
+    return rule(sequence(multiplicative_expression(),
+                              option(sequence(addititve_op(),
+                                              addititve_expression()))));
 }
 
-combinator *addititve_op(void)
+static Parser *addititve_op(void)
 {
-    return alternation(literal("+"), literal("-"));
+    return rule(choice(literal("+"), literal("-")));
 }
 
-combinator *multiplicative_expression(void)
+static Parser *multiplicative_expression(void)
 {
-    return concatenation(unary_expression(),
-                         option(concatenation(multiplicative_op(), multiplicative_expression())));
+    return rule(sequence(unary_expression(),
+                         option(sequence(multiplicative_op(),
+                                         multiplicative_expression()))));
 }
 
-combinator *multiplicative_op(void)
+static Parser *multiplicative_op(void)
 {
-    return alternation(literal("*"), literal("/"), literal("%"));
+    return rule(choice(literal("*"), literal("/"), literal("%")));
 }
 
-combinator *unary_expression(void)
+static Parser *unary_expression(void)
 {
-    return alternation(relative_path(),
+    return rule(choice(relative_path(),
                        number(),
                        string(),
                        boolean(),
-                       literal("null"));
+                       literal("null")));
 }
 
-combinator *boolean(void)
+static Parser *boolean(void)
 {
-    return alternation(literal("true"), literal("false"));
+    return rule(choice(literal("true"), literal("false")));
 }
