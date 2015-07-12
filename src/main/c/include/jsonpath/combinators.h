@@ -43,55 +43,45 @@
 
 enum combinator_kind
 {
-    ALTERNATION,
-    CONCATENATION,
+    CHOICE,
+    SEQUENCE,
     OPTION,
     REPETITION,
     TERMINAL,
     RULE,
 };
 
-struct combinator_s
+struct parser_s
 {
     enum combinator_kind kind;
     parser_function      parser;
-    void                *argument;
 };
 
-typedef struct combinator_s combinator;
+typedef struct parser_s Parser;
 
-struct rule_context_s
-{
-    combinator *expression;
-    char       *name;
-};
+/* Destructor */
+void parser_free(Parser *value);
 
-typedef struct rule_context_s rule_context;
-
-combinator *make_combinator(void);
-void combinator_free(combinator *value);
-
-/* Non-terminal Combinators */
-combinator *rule_combinator(char *name, combinator *expression);
+/* Non-terminal parsers */
+Parser *rule_combinator(const char *name, Parser *expression);
 #define rule(COMBINATOR) rule_combinator(__func__, (COMBINATOR))
 
-combinator *alternation_combinator(combinator *one, combinator *two, ...);
-#define alternation(...) alternation_combinator(__VA_ARGS__, NULL)
+Parser *choice_combinator(Parser *one, Parser *two, ...);
+#define choice(...) choice_combinator(__VA_ARGS__, NULL)
 
-combinator *concatenation_combinator(combinator *one, combinator *two, ...);
-#define concatenation(...) concatenation_combinator(__VA_ARGS__, NULL)
+Parser *sequence_combinator(Parser *one, Parser *two, ...);
+#define sequence(...) sequence_combinator(__VA_ARGS__, NULL)
 
-combinator *option(combinator *optional);
-combinator *repetition(combinator *repeated);
+Parser *option(Parser *optional);
+Parser *repetition(Parser *repeated);
 
-/* Terminal Combinators */
-combinator *literal(char *value);
+/* Terminal parsers */
+Parser *literal(char *value);
 
-combinator *number(void);
-combinator *integer(void);
-combinator *signed_integer(void);
-combinator *non_zero_signed_integer(void);
+Parser *number(void);
+Parser *integer(void);
+Parser *signed_integer(void);
+Parser *non_zero_signed_integer(void);
 
-combinator *quoted_string(void);
-combinator *string(void);
-
+Parser *quoted_string(void);
+Parser *string(void);

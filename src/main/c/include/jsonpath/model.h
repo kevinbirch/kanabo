@@ -48,17 +48,17 @@ enum slice_specifiers
     SLICE_STEP = 4
 };
 
-struct predicate
+struct predicate_s
 {
     enum predicate_kind kind;
-    
+
     union
     {
         struct
         {
             size_t index;
         } subscript;
-        
+
         struct
         {
             uint8_t      specified;
@@ -66,19 +66,19 @@ struct predicate
             int_fast32_t to;
             int_fast32_t step;
         } slice;
-        
+
         struct
         {
-            jsonpath *left;
-            jsonpath *right;
+            JsonPath *left;
+            JsonPath *right;
         } join;
     };
 };
 
-struct step
+struct step_s
 {
     enum step_kind kind;
-    
+
     struct
     {
         enum test_kind kind;
@@ -90,19 +90,17 @@ struct step
                 uint8_t *value;
                 size_t  length;
             } name;
-        
+
             enum type_test_kind type;
         };
-    } test;    
+    } test;
 
-    predicate *predicate;
+    Predicate *predicate;
 };
 
-struct jsonpath
+struct jsonpath_s
 {
     enum path_kind kind;
     size_t length;
     Vector *steps;
 };
-
-
