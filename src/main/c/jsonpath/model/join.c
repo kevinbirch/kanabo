@@ -39,7 +39,7 @@
 #include "conditions.h"
 
 
-jsonpath *join_predicate_left(const predicate *value)
+JsonPath *join_predicate_left(const Predicate *value)
 {
     PRECOND_NONNULL_ELSE_NULL(value);
     PRECOND_ELSE_NULL(JOIN == value->kind);
@@ -47,7 +47,7 @@ jsonpath *join_predicate_left(const predicate *value)
     return value->join.left;
 }
 
-jsonpath *join_predicate_right(const predicate *value)
+JsonPath *join_predicate_right(const Predicate *value)
 {
     PRECOND_NONNULL_ELSE_NULL(value);
     PRECOND_ELSE_NULL(JOIN == value->kind);

@@ -53,18 +53,18 @@ struct context_adapter
 static bool iterator_adapter(void *each, void *context);
 
 
-enum path_kind path_kind(const jsonpath *path)
+enum path_kind path_kind(const JsonPath *path)
 {
     return path->kind;
 }
 
-size_t path_length(const jsonpath *path)
+size_t path_length(const JsonPath *path)
 {
     PRECOND_NONNULL_ELSE_ZERO(path);
     return path->length;
 }
 
-step *path_get(const jsonpath *path, size_t index)
+Step *path_get(const JsonPath *path, size_t index)
 {
     PRECOND_NONNULL_ELSE_NULL(path);
     PRECOND_NONNULL_ELSE_NULL(path->steps);
@@ -75,10 +75,10 @@ step *path_get(const jsonpath *path, size_t index)
 static bool iterator_adapter(void *each, void *context)
 {
     struct context_adapter *adapter = (struct context_adapter *)context;
-    return adapter->iterator((step *)each, adapter->original_context);
+    return adapter->iterator((Step *)each, adapter->original_context);
 }
 
-bool inline path_iterate(const jsonpath *path, path_iterator iterator, void *context)
+bool inline path_iterate(const JsonPath *path, path_iterator iterator, void *context)
 {
     PRECOND_NONNULL_ELSE_FALSE(path, iterator);
 
@@ -89,4 +89,3 @@ const char *path_kind_name(enum path_kind value)
 {
     return PATH_KIND_NAMES[value];
 }
-

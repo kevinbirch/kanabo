@@ -49,7 +49,7 @@ static const char * const TYPE_TEST_KIND_NAMES[] =
 };
 
 
-enum type_test_kind type_test_step_kind(const step *value)
+enum type_test_kind type_test_step_kind(const Step *value)
 {
     return value->test.type;
 }
@@ -58,4 +58,3 @@ const char *type_test_kind_name(enum type_test_kind value)
 {
     return TYPE_TEST_KIND_NAMES[value];
 }
-
