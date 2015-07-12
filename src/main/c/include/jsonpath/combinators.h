@@ -60,9 +60,11 @@ struct parser_s
 typedef struct parser_s Parser;
 
 /* Destructor */
+
 void parser_free(Parser *value);
 
 /* Non-terminal parsers */
+
 Parser *rule_combinator(const char *name, Parser *expression);
 #define rule(COMBINATOR) rule_combinator(__func__, (COMBINATOR))
 
@@ -76,6 +78,7 @@ Parser *option(Parser *optional);
 Parser *repetition(Parser *repeated);
 
 /* Terminal parsers */
+
 Parser *literal(char *value);
 
 Parser *number(void);
