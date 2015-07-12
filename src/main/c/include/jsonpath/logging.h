@@ -51,8 +51,8 @@
 #define debug_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_DEBUG, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 
 #ifdef USE_LOGGING
-void log_combinator(combinator *value);
+void log_parser(Parser *value);
 #else
-#define log_combinator(...)
+#define log_parser(...)
 #endif
 

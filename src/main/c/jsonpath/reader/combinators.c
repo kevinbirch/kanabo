@@ -264,7 +264,7 @@ combinator *string(void)
 }
 
 #ifdef USE_LOGGING
-void log_combinator(combinator *value)
+void log_parser(Parser *value)
 {
     switch(value->kind)
     {
