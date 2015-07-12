@@ -54,7 +54,7 @@ enum combinator_kind
 struct parser_s
 {
     enum combinator_kind kind;
-    parser_function      parser;
+    parser_function      function;
 };
 
 typedef struct parser_s Parser;

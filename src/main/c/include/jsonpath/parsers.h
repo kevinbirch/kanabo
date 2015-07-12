@@ -89,28 +89,28 @@ struct maybe_ast_s
 
 typedef struct maybe_ast_s MaybeAst;
 
-typedef MaybeAst (*parser_function)(MaybeAst ast, Input *input, void *arg);
+typedef MaybeAst (*parser_function)(MaybeAst ast, Input *input);
 
-#define collection() (MaybeAst){VALUE, .value=make_ast_node(AST_COLLECTION, NULL)}
+#define collection() (MaybeAst){AST_VALUE, .value=make_ast_node(AST_COLLECTION, NULL)}
 #define error(CODE) (MaybeAst){NOTHING, .error.code=(CODE), .error.argument=0}
 #define fail()
-#define nothing() (MaybeAst){VALUE, .value=AST_NONE}
-#define just(AST) (MaybeAst){VALUE, .value=(AST)}
+#define nothing() (MaybeAst){AST_VALUE, .value=AST_NONE}
+#define just(AST) (MaybeAst){AST_VALUE, .value=(AST)}
 
-MaybeAst bind(MaybeAst ast, parser_function f, Input *input, void *arg);
+MaybeAst bind(MaybeAst ast, parser_function f, Input *input);
 
 /* Non Terminal Parsers */
-MaybeAst rule_parser(MaybeAst ast, Input *input, void *arg);
-MaybeAst choice_parser(MaybeAst ast, Input *input, void *arg);
-MaybeAst sequence_parser(MaybeAst ast, Input *input, void *arg);
-MaybeAst option_parser(MaybeAst ast, Input *input, void *arg);
-MaybeAst repeat_parser(MaybeAst ast, Input *input, void *arg);
+MaybeAst rule_parser(MaybeAst ast, Input *input);
+MaybeAst choice_parser(MaybeAst ast, Input *input);
+MaybeAst sequence_parser(MaybeAst ast, Input *input);
+MaybeAst option_parser(MaybeAst ast, Input *input);
+MaybeAst repeat_parser(MaybeAst ast, Input *input);
 
 /* Terminal Parsers */
-MaybeAst literal_parser(MaybeAst ast, Input *input, void *arg);
-MaybeAst number_parser(MaybeAst ast, Input *input, void *arg);
-MaybeAst integer_parser(MaybeAst ast, Input *input, void *arg);
-MaybeAst signed_integer_parser(MaybeAst ast, Input *input, void *arg);
-MaybeAst non_zero_signed_integer_parser(MaybeAst ast, Input *input, void *arg);
-MaybeAst string_parser(MaybeAst ast, Input *input, void *arg);
-MaybeAst quoted_string_parser(MaybeAst ast, Input *input, void *arg);
+MaybeAst literal_parser(MaybeAst ast, Input *input);
+MaybeAst number_parser(MaybeAst ast, Input *input);
+MaybeAst integer_parser(MaybeAst ast, Input *input);
+MaybeAst signed_integer_parser(MaybeAst ast, Input *input);
+MaybeAst non_zero_signed_integer_parser(MaybeAst ast, Input *input);
+MaybeAst string_parser(MaybeAst ast, Input *input);
+MaybeAst quoted_string_parser(MaybeAst ast, Input *input);
