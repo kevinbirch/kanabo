@@ -51,12 +51,6 @@ enum combinator_kind
     RULE,
 };
 
-struct parser_s
-{
-    enum combinator_kind kind;
-    parser_function      function;
-};
-
 typedef struct parser_s Parser;
 
 
