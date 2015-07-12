@@ -93,246 +93,358 @@ Parser *jsonpath(void)
 
 static Parser *absolute_path(void)
 {
-    return rule(sequence(root_step(), repetition(qualified_step())));
+    return rule(
+        sequence(
+            root_step(),
+            repetition(qualified_step())));
 }
 
 static Parser *root_step(void)
 {
-    return rule(sequence(literal("$"), option(predicate_expression())));
+    return rule(
+        sequence(
+            literal("$"),
+            option(predicate_expression())));
 }
 
 static Parser *qualified_step(void)
 {
-    return rule(choice(recursive_step(),
-                       relative_step()));
+    return rule(
+        choice(
+            recursive_step(),
+            relative_step()));
 }
 
 static Parser *recursive_step(void)
 {
-    return rule(sequence(literal(".."), step()));
+    return rule(
+        sequence(
+            literal(".."),
+            step()));
 }
 
 static Parser *relative_step(void)
 {
-    return rule(sequence(literal("."), step()));
+    return rule(
+        sequence(
+            literal("."),
+            step()));
 }
 
 static Parser *relative_path(void)
 {
-    return rule(sequence(choice(relative_head_step(), step()),
-                         repetition(qualified_step())));
+    return rule(
+        sequence(
+            choice(
+                relative_head_step(),
+                step()),
+            repetition(qualified_step())));
 }
 
 static Parser *relative_head_step(void)
 {
-    return rule(sequence(literal("@"), option(predicate_expression())));
+    return rule(
+        sequence(
+            literal("@"),
+            option(predicate_expression())));
 }
 
 static Parser *step(void)
 {
-    return choice(transformer(),
-                  sequence(selector(),
-                           option(predicate_expression())));
+    return rule(
+        choice(
+            transformer(),
+            sequence(
+                selector(),
+                option(predicate_expression()))));
 }
 
 static Parser *transformer(void)
 {
-    return rule(sequence(literal("="), value()));
+    return rule(
+        sequence(
+            literal("="),
+            value()));
 }
 
 static Parser *object(void)
 {
-    return rule(sequence(
-                    literal("{"),
-                    option(sequence(
-                               key_value(),
-                               repetition(sequence(literal(","),
-                                                   key_value())))),
-                    literal("}")));
+    return rule(
+        sequence(
+            literal("{"),
+            option(sequence(
+                       key_value(),
+                       repetition(sequence(
+                                      literal(","),
+                                      key_value())))),
+            literal("}")));
 }
 
 static Parser *key_value(void)
 {
-    return rule(sequence(string(), literal(":"), value()));
+    return rule(
+        sequence(
+            string(),
+            literal(":"),
+            value()));
 }
 
 static Parser *array(void)
 {
-    return rule(sequence(
-                    literal("["),
-                    option(sequence(value(),
-                                    repetition(sequence(literal(","),
-                                                        value())))),
-                    literal("]")));
+    return rule
+        (sequence(
+            literal("["),
+            option(sequence(
+                       value(),
+                       repetition(sequence(
+                                      literal(","),
+                                      value())))),
+            literal("]")));
 }
 
 static Parser *value(void)
 {
-    return rule(choice(array(),
-                       object(),
-                       addititve_expression()));
+    return rule(
+        choice(
+            array(),
+            object(),
+            addititve_expression()));
 }
 
 static Parser *selector(void)
 {
-    return rule(choice(tag_selector(),
-                       anchor_selector(),
-                       type_selector(),
-                       name_selector()));
+    return rule(
+        choice(
+            tag_selector(),
+            anchor_selector(),
+            type_selector(),
+            name_selector()));
 }
 
 static Parser *tag_selector(void)
 {
-    return rule(sequence(literal("!"), name()));
+    return rule(
+        sequence(
+            literal("!"),
+            name()));
 }
 
 static Parser *anchor_selector(void)
 {
-    return rule(sequence(literal("&"), name()));
+    return rule(
+        sequence(
+            literal("&"),
+            name()));
 }
 
 static Parser *type_selector(void)
 {
-    return rule(sequence(type(), literal("("), literal(")")));
+    return rule(
+        sequence(
+            type(),
+            literal("("),
+            literal(")")));
 }
 
 static Parser *type(void)
 {
-    return rule(choice(literal("object"),
-                       literal("array"),
-                       literal("string"),
-                       literal("number"),
-                       literal("integer"),
-                       literal("decimal"),
-                       literal("timestamp"),
-                       literal("boolean"),
-                       literal("null")));
+    return rule(
+        choice(
+            literal("object"),
+            literal("array"),
+            literal("string"),
+            literal("number"),
+            literal("integer"),
+            literal("decimal"),
+            literal("timestamp"),
+            literal("boolean"),
+            literal("null")));
 }
 
 static Parser *name_selector(void)
 {
-    return rule(choice(wildcard(), name()));
+    return rule(
+        choice(
+            wildcard(),
+            name()));
 }
 
 static Parser *wildcard(void)
 {
-    return rule(literal("*"));
+    return rule(
+        literal("*"));
 }
 
 static Parser *name(void)
 {
-    return rule(choice(quoted_string(), string()));
+    return rule(
+        choice(
+            quoted_string(),
+            string()));
 }
 
 static Parser *predicate_expression(void)
 {
-    return rule(sequence(literal("["),
-                         predicate(),
-                         literal("]"),
-                         filter_expression()));
+    return rule(
+        sequence(
+            literal("["),
+            predicate(),
+            literal("]"),
+            filter_expression()));
 }
 
 static Parser *predicate(void)
 {
-    return rule(choice(wildcard(),
-                       subscript(),
-                       slice(),
-                       join()));
+    return rule(
+        choice(
+            wildcard(),
+            subscript(),
+            slice(),
+            join()));
 }
 
 static Parser *subscript(void)
 {
-    return rule(signed_integer());
+    return rule(
+        signed_integer());
 }
 
 static Parser *slice(void)
 {
-    return rule(sequence(option(signed_integer()),
-                         literal(":"),
-                         option(signed_integer()),
-                         option(sequence(literal(":"),
-                                         option(non_zero_signed_integer())))));
+    return rule(
+        sequence(
+            option(
+                signed_integer()),
+            literal(":"),
+            option(
+                signed_integer()),
+            option(
+                sequence(
+                    literal(":"),
+                    option(non_zero_signed_integer())))));
 }
 
 static Parser *join(void)
 {
-    return rule(sequence(addititve_expression(),
-                         literal(","),
-                         addititve_expression(),
-                         repetition(sequence(literal(","),
-                                             addititve_expression()))));
+    return rule(
+        sequence(
+            addititve_expression(),
+            literal(","),
+            addititve_expression(),
+            repetition(
+                sequence(
+                    literal(","),
+                    addititve_expression()))));
 }
 
 static Parser *filter_expression(void)
 {
-    return rule(sequence(literal("?("),
-                         or_expression(),
-                         literal(")")));
+    return rule(
+        sequence(
+            literal("?("),
+            or_expression(),
+            literal(")")));
 }
 
 static Parser *or_expression(void)
 {
-    return rule(sequence(and_expression(),
-                              option(sequence(literal("or"), or_expression()))));
+    return rule(
+        sequence(
+            and_expression(),
+            option(
+                sequence(
+                    literal("or"),
+                    or_expression()))));
 }
 
 static Parser *and_expression(void)
 {
-    return rule(sequence(comparison_expression(),
-                              option(sequence(literal("and"), and_expression()))));
+    return rule(
+        sequence(
+            comparison_expression(),
+            option(
+                sequence(
+                    literal("and"),
+                    and_expression()))));
 }
 
 static Parser *comparison_expression(void)
 {
-    return rule(sequence(addititve_expression(),
-                              option(sequence(comparison_op(),
-                                              comparison_expression()))));
+    return rule(
+        sequence(
+            addititve_expression(),
+            option(
+                sequence(
+                    comparison_op(),
+                    comparison_expression()))));
 }
 
 static Parser *comparison_op(void)
 {
-    return rule(choice(literal(">"),
-                            literal("<"),
-                            literal(">="),
-                            literal(">="),
-                            literal("="),
-                            literal("!=")));
+    return rule(
+        choice(
+            literal(">"),
+            literal("<"),
+            literal(">="),
+            literal(">="),
+            literal("="),
+            literal("!=")));
 }
 
 static Parser *addititve_expression(void)
 {
-    return rule(sequence(multiplicative_expression(),
-                              option(sequence(addititve_op(),
-                                              addititve_expression()))));
+    return rule(
+        sequence(
+            multiplicative_expression(),
+            option(
+                sequence(
+                    addititve_op(),
+                    addititve_expression()))));
 }
 
 static Parser *addititve_op(void)
 {
-    return rule(choice(literal("+"), literal("-")));
+    return rule(
+        choice(
+            literal("+"),
+            literal("-")));
 }
 
 static Parser *multiplicative_expression(void)
 {
-    return rule(sequence(unary_expression(),
-                         option(sequence(multiplicative_op(),
-                                         multiplicative_expression()))));
+    return rule(
+        sequence(
+            unary_expression(),
+            option(
+                sequence(
+                    multiplicative_op(),
+                    multiplicative_expression()))));
 }
 
 static Parser *multiplicative_op(void)
 {
-    return rule(choice(literal("*"), literal("/"), literal("%")));
+    return rule(
+        choice(
+            literal("*"),
+            literal("/"),
+            literal("%")));
 }
 
 static Parser *unary_expression(void)
 {
-    return rule(choice(relative_path(),
-                       number(),
-                       string(),
-                       boolean(),
-                       literal("null")));
+    return rule(
+        choice(
+            relative_path(),
+            number(),
+            string(),
+            boolean(),
+            literal("null")));
 }
 
 static Parser *boolean(void)
 {
-    return rule(choice(literal("true"), literal("false")));
+    return rule(
+        choice(
+            literal("true"),
+            literal("false")));
 }
