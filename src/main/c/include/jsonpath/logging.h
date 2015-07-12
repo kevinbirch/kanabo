@@ -38,7 +38,6 @@
 #pragma once
 
 #include "log.h"
-#include "jsonpath/combinators.h"
 
 #define component_name "parser"
 
@@ -49,10 +48,3 @@
 
 #define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 #define debug_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_DEBUG, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
-
-#ifdef USE_LOGGING
-void log_parser(Parser *value);
-#else
-#define log_parser(...)
-#endif
-
