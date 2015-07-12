@@ -41,7 +41,7 @@
 #include "jsonpath/logging.h"
 
 
-MaybeAst literal_parser(MaybeAst ast, Input *input, void *arg)
+MaybeAst literal_parser(MaybeAst ast, Input *input)
 {
     char *literal = (char *)arg;
     // add trace!
@@ -56,32 +56,27 @@ MaybeAst literal_parser(MaybeAst ast, Input *input, void *arg)
     }
 }
 
-MaybeAst number_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst integer_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)))
 {
     return error(ERR_NULL_EXPRESSION);
 }
 
-MaybeAst integer_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst signed_integer_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)))
 {
     return error(ERR_NULL_EXPRESSION);
 }
 
-MaybeAst signed_integer_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst non_zero_signed_integer_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)))
 {
     return error(ERR_NULL_EXPRESSION);
 }
 
-MaybeAst non_zero_signed_integer_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst string_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)))
 {
     return error(ERR_NULL_EXPRESSION);
 }
 
-MaybeAst string_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
-{
-    return error(ERR_NULL_EXPRESSION);
-}
-
-MaybeAst quoted_string_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst quoted_string_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)))
 {
     return error(ERR_NULL_EXPRESSION);
 }
