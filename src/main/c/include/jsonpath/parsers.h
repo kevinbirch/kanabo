@@ -72,8 +72,8 @@ struct maybe_ast_s
 {
     enum
     {
-        NOTHING,
-        VALUE
+        AST_ERROR,
+        AST_VALUE
     } tag;
 
     union
