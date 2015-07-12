@@ -36,40 +36,64 @@
  */
 
 #include "jsonpath/model.h"
-#include "jsonpath/parsers.h"
+#include "jsonpath/input.h"
 #include "jsonpath/logging.h"
 #include "conditions.h"
-
-static void parser_init(parser_context *context, const uint8_t *expression, size_t length);
 
 #define PRECOND_ELSE_NOTHING(ERR_CODE, ...)                       \
     if(is_false(__VA_ARGS__, -1))                                 \
     {                                                             \
         char *msg = parser_status_message((ERR_CODE), 0, NULL);   \
-        return (MaybeJsonpath){ERROR, .error.message=msg};        \
+        return (MaybeJsonPath){ERROR, .error.message=msg};        \
     }
 
 
-MaybeJsonpath parse(const uint8_t *expression, size_t length)
+Parser *jsonpath(void);
+
+
+static inline JsonPath *build_path(Ast *ast)
+{
+    if(NULL == ast)
+    {
+        return NULL;
+    }
+    return NULL;
+}
+
+static inline MaybeJsonPath resolve_ast(MaybeAst *ast, Input *input)
+{
+    if(AST_ERROR == ast->tag)
+    {
+        char *msg = parser_status_message(ast->error.code,
+                                          ast->error.argument,
+                                          input);
+        return (MaybeJsonPath){
+            .tag=ERROR, .error.message=msg, .error.position=input->cursor
+        };
+        
+    }
+    return (MaybeJsonPath){JSONPATH, .path=build_path(ast->value)};
+
+}
+
+static inline MaybeAst execute(Parser *parser, Input *input)
+{
+    MaybeAst ast = just(make_ast_root_node());
+    return parser->function(ast, input);
+}
+
+MaybeJsonPath parse(const uint8_t *expression, size_t length)
 {
     PRECOND_ELSE_NOTHING(ERR_NULL_EXPRESSION, NULL != expression);
     PRECOND_ELSE_NOTHING(ERR_ZERO_LENGTH, 0 != length);
 
     debug_string("parsing expression: '%s'", expression, length);
 
-    parser_context context;
-    parser_init(&context, expression, length);
+    Input input = {expression, length, 0ul, 0ul};
 
-    return (MaybeJsonpath){};
+    Parser *parser = jsonpath();
+    MaybeAst ast = execute(parser, &input);
+    parser_free(parser);
+
+    return resolve_ast(&ast, &input);
 }
-
-static void parser_init(parser_context *context, const uint8_t *expression, size_t length)
-{
-    context->input.expression = expression;
-    context->input.length = length;
-    context->input.cursor = 0;
-    context->input.mark = 0;
-    context->step = 0;
-    context->state = ST_START;    
-}
-
