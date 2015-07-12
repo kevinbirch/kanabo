@@ -35,6 +35,8 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
+#include "jsonpath/grammar.h"
 #include "jsonpath/model.h"
 #include "jsonpath/input.h"
 #include "jsonpath/logging.h"
@@ -46,9 +48,6 @@
         char *msg = parser_status_message((ERR_CODE), 0, NULL);   \
         return (MaybeJsonPath){ERROR, .error.message=msg};        \
     }
-
-
-Parser *jsonpath(void);
 
 
 static inline JsonPath *build_path(Ast *ast)

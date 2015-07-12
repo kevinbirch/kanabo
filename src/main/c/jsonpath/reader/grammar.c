@@ -35,10 +35,8 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include "jsonpath/combinators.h"
+#include "jsonpath/grammar.h"
 
-
-Parser *jsonpath(void);
 
 static Parser *absolute_path(void);
 static Parser *root_step(void);
