@@ -59,9 +59,6 @@ struct parser_s
 
 typedef struct parser_s Parser;
 
-/* Destructor */
-
-void parser_free(Parser *value);
 
 /* Non-terminal parsers */
 
@@ -88,3 +85,7 @@ Parser *non_zero_signed_integer(void);
 
 Parser *quoted_string(void);
 Parser *string(void);
+
+/* Destructor */
+
+void parser_free(Parser *value);
