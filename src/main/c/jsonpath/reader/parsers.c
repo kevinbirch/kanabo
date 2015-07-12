@@ -37,61 +37,14 @@
 
 #include "jsonpath/parsers.h"
 
-static void ast_destructor(void *each);
 
-
-Ast *make_ast_node(enum ast_node_tag tag, void *value)
+MaybeAst bind(MaybeAst value, parser_function f, Input *input, void *arg)
 {
-    Ast *result = calloc(1, sizeof(Ast));
-
-    if(NULL != result)
+    switch(value.tag)
     {
-        result->tag = tag;
-        result->value = value;
+        case NOTHING:
+            return value;
+        case VALUE:
+            return f(value, input, arg);
     }
-    return result;
-}
-
-void ast_add_child(Ast *parent, Ast *child)
-{
-    if(NULL == parent || NULL == child)
-    {
-        return;
-    }
-
-    if(NULL == parent->children)
-    {
-        parent->children = make_vector();
-        if(NULL == parent->children)
-        {
-            return;
-        }
-    }
-
-    vector_add(parent->children, child);
-}
-
-static void ast_destructor(void *each)
-{
-    if(NULL == each)
-    {
-        return;
-    }
-
-    Ast *current = (Ast *)each;
-    free(current->value);
-    vector_destroy(current->children, ast_destructor);
-    free(current);
-}
-
-void ast_free(Ast *value)
-{
-    if(NULL == value)
-    {
-        return;
-    }
-
-    free(value->value);
-    vector_destroy(value->children, ast_destructor);
-    free(value);
 }
