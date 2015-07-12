@@ -108,10 +108,16 @@ struct maybe_jsonpath_s
 
 typedef struct maybe_jsonpath_s MaybeJsonPath;
 
+/* Parser API */
+
 MaybeJsonPath parse(const uint8_t *expression, size_t length);
+
+/* Destructor */
+
 void          path_free(MaybeJsonPath result);
 
 /* Path API */
+
 enum path_kind      path_kind(const JsonPath *path);
 const char *        path_kind_name(enum path_kind value);
 size_t              path_length(const JsonPath *path);
@@ -121,20 +127,24 @@ typedef bool (*path_iterator)(Step *each, void *parser);
 bool path_iterate(const JsonPath *path, path_iterator iterator, void *context);
 
 /* Step API */
+
 enum step_kind      step_kind(const Step *value);
 const char *        step_kind_name(enum step_kind value);
 enum test_kind      step_test_kind(const Step *value);
 const char *        test_kind_name(enum test_kind value);
 
 /* Type Test API */
+
 enum type_test_kind type_test_step_kind(const Step *value);
 const char *        type_test_kind_name(enum type_test_kind value);
 
 /* Name Test API */
+
 uint8_t *           name_test_step_name(const Step *value);
 size_t              name_test_step_length(const Step *value);
 
 /* Predicate API */
+
 bool                step_has_predicate(const Step *value);
 Predicate *         step_predicate(const Step *value);
 
@@ -142,9 +152,11 @@ enum predicate_kind predicate_kind(const Predicate *value);
 const char *        predicate_kind_name(enum predicate_kind value);
 
 /* Subscript Predicate API */
+
 size_t              subscript_predicate_index(const Predicate *value);
 
 /* Slice Predicate API */
+
 int_fast32_t        slice_predicate_to(const Predicate *value);
 int_fast32_t        slice_predicate_from(const Predicate *value);
 int_fast32_t        slice_predicate_step(const Predicate *value);
@@ -152,6 +164,7 @@ bool                slice_predicate_has_to(const Predicate *value);
 bool                slice_predicate_has_from(const Predicate *value);
 bool                slice_predicate_has_step(const Predicate *value);
 
-/* Join (Union) PredicateAPI */
+/* Join (Union) Predicate API */
+
 JsonPath *          join_predicate_left(const Predicate *value);
 JsonPath *          join_predicate_right(const Predicate *value);
