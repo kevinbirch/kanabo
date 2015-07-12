@@ -61,11 +61,11 @@ static int expression_mode(const struct settings *settings);
 static int apply_expression(const struct settings *settings, document_model *model, const char *expression);
 
 static document_model *load_model(const struct settings *settings);
-static jsonpath *parse_expression(const struct settings *settings, const char *expression);
-static nodelist *evaluate_expression(const struct settings *settings, const document_model *model, const jsonpath *path);
+static nodelist *evaluate_expression(const struct settings *settings, const document_model *model, const JsonPath *path);
 
 static FILE *open_input(const struct settings *settings);
 static void close_input(const struct settings *settings, FILE *input);
+
 static void error(const char *prelude, const char *message, const struct settings *settings);
 
 static emit_function get_emitter(const struct settings *settings);
@@ -259,21 +259,7 @@ static document_model *load_model(const struct settings *settings)
     return model;
 }
 
-static jsonpath *parse_expression(const struct settings *settings, const char *expression)
-{
-    log_trace("kanabo", "parsing expression");
-    MaybeJsonpath result = parse((uint8_t *)expression, strlen(expression));    
-    if(ERROR == result.tag)
-    {
-        error("while parsing the jsonpath expression", result.error.message, settings);
-        maybe_jsonpath_free(result);
-        return NULL;
-    }
-
-    return result.path;
-}
-
-static nodelist *evaluate_expression(const struct settings *settings, const document_model *model, const jsonpath *path)
+static nodelist *evaluate_expression(const struct settings *settings, const document_model *model, const JsonPath *path)
 {
     log_trace("kanabo", "evaluating expression");
     evaluator_context *evaluator = make_evaluator(model, path);
