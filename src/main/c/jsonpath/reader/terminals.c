@@ -35,48 +35,53 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#include "string.h"
 #include "jsonpath/parsers.h"
+#include "jsonpath/input.h"
 #include "jsonpath/logging.h"
 
-/* 
-   - bind function?
-   - can we do something clever with a maybe function that runs a parser returns the maybe struct, while the parser returns only ast?
-   - at what level do we create jsonpath entities? after the whole ast is ready? at each production?
-   - what is the ast?
- */
 
-
-MaybeAst literal_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst literal_parser(MaybeAst ast, Input *input, void *arg)
 {
-    return nothing(ERR_NULL_EXPRESSION);
+    char *literal = (char *)arg;
+    // add trace!
+    if(consume_if(input, literal))
+    {
+        return ast;
+    }
+    else
+    {
+        // need to return the expected literal here!
+        return error(ERR_UNEXPECTED_VALUE);
+    }
 }
 
-MaybeAst number_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst number_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
 {
-    return nothing(ERR_NULL_EXPRESSION);
+    return error(ERR_NULL_EXPRESSION);
 }
 
-MaybeAst integer_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst integer_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
 {
-    return nothing(ERR_NULL_EXPRESSION);
+    return error(ERR_NULL_EXPRESSION);
 }
 
-MaybeAst signed_integer_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst signed_integer_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
 {
-    return nothing(ERR_NULL_EXPRESSION);
+    return error(ERR_NULL_EXPRESSION);
 }
 
-MaybeAst non_zero_signed_integer_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst non_zero_signed_integer_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
 {
-    return nothing(ERR_NULL_EXPRESSION);
+    return error(ERR_NULL_EXPRESSION);
 }
 
-MaybeAst string_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst string_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
 {
-    return nothing(ERR_NULL_EXPRESSION);
+    return error(ERR_NULL_EXPRESSION);
 }
 
-MaybeAst quoted_string_parser(parser_context *context __attribute__((unused)), void *arg __attribute__((unused)))
+MaybeAst quoted_string_parser(MaybeAst ast __attribute__((unused)), Input *input __attribute__((unused)), void *arg __attribute__((unused)))
 {
-    return nothing(ERR_NULL_EXPRESSION);
+    return error(ERR_NULL_EXPRESSION);
 }
