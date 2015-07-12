@@ -50,7 +50,7 @@
 #include "jsonpath/parsers.h"
 #include "conditions.h"
 
-static const char * const MESSAGES[] = 
+static const char * const MESSAGES[] =
 {
     "Success.",
     "Expression was NULL.",
@@ -71,16 +71,16 @@ static const char * const MESSAGES[] =
 };
 
 
-char *parser_status_message(parser_result_code code, uint8_t argument, parser_context *context)
+char *parser_status_message(parser_result_code code, uint8_t argument, Input *input)
 {
-    PRECOND_NONNULL_ELSE_NULL(context);
+    PRECOND_NONNULL_ELSE_NULL(input);
     char *message = NULL;
     int result = 0;
-    
+
     switch(code)
     {
         case ERR_PREMATURE_END_OF_INPUT:
-            result = asprintf(&message, MESSAGES[code], context->input.cursor);
+            result = asprintf(&message, MESSAGES[code], input->cursor);
             break;
         case ERR_EXPECTED_NODE_TYPE_TEST:
         case ERR_EMPTY_PREDICATE:
@@ -89,20 +89,20 @@ char *parser_status_message(parser_result_code code, uint8_t argument, parser_co
         case ERR_UNSUPPORTED_PRED_TYPE:
         case ERR_EXPECTED_INTEGER:
         case ERR_INVALID_NUMBER:
-            result = asprintf(&message, MESSAGES[code], context->input.cursor + 1);
+            result = asprintf(&message, MESSAGES[code], input->cursor + 1);
             break;
         case ERR_UNEXPECTED_VALUE:
-            result = asprintf(&message, 
-                              MESSAGES[code], 
-                              context->input.cursor + 1, 
-                              context->input.expression[context->input.cursor], 
+            result = asprintf(&message,
+                              MESSAGES[code],
+                              input->cursor + 1,
+                              input->data[input->cursor],
                               argument);
             break;
         case ERR_EXPECTED_NAME_CHAR:
-            result = asprintf(&message, 
-                              MESSAGES[code], 
-                              context->input.cursor + 1, 
-                              context->input.expression[context->input.cursor]);
+            result = asprintf(&message,
+                              MESSAGES[code],
+                              input->cursor + 1,
+                              input->data[input->cursor]);
             break;
         default:
             message = strdup(MESSAGES[code]);
