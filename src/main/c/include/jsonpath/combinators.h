@@ -35,13 +35,16 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
 #pragma once
+
 
 #include <stddef.h>
 
 #include "jsonpath/parsers.h"
 
-enum combinator_kind
+
+enum parser_kind
 {
     CHOICE,
     SEQUENCE,
