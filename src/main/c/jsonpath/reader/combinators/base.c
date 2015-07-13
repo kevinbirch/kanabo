@@ -56,6 +56,28 @@ static const char * const PARSER_NAMES[] =
 };
 
 
+static void generic_parser_free(Parser *self __attribute__((unused)))
+{
+}
+
+static void generic_parser_log(Parser *self)
+{
+    parser_debug("processing %s parser, value: %s", parser_name(self));
+}
+
+static const struct vtable_s PARSER_VTABLE =
+{
+    generic_parser_free,
+    generic_parser_log
+};
+
+
+Parser *make_parser(enum parser_kind kind, parser_function function)
+{
+    Parser *parser = (Parser *)calloc(1, sizeof(Parser));
+    return parser_init(parser, kind, function, &PARSER_VTABLE);
+}
+
 Parser *parser_init(Parser *self,
                     enum parser_kind kind,
                     parser_function function,
