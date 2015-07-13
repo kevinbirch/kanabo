@@ -36,9 +36,7 @@
  */
 
 
-#include "jsonpath/combinators.h"
 #include "jsonpath/combinators/base.h"
-#include "jsonpath/logging.h"
 
 
 struct rule_parser_s
