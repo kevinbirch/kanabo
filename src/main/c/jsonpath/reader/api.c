@@ -36,11 +36,13 @@
  */
 
 
+#include "conditions.h"
+
+#include "jsonpath/parsers.h"
 #include "jsonpath/grammar.h"
 #include "jsonpath/model.h"
 #include "jsonpath/input.h"
 #include "jsonpath/logging.h"
-#include "conditions.h"
 
 #define PRECOND_ELSE_NOTHING(ERR_CODE, ...)                       \
     if(is_false(__VA_ARGS__, -1))                                 \
