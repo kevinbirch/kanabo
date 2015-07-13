@@ -67,17 +67,18 @@ struct vtable_s
 struct parser_s
 {
     const struct vtable_s *vtable;
-    enum parser_kind   kind;
+    enum parser_kind       kind;
     parser_function        function;
 };
 
 
+Parser *make_parser(enum parser_kind kind, parser_function function);
 Parser *parser_init(Parser *self,
                     enum parser_kind kind,
                     parser_function function,
                     const struct vtable_s *vtable);
-void    parser_free(Parser *self);
 
+void parser_free(Parser *self);
 void parser_destructor(void *each);
 
 enum parser_kind parser_kind(Parser *self);
