@@ -39,9 +39,7 @@
 #pragma once
 
 
-#include <stddef.h>
-
-#include "jsonpath/parsers.h"
+#include <stdint.h>
 
 
 typedef struct parser_s Parser;
