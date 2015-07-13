@@ -75,8 +75,7 @@ Parser *make_wrapped_parser(enum parser_kind kind, parser_function func, Parser 
         return NULL;
     }
     
-    parser_init((Parser *)result, kind, func);
-    result->base.vtable = &WRAPPED_VTABLE;
+    parser_init((Parser *)result, kind, func, &WRAPPED_VTABLE);
     result->child = child;
 
     return (Parser *)result;

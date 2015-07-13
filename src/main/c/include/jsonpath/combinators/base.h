@@ -55,7 +55,10 @@ struct parser_s
     parser_function        function;
 };
 
-Parser *parser_init(Parser *self, enum parser_kind kind, parser_function function);
+Parser *parser_init(Parser *self,
+                    enum parser_kind kind,
+                    parser_function function,
+                    const struct vtable_s *vtable);
 void    parser_free(Parser *self);
 
 void parser_destructor(void *each);

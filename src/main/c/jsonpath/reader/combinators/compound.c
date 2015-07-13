@@ -93,8 +93,7 @@ Parser *make_compound_parser(enum parser_kind kind, parser_function func,
         each = va_arg(rest, Parser *);
     }
 
-    parser_init((Parser *)result, kind, func);
-    result->base.vtable = &COMPOUND_VTABLE;
+    parser_init((Parser *)result, kind, func, &COMPOUND_VTABLE);
     result->children = combinators;
 
     return (Parser *)result;

@@ -50,7 +50,10 @@ static const char * const PARSER_NAMES[] =
 };
 
 
-Parser *parser_init(Parser *self, enum parser_kind kind, parser_function function)
+Parser *parser_init(Parser *self,
+                    enum parser_kind kind,
+                    parser_function function,
+                    const struct vtable_s *vtable)
 {
     if(NULL == self)
     {
@@ -58,6 +61,7 @@ Parser *parser_init(Parser *self, enum parser_kind kind, parser_function functio
     }
     self->kind = kind;
     self->function = function;
+    self->vtable = vtable;
 
     return self;
 }
@@ -69,6 +73,7 @@ void parser_free(Parser *self)
         return;
     }
     self->vtable->free(self);
+    free(self);
 }
 
 void parser_destructor(void *each)
