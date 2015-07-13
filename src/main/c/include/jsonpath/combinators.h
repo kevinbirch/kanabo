@@ -63,7 +63,7 @@ Parser *repetition(Parser *repeated);
 
 /* Terminal parsers */
 
-Parser *literal(char *value);
+Parser *literal(const char *value);
 
 Parser *number(void);
 Parser *integer(void);
