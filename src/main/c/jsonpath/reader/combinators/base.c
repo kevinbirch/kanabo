@@ -41,12 +41,18 @@
 
 static const char * const PARSER_NAMES[] =
 {
+    "rule"
     "choice",
     "sequence",
     "option",
     "repetition",
-    "terminal",
-    "rule"
+    "literal",
+    "number",
+    "integer",
+    "signed_integer",
+    "non_zero_signed_integer",
+    "quoted_string",
+    "string"
 };
 
 

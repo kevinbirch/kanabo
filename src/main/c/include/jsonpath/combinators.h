@@ -44,16 +44,6 @@
 #include "jsonpath/parsers.h"
 
 
-enum parser_kind
-{
-    CHOICE,
-    SEQUENCE,
-    OPTION,
-    REPETITION,
-    TERMINAL,
-    RULE,
-};
-
 typedef struct parser_s Parser;
 
 

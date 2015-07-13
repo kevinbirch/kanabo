@@ -42,6 +42,22 @@
 #include "jsonpath/logging.h"
 
 
+enum parser_kind
+{
+    RULE,
+    CHOICE,
+    SEQUENCE,
+    OPTION,
+    REPETITION,
+    LITERAL,
+    NUMBER,
+    INTEGER,
+    SIGNED_INTEGER,
+    NON_ZERO_SIGNED_INTEGER,
+    QUOTED_STRING,
+    STRING
+};
+
 struct vtable_s
 {
     void (*free)(Parser *self);
@@ -54,6 +70,7 @@ struct parser_s
     enum parser_kind   kind;
     parser_function        function;
 };
+
 
 Parser *parser_init(Parser *self,
                     enum parser_kind kind,
