@@ -37,7 +37,7 @@
 
 #pragma once
 
-#include "jsonpath/combinators.h"
+#include "jsonpath/parsers.h"
 
 
 Parser *jsonpath(void);

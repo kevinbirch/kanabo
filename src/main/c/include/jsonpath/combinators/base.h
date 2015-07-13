@@ -41,7 +41,7 @@
 
 #include "jsonpath/ast.h"
 #include "jsonpath/input.h"
-#include "jsonpath/combinators.h"
+#include "jsonpath/parsers.h"
 #include "jsonpath/logging.h"
 
 
