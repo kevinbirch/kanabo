@@ -39,7 +39,7 @@
 #pragma once
 
 
-#include "jsonpath/combinators/base.h"
+#include "jsonpath/parsers/base.h"
 
 
 Parser *make_compound_parser(enum parser_kind kind, parser_function func,

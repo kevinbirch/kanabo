@@ -36,7 +36,7 @@
  */
 
 
-#include "jsonpath/combinators/base.h"
+#include "jsonpath/parsers/base.h"
 
 
 Parser *signed_integer(void)

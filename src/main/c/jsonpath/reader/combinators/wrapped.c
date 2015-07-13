@@ -36,7 +36,7 @@
  */
 
 
-#include "jsonpath/combinators/wrapped.h"
+#include "jsonpath/parsers/wrapped.h"
 
 
 struct wrapped_parser_s

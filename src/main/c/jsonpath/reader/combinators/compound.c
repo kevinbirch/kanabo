@@ -37,7 +37,7 @@
 
 #include "vector.h"
 
-#include "jsonpath/combinators/compound.h"
+#include "jsonpath/parsers/compound.h"
 
 
 struct compound_parser_s

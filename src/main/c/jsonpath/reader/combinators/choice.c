@@ -37,7 +37,7 @@
 
 #include <stdarg.h>
 
-#include "jsonpath/combinators/compound.h"
+#include "jsonpath/parsers/compound.h"
 
 
 Parser *choice_parser(Parser *one, Parser *two, ...)

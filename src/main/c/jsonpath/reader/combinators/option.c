@@ -37,7 +37,7 @@
 
 #include <stdarg.h>
 
-#include "jsonpath/combinators/wrapped.h"
+#include "jsonpath/parsers/wrapped.h"
 
 
 Parser *option(Parser *expression)
