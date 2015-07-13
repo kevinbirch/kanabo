@@ -49,13 +49,13 @@ typedef struct parser_s Parser;
 
 /* Non-terminal parsers */
 
-Parser *rule_combinator(const char *name, Parser *expression);
+Parser *rule_parser(const char *name, Parser *expression);
 #define rule(COMBINATOR) rule_combinator(__func__, (COMBINATOR))
 
-Parser *choice_combinator(Parser *one, Parser *two, ...);
+Parser *choice_parser(Parser *one, Parser *two, ...);
 #define choice(...) choice_combinator(__VA_ARGS__, NULL)
 
-Parser *sequence_combinator(Parser *one, Parser *two, ...);
+Parser *sequence_parser(Parser *one, Parser *two, ...);
 #define sequence(...) sequence_combinator(__VA_ARGS__, NULL)
 
 Parser *option(Parser *optional);

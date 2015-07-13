@@ -40,7 +40,7 @@
 #include "jsonpath/combinators/compound.h"
 
 
-Parser *sequence_combinator(Parser *one, Parser *two, ...)
+Parser *sequence_parser(Parser *one, Parser *two, ...)
 {
     if(NULL == one || NULL == two)
     {

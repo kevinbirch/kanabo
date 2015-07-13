@@ -40,7 +40,7 @@
 #include "jsonpath/combinators/compound.h"
 
 
-Parser *choice_combinator(Parser *one, Parser *two, ...)
+Parser *choice_parser(Parser *one, Parser *two, ...)
 {
     if(NULL == one || NULL == two)
     {

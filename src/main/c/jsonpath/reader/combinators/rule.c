@@ -67,7 +67,7 @@ static const struct vtable_s RULE_VTABLE =
     rule_log
 };
 
-Parser *rule_combinator(const char *name, Parser *expression)
+Parser *rule_parser(const char *name, Parser *expression)
 {
     if(NULL == expression)
     {
