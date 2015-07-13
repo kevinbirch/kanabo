@@ -58,7 +58,7 @@ static void compound_free(Parser *value)
 static void compound_log(Parser *value)
 {
     CompoundParser *self = (CompoundParser *)value;
-    parser_debug("processing %s combinator, %zd steps",
+    parser_debug("processing %s parser, %zd steps",
                  parser_name(value), vector_length(self->children));
 }
 
@@ -77,24 +77,24 @@ Parser *make_compound_parser(enum parser_kind kind, parser_function func,
         return NULL;
     }
     
-    Vector *combinators = make_vector();
-    if(NULL == combinators)
+    Vector *children = make_vector();
+    if(NULL == children)
     {
         parser_free((Parser *)result);
         return NULL;
     }
-    vector_add(combinators, one);
-    vector_add(combinators, two);
+    vector_add(children, one);
+    vector_add(children, two);
 
     Parser *each = va_arg(rest, Parser *);
     while(NULL != each)
     {
-        vector_add(combinators, each);
+        vector_add(children, each);
         each = va_arg(rest, Parser *);
     }
 
     parser_init((Parser *)result, kind, func, &COMPOUND_VTABLE);
-    result->children = combinators;
+    result->children = children;
 
     return (Parser *)result;
 }

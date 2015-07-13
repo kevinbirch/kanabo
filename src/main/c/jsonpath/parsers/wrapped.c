@@ -57,7 +57,7 @@ static void wrapped_free(Parser *value)
 static void wrapped_log(Parser *value)
 {
     WrappedParser *self = (WrappedParser *)value;
-    parser_debug("processing %s combinator, containing: %s",
+    parser_debug("processing %s parser, containing: %s",
                  parser_name(value), parser_name(self->child));
 }
 
