@@ -76,3 +76,7 @@ Parser *string(void);
 /* Destructor */
 
 void parser_free(Parser *value);
+
+/* Parser Execution */
+
+char *parser_status_message(parser_result_code code, uint8_t argument, Input *input);
