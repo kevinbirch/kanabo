@@ -58,11 +58,11 @@ static void rule_free(Parser *value)
 static MaybeAst rule_delegate(MaybeAst ast, Parser *parser, Input *input)
 {
     RuleParser *self = (RuleParser *)parser;
-    parser_debug("entering rule: %s", self->name);
+    parser_debug("entering %s rule", self->name);
 
     MaybeAst result = bind(ast, rule->expression, input);
     const char *status = AST_VALUE == result.tag ? "success" : "failure";
-    parser_debug("leaving rule: %s, %s", self->name, status);
+    parser_debug("leaving %s rule: %s", self->name, status);
 
     return result;
 }
