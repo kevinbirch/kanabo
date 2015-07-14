@@ -42,6 +42,7 @@
 #include <stdint.h>
 
 
+typedef enum parser_result_code parser_result_code;
 typedef struct parser_s Parser;
 
 
