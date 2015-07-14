@@ -42,5 +42,16 @@
 #include "jsonpath/parsers/base.h"
 
 
-Parser *make_compound_parser(enum parser_kind kind, parser_function func,
+struct compound_parser_s
+{
+    Parser  base;
+    Vector *children;
+};
+
+typedef struct compound_parser_s CompoundParser;
+
+
+void compound_free(Parser *value);
+
+Parser *make_compound_parser(enum parser_kind kind, const struct vtable_s *vtable,
                              Parser *one, Parser *two, va_list rest);

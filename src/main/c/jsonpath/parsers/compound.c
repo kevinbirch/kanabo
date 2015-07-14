@@ -35,40 +35,19 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
 #include "vector.h"
 
 #include "jsonpath/parsers/compound.h"
 
 
-struct compound_parser_s
-{
-    Parser  base;
-    Vector *children;
-};
-
-typedef struct compound_parser_s CompoundParser;
-
-
-static void compound_free(Parser *value)
+void compound_free(Parser *value)
 {
     CompoundParser *self = (CompoundParser *)value;
     vector_destroy(self->children, parser_destructor);
 }
 
-static void compound_log(Parser *value)
-{
-    CompoundParser *self = (CompoundParser *)value;
-    parser_debug("processing %s parser, %zd steps",
-                 parser_name(value), vector_length(self->children));
-}
-
-static const struct vtable_s COMPOUND_VTABLE =
-{
-    compound_free,
-    compound_log
-};
-
-Parser *make_compound_parser(enum parser_kind kind, parser_function func,
+Parser *make_compound_parser(enum parser_kind kind, const struct vtable_s *vtable,
                              Parser *one, Parser *two, va_list rest)
 {
     CompoundParser *result = (CompoundParser *)calloc(1, sizeof(CompoundParser));
@@ -93,7 +72,7 @@ Parser *make_compound_parser(enum parser_kind kind, parser_function func,
         each = va_arg(rest, Parser *);
     }
 
-    parser_init((Parser *)result, kind, func, &COMPOUND_VTABLE);
+    parser_init((Parser *)result, kind, vtable);
     result->children = children;
 
     return (Parser *)result;
