@@ -56,31 +56,34 @@ static const char * const PARSER_NAMES[] =
 };
 
 
-static void generic_parser_free(Parser *self __attribute__((unused)))
+static void base_free(Parser *self __attribute__((unused)))
 {
 }
 
-static void generic_parser_log(Parser *self)
+static MaybeAst base_delegate(MaybeAst ast,
+                              Parser *parser __attribute__((unused)),
+                              Input *input __attribute__((unused)))
 {
-    parser_debug("processing %s parser, value: %s", parser_name(self));
+    parser_trace("entering parser: %s", parser_name(parser));
+    parser_trace("leaving parser: %s", parser_name(parser));
+    return ast;
 }
 
-static const struct vtable_s PARSER_VTABLE =
+static const struct vtable_s BASE_VTABLE =
 {
-    generic_parser_free,
-    generic_parser_log
+    base_free,
+    base_delegate
 };
 
 
-Parser *make_parser(enum parser_kind kind, parser_function function)
+Parser *make_parser(enum parser_kind kind)
 {
     Parser *parser = (Parser *)calloc(1, sizeof(Parser));
-    return parser_init(parser, kind, function, &PARSER_VTABLE);
+    return parser_init(parser, kind, &BASE_VTABLE);
 }
 
 Parser *parser_init(Parser *self,
                     enum parser_kind kind,
-                    parser_function function,
                     const struct vtable_s *vtable)
 {
     if(NULL == self)
@@ -88,7 +91,6 @@ Parser *parser_init(Parser *self,
         return NULL;
     }
     self->kind = kind;
-    self->function = function;
     self->vtable = vtable;
 
     return self;
@@ -117,4 +119,13 @@ enum parser_kind parser_kind(Parser *self)
 const char *parser_name(Parser *self)
 {
     return PARSER_NAMES[parser_kind(self)];
+}
+
+MaybeAst bind(MaybeAst ast, Parser *parser, Input *input)
+{
+    if(AST_ERROR == ast.tag)
+    {
+        return ast;    
+    }
+    return parser->vtable->delegate(ast, parser, input);
 }

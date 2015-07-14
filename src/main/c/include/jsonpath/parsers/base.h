@@ -82,8 +82,6 @@ enum parser_result_code
     ERR_NO_ALTERNATIVE,              // none of the alternatives matched the input
 };
 
-typedef enum parser_result_code parser_result_code;
-
 struct maybe_ast_s
 {
     enum
@@ -105,21 +103,18 @@ struct maybe_ast_s
 
 typedef struct maybe_ast_s MaybeAst;
 
-typedef MaybeAst (*parser_function)(MaybeAst ast, Input *input);
-
+typedef MaybeAst (*parser_delegate)(MaybeAst ast, Parser *parser, Input *input);
 struct vtable_s
 {
     void (*free)(Parser *self);
-    void (*log)(Parser *self);
+    parser_delegate delegate;
 };
 
 struct parser_s
 {
     const struct vtable_s *vtable;
     enum parser_kind       kind;
-    parser_function        function;
 };
-
 
 #define collection() (MaybeAst){AST_VALUE, .value=make_ast_node(AST_COLLECTION, NULL)}
 #define error(CODE) (MaybeAst){AST_ERROR, .error.code=(CODE), .error.argument=0}
@@ -128,12 +123,9 @@ struct parser_s
 #define just(AST) (MaybeAst){AST_VALUE, .value=(AST)}
 
 
-MaybeAst bind(MaybeAst ast, parser_function f, Input *input);
-
-Parser *make_parser(enum parser_kind kind, parser_function function);
+Parser *make_parser(enum parser_kind kind);
 Parser *parser_init(Parser *self,
                     enum parser_kind kind,
-                    parser_function function,
                     const struct vtable_s *vtable);
 
 void parser_free(Parser *self);
@@ -142,4 +134,4 @@ void parser_destructor(void *each);
 enum parser_kind parser_kind(Parser *self);
 const char *parser_name(Parser *self);
 
-
+MaybeAst bind(MaybeAst ast, Parser *parser, Input *input);

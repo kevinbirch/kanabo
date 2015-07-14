@@ -55,16 +55,23 @@ static void rule_free(Parser *value)
     parser_free(self->expression);
 }
 
-static void rule_log(Parser *value)
+static MaybeAst rule_delegate(MaybeAst ast, Parser *parser, Input *input)
 {
-    RuleParser *self = (RuleParser *)value;
-    parser_debug("processing rule combinator, name: %s", self->name);
+    RuleParser *self = (RuleParser *)parser;
+    parser_debug("entering rule: %s", self->name);
+
+    MaybeAst result = bind(ast, rule->expression, input);
+    const char *status = AST_VALUE == result.tag ? "success" : "failure";
+    parser_debug("leaving rule: %s, %s", self->name, status);
+
+    return result;
 }
 
 static const struct vtable_s RULE_VTABLE =
 {
     rule_free,
-    rule_log
+    rule_log,
+    rule_delegate
 };
 
 Parser *rule_parser(const char *name, Parser *expression)
@@ -79,7 +86,7 @@ Parser *rule_parser(const char *name, Parser *expression)
         return NULL;
     }
 
-    parser_init((Parser *)result, RULE, rule_parser, &RULE_VTABLE);
+    parser_init((Parser *)result, RULE, &RULE_VTABLE);
     result->name = name;
     result->expression = expression;
 
