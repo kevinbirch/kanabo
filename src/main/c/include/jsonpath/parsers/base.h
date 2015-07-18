@@ -119,7 +119,7 @@ struct parser_s
 #define collection() (MaybeAst){AST_VALUE, .value=make_ast_node(AST_COLLECTION, NULL)}
 #define error(CODE) (MaybeAst){AST_ERROR, .error.code=(CODE), .error.argument=0}
 #define fail()
-#define nothing() (MaybeAst){AST_VALUE, .value=AST_NONE}
+#define nothing() (MaybeAst){AST_VALUE, .value=&AST_NONE_VALUE}
 #define just(AST) (MaybeAst){AST_VALUE, .value=(AST)}
 
 
