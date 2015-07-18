@@ -60,7 +60,7 @@ static MaybeAst rule_delegate(MaybeAst ast, Parser *parser, Input *input)
     RuleParser *self = (RuleParser *)parser;
     parser_debug("entering %s rule", self->name);
 
-    MaybeAst result = bind(ast, rule->expression, input);
+    MaybeAst result = bind(ast, self->expression, input);
     const char *status = AST_VALUE == result.tag ? "success" : "failure";
     parser_debug("leaving %s rule: %s", self->name, status);
 
@@ -70,7 +70,6 @@ static MaybeAst rule_delegate(MaybeAst ast, Parser *parser, Input *input)
 static const struct vtable_s RULE_VTABLE =
 {
     rule_free,
-    rule_log,
     rule_delegate
 };
 
