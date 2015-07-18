@@ -121,11 +121,11 @@ const char *parser_name(Parser *self)
     return PARSER_NAMES[parser_kind(self)];
 }
 
-MaybeAst bind(MaybeAst ast, Parser *parser, Input *input)
+MaybeAst bind(Parser *parser, MaybeAst ast, Input *input)
 {
     if(AST_ERROR == ast.tag)
     {
         return ast;    
     }
-    return parser->vtable->delegate(ast, parser, input);
+    return parser->vtable->delegate(parser, ast, input);
 }

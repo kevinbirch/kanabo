@@ -103,7 +103,7 @@ struct maybe_ast_s
 
 typedef struct maybe_ast_s MaybeAst;
 
-typedef MaybeAst (*parser_delegate)(MaybeAst ast, Parser *parser, Input *input);
+typedef MaybeAst (*parser_delegate)(Parser *parser, MaybeAst ast, Input *input);
 struct vtable_s
 {
     void (*free)(Parser *self);
@@ -134,4 +134,4 @@ void parser_destructor(void *each);
 enum parser_kind parser_kind(Parser *self);
 const char *parser_name(Parser *self);
 
-MaybeAst bind(MaybeAst ast, Parser *parser, Input *input);
+MaybeAst bind(Parser *parser, MaybeAst ast, Input *input);
