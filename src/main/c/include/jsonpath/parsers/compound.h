@@ -39,6 +39,8 @@
 #pragma once
 
 
+#include <stdarg.h>
+
 #include "jsonpath/parsers/base.h"
 
 

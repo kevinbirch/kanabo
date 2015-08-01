@@ -35,8 +35,6 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <stdarg.h>
-
 #include "jsonpath/parsers/wrapped.h"
 
 

@@ -36,8 +36,6 @@
  */
 
 
-#include <stdarg.h>
-
 #include "vector.h"
 
 #include "jsonpath/parsers/compound.h"
@@ -46,7 +44,7 @@
 struct sequence_context_s
 {
     Input    *input;
-    MaybeAst  result;
+    MaybeAst  ast;
 };
 
 typedef struct sequence_context_s Context;
@@ -57,26 +55,27 @@ static bool choice_iterator(void *each, void *paramter)
     Parser *expression = (Parser *)each;
     Context *context = (Context *)paramter;
 
-    // TODO reset error
-    // TODO set input mark
-    // TODO consume whitespace
-    MaybeAst sub_result = expression->parser(meta_context->context, expression->argument);
-    // TODO reset to mark
-    if(VALUE == sub_result.tag)
+    set_mark(context->input);
+    skip_whitespace(context->input);    
+
+    parser_trace("attempting choice parser branch: %s", parser_name(expression));
+    MaybeAst result = bind(expression, context->ast, context->input);
+    if(AST_VALUE == result.tag)
     {
-        meta_context->result = sub_result;
+        ast_add_child(context->ast.value, result.value);
         return true;
     }
 
+    reset_to_mark(context->input);
     return false;
 }
 
-static MaybeAst choice_delegate(MaybeAst maybe, Parser *parser, Input *input)
+static MaybeAst choice_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
     CompoundParser *self = (CompoundParser *)parser;
     parser_trace("entering choice parser, %zd branches", vector_length(self->children));
 
-    Context context = {input, nothing()};
+    Context context = {input, ast};
     if(!vector_any(self->children, choice_iterator, &context))
     {
         // TODO free ast
@@ -84,11 +83,8 @@ static MaybeAst choice_delegate(MaybeAst maybe, Parser *parser, Input *input)
         return error(ERR_NO_ALTERNATIVE);
     }
 
-    // xxx - should this really add a child here?
-    ast_add_child(maybe.value, context.result.value);
-    parser_trace("leaving choice parser: success");
-    // xxx - what should this return?  should this create a tree matching the parser tree?
-    return context.result;
+    parser_trace("leaving choice parser");
+    return ast;
 }
 
 static const struct vtable_s CHOICE_VTABLE =
