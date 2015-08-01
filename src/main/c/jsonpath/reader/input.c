@@ -41,6 +41,15 @@
 #include "jsonpath/input.h"
 
 
+struct input_s
+{
+    const uint8_t *data;
+    size_t         length;
+    size_t         cursor;
+    size_t         mark;
+};
+
+
 void reset(Input *input)
 {
     input->cursor = 0;

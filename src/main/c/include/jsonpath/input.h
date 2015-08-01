@@ -38,16 +38,9 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
-
-struct input_s
-{
-    const uint8_t *data;
-    size_t         length;
-    size_t         cursor;
-    size_t         mark;
-};
 
 typedef struct input_s Input;
 
