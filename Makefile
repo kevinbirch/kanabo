@@ -182,10 +182,10 @@ psdir := $(docdir)
 DEPENDENCY_HOOK ?=
 DEPENDENCY_VALIDATIONS := $(addprefix dependency/,$(DEPENDENCIES))
 dependency_INCLUDES ?=
-dependency_LDINCLUDES ?=
+dependency_LDFLAGS ?=
 TEST_DEPENDENCY_VALIDATIONS := $(addprefix test-dependency/,$(TEST_DEPENDENCIES))
 test_dependency_INCLUDES ?= $(dependency_INCLUDES)
-test_dependency_LDINCLUDES ?= $(dependency_LDINCLUDES)
+test_dependency_LDFLAGS ?= $(dependency_LDFLAGS)
 
 ## Hooks
 GENERATE_SOURCES_HOOKS ?=
@@ -201,14 +201,12 @@ PROCESS_TEST_RESOURCES_HOOKS ?=
 INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR) -I$(INCLUDE_DIR)
 CFLAGS := $(CFLAGS) $($(build)_CFLAGS)
 LDFLAGS ?=
-LDINCLUDES ?=
 LDLIBS := $(addprefix -l, $(DEPENDENCIES))
 
 ## Project test compiler settings
 TEST_INCLUDES ?= $(INCLUDES) -I$(TEST_INCLUDE_DIR)
 TEST_CFLAGS ?= $(CFLAGS)
 TEST_LDFLAGS ?= $(LDFLAGS)
-TEST_LDINCLUDES ?= $(LDINCLUDES)
 TEST_LDLIBS ?= $(addprefix -l, $(TEST_DEPENDENCIES)) $(LDLIBS)
 
 ## Automation helper functions
@@ -361,7 +359,7 @@ $(PROGRAM_TARGET): $(LIBRARY_TARGET) $(PROGRAM_OBJECTS)
 	@echo ""; \
 	echo " -- Building program $(PROGRAM_TARGET)"; \
 	echo "------------------------------------------------------------------------"
-	$(CC) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_NAME_BASE) $(LDINCLUDES) $(LDLIBS) -o $(PROGRAM_TARGET)
+	$(CC) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_NAME_BASE) $(LDFLAGS) $(LDLIBS) -o $(PROGRAM_TARGET)
 
 $(PROGRAM_NAME): $(PROGRAM_TARGET)
 
@@ -370,7 +368,7 @@ $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	@echo ""; \
 	echo " -- Building test harness $(TEST_PROGRAM_TARGET)"; \
 	echo "------------------------------------------------------------------------"
-	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDINCLUDES) $(TEST_LDLIBS) -o $(TEST_PROGRAM_TARGET)
+	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDFLAGS) $(TEST_LDLIBS) -o $(TEST_PROGRAM_TARGET)
 
 $(TEST_PROGRAM): $(TEST_PROGRAM_TARGET)
 endif
