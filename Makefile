@@ -254,6 +254,7 @@ check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST
 ## Confirm the avialability of one library dependency
 dependency/%: in:=$(shell mktemp -t dependencyXXXXXX).c
 dependency/%:
+	@echo "resolving depencency: $(@F)"
 ifeq ($(strip $(DEPENDENCY_HELPER)),)
 	@$(RM) $(in)
 	@echo "#include <$(@F).h>" > $(in); echo "int main(void) {return 0;}" >> $(in); \
@@ -267,6 +268,7 @@ endif
 test-dependency/%: in:=$(shell mktemp -t test-dependencyXXXXXX).c
 test-dependency/%:
 ifeq ($(strip $(skip_tests)),)
+	@echo "resolving test depencency: $(@F)"
 ifeq ($(strip $(DEPENDENCY_HELPER)),)
 	@$(RM) $(in)
 	@echo "#include <$(@F).h>" > $(in); echo "int main(void) {return 0;}" >> $(in); \
