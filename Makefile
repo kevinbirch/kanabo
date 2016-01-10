@@ -353,19 +353,40 @@ ifeq ($(strip $(package)),)
 	$(error "Please set a value for 'package' in project.mk")
 endif
 
-ensure-dependencies: $(DEPENDENCY_VALIDATIONS)
+announce-initialize-phase:
+	@echo ""; \
+	echo "------------------------------------------------------------------------"; \
+	echo " Initialize phase"; \
+	echo "------------------------------------------------------------------------"
+
+announce-ensure-dependencies:
+ifneq ($(strip $(DEPENDENCIES)),)
+	@echo ""; \
+	echo " -- Finding dependencies"; \
+	echo "------------------------------------------------------------------------"; \
+	echo "Resolving $(words $(DEPENDENCIES)) dependencies"; \
+	echo ""
+endif
+
+ensure-dependencies: announce-ensure-dependencies $(DEPENDENCY_VALIDATIONS)
 
 announce-build:
 	@echo ""; \
 	echo " Buidling $(owner):$(package):$(version)"
 
-create-build-directories:
-	@mkdir -p $(OBJECT_DIR)
-	@mkdir -p $(TEST_OBJECT_DIR)
-	@mkdir -p $(GENERATED_DEPEND_DIR)
-	@mkdir -p $(GENERATED_TEST_DEPEND_DIR)
+announce-create-build-directories:
+	@echo ""; \
+	echo " -- Creating build directories"; \
+	echo "------------------------------------------------------------------------"; \
+	echo ""
 
-initialize: validate announce-build ensure-dependencies create-build-directories
+create-build-directories: announce-create-build-directories
+	mkdir -p $(OBJECT_DIR)
+	mkdir -p $(TEST_OBJECT_DIR)
+	mkdir -p $(GENERATED_DEPEND_DIR)
+	mkdir -p $(GENERATED_TEST_DEPEND_DIR)
+
+initialize: validate announce-build announce-initialize-phase ensure-dependencies create-build-directories
 
 announce-compile-phase:
 	@echo ""; \
