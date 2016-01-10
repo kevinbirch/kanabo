@@ -324,13 +324,13 @@ $(GENERATED_DEPEND_DIR):
 
 $(GENERATED_DEPEND_DIR)/%.d: %.c | $(GENERATED_DEPEND_DIR)
 	@mkdir -p $(dir $@)
-	@$(CC) -MM -MG -MT '$(OBJECT_DIR)/$(*F).o $@' $(CFLAGS) $(CDEFS) $< > $@
+	@$(CC) -MM -MG -MT '$(OBJECT_DIR)/$(*F).o $@' $(CFLAGS) $< > $@
 
 $(GENERATED_TEST_DEPEND_DIR):
 	@mkdir -p $(GENERATED_TEST_DEPEND_DIR)
 
 $(GENERATED_TEST_DEPEND_DIR)/%.d: %.c | $(GENERATED_TEST_DEPEND_DIR)
-	@$(CC) -MM -MG -MT '$(TEST_OBJECT_DIR)/$(*F).o $@' $(TEST_CFLAGS) $(CDEFS) $< > $@
+	@$(CC) -MM -MG -MT '$(TEST_OBJECT_DIR)/$(*F).o $@' $(TEST_CFLAGS) $< > $@
 
 ## Main build rules
 $(OBJECT_DIR):
@@ -341,11 +341,11 @@ $(TEST_OBJECT_DIR):
 
 $(OBJECT_DIR)/%.o: %.c | $(OBJECT_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) $(INCLUDES) $(CFLAGS) $(CDEFS) -c $< -o $@
+	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
 
 $(TEST_OBJECT_DIR)/%.o: %.c  | $(TEST_OBJECT_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) $(TEST_INCLUDES) $(TEST_CFLAGS) $(CDEFS) -c $< -o $@
+	$(CC) $(TEST_INCLUDES) $(TEST_CFLAGS) -c $< -o $@
 
 $(LIBRARY_TARGET): $(LIBRARY_OBJECTS)
 	@echo ""; \
