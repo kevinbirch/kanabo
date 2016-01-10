@@ -319,11 +319,11 @@ $(TEST_OBJECT_DIR):
 
 $(OBJECT_DIR)/%.o: %.c | $(OBJECT_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(CDEFS) -c $< -o $@
+	$(CC) $(INCLUDES) $(CFLAGS) $(CDEFS) -c $< -o $@
 
 $(TEST_OBJECT_DIR)/%.o: %.c  | $(TEST_OBJECT_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) $(TEST_CFLAGS) $(CDEFS) -c $< -o $@
+	$(CC) $(TEST_INCLUDES) $(TEST_CFLAGS) $(CDEFS) -c $< -o $@
 
 $(LIBRARY_TARGET): $(LIBRARY_OBJECTS)
 	@echo ""; \
