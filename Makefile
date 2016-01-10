@@ -102,6 +102,10 @@ TEST_PROGRAM = $(package)_test
 TEST_PROGRAM_TARGET = $(TARGET_DIR)/$(TEST_PROGRAM)
 endif
 
+## Build mode
+## Set this to the CFLAGS to be used in release build mode
+release_CFLAGS ?=
+
 ## Set this to the CFLAGS to be used in debug build mode
 debug_CFLAGS ?=
 
