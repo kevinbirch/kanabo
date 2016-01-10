@@ -107,10 +107,12 @@ endif
 release_CFLAGS ?=
 
 ## Set this to the CFLAGS to be used in debug build mode
-debug_CFLAGS ?=
+debug_CFLAGS ?= -g
 
 ifeq ($(build),debug)
-debug_CFLAGS := $(debug_CFLAGS) -g
+else ifeq ($(build),release)
+else
+$(error "Unsupported value of `build`: '$(build)', must be 'debug' or 'release'")
 endif
 
 ## Project installation directories (according to GNU conventions)
