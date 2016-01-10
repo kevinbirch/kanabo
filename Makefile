@@ -104,36 +104,36 @@ debug_CFLAGS := $(debug_CFLAGS) -g
 endif
 
 ## Project installation directories (according to GNU conventions)
-srcdir = $(SOURCE_DIR)
-mansrcdir = $(srcdir)/man
-infosrcdir = $(srcdir)/info
-htmlsrcdir = $(srcdir)/html
-pdfsrcdir = $(srcdir)/pdf
-pssrcdir = $(srcdir)/ps
-dvisrcdir = $(srcdir)/dvi
+srcdir := $(SOURCE_DIR)
+mansrcdir := $(srcdir)/man
+infosrcdir := $(srcdir)/info
+htmlsrcdir := $(srcdir)/html
+pdfsrcdir := $(srcdir)/pdf
+pssrcdir := $(srcdir)/ps
+dvisrcdir := $(srcdir)/dvi
 
 prefix ?= /usr/local
 
-exec_prefix = $(prefix)
-bindir = $(exec_prefix)/bin
-sbindir = $(exec_prefix)/sbin
-libexecdir = $(exec_prefix)/libexec
-libdir = $(exec_prefix)/lib
-package_libexecdir = $(libexecdir)/$(package)/$(version)
+exec_prefix := $(prefix)
+bindir := $(exec_prefix)/bin
+sbindir := $(exec_prefix)/sbin
+libexecdir := $(exec_prefix)/libexec
+libdir := $(exec_prefix)/lib
+package_libexecdir := $(libexecdir)/$(package)/$(version)
 
-datarootdir = $(prefix)/share
-datadir = $(datarootdir)
-package_datadir = $(datadir)/$(package)
-lispdir = $(datarootdir)/emacs/site-lisp
-localedir = $(datarootdir)/locale
+datarootdir := $(prefix)/share
+datadir := $(datarootdir)
+package_datadir := $(datadir)/$(package)
+lispdir := $(datarootdir)/emacs/site-lisp
+localedir := $(datarootdir)/locale
 
-mandir = $(datarootdir)/man
-man1dir = $(mandir)/man1
-man2dir = $(mandir)/man2
-man3dir = $(mandir)/man3
-man4dir = $(mandir)/man4
-man5dir = $(mandir)/man5
-man6dir = $(mandir)/man6
+mandir := $(datarootdir)/man
+man1dir := $(mandir)/man1
+man2dir := $(mandir)/man2
+man3dir := $(mandir)/man3
+man4dir := $(mandir)/man4
+man5dir := $(mandir)/man5
+man6dir := $(mandir)/man6
 man7dir = $(mandir)/man7
 
 man1ext = .1
@@ -143,44 +143,55 @@ man4ext = .4
 man5ext = .5
 man6ext = .6
 man6ext = .7
-manext = $(man1ext)
+manext := $(man1ext)
 
-sysconfdir = $(prefix)/etc
+sysconfdir := $(prefix)/etc
 
-sharedstatedir = $(prefix)/com
-localstatedir = $(prefix)/var
-logdir = $(localstatedir)/log
-package_logdir = $(logdir)/$(package)
-rundir = $(localstatedir)/run
-package_rundir = $(rundir)/$(package)
-tmpdir = $(localstatedir)/tmp
+sharedstatedir := $(prefix)/com
+localstatedir := $(prefix)/var
+logdir := $(localstatedir)/log
+package_logdir := $(logdir)/$(package)
+rundir := $(localstatedir)/run
+package_rundir := $(rundir)/$(package)
+tmpdir := $(localstatedir)/tmp
 
-includedir = $(prefix)/include
-oldincludedir =
+includedir := $(prefix)/include
+oldincludedir :=
 
-docdir = $(datarootdir)/doc/$(package)
-infodir = $(datarootdir)/info
-htmldir = $(docdir)
-dvidir = $(docdir)
-pdfdir = $(docdir)
-psdir = $(docdir)
+docdir := $(datarootdir)/doc/$(package)
+infodir := $(datarootdir)/info
+htmldir := $(docdir)
+dvidir := $(docdir)
+pdfdir := $(docdir)
+psdir := $(docdir)
 
-## Project source compiler settings
+## Dependency handling
 DEPENDENCY_VALIDATIONS := $(addprefix dependency/,$(DEPENDENCIES))
+dependency_INCLUDES ?=
+dependency_LDINCLUDES ?=
 TEST_DEPENDENCY_VALIDATIONS := $(addprefix test-dependency/,$(TEST_DEPENDENCIES))
-INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR)
-CFLAGS := -I$(INCLUDE_DIR) $(INCLUDES) $(CFLAGS) $($(build)_CFLAGS)
+test_dependency_INCLUDES ?= $(dependency_INCLUDES)
+test_dependency_LDINCLUDES ?= $(dependency_LDINCLUDES)
+
+## Project compiler settings
+INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR) -I$(INCLUDE_DIR)
+CFLAGS := $(CFLAGS) $($(build)_CFLAGS)
+LDFLAGS ?=
+LDINCLUDES ?=
 LDLIBS := $(addprefix -l, $(DEPENDENCIES))
+
+## Project test compiler settings
+TEST_INCLUDES ?= $(INCLUDES) -I$(TEST_INCLUDE_DIR)
+TEST_CFLAGS ?= $(CFLAGS) $(TEST_CFLAGS)
+TEST_LDFLAGS ?= $(LDFLAGS)
+TEST_LDINCLUDES ?= $(LDINCLUDES)
+TEST_LDLIBS ?= $(addprefix -l, $(TEST_DEPENDENCIES)) $(LDLIBS)
 
 ## Automation helper functions
 source_to_target = $(foreach s, $(1), $(2)/$(basename $(s)).$(3))
 source_to_object = $(call source_to_target,$(1),$(2),o)
 source_to_depend = $(call source_to_target,$(1),$(2),d)
 find_source_files = $(shell cd $(1) && $(FIND) . -type f \( -name '*.c' -or -name '*.C' \) | sed 's|\./||')
-
-## Project test source compiler settings
-TEST_CFLAGS := -I$(TEST_INCLUDE_DIR) $(CFLAGS) $(TEST_CFLAGS)
-TEST_LDLIBS := $(addprefix -l, $(TEST_DEPENDENCIES)) $(LDLIBS)
 
 ## Project source file locations
 SOURCES := $(call find_source_files,$(SOURCE_DIR))
