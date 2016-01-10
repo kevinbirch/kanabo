@@ -88,6 +88,9 @@ GENERATED_DEPEND_DIR ?= $(GENERATED_SOURCE_DIR)/depend
 GENERATED_TEST_SOURCE_DIR ?= $(TARGET_DIR)/generated-test-sources
 GENERATED_TEST_DEPEND_DIR ?= $(TARGET_DIR)/generated-test-sources/depend
 
+## Set this variable to any value to skip all testing
+skip_tests ?=
+
 ## Project target artifact settings
 PROGRAM_NAME ?= $(package)
 PROGRAM_TARGET = $(TARGET_DIR)/$(PROGRAM_NAME)
@@ -98,6 +101,9 @@ ifeq ($(strip $(skip_tests)),)
 TEST_PROGRAM = $(package)_test
 TEST_PROGRAM_TARGET = $(TARGET_DIR)/$(TEST_PROGRAM)
 endif
+
+## Set this to the CFLAGS to be used in debug build mode
+debug_CFLAGS ?=
 
 ifeq ($(build),debug)
 debug_CFLAGS := $(debug_CFLAGS) -g
@@ -166,12 +172,18 @@ pdfdir := $(docdir)
 psdir := $(docdir)
 
 ## Dependency handling
+# set this to the path to a script to resolve dependencies
+DEPENDENCY_HOOK ?=
 DEPENDENCY_VALIDATIONS := $(addprefix dependency/,$(DEPENDENCIES))
 dependency_INCLUDES ?=
 dependency_LDINCLUDES ?=
 TEST_DEPENDENCY_VALIDATIONS := $(addprefix test-dependency/,$(TEST_DEPENDENCIES))
 test_dependency_INCLUDES ?= $(dependency_INCLUDES)
 test_dependency_LDINCLUDES ?= $(dependency_LDINCLUDES)
+
+## Hooks
+PROCESS_RESOURCES_HOOKS ?=
+PROCESS_TEST_RESOURCES_HOOKS ?=
 
 ## Project compiler settings
 INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR) -I$(INCLUDE_DIR)
@@ -280,7 +292,7 @@ test-dependency/%: in:=$(shell mktemp -t test-dependencyXXXXXX).c
 test-dependency/%:
 ifeq ($(strip $(skip_tests)),)
 	@echo "resolving test depencency: $(@F)"
-ifeq ($(strip $(DEPENDENCY_HELPER)),)
+ifeq ($(strip $(DEPENDENCY_HOOK)),)
 	@$(RM) $(in)
 	@echo "#include <$(@F).h>" > $(in); echo "int main(void) {return 0;}" >> $(in); \
 	$(CC) $(in) -l$(@F) -o `mktemp -t objXXXXXX`; \
@@ -289,7 +301,7 @@ ifeq ($(strip $(DEPENDENCY_HELPER)),)
 	  exit 1; \
 	fi
 else
-	$(DEPENDENCY_HELPER) $(@F)
+	$(DEPENDENCY_HOOK) $(@F)
 endif
 endif
 
