@@ -44,6 +44,8 @@ LICENSE file for more details.
   * http://www.openbsd.org/cgi-bin/cvsweb/src/lib/libc/string/strlcpy.c?rev=1.11;content-type=text%2Fplain
 * invert order of static functions?
   * http://www.reddit.com/r/C_Programming/comments/1u1ofw/is_this_code_clike/cednu4t
+* interesting competitor: http://jmespath.org/
+* various getopt alternatvies: https://news.ycombinator.com/item?id=10687375
 
 ### evaluator
 
@@ -92,6 +94,27 @@ LICENSE file for more details.
 * pratt parser?
   * http://l-lang.org/blog/TDOP---Pratt-parser-in-pictures/
 * parser combinator - https://github.com/orangeduck/mpc
+
+
+* use maybe parser in grammar to handle builder errors
+* push parser functions down to parser modules
+* build the jsonpath inline with custom rule parsers
+* rename emit package to emitter
+* move jsonpath/reader to parser?
+* inline jsonpath/model package into jsonpath?
+* rename model package to document?
+* move nodelist creation to evaluate function evaluator/api.c
+* create common maybe.h for enum and others
+* fix license to point to bsd 3 clause
+* use type generic macro instead of vtable
+parser model todo:
+ - upcast
+ - downcast
+ - static cast?
+ - vtable for d'tor
+
+current change is: moving parser delegate into vtable, removing log from vtable
+the vtable itself doens't need to be a ptr, it can be a static struct of ptr's
 
 ### loader
 
