@@ -363,7 +363,7 @@ create-build-directories:
 	@mkdir -p $(GENERATED_DEPEND_DIR)
 	@mkdir -p $(GENERATED_TEST_DEPEND_DIR)
 
-initialize: validate ensure-dependencies announce-build create-build-directories
+initialize: validate announce-build ensure-dependencies create-build-directories
 
 announce-compile-phase:
 	@echo ""; \
