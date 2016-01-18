@@ -179,7 +179,6 @@ pdfdir := $(docdir)
 psdir := $(docdir)
 
 ## Dependency handling
-# set this to the path to a script to resolve dependencies
 DEPENDENCY_HOOK ?=
 DEPENDENCY_VALIDATIONS := $(addprefix dependency/,$(DEPENDENCIES))
 dependency_INCLUDES ?=
