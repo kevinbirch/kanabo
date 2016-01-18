@@ -313,7 +313,7 @@ ifeq ($(strip $(DEPENDENCY_HOOK)),)
 	  exit 1; \
 	fi
 else
-	$(DEPENDENCY_HOOK) $(@F)
+	$(TEST_DEPENDENCY_HOOK) $(@F)
 endif
 endif
 
