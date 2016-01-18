@@ -284,22 +284,31 @@ help:
 
 ## Suport Emacs flymake syntax checker
 check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS)
-	$(CC) $(TEST_CFLAGS) $(CDEFS) -fsyntax-only $(CHK_SOURCES)
+	$(CC) $(TEST_CFLAGS) -fsyntax-only $(CHK_SOURCES)
 
-## Confirm the avialability of one library dependency
-dependency/%: in:=$(shell mktemp -t dependencyXXXXXX).c
+define make-dep-vars =
+ dependency_$(1)_INCLUDES ?= $(dependency_INCLUDES)
+ dependency_$(1)_LDFLAGS ?= $(dependency_LDFLAGS)
+ dependency_$(1)_HEADER ?= $(1).h
+ dependency_$(1)_LIB ?= $(1)
+ dependency_$(1)_infile := $(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.c)
+ dependency_$(1)_outfile := $(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.o)
+endef
+
+## Confirm the availability of one dependency
 dependency/%:
+ifeq ($(strip $(DEPENDENCY_HOOK)),)
+	@$(eval $(call make-dep-vars,$(@F)))
 	@echo "resolving depencency: $(@F)"
-ifeq ($(strip $(DEPENDENCY_HELPER)),)
-	@$(RM) $(in)
-	@echo "#include <$(@F).h>" > $(in); echo "int main(void) {return 0;}" >> $(in); \
-	$(CC) $(in) -l$(@F) -o `mktemp -t objXXXXXX`; \
-	if [ "0" != "$$?" ]; then echo "build: *** The dependency \"$(@F)\" was not found."; exit 1; fi
+	@echo "#include <$(dependency_$(@F)_HEADER)>" > $(dependency_$(@F)_infile)
+	@echo "int main(void) {return 0;}" >> $(dependency_$(@F)_infile)
+	@$(CC) $(dependency_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $(dependency_$(@F)_LDFLAGS) -l$(dependency_$(@F)_LIB) -o $(dependency_$(@F)_outfile)
 else
-	$(DEPENDENCY_HELPER) $(@F)
+	@echo "invoking depencency hook: $(DEPENDENCY_HOOK)"
+	@$(DEPENDENCY_HOOK) $(@F)
 endif
 
-## Confirm the avialability of one test library dependency
+## Confirm the availability of one test dependency
 test-dependency/%: in:=$(shell mktemp -t test-dependencyXXXXXX).c
 test-dependency/%:
 ifeq ($(strip $(skip_tests)),)
