@@ -70,14 +70,25 @@ GENERATE_TEST_RESOURCES_HOOKS ?=
 PROCESS_TEST_SOURCES_HOOKS ?=
 
 ## Defaults for project source directories
-SOURCE_DIR  ?= src/main/c
-INCLUDE_DIR ?= $(SOURCE_DIR)/include
-RESOURCE_DIR ?= src/main/resources
+SOURCE_DIR ?= src
+MAIN_DIR ?= $(SOURCE_DIR)/main
+C_SOURCES_DIR ?= $(MAIN_DIR)/c
+CC_SOURCES_DIR ?= $(MAIN_DIR)/c++
+M_SOURCES_DIR ?= $(MAIN_DIR)/m
+C_INCLUDE_DIR ?= $(C_SOURCES_DIR)/include
+CC_INCLUDE_DIR ?= $(CC_SOURCES_DIR)/include
+M_INCLUDE_DIR ?= $(M_SOURCES_DIR)/include
+RESOURCES_DIR ?= $(MAIN_DIR)/resources
 
 ## Defaults for project test source directories
-TEST_SOURCE_DIR  ?= src/test/c
-TEST_INCLUDE_DIR ?= $(TEST_SOURCE_DIR)/include
-TEST_RESOURCE_DIR ?= src/test/resources
+TEST_DIR ?= $(SOURCE_DIR)/test
+C_TEST_SOURCES_DIR ?= $(TEST_DIR)/c
+CC_TEST_SOURCES_DIR ?= $(TEST_DIR)/c++
+M_TEST_SOURCES_DIR ?= $(TEST_DIR)/m
+C_TEST_INCLUDE_DIR ?= $(C_TEST_SOURCES_DIR)/include
+CC_TEST_INCLUDE_DIR ?= $(CC_TEST_SOURCES_DIR)/include
+M_TEST_INCLUDE_DIR ?= $(M_TEST_SOURCES_DIR)/include
+TEST_RESOURCE_DIR ?= $(TEST_DIR)/resources
 
 ## Defaults for project output directories
 TARGET_DIR  ?= target
@@ -199,13 +210,13 @@ TEST_DEPENDENCY_INCLUDES ?= $(DEPENDENCY_INCLUDES)
 TEST_DEPENDENCY_LDFLAGS ?= $(DEPENDENCY_LDFLAGS)
 
 ## Project compiler settings
-INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR) -I$(INCLUDE_DIR)
+INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR) -I$(C_INCLUDE_DIR)
 CFLAGS := $(CFLAGS) $($(build)_CFLAGS)
 LDFLAGS ?=
 LDLIBS ?=
 
 ## Project test compiler settings
-TEST_INCLUDES ?= $(INCLUDES) -I$(TEST_INCLUDE_DIR)
+TEST_INCLUDES ?= $(INCLUDES) -I$(C_TEST_INCLUDE_DIR)
 TEST_CFLAGS ?= $(CFLAGS)
 TEST_LDFLAGS ?= $(LDFLAGS)
 TEST_LDLIBS ?= $(LDLIBS)
@@ -217,13 +228,13 @@ source_to_depend = $(call source_to_target,$(1),$(2),d)
 find_source_files = $(shell cd $(1) && $(FIND) . -type f \( -name '*.c' -or -name '*.C' \) | sed 's|\./||')
 
 ## Project source file locations
-SOURCES := $(call find_source_files,$(SOURCE_DIR))
+SOURCES := $(call find_source_files,$(C_SOURCES_DIR))
 OBJECTS := $(call source_to_object,$(SOURCES),$(OBJECT_DIR))
-PROGRAM_SOURCES ?= $(shell grep -l -E '(int|void)\s+main' $(addprefix $(SOURCE_DIR)/,$(SOURCES)) | sed 's|$(SOURCE_DIR)/||')
+PROGRAM_SOURCES ?= $(shell grep -l -E '(int|void)\s+main' $(addprefix $(C_SOURCES_DIR)/,$(SOURCES)) | sed 's|$(C_SOURCES_DIR)/||')
 PROGRAM_OBJECTS := $(call source_to_object,$(PROGRAM_SOURCES),$(OBJECT_DIR))
 LIBRARY_OBJECTS := $(filter-out $(PROGRAM_OBJECTS),$(OBJECTS))
-vpath %.c $(SOURCE_DIR)
-vpath %.h $(INCLUDE_DIR)
+vpath %.c $(C_SOURCES_DIR)
+vpath %.h $(C_INCLUDE_DIR)
 DEPENDS := $(call source_to_depend,$(SOURCES),$(GENERATED_DEPEND_DIR))
 
 ifneq (1,$(words $(PROGRAM_SOURCES)))
@@ -232,10 +243,10 @@ endif
 
 ## Project test source file locations
 ifeq ($(strip $(skip_tests)),)
-TEST_SOURCES := $(call find_source_files,$(TEST_SOURCE_DIR))
+TEST_SOURCES := $(call find_source_files,$(C_TEST_SOURCES_DIR))
 TEST_OBJECTS := $(call source_to_object,$(TEST_SOURCES),$(TEST_OBJECT_DIR))
-vpath %.c $(TEST_SOURCE_DIR)
-vpath %.h $(TEST_INCLUDE_DIR)
+vpath %.c $(C_TEST_SOURCES_DIR)
+vpath %.h $(C_TEST_INCLUDE_DIR)
 TEST_DEPENDS := $(call source_to_depend,$(TEST_SOURCES),$(GENERATED_TEST_DEPEND_DIR))
 endif
 
@@ -467,14 +478,14 @@ endif
 
 generate-resources: process-sources announce-generate-resources $(GENERATE_RESOURCES_HOOKS)
 
-process-resources: count = $(shell if [ -d $(RESOURCE_DIR) ]; then ls $(RESOURCE_DIR) | wc -l; fi)
+process-resources: count = $(shell if [ -d $(RESOURCES_DIR) ]; then ls $(RESOURCES_DIR) | wc -l; fi)
 process-resources: generate-resources $(PROCESS_RESOURCES_HOOKS)
-ifeq ($(shell if [ -d $(RESOURCE_DIR) ]; then echo "true"; fi),true)
+ifeq ($(shell if [ -d $(RESOURCES_DIR) ]; then echo "true"; fi),true)
 	@echo ""; \
 	echo " -- Copying resources..."; \
 	echo "------------------------------------------------------------------------"; \
 	echo "Copying $(strip $(count)) files to: $(TARGET_DIR)"
-	@cp -r $(RESOURCE_DIR)/* $(TARGET_DIR)
+	@cp -r $(RESOURCES_DIR)/* $(TARGET_DIR)
 endif
 
 announce-compile-sources:
