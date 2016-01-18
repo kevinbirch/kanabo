@@ -184,6 +184,7 @@ DEPENDENCY_HOOK ?=
 DEPENDENCY_VALIDATIONS := $(addprefix dependency/,$(DEPENDENCIES))
 dependency_INCLUDES ?=
 dependency_LDFLAGS ?=
+TEST_DEPENDENCY_HOOK ?= $(DEPENDENCY_HOOK)
 TEST_DEPENDENCY_VALIDATIONS := $(addprefix test-dependency/,$(TEST_DEPENDENCIES))
 test_dependency_INCLUDES ?= $(dependency_INCLUDES)
 test_dependency_LDFLAGS ?= $(dependency_LDFLAGS)
