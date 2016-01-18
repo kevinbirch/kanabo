@@ -298,8 +298,8 @@ endef
 ## Confirm the availability of one dependency
 dependency/%:
 ifeq ($(strip $(DEPENDENCY_HOOK)),)
-	@$(eval $(call make-dep-vars,$(@F)))
 	@echo "resolving depencency: $(@F)"
+	@$(eval $(call make_dependency_variables,$(@F)))
 	@echo "#include <$(dependency_$(@F)_HEADER)>" > $(dependency_$(@F)_infile)
 	@echo "int main(void) {return 0;}" >> $(dependency_$(@F)_infile)
 	@$(CC) $(dependency_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $(dependency_$(@F)_LDFLAGS) -l$(dependency_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
