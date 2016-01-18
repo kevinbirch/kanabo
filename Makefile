@@ -181,12 +181,12 @@ psdir := $(docdir)
 ## Dependency handling
 DEPENDENCY_HOOK ?=
 DEPENDENCY_VALIDATIONS := $(addprefix dependency/,$(DEPENDENCIES))
-dependency_INCLUDES ?=
-dependency_LDFLAGS ?=
+DEPENDENCY_INCLUDES ?=
+DEPENDENCY_LDFLAGS ?=
 TEST_DEPENDENCY_HOOK ?= $(DEPENDENCY_HOOK)
 TEST_DEPENDENCY_VALIDATIONS := $(addprefix test-dependency/,$(TEST_DEPENDENCIES))
-test_dependency_INCLUDES ?= $(dependency_INCLUDES)
-test_dependency_LDFLAGS ?= $(dependency_LDFLAGS)
+TEST_DEPENDENCY_INCLUDES ?= $(DEPENDENCY_INCLUDES)
+TEST_DEPENDENCY_LDFLAGS ?= $(DEPENDENCY_LDFLAGS)
 
 ## Hooks
 GENERATE_SOURCES_HOOKS ?=
@@ -286,10 +286,10 @@ check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST
 	$(CC) $(TEST_CFLAGS) -fsyntax-only $(CHK_SOURCES)
 
 define make_dependency_variables =
- $(dependency_prefix)dependency_$(1)_INCLUDES ?= $($(dependency_prefix)dependency_INCLUDES)
- $(dependency_prefix)dependency_$(1)_LDFLAGS ?= $($(dependency_prefix)dependency_LDFLAGS)
- $(dependency_prefix)dependency_$(1)_HEADER ?= $(1).h
- $(dependency_prefix)dependency_$(1)_LIB ?= $(1)
+ $(dependency_prefix)DEPENDENCY_$(1)_INCLUDES ?= $($(dependency_prefix)DEPENDENCY_INCLUDES)
+ $(dependency_prefix)DEPENDENCY_$(1)_LDFLAGS ?= $($(dependency_prefix)DEPENDENCY_LDFLAGS)
+ $(dependency_prefix)DEPENDENCY_$(1)_HEADER ?= $(1).h
+ $(dependency_prefix)DEPENDENCY_$(1)_LIB ?= $(1)
  $(dependency_prefix)LDLIBS += -l$(dependency_prefix)dependency_$(1)_LIB
  dependency_$(1)_infile := $(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.c)
  dependency_$(1)_outfile := $(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.o)
@@ -300,9 +300,9 @@ dependency/%:
 ifeq ($(strip $(DEPENDENCY_HOOK)),)
 	@echo "resolving depencency: $(@F)"
 	@$(eval $(call make_dependency_variables,$(@F)))
-	@echo "#include <$(dependency_$(@F)_HEADER)>" > $(dependency_$(@F)_infile)
+	@echo "#include <$(DEPENDENCY_$(@F)_HEADER)>" > $(dependency_$(@F)_infile)
 	@echo "int main(void) {return 0;}" >> $(dependency_$(@F)_infile)
-	@$(CC) $(dependency_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $(dependency_$(@F)_LDFLAGS) -l$(dependency_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
+	@$(CC) $(DEPENDENCY_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $(DEPENDENCY_$(@F)_LDFLAGS) -l$(DEPENDENCY_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
 	if [ "0" != "$$?" ]; \
 	  then echo "build: *** The dependency \"$(@F)\" was not found."; \
 	  exit 1; \
@@ -319,9 +319,9 @@ ifeq ($(strip $(skip_tests)),)
 ifeq ($(strip $(DEPENDENCY_HOOK)),)
 	@echo "resolving test depencency: $(@F)"
 	@$(eval $(call make_dependency_variables,$(@F)))
-	@echo "#include <$($(dependency_prefix)dependency_$(@F)_HEADER)>" > $(dependency_$(@F)_infile)
+	@echo "#include <$($(dependency_prefix)DEPENDENCY_$(@F)_HEADER)>" > $(dependency_$(@F)_infile)
 	@echo "int main(void) {return 0;}" >> $(dependency_$(@F)_infile)
-	@$(CC) $($(dependency_prefix)dependency_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $($(dependency_prefix)dependency_$(@F)_LDFLAGS) -l$($(dependency_prefix)dependency_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
+	@$(CC) $($(dependency_prefix)DEPENDENCY_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $($(dependency_prefix)DEPENDENCY_$(@F)_LDFLAGS) -l$($(dependency_prefix)DEPENDENCY_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
 	if [ "0" != "$$?" ]; \
 	  then echo "build: *** The test dependency \"$(@F)\" was not found."; \
 	  exit 1; \
