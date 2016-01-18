@@ -39,7 +39,17 @@
 #include "jsonpath/parsers/base.h"
 
 
+static MaybeAst string_delegate(Parser *parser __attribute__((unused)), MaybeAst ast, Input *input __attribute__((unused)))
+{
+    parser_trace("entering string parser");
+    parser_trace("leaving string parser");
+    return ast;
+}
+
 Parser *string(void)
 {
-    return make_parser(STRING, string_parser);
+    Parser *self = make_parser(STRING);
+    self->vtable.delegate = string_delegate;
+
+    return self;
 }

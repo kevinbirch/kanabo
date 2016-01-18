@@ -48,21 +48,24 @@ struct literal_parser_s
 typedef struct literal_parser_s LiteralParser;
 
 
-static void literal_free(Parser *value __attribute__((unused)))
+static MaybeAst literal_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
-}
+    LiteralParser *self = (LiteralParser *)parser;
+    parser_trace("entering literal parser, '%s'", self->value);
 
-static void literal_log(Parser *value)
-{
-    LiteralParser *self = (LiteralParser *)value;
-    parser_debug("processing literal parser, value: %s", self->value);
+    if(consume_if(input, literal))
+    {
+        // xxx - add literal to ast
+        parser_trace("leaving literal parser, with success")
+        return ast;
+    }
+    else
+    {
+        // xxx - need to return the expected literal here! `error_with_context`? error structs and handlers?
+        parser_trace("leaving literal parser, with error")
+        return error(ERR_UNEXPECTED_VALUE);
+    }
 }
-
-static const struct vtable_s LITERAL_VTABLE =
-{
-    literal_free,
-    literal_log
-};
 
 Parser *literal(const char *value)
 {
@@ -70,17 +73,14 @@ Parser *literal(const char *value)
     {
         return NULL;
     }
-    LiteralParser *result = (LiteralParser *)calloc(1, sizeof(LiteralParser));
-    if(NULL == result)
+    LiteralParser *self = (LiteralParser *)calloc(1, sizeof(LiteralParser));
+    if(NULL == self)
     {
         return NULL;
     }
 
-    parser_init((Parser *)result, RULE, literal_parser, &LITERAL_VTABLE);
-    result->value = value;
+    parser_init((Parser *)self, RULE, literal_parser, &LITERAL_VTABLE);
+    self->value = value;
 
-    return (Parser *)result;
+    return (Parser *)self;
 }
-
-
-

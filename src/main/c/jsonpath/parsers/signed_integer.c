@@ -39,7 +39,17 @@
 #include "jsonpath/parsers/base.h"
 
 
+static MaybeAst signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeAst ast, Input *input __attribute__((unused)))
+{
+    parser_trace("entering signed integer parser");
+    parser_trace("leaving signed integer parser");
+    return ast;
+}
+
 Parser *signed_integer(void)
 {
-    return make_parser(SIGNED_INTEGER, signed_integer_parser);
+    Parser *self = make_parser(SIGNED_INTEGER);
+    self->vtable.delegate = signed_integer_delegate;
+
+    return self;
 }

@@ -39,7 +39,18 @@
 #include "jsonpath/parsers/base.h"
 
 
+static MaybeAst quoted_string_delegate(Parser *parser __attribute__((unused)), MaybeAst ast, Input *input __attribute__((unused)))
+{
+    parser_trace("entering quoted string parser");
+    parser_trace("leaving quoted string parser");
+    return ast;
+}
+
+
 Parser *quoted_string(void)
 {
-    return make_parser(QUOTED_STRING, quoted_string_parser);
+    Parser *self = make_parser(QUOTED_STRING);
+    self->vtable.delegate = quoted_string_delegate;
+
+    return self;
 }

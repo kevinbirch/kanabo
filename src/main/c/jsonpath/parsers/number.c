@@ -39,7 +39,17 @@
 #include "jsonpath/parsers/base.h"
 
 
+static MaybeAst number_delegate(Parser *parser __attribute__((unused)), MaybeAst ast, Input *input __attribute__((unused)))
+{
+    parser_trace("entering number parser");
+    parser_trace("leaving number parser");
+    return ast;
+}
+
 Parser *number(void)
 {
-    return make_parser(NUMBER, number_parser);
+    Parser *self = make_parser(NUMBER);
+    self->vtable.delegate = number_delegate;
+
+    return self;
 }
