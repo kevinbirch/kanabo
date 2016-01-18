@@ -394,11 +394,11 @@ announce-initialize-phase:
 	echo "------------------------------------------------------------------------"
 
 announce-ensure-dependencies:
-ifneq ($(strip $(DEPENDENCIES)),)
+ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
 	@echo ""; \
 	echo " -- Finding dependencies"; \
 	echo "------------------------------------------------------------------------"; \
-	echo "Resolving $(words $(DEPENDENCIES)) dependencies"; \
+	echo "Resolving $(words $(DEPENDENCY_VALIDATIONS)) dependencies"; \
 	echo ""
 endif
 
