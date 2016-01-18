@@ -358,11 +358,11 @@ $(TEST_OBJECT_DIR):
 
 $(OBJECT_DIR)/%.o: %.c | $(OBJECT_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(TEST_OBJECT_DIR)/%.o: %.c  | $(TEST_OBJECT_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) $(TEST_INCLUDES) $(TEST_CFLAGS) -c $< -o $@
+	$(CC) $(TEST_CFLAGS) $(TEST_INCLUDES) -c $< -o $@
 
 $(LIBRARY_TARGET): $(LIBRARY_OBJECTS)
 	@echo ""; \
