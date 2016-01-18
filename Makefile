@@ -283,7 +283,7 @@ help:
 
 ## Suport Emacs flymake syntax checker
 check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS)
-	$(CC) $(TEST_CFLAGS) -fsyntax-only $(CHK_SOURCES)
+	$(CC) $(TEST_CFLAGS) -fsyntax-only $(TEST_INCLUDES) $(INCLUDES) $(CHK_SOURCES)
 
 define make_dependency_variables =
  $(dependency_prefix)DEPENDENCY_$(1)_INCLUDES ?= $($(dependency_prefix)DEPENDENCY_INCLUDES)
