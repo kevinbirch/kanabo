@@ -313,19 +313,21 @@ else
 endif
 
 ## Confirm the availability of one test dependency
-test-dependency/%: in:=$(shell mktemp -t test-dependencyXXXXXX).c
+test-dependency/%: dependency_prefix := TEST
 test-dependency/%:
 ifeq ($(strip $(skip_tests)),)
-	@echo "resolving test depencency: $(@F)"
 ifeq ($(strip $(DEPENDENCY_HOOK)),)
-	@$(RM) $(in)
-	@echo "#include <$(@F).h>" > $(in); echo "int main(void) {return 0;}" >> $(in); \
-	$(CC) $(in) -l$(@F) -o `mktemp -t objXXXXXX`; \
+	@echo "resolving test depencency: $(@F)"
+	@$(eval $(call make_dependency_variables,$(@F)))
+	@echo "#include <$($(dependency_prefix)dependency_$(@F)_HEADER)>" > $(dependency_$(@F)_infile)
+	@echo "int main(void) {return 0;}" >> $(dependency_$(@F)_infile)
+	@$(CC) $($(dependency_prefix)dependency_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $($(dependency_prefix)dependency_$(@F)_LDFLAGS) -l$($(dependency_prefix)dependency_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
 	if [ "0" != "$$?" ]; \
-	  then echo "build: *** The test dependency \"$(@F)\" was not found.  You can skip this check by setting the variable 'skip_tests' to any value"; \
+	  then echo "build: *** The test dependency \"$(@F)\" was not found."; \
 	  exit 1; \
 	fi
 else
+	@echo "invoking test depencency hook: $(TEST_DEPENDENCY_HOOK)"
 	$(TEST_DEPENDENCY_HOOK) $(@F)
 endif
 endif
