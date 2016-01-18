@@ -202,13 +202,13 @@ PROCESS_TEST_RESOURCES_HOOKS ?=
 INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR) -I$(INCLUDE_DIR)
 CFLAGS := $(CFLAGS) $($(build)_CFLAGS)
 LDFLAGS ?=
-LDLIBS := $(addprefix -l, $(DEPENDENCIES))
+LDLIBS ?=
 
 ## Project test compiler settings
 TEST_INCLUDES ?= $(INCLUDES) -I$(TEST_INCLUDE_DIR)
 TEST_CFLAGS ?= $(CFLAGS)
 TEST_LDFLAGS ?= $(LDFLAGS)
-TEST_LDLIBS ?= $(addprefix -l, $(TEST_DEPENDENCIES)) $(LDLIBS)
+TEST_LDLIBS ?= $(LDLIBS)
 
 ## Automation helper functions
 source_to_target = $(foreach s, $(1), $(2)/$(basename $(s)).$(3))
