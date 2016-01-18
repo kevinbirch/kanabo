@@ -53,16 +53,16 @@ static MaybeAst literal_delegate(Parser *parser, MaybeAst ast, Input *input)
     LiteralParser *self = (LiteralParser *)parser;
     parser_trace("entering literal parser, '%s'", self->value);
 
-    if(consume_if(input, literal))
+    if(consume_if(input, self->value))
     {
         // xxx - add literal to ast
-        parser_trace("leaving literal parser, with success")
+        parser_trace("leaving literal parser, with success");
         return ast;
     }
     else
     {
         // xxx - need to return the expected literal here! `error_with_context`? error structs and handlers?
-        parser_trace("leaving literal parser, with error")
+        parser_trace("leaving literal parser, with error");
         return error(ERR_UNEXPECTED_VALUE);
     }
 }
@@ -79,7 +79,8 @@ Parser *literal(const char *value)
         return NULL;
     }
 
-    parser_init((Parser *)self, RULE, literal_parser, &LITERAL_VTABLE);
+    parser_init((Parser *)self, LITERAL);
+    self->base.vtable.delegate = literal_delegate;
     self->value = value;
 
     return (Parser *)self;
