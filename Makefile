@@ -286,10 +286,12 @@ check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST
 	$(CC) $(TEST_CFLAGS) -fsyntax-only $(CHK_SOURCES)
 
 define make-dep-vars =
- dependency_$(1)_INCLUDES ?= $(dependency_INCLUDES)
- dependency_$(1)_LDFLAGS ?= $(dependency_LDFLAGS)
- dependency_$(1)_HEADER ?= $(1).h
- dependency_$(1)_LIB ?= $(1)
+ dep_var_name_prefix := $(if $(2),$(2)_)
+ $(dep_var_name_prefix)dependency_$(1)_INCLUDES ?= $($(dep_var_name_prefix)dependency_INCLUDES)
+ $(dep_var_name_prefix)dependency_$(1)_LDFLAGS ?= $($(dep_var_name_prefix)dependency_LDFLAGS)
+ $(dep_var_name_prefix)dependency_$(1)_HEADER ?= $(1).h
+ $(dep_var_name_prefix)dependency_$(1)_LIB ?= $(1)
+ $(dep_var_name_prefix)LDLIBS += -l$(dep_var_name_prefix)dependency_$(1)_LIB
  dependency_$(1)_infile := $(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.c)
  dependency_$(1)_outfile := $(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.o)
 endef
