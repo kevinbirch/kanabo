@@ -48,6 +48,7 @@ DIFF ?= diff
 TAR ?= tar
 FIND ?= find
 INSTALL ?= install
+MKTEMP ?= mktemp
 
 ## Defaults for project settings
 version ?= 1.0.0-SNAPSHOT
