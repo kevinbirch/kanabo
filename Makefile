@@ -301,7 +301,11 @@ ifeq ($(strip $(DEPENDENCY_HOOK)),)
 	@echo "resolving depencency: $(@F)"
 	@echo "#include <$(dependency_$(@F)_HEADER)>" > $(dependency_$(@F)_infile)
 	@echo "int main(void) {return 0;}" >> $(dependency_$(@F)_infile)
-	@$(CC) $(dependency_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $(dependency_$(@F)_LDFLAGS) -l$(dependency_$(@F)_LIB) -o $(dependency_$(@F)_outfile)
+	@$(CC) $(dependency_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $(dependency_$(@F)_LDFLAGS) -l$(dependency_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
+	if [ "0" != "$$?" ]; \
+	  then echo "build: *** The dependency \"$(@F)\" was not found."; \
+	  exit 1; \
+	fi
 else
 	@echo "invoking depencency hook: $(DEPENDENCY_HOOK)"
 	@$(DEPENDENCY_HOOK) $(@F)
