@@ -352,13 +352,13 @@ $(GENERATED_DEPEND_DIR):
 
 $(GENERATED_DEPEND_DIR)/%.d: %.c | $(GENERATED_DEPEND_DIR)
 	@mkdir -p $(dir $@)
-	@$(CC) -MM -MG -MT '$(OBJECT_DIR)/$(*F).o $@' $(CFLAGS) $< > $@
+	@$(CC) -MM -MG -MT '$(OBJECT_DIR)/$(*F).o $@' $(CFLAGS) $(INCLUDES) $< > $@
 
 $(GENERATED_TEST_DEPEND_DIR):
 	@mkdir -p $(GENERATED_TEST_DEPEND_DIR)
 
 $(GENERATED_TEST_DEPEND_DIR)/%.d: %.c | $(GENERATED_TEST_DEPEND_DIR)
-	@$(CC) -MM -MG -MT '$(TEST_OBJECT_DIR)/$(*F).o $@' $(TEST_CFLAGS) $< > $@
+	@$(CC) -MM -MG -MT '$(TEST_OBJECT_DIR)/$(*F).o $@' $(TEST_CFLAGS) $(TEST_INCLUDES) $< > $@
 
 ## Main build rules
 $(OBJECT_DIR):
