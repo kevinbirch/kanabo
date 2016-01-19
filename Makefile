@@ -324,7 +324,7 @@ else
 endif
 
 ## Confirm the availability of one test dependency
-test-dependency/%: dependency_prefix := TEST
+test-dependency/%: dependency_prefix := TEST_
 test-dependency/%:
 ifeq ($(strip $(skip_tests)),)
 ifeq ($(strip $(DEPENDENCY_HOOK)),)
