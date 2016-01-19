@@ -482,7 +482,7 @@ process-resources: count = $(shell if [ -d $(RESOURCES_DIR) ]; then ls $(RESOURC
 process-resources: generate-resources $(PROCESS_RESOURCES_HOOKS)
 ifeq ($(shell if [ -d $(RESOURCES_DIR) ]; then echo "true"; fi),true)
 	@echo ""; \
-	echo " -- Copying resources..."; \
+	echo " -- Copying resources"; \
 	echo "------------------------------------------------------------------------"; \
 	echo "Copying $(strip $(count)) files to: $(TARGET_DIR)"
 	@cp -r $(RESOURCES_DIR)/* $(TARGET_DIR)
@@ -546,7 +546,7 @@ process-test-resources: count = $(shell if [ -d $(TEST_RESOURCE_DIR) ]; then ls 
 process-test-resources: generate-test-resources $(PROCESS_TEST_RESOURCES_HOOKS)
 ifeq ($(shell if [ -d $(TEST_RESOURCE_DIR) ]; then echo "true"; fi),true)
 	@echo ""; \
-	echo " -- Copying test resources..."; \
+	echo " -- Copying test resources"; \
 	echo "------------------------------------------------------------------------"; \
 	echo "Copying $(strip $(count)) files to $(TARGET_DIR)"
 	@cp -r $(TEST_RESOURCE_DIR)/* $(TARGET_DIR)
