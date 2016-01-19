@@ -103,17 +103,14 @@ struct maybe_ast_s
 
 typedef struct maybe_ast_s MaybeAst;
 
-typedef MaybeAst (*parser_delegate)(Parser *parser, MaybeAst ast, Input *input);
-struct vtable_s
-{
-    void (*free)(Parser *self);
-    parser_delegate delegate;
-};
-
 struct parser_s
 {
-    const struct vtable_s *vtable;
-    enum parser_kind       kind;
+    enum parser_kind kind;
+    struct
+    {
+        void (*free)(Parser *self);
+        MaybeAst (*delegate)(Parser *parser, MaybeAst ast, Input *input);
+    } vtable;
 };
 
 #define collection() (MaybeAst){AST_VALUE, .value=make_ast_node(AST_COLLECTION, NULL)}
@@ -124,9 +121,7 @@ struct parser_s
 
 
 Parser *make_parser(enum parser_kind kind);
-Parser *parser_init(Parser *self,
-                    enum parser_kind kind,
-                    const struct vtable_s *vtable);
+Parser *parser_init(Parser *self, enum parser_kind kind);
 
 void parser_free(Parser *self);
 void parser_destructor(void *each);
