@@ -453,7 +453,7 @@ ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
 	echo ""
 endif
 
-ensure-dependencies: announce-ensure-dependencies $(DEPENDENCY_VALIDATIONS)
+ensure-dependencies: initialize announce-build-phase announce-ensure-dependencies $(DEPENDENCY_VALIDATIONS)
 
 announce-generate-sources:
 ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
@@ -464,7 +464,7 @@ ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
 	echo ""
 endif
 
-generate-sources: initialize announce-build-phase ensure-dependencies announce-generate-sources $(GENERATE_SOURCES_HOOKS) $(DEPENDS)
+generate-sources: ensure-dependencies announce-generate-sources $(GENERATE_SOURCES_HOOKS) $(DEPENDS)
 
 process-sources: generate-sources $(PROCESS_SOURCES_HOOKS)
 
@@ -503,13 +503,22 @@ library: process-objects $(LIBRARY_TARGET)
 
 target: library $(TARGET)
 
-ensure-test-dependencies: $(TEST_DEPENDENCY_VALIDATIONS)
-
 announce-test-phase:
 	@echo ""; \
 	echo "------------------------------------------------------------------------"; \
 	echo " Test phase"; \
 	echo "------------------------------------------------------------------------"
+
+announce-ensure-test-dependencies:
+ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
+	@echo ""; \
+	echo " -- Finding test dependencies"; \
+	echo "------------------------------------------------------------------------"; \
+	echo "Resolving $(words $(TEST_DEPENDENCY_VALIDATIONS)) dependencies"; \
+	echo ""
+endif
+
+ensure-test-dependencies: target announce-test-phase announce-ensure-test-dependencies $(TEST_DEPENDENCY_VALIDATIONS)
 
 announce-generate-test-sources:
 ifneq ($(strip $(GENERATE_TEST_SOURCES_HOOKS)),)
@@ -519,7 +528,7 @@ ifneq ($(strip $(GENERATE_TEST_SOURCES_HOOKS)),)
 	echo "Executing $(words $(GENERATE_TEST_SOURCES_HOOKS)) test source hooks"
 endif
 
-generate-test-sources: target ensure-test-dependencies announce-test-phase announce-generate-test-sources $(GENERATE_TEST_SOURCES_HOOKS)
+generate-test-sources: ensure-test-dependencies announce-generate-test-sources $(GENERATE_TEST_SOURCES_HOOKS)
 
 process-test-sources: generate-test-sources $(PROCESS_TEST_SOURCES_HOOKS)
 
