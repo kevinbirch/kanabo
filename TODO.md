@@ -94,7 +94,7 @@ LICENSE file for more details.
 * pratt parser?
   * http://l-lang.org/blog/TDOP---Pratt-parser-in-pictures/
 * parser combinator - https://github.com/orangeduck/mpc
-
+* use sentinels for vararg parsers instead of NULL, error on null args
 
 * use maybe parser in grammar to handle builder errors
 * push parser functions down to parser modules
