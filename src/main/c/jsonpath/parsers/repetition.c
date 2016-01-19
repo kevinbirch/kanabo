@@ -44,6 +44,10 @@ static MaybeAst repetition_delegate(Parser *parser, MaybeAst ast, Input *input)
     parser_trace("entering repetition parser for %s", parser_name(self->child));
 
     MaybeAst result = bind(self->child, ast, input);
+    if(AST_VALUE != result.tag)
+    {
+        return error(ERR_NO_ALTERNATIVE);
+    }
     while(AST_VALUE == result.tag)
     {
         ast_add_child(ast.value, result.value);

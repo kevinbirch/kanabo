@@ -38,10 +38,9 @@
 
 #include "conditions.h"
 
-#include "jsonpath/parsers.h"
+#include "jsonpath/maybe_ast.h"
 #include "jsonpath/grammar.h"
 #include "jsonpath/model.h"
-#include "jsonpath/input.h"
 #include "jsonpath/logging.h"
 
 #define PRECOND_ELSE_NOTHING(ERR_CODE, ...)                       \

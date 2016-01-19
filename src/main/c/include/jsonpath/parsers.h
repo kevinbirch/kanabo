@@ -41,8 +41,31 @@
 
 #include <stdint.h>
 
+#include "jsonpath/input.h"
+
+enum parser_result_code
+{
+    PARSER_SUCCESS = 0,
+    ERR_NULL_EXPRESSION,             // the expression argument given was NULL
+    ERR_ZERO_LENGTH,                 // expression length was 0
+    ERR_PARSER_OUT_OF_MEMORY,        // unable to allocate memory
+    ERR_NOT_JSONPATH,                // not a JSONPath expression
+    ERR_PREMATURE_END_OF_INPUT,      // premature end of input before expression was complete
+    ERR_UNEXPECTED_VALUE,            // expected one character but found another
+    ERR_EMPTY_PREDICATE,             // a predicate is empty
+    ERR_UNBALANCED_PRED_DELIM,       // missing closing predicate delimiter `]' before end of step
+    ERR_UNSUPPORTED_PRED_TYPE,       // unsupported predicate found
+    ERR_EXTRA_JUNK_AFTER_PREDICATE,  // extra characters after valid predicate definition
+    ERR_EXPECTED_NAME_CHAR,          // expected a name character, but found something else instead
+    ERR_EXPECTED_NODE_TYPE_TEST,     // expected a node type test
+    ERR_EXPECTED_INTEGER,            // expected an integer
+    ERR_INVALID_NUMBER,              // invalid number
+    ERR_STEP_CANNOT_BE_ZERO,         // slice step value must be non-zero
+    ERR_NO_ALTERNATIVE,              // none of the alternatives matched the input
+};
 
 typedef enum parser_result_code parser_result_code;
+
 typedef struct parser_s Parser;
 
 
