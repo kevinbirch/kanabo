@@ -414,26 +414,15 @@ ifeq ($(strip $(package)),)
 	$(error "Please set a value for 'package' in project.mk")
 endif
 
+announce-build:
+	@echo ""; \
+	echo " Buidling $(owner):$(package):$(version)"
+
 announce-initialize-phase:
 	@echo ""; \
 	echo "------------------------------------------------------------------------"; \
 	echo " Initialize phase"; \
 	echo "------------------------------------------------------------------------"
-
-announce-ensure-dependencies:
-ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
-	@echo ""; \
-	echo " -- Finding dependencies"; \
-	echo "------------------------------------------------------------------------"; \
-	echo "Resolving $(words $(DEPENDENCY_VALIDATIONS)) dependencies"; \
-	echo ""
-endif
-
-ensure-dependencies: announce-ensure-dependencies $(DEPENDENCY_VALIDATIONS)
-
-announce-build:
-	@echo ""; \
-	echo " Buidling $(owner):$(package):$(version)"
 
 announce-create-build-directories:
 	@echo ""; \
@@ -447,13 +436,24 @@ create-build-directories: announce-create-build-directories
 	mkdir -p $(GENERATED_DEPEND_DIR)
 	mkdir -p $(GENERATED_TEST_DEPEND_DIR)
 
-initialize: validate announce-build announce-initialize-phase ensure-dependencies create-build-directories
+initialize: validate announce-build announce-initialize-phase create-build-directories
 
 announce-build-phase:
 	@echo ""; \
 	echo "------------------------------------------------------------------------"; \
 	echo " Build phase"; \
 	echo "------------------------------------------------------------------------"
+
+announce-ensure-dependencies:
+ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
+	@echo ""; \
+	echo " -- Finding dependencies"; \
+	echo "------------------------------------------------------------------------"; \
+	echo "Resolving $(words $(DEPENDENCY_VALIDATIONS)) dependencies"; \
+	echo ""
+endif
+
+ensure-dependencies: announce-ensure-dependencies $(DEPENDENCY_VALIDATIONS)
 
 announce-generate-sources:
 ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
@@ -464,7 +464,7 @@ ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
 	echo ""
 endif
 
-generate-sources: initialize announce-build-phase announce-generate-sources $(GENERATE_SOURCES_HOOKS) $(DEPENDS)
+generate-sources: initialize announce-build-phase ensure-dependencies announce-generate-sources $(GENERATE_SOURCES_HOOKS) $(DEPENDS)
 
 process-sources: generate-sources $(PROCESS_SOURCES_HOOKS)
 
