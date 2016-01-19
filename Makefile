@@ -88,7 +88,7 @@ M_TEST_SOURCES_DIR ?= $(TEST_DIR)/m
 C_TEST_INCLUDE_DIR ?= $(C_TEST_SOURCES_DIR)/include
 CC_TEST_INCLUDE_DIR ?= $(CC_TEST_SOURCES_DIR)/include
 M_TEST_INCLUDE_DIR ?= $(M_TEST_SOURCES_DIR)/include
-TEST_RESOURCE_DIR ?= $(TEST_DIR)/resources
+TEST_RESOURCES_DIR ?= $(TEST_DIR)/resources
 
 ## Defaults for project output directories
 TARGET_DIR  ?= target
@@ -99,6 +99,8 @@ GENERATED_HEADERS_DIR ?= $(GENERATED_SOURCE_DIR)/include
 GENERATED_DEPEND_DIR ?= $(GENERATED_SOURCE_DIR)/depend
 GENERATED_TEST_SOURCE_DIR ?= $(TARGET_DIR)/generated-test-sources
 GENERATED_TEST_DEPEND_DIR ?= $(TARGET_DIR)/generated-test-sources/depend
+RESOURCES_TARGET_DIR ?= $(TARGET_DIR)/resources
+TEST_RESOURCES_TARGET_DIR ?= $(TARGET_DIR)/test-resources
 
 ## Set this variable to any value to skip executing the test harness
 skip_tests ?=
@@ -234,6 +236,10 @@ LIBRARY_OBJECTS := $(filter-out $(PROGRAM_OBJECTS),$(OBJECTS))
 vpath %.c $(C_SOURCES_DIR)
 vpath %.h $(C_INCLUDE_DIR)
 DEPENDS := $(call source_to_depend,$(SOURCES),$(GENERATED_DEPEND_DIR))
+# find_resources = $(foreach r, $(shell if [ -d $(1) ]; then ls $(1); fi), $(2)/$(r))
+find_resources = $(foreach r, $(wildcard $(1)/*), $(subst $(1),$(2),$(r)))
+RESOURCES := $(call find_resources,$(RESOURCES_DIR),$(RESOURCES_TARGET_DIR))
+TEST_RESOURCES := $(call find_resources,$(TEST_RESOURCES_DIR),$(TEST_RESOURCES_TARGET_DIR))
 
 ifneq (1,$(words $(PROGRAM_SOURCES)))
 $(warning "Multiple sources containing `main' detected: $(PROGRAM_SOURCES)")
@@ -363,9 +369,17 @@ $(OBJECT_DIR)/%.o: %.c | $(OBJECT_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-$(TEST_OBJECT_DIR)/%.o: %.c  | $(TEST_OBJECT_DIR)
+$(TEST_OBJECT_DIR)/%.o: %.c | $(TEST_OBJECT_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) $(TEST_CFLAGS) $(TEST_INCLUDES) -c $< -o $@
+
+$(RESOURCES_TARGET_DIR)/%: $(RESOURCES_DIR)/%
+	@mkdir -p $(dir $@)
+	cp -r $< $(RESOURCES_TARGET_DIR)
+
+$(TEST_RESOURCES_TARGET_DIR)/%: $(TEST_RESOURCES_DIR)/%
+	@mkdir -p $(dir $@)
+	cp -r $< $(TEST_RESOURCES_TARGET_DIR)
 
 $(LIBRARY_TARGET): $(LIBRARY_OBJECTS)
 	@echo ""; \
@@ -472,16 +486,17 @@ endif
 
 generate-resources: process-sources announce-generate-resources $(GENERATE_RESOURCES_HOOKS)
 
-process-resources: count = $(shell if [ -d $(RESOURCES_DIR) ]; then ls $(RESOURCES_DIR) | wc -l; fi)
-process-resources: generate-resources $(PROCESS_RESOURCES_HOOKS)
+announce-process-resources: count = $(shell if [ -d $(RESOURCES_DIR) ]; then ls $(RESOURCES_DIR) | wc -l; fi)
+announce-process-resources:
 ifeq ($(shell if [ -d $(RESOURCES_DIR) ]; then echo "true"; fi),true)
 	@echo ""; \
 	echo " -- Copying resources"; \
 	echo "------------------------------------------------------------------------"; \
-	echo "Copying $(strip $(count)) files to: $(TARGET_DIR)"; \
+	echo "Evaluating $(strip $(count)) files"; \
 	echo ""
-	@cp -r $(RESOURCES_DIR)/* $(TARGET_DIR)
 endif
+
+process-resources: generate-resources $(PROCESS_RESOURCES_HOOKS) announce-process-resources $(RESOURCES)
 
 announce-compile-sources:
 	@echo ""; \
@@ -539,16 +554,17 @@ endif
 
 generate-test-resources: process-test-sources announce-generate-test-sources $(GENERATE_TEST_RESOURCES_HOOKS)
 
-process-test-resources: count = $(shell if [ -d $(TEST_RESOURCE_DIR) ]; then ls $(TEST_RESOURCE_DIR) | wc -l; fi)
-process-test-resources: generate-test-resources $(PROCESS_TEST_RESOURCES_HOOKS)
-ifeq ($(shell if [ -d $(TEST_RESOURCE_DIR) ]; then echo "true"; fi),true)
+announce-process-test-resources: count = $(shell if [ -d $(TEST_RESOURCES_DIR) ]; then ls $(TEST_RESOURCES_DIR) | wc -l; fi)
+announce-process-test-resources:
+ifeq ($(shell if [ -d $(TEST_RESOURCES_DIR) ]; then echo "true"; fi),true)
 	@echo ""; \
 	echo " -- Copying test resources"; \
 	echo "------------------------------------------------------------------------"; \
-	echo "Copying $(strip $(count)) files to $(TARGET_DIR)"; \
+	echo "Evaluating $(strip $(count)) files"; \
 	echo ""
-	@cp -r $(TEST_RESOURCE_DIR)/* $(TARGET_DIR)
 endif
+
+process-test-resources: generate-test-resources $(PROCESS_TEST_RESOURCES_HOOKS) announce-process-test-resources $(TEST_RESOURCES)
 
 announce-compile-test-sources:
 	@echo ""; \
