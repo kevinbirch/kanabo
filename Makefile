@@ -370,7 +370,8 @@ $(TEST_OBJECT_DIR)/%.o: %.c  | $(TEST_OBJECT_DIR)
 $(LIBRARY_TARGET): $(LIBRARY_OBJECTS)
 	@echo ""; \
 	echo " -- Builing library $(LIBRARY_TARGET)"; \
-	echo "------------------------------------------------------------------------"
+	echo "------------------------------------------------------------------------"; \
+	echo ""
 	$(AR) rcs $(LIBRARY_TARGET) $(shell $(FIND) $(OBJECT_DIR) -type f -name '*.o')
 
 $(LIBRARY_NAME): $(LIBRARY_TARGET)
@@ -378,7 +379,8 @@ $(LIBRARY_NAME): $(LIBRARY_TARGET)
 $(PROGRAM_TARGET): $(LIBRARY_TARGET) $(PROGRAM_OBJECTS)
 	@echo ""; \
 	echo " -- Building program $(PROGRAM_TARGET)"; \
-	echo "------------------------------------------------------------------------"
+	echo "------------------------------------------------------------------------"; \
+	echo ""
 	$(CC) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_NAME_BASE) $(LDFLAGS) $(LDLIBS) -o $(PROGRAM_TARGET)
 
 $(PROGRAM_NAME): $(PROGRAM_TARGET)
@@ -386,7 +388,8 @@ $(PROGRAM_NAME): $(PROGRAM_TARGET)
 $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	@echo ""; \
 	echo " -- Building test harness $(TEST_PROGRAM_TARGET)"; \
-	echo "------------------------------------------------------------------------"
+	echo "------------------------------------------------------------------------"; \
+	echo ""
 	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDFLAGS) $(TEST_LDLIBS) -o $(TEST_PROGRAM_TARGET)
 
 $(TEST_PROGRAM): $(TEST_PROGRAM_TARGET)
@@ -463,7 +466,8 @@ ifneq ($(strip $(GENERATE_RESOURCES_HOOKS)),)
 	@echo ""; \
 	echo " -- Generating resources"; \
 	echo "------------------------------------------------------------------------"; \
-	echo "Executing $(words $(GENERATE_RESOURCES_HOOKS)) resource hooks"
+	echo "Executing $(words $(GENERATE_RESOURCES_HOOKS)) resource hooks"; \
+	echo ""
 endif
 
 generate-resources: process-sources announce-generate-resources $(GENERATE_RESOURCES_HOOKS)
@@ -474,7 +478,8 @@ ifeq ($(shell if [ -d $(RESOURCES_DIR) ]; then echo "true"; fi),true)
 	@echo ""; \
 	echo " -- Copying resources"; \
 	echo "------------------------------------------------------------------------"; \
-	echo "Copying $(strip $(count)) files to: $(TARGET_DIR)"
+	echo "Copying $(strip $(count)) files to: $(TARGET_DIR)"; \
+	echo ""
 	@cp -r $(RESOURCES_DIR)/* $(TARGET_DIR)
 endif
 
@@ -515,7 +520,8 @@ ifneq ($(strip $(GENERATE_TEST_SOURCES_HOOKS)),)
 	@echo ""; \
 	echo " -- Generating test sources"; \
 	echo "------------------------------------------------------------------------"; \
-	echo "Executing $(words $(GENERATE_TEST_SOURCES_HOOKS)) test source hooks"
+	echo "Executing $(words $(GENERATE_TEST_SOURCES_HOOKS)) test source hooks"; \
+	echo ""
 endif
 
 generate-test-sources: ensure-test-dependencies announce-generate-test-sources $(GENERATE_TEST_SOURCES_HOOKS)
@@ -527,7 +533,8 @@ ifneq ($(strip $(GENERATE_TEST_RESOURCES_HOOKS)),)
 	@echo ""; \
 	echo " -- Generating test resources"; \
 	echo "------------------------------------------------------------------------"; \
-	echo "Executing $(words $(GENERATE_TEST_RESOURCES_HOOKS)) test resource hooks"
+	echo "Executing $(words $(GENERATE_TEST_RESOURCES_HOOKS)) test resource hooks"; \
+	echo ""
 endif
 
 generate-test-resources: process-test-sources announce-generate-test-sources $(GENERATE_TEST_RESOURCES_HOOKS)
@@ -538,7 +545,8 @@ ifeq ($(shell if [ -d $(TEST_RESOURCE_DIR) ]; then echo "true"; fi),true)
 	@echo ""; \
 	echo " -- Copying test resources"; \
 	echo "------------------------------------------------------------------------"; \
-	echo "Copying $(strip $(count)) files to $(TARGET_DIR)"
+	echo "Copying $(strip $(count)) files to $(TARGET_DIR)"; \
+	echo ""
 	@cp -r $(TEST_RESOURCE_DIR)/* $(TARGET_DIR)
 endif
 
@@ -559,12 +567,14 @@ test: test-target
 ifeq ($(strip $(skip_tests)),)
 	@echo ""; \
 	echo " -- Executing test harness"; \
-	echo "------------------------------------------------------------------------"
+	echo "------------------------------------------------------------------------"; \
+	echo ""
 	@cd $(TARGET_DIR); ./$(TEST_PROGRAM)
 else
 	@echo ""; \
 	echo " -- Skipping tests"; \
-	echo "------------------------------------------------------------------------"
+	echo "------------------------------------------------------------------------"; \
+	echo ""
 endif
 
 announce-package-phase:
