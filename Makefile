@@ -329,6 +329,7 @@ test-dependency/%:
 ifeq ($(strip $(DEPENDENCY_HOOK)),)
 	@echo "resolving test depencency: $(@F)"
 	@$(eval $(call make_dependency_variables,$(@F)))
+# xxx use file function here instead of echo
 	@echo "#include <$($(dependency_prefix)DEPENDENCY_$(@F)_HEADER)>" > $(dependency_$(@F)_infile)
 	@echo "int main(void) {return 0;}" >> $(dependency_$(@F)_infile)
 	@$(CC) $($(dependency_prefix)DEPENDENCY_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $($(dependency_prefix)DEPENDENCY_$(@F)_LDFLAGS) -l$($(dependency_prefix)DEPENDENCY_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
