@@ -68,3 +68,6 @@ typedef struct maybe_ast_s MaybeAst;
 #define fail()
 #define nothing() (MaybeAst){AST_VALUE, .value=&AST_NONE_VALUE}
 #define just(AST) (MaybeAst){AST_VALUE, .value=(AST)}
+
+
+MaybeAst bind(Parser *parser, MaybeAst ast, Input *input);

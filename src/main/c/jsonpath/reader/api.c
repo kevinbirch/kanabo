@@ -68,7 +68,7 @@ static inline MaybeJsonPath resolve_ast(MaybeAst *ast, Input *input)
                                           ast->error.argument,
                                           input);
         return (MaybeJsonPath){
-            .tag=ERROR, .error.message=msg, .error.position=input->cursor
+            .tag=ERROR, .error.message=msg, .error.position=cursor(input)
         };
         
     }
@@ -79,7 +79,7 @@ static inline MaybeJsonPath resolve_ast(MaybeAst *ast, Input *input)
 static inline MaybeAst execute(Parser *parser, Input *input)
 {
     MaybeAst ast = just(make_ast_root_node());
-    return parser->function(ast, input);
+    return bind(parser, ast, input);
 }
 
 MaybeJsonPath parse(const uint8_t *expression, size_t length)
@@ -89,7 +89,7 @@ MaybeJsonPath parse(const uint8_t *expression, size_t length)
 
     debug_string("parsing expression: '%s'", expression, length);
 
-    Input input = {expression, length, 0ul, 0ul};
+    Input input = make_input(expression, length);
 
     Parser *parser = jsonpath();
     MaybeAst ast = execute(parser, &input);

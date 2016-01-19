@@ -78,5 +78,3 @@ void parser_destructor(void *each);
 
 enum parser_kind parser_kind(Parser *self);
 const char *parser_name(Parser *self);
-
-MaybeAst bind(Parser *parser, MaybeAst ast, Input *input);

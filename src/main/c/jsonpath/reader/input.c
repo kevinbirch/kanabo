@@ -41,115 +41,111 @@
 #include "jsonpath/input.h"
 
 
-struct input_s
+size_t cursor(Input *self)
 {
-    const uint8_t *data;
-    size_t         length;
-    size_t         cursor;
-    size_t         mark;
-};
-
-
-void reset(Input *input)
-{
-    input->cursor = 0;
+    return self->cursor;
 }
 
-void set_mark(Input *input)
+void reset(Input *self)
 {
-    input->mark = input->cursor;
+    self->cursor = 0;
 }
 
-void reset_to_mark(Input *input)
+void set_mark(Input *self)
 {
-    input->cursor = input->mark;
+    self->mark = self->cursor;
 }
 
-bool has_more(Input *input)
+void reset_to_mark(Input *self)
 {
-    return input->cursor < input->length;
+    self->cursor = self->mark;
 }
 
-size_t remaining(Input *input)
+bool has_more(Input *self)
 {
-    return input->length - input->cursor;
+    return self->cursor < self->length;
 }
 
-void skip_whitespace(Input *input)
+size_t remaining(Input *self)
 {
-    if(!has_more(input))
+    return self->length - self->cursor;
+}
+
+void skip_whitespace(Input *self)
+{
+    if(!has_more(self))
     {
         return;
     }
-    while(isspace(peek(input)))
+    while(isspace(peek(self)))
     {
-        consume_char(input);
+        consume_char(self);
     }
 }
 
-uint8_t peek(Input *input)
+uint8_t peek(Input *self)
 {
-    if(!has_more(input))
-    {
-        return 0;
-    }
-    return input->data[input->cursor];
-}
-
-uint8_t consume_char(Input *input)
-{
-    if(!has_more(input))
+    if(!has_more(self))
     {
         return 0;
     }
-    return input->data[input->cursor++];
+    return self->data[self->cursor];
 }
 
-void consume_many(Input *input, size_t count)
+uint8_t consume_char(Input *self)
 {
-    if(!has_more(input))
+    if(!has_more(self))
+    {
+        return 0;
+    }
+    return self->data[self->cursor++];
+}
+
+void consume_many(Input *self, size_t count)
+{
+    if(!has_more(self))
     {
         return;
     }
-    else if(count > remaining(input))
+    else if(count > remaining(self))
     {
-        input->cursor = input->length - 1;
+        self->cursor = self->length - 1;
     }
     else
     {
-        input->cursor += count;
+        self->cursor += count;
     }
 }
 
-bool consume_if(Input *input, const char *value)
+bool consume_if(Input *self, const char *value)
 {
-    if(!has_more(input))
+    if(!has_more(self))
     {
         return false;
     }
 
     size_t length = strlen(value);
-    if(0 == memcmp(input->data, value, length))
+    if(0 == memcmp(self->data, value, length))
     {
-        consume_many(input, length);
+        consume_many(self, length);
         return true;
     }
     return false;
 }
 
-void push_back(Input *input)
+void push_back(Input *self)
 {
-    input->cursor--;
+    self->cursor--;
 }
 
-bool looking_at(Input *input, const char *value)
+bool looking_at(Input *self, const char *value)
 {
-    if(!has_more(input))
+    if(!has_more(self))
     {
         return false;
     }
     size_t length = strlen(value);
-    if(0 == memcmp(input->data, value, length))
+    if(0 == memcmp(self->data, value, length))
     {
         return true;
     }
@@ -157,12 +153,12 @@ bool looking_at(Input *input, const char *value)
 
 }
 
-size_t find(Input *input, const char *value)
+size_t find(Input *self, const char *value)
 {
-    if(!has_more(input))
+    if(!has_more(self))
     {
         return 0;
     }
-    return strcspn((char *)input->data + input->cursor, value);
+    return strcspn((char *)self->data + self->cursor, value);
 
 }
