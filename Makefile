@@ -100,7 +100,7 @@ GENERATED_DEPEND_DIR ?= $(GENERATED_SOURCE_DIR)/depend
 GENERATED_TEST_SOURCE_DIR ?= $(TARGET_DIR)/generated-test-sources
 GENERATED_TEST_DEPEND_DIR ?= $(TARGET_DIR)/generated-test-sources/depend
 
-## Set this variable to any value to skip all testing
+## Set this variable to any value to skip executing the test harness
 skip_tests ?=
 
 ## Project target artifact settings
