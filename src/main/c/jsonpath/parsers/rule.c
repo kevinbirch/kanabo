@@ -66,29 +66,25 @@ static MaybeAst rule_delegate(Parser *parser, MaybeAst ast, Input *input)
     return result;
 }
 
-static const struct vtable_s RULE_VTABLE =
-{
-    rule_free,
-    rule_delegate
-};
-
 Parser *rule_parser(const char *name, Parser *expression)
 {
     if(NULL == expression)
     {
         return NULL;
     }
-    RuleParser *result = (RuleParser *)calloc(1, sizeof(RuleParser));
-    if(NULL == result)
+    RuleParser *self = (RuleParser *)calloc(1, sizeof(RuleParser));
+    if(NULL == self)
     {
         return NULL;
     }
 
-    parser_init((Parser *)result, RULE, &RULE_VTABLE);
-    result->name = name;
-    result->expression = expression;
+    parser_init((Parser *)self, RULE);
+    self->base.vtable.delegate = rule_delegate;
+    self->base.vtable.free = rule_free;
+    self->name = name;
+    self->expression = expression;
 
-    return (Parser *)result;
+    return (Parser *)self;
 }
 
 

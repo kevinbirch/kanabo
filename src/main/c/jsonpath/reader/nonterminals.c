@@ -37,76 +37,23 @@
 
 #include <stdbool.h>
 
-#include "jsonpath/combinators.h"
-#include "jsonpath/logging.h"
-#include "vector.h"
 
 struct sequence_context
 {
-    parser_context *context;
-    MaybeAst        result;
+    Input    *input;
+    MaybeAst  result;
 };
 
 typedef struct sequence_context sequence_context;
 
-bool alternation_iterator(void *each, void *context);
-bool concatenation_iterator(void *each, void *context);
+bool choice_iterator(void *each, void *context);
+bool sequence_iterator(void *each, void *context);
 
 
-MaybeAst rule_parser(parser_context *context, void *arg)
+
+bool sequence_iterator(void *each, void *context)
 {
-    // TODO is this necessary? couldn't the parser arg to the rule combinator be invoked instead?
-    rule_context *combinator_context = (rule_context *)arg;
-    parser_debug("entering rule: %s", combinator_context->name);
-
-    MaybeAst result = combinator_context->expression->parser(context, combinator_context->expression->argument);
-
-    parser_debug("leaving rule: %s, success: %s", combinator_context->name, VALUE == result.tag ? "yes" : "no");
-    return result;
-}
-
-bool alternation_iterator(void *each, void *context)
-{
-    combinator *expression = (combinator *)each;
-    log_combinator(expression);
-
-    sequence_context *meta_context = (sequence_context *)context;
-
-    // TODO reset error
-    // TODO set input mark
-    // TODO consume whitespace
-    MaybeAst sub_result = expression->parser(meta_context->context, expression->argument);
-    // TODO reset to mark
-    // TODO log result
-    if(VALUE == sub_result.tag)
-    {
-        meta_context->result = sub_result;
-        return true;
-    }
-
-    return false;
-}
-
-MaybeAst alternation_parser(parser_context *context, void *arg)
-{
-    Vector *branches = (Vector *)arg;
-    parser_debug("attempting %zd branches", vector_length(branches));
-
-    sequence_context meta_context;
-    meta_context.context = context;
-    meta_context.result = collection();
-    if(!vector_any(branches, alternation_iterator, &meta_context))
-    {
-        // need some way to capture the alternates for the error message
-        return nothing(ERR_NO_ALTERNATIVE);
-    }
-
-    return meta_context.result;
-}
-
-bool concatenation_iterator(void *each, void *context)
-{
-    combinator *expression = (combinator *)each;
+    Parser *expression = (Parser *)each;
     log_combinator(expression);
 
     sequence_context *meta_context = (sequence_context *)context;
@@ -124,48 +71,16 @@ bool concatenation_iterator(void *each, void *context)
     return false;
 }
 
-MaybeAst concatenation_parser(parser_context *context, void *arg)
+MaybeAst sequence_parser(MaybeAst ast, Input *input)
 {
     Vector *steps = (Vector *)arg;
-    parser_debug("attempting %zd steps", vector_length(steps));
+    parser_debug("sequence: attempting %zd steps", vector_length(steps));
 
-    sequence_context meta_context;
-    meta_context.context = context;
-    meta_context.result = collection();
-    if(!vector_all(steps, concatenation_iterator, &meta_context))
+    sequence_context meta_context = {context, collection()};
+    if(!vector_all(steps, sequence_iterator, &meta_context))
     {
         // TODO bail out here
     }
 
     return meta_context.result;
-}
-
-MaybeAst option_parser(parser_context *context, void *arg)
-{
-    combinator *expression = (combinator *)arg;
-    log_combinator(expression);
-
-    MaybeAst sub_result = expression->parser(context, expression->argument);
-    if(VALUE == sub_result.tag)
-    {
-        return sub_result;
-    }
-
-    return none();
-}
-
-MaybeAst repeat_parser(parser_context *context, void *arg)
-{
-    combinator *expression = (combinator *)arg;
-    log_combinator(expression);
-
-    MaybeAst result = collection();
-    MaybeAst sub_result = expression->parser(context, expression->argument);
-    while(VALUE == sub_result.tag)
-    {
-        ast_add_child(result.value, sub_result.value);
-        sub_result = expression->parser(context, expression->argument);
-    }
-
-    return result;
 }

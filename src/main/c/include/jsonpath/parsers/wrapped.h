@@ -42,4 +42,13 @@
 #include "jsonpath/parsers/base.h"
 
 
-Parser *make_wrapped_parser(enum parser_kind kind, parser_function func, Parser *child);
+struct wrapped_parser_s
+{
+    Parser  base;
+    Parser *child;
+};
+
+typedef struct wrapped_parser_s WrappedParser;
+
+
+WrappedParser *make_wrapped_parser(enum parser_kind kind, Parser *child);

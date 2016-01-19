@@ -53,7 +53,4 @@ struct compound_parser_s
 typedef struct compound_parser_s CompoundParser;
 
 
-void compound_free(Parser *value);
-
-Parser *make_compound_parser(enum parser_kind kind, const struct vtable_s *vtable,
-                             Parser *one, Parser *two, va_list rest);
+CompoundParser *make_compound_parser(enum parser_kind kind, Parser *one, Parser *two, va_list rest);

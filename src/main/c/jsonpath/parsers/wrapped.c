@@ -39,45 +39,24 @@
 #include "jsonpath/parsers/wrapped.h"
 
 
-struct wrapped_parser_s
-{
-    Parser  base;
-    Parser *child;
-};
-
-typedef struct wrapped_parser_s WrappedParser;
-
-
 static void wrapped_free(Parser *value)
 {
     WrappedParser *self = (WrappedParser *)value;
     parser_free(self->child);
 }
 
-static void wrapped_log(Parser *value)
+WrappedParser *make_wrapped_parser(enum parser_kind kind, Parser *child)
 {
-    WrappedParser *self = (WrappedParser *)value;
-    parser_debug("processing %s parser, containing: %s",
-                 parser_name(value), parser_name(self->child));
-}
-
-static const struct vtable_s WRAPPED_VTABLE =
-{
-    wrapped_free,
-    wrapped_log
-};
-
-Parser *make_wrapped_parser(enum parser_kind kind, parser_function func, Parser *child)
-{
-    WrappedParser *result = (WrappedParser *)calloc(1, sizeof(WrappedParser));
-    if(NULL == result)
+    WrappedParser *self = (WrappedParser *)calloc(1, sizeof(WrappedParser));
+    if(NULL == self)
     {
         return NULL;
     }
     
-    parser_init((Parser *)result, kind, func, &WRAPPED_VTABLE);
-    result->child = child;
+    parser_init((Parser *)self, kind);
+    self->child = child;
+    self->base.vtable.free = &wrapped_free;
 
-    return (Parser *)result;
+    return self;
 }
 

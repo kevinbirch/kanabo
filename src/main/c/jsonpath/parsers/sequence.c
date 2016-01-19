@@ -35,8 +35,36 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
+#include "vector.h"
+
 #include "jsonpath/parsers/compound.h"
 
+
+static MaybeAst sequence_delegate(Parser *parser, MaybeAst ast, Input *input)
+{
+    CompoundParser *self = (CompoundParser *)parser;
+    parser_trace("entering sequence parser, %zd branches", vector_length(self->children));
+
+    for(size_t i = 0; i < vector_length(self->children); i++)
+    {
+        Parser *each = vector_get(self->children, i);
+        parser_trace("attempting sequence parser branch: %s", parser_name(each));
+        MaybeAst branch_result = bind(each, ast, input);
+        if(AST_VALUE == branch_result.tag)
+        {
+            ast_add_child(ast.value, branch_result.value);
+        }
+        else
+        {
+            parser_trace("leaving sequence parser, failure");
+            return branch_result;
+        }
+    }
+
+    parser_trace("leaving sequence parser, success");
+    return ast;
+}
 
 Parser *sequence_parser(Parser *one, Parser *two, ...)
 {
@@ -54,8 +82,13 @@ Parser *sequence_parser(Parser *one, Parser *two, ...)
     }
     va_list rest;
     va_start(rest, two);
-    Parser *result = make_compound_parser(SEQUENCE, sequence_parser, one, two, rest);
+    CompoundParser *self = make_compound_parser(SEQUENCE, one, two, rest);
     va_end(rest);
+    if(NULL == self)
+    {
+        return NULL;
+    }
+    self->base.vtable.delegate = sequence_delegate;
 
-    return result;
+    return (Parser *)self;
 }

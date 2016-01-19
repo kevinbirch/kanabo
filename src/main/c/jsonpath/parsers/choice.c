@@ -79,20 +79,13 @@ static MaybeAst choice_delegate(Parser *parser, MaybeAst ast, Input *input)
     if(!vector_any(self->children, choice_iterator, &context))
     {
         // TODO free ast
-        parser_trace("leaving choice parser: failure");
+        parser_trace("leaving choice parser, failure");
         return error(ERR_NO_ALTERNATIVE);
     }
 
-    parser_trace("leaving choice parser");
+    parser_trace("leaving choice parser, success");
     return ast;
 }
-
-static const struct vtable_s CHOICE_VTABLE =
-{
-    compound_free,
-    choice_delegate
-};
-
 
 Parser *choice_parser(Parser *one, Parser *two, ...)
 {
@@ -110,8 +103,13 @@ Parser *choice_parser(Parser *one, Parser *two, ...)
     }
     va_list rest;
     va_start(rest, two);
-    Parser *result = make_compound_parser(CHOICE, &CHOICE_VTABLE, one, two, rest);
+    CompoundParser *self = make_compound_parser(CHOICE, one, two, rest);
     va_end(rest);
+    if(NULL == self)
+    {
+        return NULL;
+    }
+    self->base.vtable.delegate = choice_delegate;
 
-    return result;
+    return (Parser *)self;
 }

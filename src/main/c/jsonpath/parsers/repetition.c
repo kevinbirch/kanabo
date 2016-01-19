@@ -38,11 +38,32 @@
 #include "jsonpath/parsers/wrapped.h"
 
 
+static MaybeAst repetition_delegate(Parser *parser, MaybeAst ast, Input *input)
+{
+    WrappedParser *self = (WrappedParser *)parser;
+    parser_trace("entering repetition parser for %s", parser_name(self->child));
+
+    MaybeAst result = bind(self->child, ast, input);
+    while(AST_VALUE == result.tag)
+    {
+        ast_add_child(ast.value, result.value);
+        result = bind(self->child, ast, input);
+        // xxx - which ast object to return from this function?
+    }
+
+    // xxx - log count of repetitions found
+    parser_trace("leaving repetition parser");
+    return ast;
+}
+
 Parser *repetition(Parser *expression)
 {
     if(NULL == expression)
     {
         return NULL;
     }
-    return make_wrapped_parser(REPETITION, repeat_parser, expression);
+    WrappedParser *self = make_wrapped_parser(REPETITION, expression);
+    self->base.vtable.delegate = repetition_delegate;
+
+    return (Parser *)self;
 }
