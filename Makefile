@@ -301,9 +301,9 @@ define make_dependency_variables =
  $(dependency_prefix)DEPENDENCY_$(1)_LDFLAGS ?= $($(dependency_prefix)DEPENDENCY_LDFLAGS)
  $(dependency_prefix)DEPENDENCY_$(1)_HEADER ?= $(1).h
  $(dependency_prefix)DEPENDENCY_$(1)_LIB ?= $(1)
- $(dependency_prefix)LDLIBS += -l$(dependency_prefix)dependency_$(1)_LIB
- dependency_$(1)_infile := $(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.c)
- dependency_$(1)_outfile := $(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.o)
+ $(dependency_prefix)LDLIBS += -l$($(dependency_prefix)DEPENDENCY_$(1)_LIB)
+ dependency_$(1)_infile := $(shell $(MKTEMP) -t dependency_$(1)_XXXXXX.c)
+ dependency_$(1)_outfile := $(shell $(MKTEMP) -t dependency_$(1)_XXXXXX.o)
 endef
 
 ## Confirm the availability of one dependency
