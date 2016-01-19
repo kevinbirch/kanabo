@@ -109,10 +109,8 @@ PROGRAM_TARGET = $(TARGET_DIR)/$(PROGRAM_NAME)
 LIBRARY_NAME_BASE ?= $(package)
 LIBRARY_NAME ?= lib$(LIBRARY_NAME_BASE).a
 LIBRARY_TARGET = $(TARGET_DIR)/$(LIBRARY_NAME)
-ifeq ($(strip $(skip_tests)),)
 TEST_PROGRAM = $(package)_test
 TEST_PROGRAM_TARGET = $(TARGET_DIR)/$(TEST_PROGRAM)
-endif
 
 ## Build mode
 ## Set this to the CFLAGS to be used in release build mode
@@ -242,13 +240,11 @@ $(warning "Multiple sources containing `main' detected: $(PROGRAM_SOURCES)")
 endif
 
 ## Project test source file locations
-ifeq ($(strip $(skip_tests)),)
 TEST_SOURCES := $(call find_source_files,$(C_TEST_SOURCES_DIR))
 TEST_OBJECTS := $(call source_to_object,$(TEST_SOURCES),$(TEST_OBJECT_DIR))
 vpath %.c $(C_TEST_SOURCES_DIR)
 vpath %.h $(C_TEST_INCLUDE_DIR)
 TEST_DEPENDS := $(call source_to_depend,$(TEST_SOURCES),$(GENERATED_TEST_DEPEND_DIR))
-endif
 
 vpath %.a $(TARGET_DIR)
 
@@ -269,11 +265,9 @@ ifeq ($(strip $(shell if [ -d $(GENERATED_DEPEND_DIR) ]; then echo "true"; fi)),
 endif
 endif
 
-ifeq ($(strip $(skip_tests)),)
 ifeq ($(strip $(shell if [ -d $(GENERATED_TEST_DEPEND_DIR) ]; then echo "true"; fi)),true)
 ifneq ($(MAKECMDGOALS),clean)
 -include $(TEST_DEPENDS)
-endif
 endif
 endif
 
@@ -326,7 +320,6 @@ endif
 ## Confirm the availability of one test dependency
 test-dependency/%: dependency_prefix := TEST_
 test-dependency/%:
-ifeq ($(strip $(skip_tests)),)
 ifeq ($(strip $(DEPENDENCY_HOOK)),)
 	@echo "resolving test depencency: $(@F)"
 	@$(eval $(call make_dependency_variables,$(@F)))
@@ -340,7 +333,6 @@ ifeq ($(strip $(DEPENDENCY_HOOK)),)
 else
 	@echo "invoking test depencency hook: $(TEST_DEPENDENCY_HOOK)"
 	$(TEST_DEPENDENCY_HOOK) $(@F)
-endif
 endif
 
 ## Generate depened rule files
@@ -391,7 +383,6 @@ $(PROGRAM_TARGET): $(LIBRARY_TARGET) $(PROGRAM_OBJECTS)
 
 $(PROGRAM_NAME): $(PROGRAM_TARGET)
 
-ifeq ($(strip $(skip_tests)),)
 $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	@echo ""; \
 	echo " -- Building test harness $(TEST_PROGRAM_TARGET)"; \
@@ -399,7 +390,6 @@ $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDFLAGS) $(TEST_LDLIBS) -o $(TEST_PROGRAM_TARGET)
 
 $(TEST_PROGRAM): $(TEST_PROGRAM_TARGET)
-endif
 
 clean:
 	@echo ""; \
@@ -553,13 +543,11 @@ ifeq ($(shell if [ -d $(TEST_RESOURCE_DIR) ]; then echo "true"; fi),true)
 endif
 
 announce-compile-test-sources:
-ifeq ($(strip $(skip_tests)),)
 	@echo ""; \
 	echo " -- Compiling test sources"; \
 	echo "------------------------------------------------------------------------"; \
 	echo "Evaluating $(words $(TEST_OBJECTS)) source files"; \
 	echo ""
-endif
 
 test-compile: process-test-resources announce-compile-test-sources $(TEST_OBJECTS)
 
