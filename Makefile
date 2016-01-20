@@ -549,10 +549,6 @@ test-target: library process-test-objects $(TEST_PROGRAM_TARGET)
 test: test-target
 ifeq ($(strip $(skip_tests)),)
 	@$(info $(call announce_section_detail_message,Executing test harness))
-	@echo ""; \
-	echo " -- "; \
-	echo "------------------------------------------------------------------------"; \
-	echo ""
 	@cd $(TARGET_DIR); ./$(TEST_PROGRAM)
 else
 	@$(info $(call announce_section_detail_message,Skipping tests))
