@@ -331,13 +331,13 @@ check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST
 	$(CC) $(TEST_CFLAGS) -fsyntax-only $(TEST_INCLUDES) $(INCLUDES) $(CHK_SOURCES)
 
 define define_dependency_variables =
- $$(dependency_prefix)DEPENDENCY_$$(@F)_INCLUDES ?= $$($$(dependency_prefix)DEPENDENCY_INCLUDES)
- $$(dependency_prefix)DEPENDENCY_$$(@F)_LDFLAGS ?= $$($$(dependency_prefix)DEPENDENCY_LDFLAGS)
- $$(dependency_prefix)DEPENDENCY_$$(@F)_HEADER ?= $$(@F).h
- $$(dependency_prefix)DEPENDENCY_$$(@F)_LIB ?= $$(@F)
- $$(dependency_prefix)LDLIBS += -l$$($$(dependency_prefix)DEPENDENCY_$$(@F)_LIB)
- dependency_$$(@F)_infile := $$(shell $(MKTEMP) -t dependency_$$(@F)_XXXXXX.c)
- dependency_$$(@F)_outfile := $$(shell $(MKTEMP) -t dependency_$$(@F)_XXXXXX.o)
+ $(dependency_prefix)DEPENDENCY_$$(@F)_INCLUDES ?= $$($$(dependency_prefix)DEPENDENCY_INCLUDES)
+ $(dependency_prefix)DEPENDENCY_$$(@F)_LDFLAGS ?= $$($$(dependency_prefix)DEPENDENCY_LDFLAGS)
+ $(dependency_prefix)DEPENDENCY_$$(@F)_HEADER ?= $(@F).h
+ $(dependency_prefix)DEPENDENCY_$$(@F)_LIB ?= $(@F)
+ $(dependency_prefix)LDLIBS += -l$$($(dependency_prefix)DEPENDENCY_$(@F)_LIB)
+ dependency_$$(@F)_infile := $$(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.c)
+ dependency_$$(@F)_outfile := $$(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.o)
 endef
 
 define dependency_test_template =
