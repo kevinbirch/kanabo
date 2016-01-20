@@ -38,7 +38,9 @@
 # Compatibility target
 all: help
 
-include project.mk
+PROJECT_CONFIG_FILE ?= project.mk
+
+include $(PROJECT_CONFIG_FILE)
 
 ## Defaults for common shell commands
 CC ?= cc
