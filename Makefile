@@ -476,7 +476,7 @@ create-build-directories: announce-create-build-directories
 initialize: validate announce-build announce-initialize-phase create-build-directories
 
 announce-build-phase:
-	$(info $(call announce_phase_message,Build))
+	@$(info $(call announce_phase_message,Build))
 
 announce-ensure-dependencies:
 ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
@@ -541,7 +541,7 @@ library: process-objects $(LIBRARY_TARGET)
 target: library $(TARGET)
 
 announce-test-phase:
-	$(info $(call announce_phase_message,Test))
+	@$(info $(call announce_phase_message,Test))
 
 announce-ensure-test-dependencies:
 ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
@@ -618,14 +618,14 @@ else
 endif
 
 announce-package-phase:
-	$(info $(call announce_phase_message,Package))
+	@$(info $(call announce_phase_message,Package))
 
 prepare-package: test announce-package-phase
 
 package: prepare-package
 
 announce-install-phase:
-	$(info $(call announce_phase_message,Install))
+	@$(info $(call announce_phase_message,Install))
 
 verify: package announce-install-phase
 
