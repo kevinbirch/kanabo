@@ -296,51 +296,47 @@ help:
 check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS)
 	$(CC) $(TEST_CFLAGS) -fsyntax-only $(TEST_INCLUDES) $(INCLUDES) $(CHK_SOURCES)
 
-define make_dependency_variables =
- $(dependency_prefix)DEPENDENCY_$(1)_INCLUDES ?= $$($(dependency_prefix)DEPENDENCY_INCLUDES)
- $(dependency_prefix)DEPENDENCY_$(1)_LDFLAGS ?= $$($(dependency_prefix)DEPENDENCY_LDFLAGS)
- $(dependency_prefix)DEPENDENCY_$(1)_HEADER ?= $(1).h
- $(dependency_prefix)DEPENDENCY_$(1)_LIB ?= $(1)
- $(dependency_prefix)LDLIBS += -l$$($(dependency_prefix)DEPENDENCY_$(1)_LIB)
- dependency_$(1)_infile := $$(shell $(MKTEMP) -t dependency_$(1)_XXXXXX.c)
- dependency_$(1)_outfile := $$(shell $(MKTEMP) -t dependency_$(1)_XXXXXX.o)
+define define_dependency_variables =
+ $$(dependency_prefix)DEPENDENCY_$$(@F)_INCLUDES ?= $$($$(dependency_prefix)DEPENDENCY_INCLUDES)
+ $$(dependency_prefix)DEPENDENCY_$$(@F)_LDFLAGS ?= $$($$(dependency_prefix)DEPENDENCY_LDFLAGS)
+ $$(dependency_prefix)DEPENDENCY_$$(@F)_HEADER ?= $$(@F).h
+ $$(dependency_prefix)DEPENDENCY_$$(@F)_LIB ?= $$(@F)
+ $$(dependency_prefix)LDLIBS += -l$$($$(dependency_prefix)DEPENDENCY_$$(@F)_LIB)
+ dependency_$$(@F)_infile := $$(shell $(MKTEMP) -t dependency_$$(@F)_XXXXXX.c)
+ dependency_$$(@F)_outfile := $$(shell $(MKTEMP) -t dependency_$$(@F)_XXXXXX.o)
 endef
 
-## Confirm the availability of one dependency
-dependency/%:
+define dependency_test_template =
+#include <$($(dependency_prefix)DEPENDENCY_$(@F)_HEADER)>
+int main(void) {return 0;}
+endef
+
 ifeq ($(strip $(DEPENDENCY_HOOK)),)
-	@echo "resolving depencency: $(@F)"
-	@$(eval $(call make_dependency_variables,$(@F)))
-	@echo "#include <$(DEPENDENCY_$(@F)_HEADER)>" > $(dependency_$(@F)_infile)
-	@echo "int main(void) {return 0;}" >> $(dependency_$(@F)_infile)
-	@$(CC) $(DEPENDENCY_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $(DEPENDENCY_$(@F)_LDFLAGS) -l$(DEPENDENCY_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
+define dependency_test_canned_recipe =
+@$(info resolving depencency: $(@F))
+@$(eval $(define_dependency_variables))
+@$(file > $(dependency_$(@F)_infile),$(dependency_test_template))
+@$(CC) $(DEPENDENCY_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $(DEPENDENCY_$(@F)_LDFLAGS) -l$(DEPENDENCY_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
 	if [ "0" != "$$?" ]; \
 	  then echo "build: *** The dependency \"$(@F)\" was not found."; \
 	  exit 1; \
 	fi
+endef
 else
-	@echo "invoking depencency hook: $(DEPENDENCY_HOOK)"
-	@$(DEPENDENCY_HOOK) $(@F)
+define dependency_test_canned_recipe =
+@$(info invoking depencency hook: $(DEPENDENCY_HOOK))
+@$(DEPENDENCY_HOOK) $(@F)
+endef
 endif
+
+## Confirm the availability of one dependency
+dependency/%:
+	$(dependency_test_canned_recipe)
 
 ## Confirm the availability of one test dependency
 test-dependency/%: dependency_prefix := TEST_
 test-dependency/%:
-ifeq ($(strip $(DEPENDENCY_HOOK)),)
-	@echo "resolving test depencency: $(@F)"
-	@$(eval $(call make_dependency_variables,$(@F)))
-# xxx use file function here instead of echo
-	@echo "#include <$($(dependency_prefix)DEPENDENCY_$(@F)_HEADER)>" > $(dependency_$(@F)_infile)
-	@echo "int main(void) {return 0;}" >> $(dependency_$(@F)_infile)
-	@$(CC) $($(dependency_prefix)DEPENDENCY_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $($(dependency_prefix)DEPENDENCY_$(@F)_LDFLAGS) -l$($(dependency_prefix)DEPENDENCY_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
-	if [ "0" != "$$?" ]; \
-	  then echo "build: *** The test dependency \"$(@F)\" was not found."; \
-	  exit 1; \
-	fi
-else
-	@echo "invoking test depencency hook: $(TEST_DEPENDENCY_HOOK)"
-	$(TEST_DEPENDENCY_HOOK) $(@F)
-endif
+	$(dependency_test_canned_recipe)
 
 ## Generate depened rule files
 $(GENERATED_HEADERS_DIR):
