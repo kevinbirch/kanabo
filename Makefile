@@ -238,10 +238,8 @@ LIBRARY_OBJECTS := $(filter-out $(PROGRAM_OBJECTS),$(OBJECTS))
 vpath %.c $(C_SOURCES_DIR)
 vpath %.h $(C_INCLUDE_DIR)
 DEPENDS := $(call source_to_depend,$(SOURCES),$(GENERATED_DEPEND_DIR))
-# find_resources = $(foreach r, $(shell if [ -d $(1) ]; then ls $(1); fi), $(2)/$(r))
 find_resources = $(foreach r, $(wildcard $(1)/*), $(subst $(1),$(2),$(r)))
 RESOURCES := $(call find_resources,$(RESOURCES_DIR),$(RESOURCES_TARGET_DIR))
-TEST_RESOURCES := $(call find_resources,$(TEST_RESOURCES_DIR),$(TEST_RESOURCES_TARGET_DIR))
 
 ifneq (1,$(words $(PROGRAM_SOURCES)))
 $(warning "Multiple sources containing `main' detected: $(PROGRAM_SOURCES)")
@@ -253,6 +251,7 @@ TEST_OBJECTS := $(call source_to_object,$(TEST_SOURCES),$(TEST_OBJECT_DIR))
 vpath %.c $(C_TEST_SOURCES_DIR)
 vpath %.h $(C_TEST_INCLUDE_DIR)
 TEST_DEPENDS := $(call source_to_depend,$(TEST_SOURCES),$(GENERATED_TEST_DEPEND_DIR))
+TEST_RESOURCES := $(call find_resources,$(TEST_RESOURCES_DIR),$(TEST_RESOURCES_TARGET_DIR))
 
 vpath %.a $(TARGET_DIR)
 
