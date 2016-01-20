@@ -413,29 +413,25 @@ $(TEST_RESOURCES_TARGET_DIR)/%: $(TEST_RESOURCES_DIR)/%
 	cp -r $< $(TEST_RESOURCES_TARGET_DIR)
 
 $(LIBRARY_TARGET): $(LIBRARY_OBJECTS)
-	@$(info $(call announce_section_message,Builing library $(LIBRARY_TARGET)))
+	@$(info $(call announce_section_detail_message,Builing library,Creating $(LIBRARY_TARGET)))
 	$(AR) rcs $(LIBRARY_TARGET) $(shell $(FIND) $(OBJECT_DIR) -type f -name '*.o')
 
 $(LIBRARY_NAME): $(LIBRARY_TARGET)
 
 $(PROGRAM_TARGET): $(LIBRARY_TARGET) $(PROGRAM_OBJECTS)
-	@$(info $(call announce_section_message,Building program $(PROGRAM_TARGET)))
+	@$(info $(call announce_section_detail_message,Building program,Creating $(PROGRAM_TARGET)))
 	$(CC) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_NAME_BASE) $(LDFLAGS) $(LDLIBS) -o $(PROGRAM_TARGET)
 
 $(PROGRAM_NAME): $(PROGRAM_TARGET)
 
 $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
-	@echo ""; \
-	echo " -- Building test harness $(TEST_PROGRAM_TARGET)"; \
-	echo "------------------------------------------------------------------------"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Building test harness,Creating $(TEST_PROGRAM_TARGET)))
 	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDFLAGS) $(TEST_LDLIBS) -o $(TEST_PROGRAM_TARGET)
 
 $(TEST_PROGRAM): $(TEST_PROGRAM_TARGET)
 
 clean:
-	@echo ""; \
-	echo " Deleting directory `pwd`/$(TARGET_DIR)"
+	@$(info Deleting directory "$(TARGET_DIR)")
 	@$(RM) -r $(TARGET_DIR)
 
 validate:
