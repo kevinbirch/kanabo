@@ -443,23 +443,11 @@ else ifeq ($(strip $(package)),)
 	$(error "Please set a value for 'package' in project.mk")
 endif
 
-define build_message =
-
- Buidling $(owner):$(package):$(version))
-endef
-
 announce-build:
-	$(info $(build_message))
-
-define announce_phase_message =
-
-------------------------------------------------------------------------
- $(1) phase
-------------------------------------------------------------------------
-endef
+	@$(info $(build_message))
 
 announce-initialize-phase:
-	$(info $(call announce_phase_message,Initialize))
+	@$(info $(call announce_phase_message,Initialize))
 
 announce-create-build-directories:
 	@echo ""; \
