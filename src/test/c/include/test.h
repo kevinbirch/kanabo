@@ -43,7 +43,7 @@
 
 #include "log.h"
 
-#if CHECK_MAJOR_VERSION == 0 && (CHECK_MINOR_VERSION < 9 || CHECK_MICRO_VERSION < 8)
+#if CHECK_MAJOR_VERSION == 0 && (CHECK_MINOR_VERSION < 9 || (CHECK_MINOR_VERSION == 9 && CHECK_MICRO_VERSION < 8))
 #error "version of check must be 0.9.8 or later"
 #endif
 
