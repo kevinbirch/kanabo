@@ -350,7 +350,7 @@ define dependency_test_canned_recipe =
 @$(info resolving depencency: $(@F))
 @$(eval $(define_dependency_variables))
 @$(file > $(dependency_$(@F)_infile),$(dependency_test_template))
-$(CC) $($(dependency_prefix)DEPENDENCY_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $($(dependency_prefix)DEPENDENCY_$(@F)_LDFLAGS) -l$($(dependency_prefix)DEPENDENCY_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
+@$(CC) $($(dependency_prefix)DEPENDENCY_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $($(dependency_prefix)DEPENDENCY_$(@F)_LDFLAGS) -l$($(dependency_prefix)DEPENDENCY_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
 	if [ "0" != "$$?" ]; \
 	  then echo "build: *** The dependency \"$(@F)\" was not found."; \
 	  exit 1; \
