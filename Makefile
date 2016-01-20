@@ -418,8 +418,7 @@ clean:
 validate:
 ifeq ($(strip $(owner)),)
 	$(error "Please set a value for 'owner' in project.mk")
-endif
-ifeq ($(strip $(package)),)
+else ifeq ($(strip $(package)),)
 	$(error "Please set a value for 'package' in project.mk")
 endif
 
