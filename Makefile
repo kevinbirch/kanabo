@@ -448,10 +448,7 @@ announce-initialize-phase:
 	@$(info $(call announce_phase_message,Initialize))
 
 announce-create-build-directories:
-	@echo ""; \
-	echo " -- Creating build directories"; \
-	echo "------------------------------------------------------------------------"; \
-	echo ""
+	@$(info $(call announce_section_message,Creating build directories))
 
 create-build-directories: announce-create-build-directories
 	mkdir -p $(OBJECT_DIR)
@@ -466,22 +463,14 @@ announce-build-phase:
 
 announce-ensure-dependencies:
 ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
-	@echo ""; \
-	echo " -- Finding dependencies"; \
-	echo "------------------------------------------------------------------------"; \
-	echo "Resolving $(words $(DEPENDENCY_VALIDATIONS)) dependencies"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Finding dependencies,Resolving $(words $(DEPENDENCY_VALIDATIONS)) dependencies))
 endif
 
 ensure-dependencies: initialize announce-build-phase announce-ensure-dependencies $(DEPENDENCY_VALIDATIONS)
 
 announce-generate-sources:
 ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
-	@echo ""; \
-	echo " -- Generating sources"; \
-	echo "------------------------------------------------------------------------"; \
-	echo "Executing $(words $(GENERATE_SOURCES_HOOKS)) source hooks"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Generating sources,Executing $(words $(GENERATE_SOURCES_HOOKS)) source hooks))
 endif
 
 generate-sources: ensure-dependencies announce-generate-sources $(GENERATE_SOURCES_HOOKS) $(DEPENDS)
@@ -490,11 +479,7 @@ process-sources: generate-sources $(PROCESS_SOURCES_HOOKS)
 
 announce-generate-resources:
 ifneq ($(strip $(GENERATE_RESOURCES_HOOKS)),)
-	@echo ""; \
-	echo " -- Generating resources"; \
-	echo "------------------------------------------------------------------------"; \
-	echo "Executing $(words $(GENERATE_RESOURCES_HOOKS)) resource hooks"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Generating resources,Executing $(words $(GENERATE_RESOURCES_HOOKS)) resource hooks))
 endif
 
 generate-resources: process-sources announce-generate-resources $(GENERATE_RESOURCES_HOOKS)
@@ -502,21 +487,13 @@ generate-resources: process-sources announce-generate-resources $(GENERATE_RESOU
 announce-process-resources: count = $(shell if [ -d $(RESOURCES_DIR) ]; then ls $(RESOURCES_DIR) | wc -l; fi)
 announce-process-resources:
 ifeq ($(shell if [ -d $(RESOURCES_DIR) ]; then echo "true"; fi),true)
-	@echo ""; \
-	echo " -- Copying resources"; \
-	echo "------------------------------------------------------------------------"; \
-	echo "Evaluating $(strip $(count)) files"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Copying resources,Evaluating $(strip $(count)) files))
 endif
 
 process-resources: generate-resources $(PROCESS_RESOURCES_HOOKS) announce-process-resources $(RESOURCES)
 
 announce-compile-sources:
-	@echo ""; \
-	echo " -- Compiling sources"; \
-	echo "------------------------------------------------------------------------"; \
-	echo "Evaluating $(words $(OBJECTS)) source files"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Compiling sources,Evaluating $(words $(OBJECTS)) source files))
 
 compile: process-resources announce-compile-sources $(OBJECTS)
 
@@ -531,22 +508,14 @@ announce-test-phase:
 
 announce-ensure-test-dependencies:
 ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
-	@echo ""; \
-	echo " -- Finding test dependencies"; \
-	echo "------------------------------------------------------------------------"; \
-	echo "Resolving $(words $(TEST_DEPENDENCY_VALIDATIONS)) dependencies"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Finding test dependencies,Resolving $(words $(TEST_DEPENDENCY_VALIDATIONS)) dependencies))
 endif
 
 ensure-test-dependencies: target announce-test-phase announce-ensure-test-dependencies $(TEST_DEPENDENCY_VALIDATIONS)
 
 announce-generate-test-sources:
 ifneq ($(strip $(GENERATE_TEST_SOURCES_HOOKS)),)
-	@echo ""; \
-	echo " -- Generating test sources"; \
-	echo "------------------------------------------------------------------------"; \
-	echo "Executing $(words $(GENERATE_TEST_SOURCES_HOOKS)) test source hooks"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Generating test sources,Executing $(words $(GENERATE_TEST_SOURCES_HOOKS)) test source hooks))
 endif
 
 generate-test-sources: ensure-test-dependencies announce-generate-test-sources $(GENERATE_TEST_SOURCES_HOOKS)
@@ -555,11 +524,7 @@ process-test-sources: generate-test-sources $(PROCESS_TEST_SOURCES_HOOKS)
 
 announce-generate-test-resources:
 ifneq ($(strip $(GENERATE_TEST_RESOURCES_HOOKS)),)
-	@echo ""; \
-	echo " -- Generating test resources"; \
-	echo "------------------------------------------------------------------------"; \
-	echo "Executing $(words $(GENERATE_TEST_RESOURCES_HOOKS)) test resource hooks"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Generating test resources,Executing $(words $(GENERATE_TEST_RESOURCES_HOOKS)) test resource hooks))
 endif
 
 generate-test-resources: process-test-sources announce-generate-test-sources $(GENERATE_TEST_RESOURCES_HOOKS)
@@ -567,21 +532,13 @@ generate-test-resources: process-test-sources announce-generate-test-sources $(G
 announce-process-test-resources: count = $(shell if [ -d $(TEST_RESOURCES_DIR) ]; then ls $(TEST_RESOURCES_DIR) | wc -l; fi)
 announce-process-test-resources:
 ifeq ($(shell if [ -d $(TEST_RESOURCES_DIR) ]; then echo "true"; fi),true)
-	@echo ""; \
-	echo " -- Copying test resources"; \
-	echo "------------------------------------------------------------------------"; \
-	echo "Evaluating $(strip $(count)) files"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Copying test resources,Evaluating $(strip $(count)) files))
 endif
 
 process-test-resources: generate-test-resources $(PROCESS_TEST_RESOURCES_HOOKS) announce-process-test-resources $(TEST_RESOURCES)
 
 announce-compile-test-sources:
-	@echo ""; \
-	echo " -- Compiling test sources"; \
-	echo "------------------------------------------------------------------------"; \
-	echo "Evaluating $(words $(TEST_OBJECTS)) source files"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Compiling test sources,Evaluating $(words $(TEST_OBJECTS)) source files))
 
 test-compile: process-test-resources announce-compile-test-sources $(TEST_OBJECTS)
 
@@ -591,16 +548,15 @@ test-target: library process-test-objects $(TEST_PROGRAM_TARGET)
 
 test: test-target
 ifeq ($(strip $(skip_tests)),)
+	@$(info $(call announce_section_detail_message,Executing test harness))
 	@echo ""; \
-	echo " -- Executing test harness"; \
+	echo " -- "; \
 	echo "------------------------------------------------------------------------"; \
 	echo ""
 	@cd $(TARGET_DIR); ./$(TEST_PROGRAM)
 else
-	@echo ""; \
-	echo " -- Skipping tests"; \
-	echo "------------------------------------------------------------------------"; \
-	echo ""
+	@$(info $(call announce_section_detail_message,Skipping tests))
+	@:
 endif
 
 announce-package-phase:
