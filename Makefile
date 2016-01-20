@@ -473,7 +473,7 @@ ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
 endif
 
 announce-generate-source-dependencies:
-	$(info $(call announce_section_detail_message,Generating source dependencies,Evaluating $(words $(OBJECTS)) source files))
+	$(info $(call announce_section_detail_message,Generating source dependencies,Evaluating $(words $(DEPENDS)) source files))
 
 generate-source-dependencies: announce-generate-source-dependencies $(DEPENDS)
 
@@ -523,7 +523,7 @@ ifneq ($(strip $(GENERATE_TEST_SOURCES_HOOKS)),)
 endif
 
 announce-test-generate-source-dependencies:
-	$(info $(call announce_section_detail_message,Generating test source dependencies,Evaluating $(words $(TEST_OBJECTS)) source files))
+	$(info $(call announce_section_detail_message,Generating test source dependencies,Evaluating $(words $(TEST_DEPENDS)) source files))
 
 generate-test-source-dependencies: announce-test-generate-source-dependencies $(TEST_DEPENDS)
 
