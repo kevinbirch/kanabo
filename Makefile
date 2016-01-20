@@ -422,15 +422,23 @@ else ifeq ($(strip $(package)),)
 	$(error "Please set a value for 'package' in project.mk")
 endif
 
+define build_message =
+
+ Buidling $(owner):$(package):$(version))
+endef
+
 announce-build:
-	@echo ""; \
-	echo " Buidling $(owner):$(package):$(version)"
+	$(info $(build_message))
+
+define announce_phase_message =
+
+------------------------------------------------------------------------
+ $(1) phase
+------------------------------------------------------------------------
+endef
 
 announce-initialize-phase:
-	@echo ""; \
-	echo "------------------------------------------------------------------------"; \
-	echo " Initialize phase"; \
-	echo "------------------------------------------------------------------------"
+	$(info $(call announce_phase_message,Initialize))
 
 announce-create-build-directories:
 	@echo ""; \
@@ -447,10 +455,7 @@ create-build-directories: announce-create-build-directories
 initialize: validate announce-build announce-initialize-phase create-build-directories
 
 announce-build-phase:
-	@echo ""; \
-	echo "------------------------------------------------------------------------"; \
-	echo " Build phase"; \
-	echo "------------------------------------------------------------------------"
+	$(info $(call announce_phase_message,Build))
 
 announce-ensure-dependencies:
 ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
@@ -515,10 +520,7 @@ library: process-objects $(LIBRARY_TARGET)
 target: library $(TARGET)
 
 announce-test-phase:
-	@echo ""; \
-	echo "------------------------------------------------------------------------"; \
-	echo " Test phase"; \
-	echo "------------------------------------------------------------------------"
+	$(info $(call announce_phase_message,Test))
 
 announce-ensure-test-dependencies:
 ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
@@ -595,20 +597,14 @@ else
 endif
 
 announce-package-phase:
-	@echo ""; \
-	echo "------------------------------------------------------------------------"; \
-	echo " Package phase"; \
-	echo "------------------------------------------------------------------------"
+	$(info $(call announce_phase_message,Package))
 
 prepare-package: test announce-package-phase
 
 package: prepare-package
 
 announce-install-phase:
-	@echo ""; \
-	echo "------------------------------------------------------------------------"; \
-	echo " Install phase"; \
-	echo "------------------------------------------------------------------------"
+	$(info $(call announce_phase_message,Install))
 
 verify: package announce-install-phase
 
