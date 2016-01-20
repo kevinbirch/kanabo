@@ -301,7 +301,6 @@ define make_dependency_variables =
  $(dependency_prefix)DEPENDENCY_$(1)_LDFLAGS ?= $($(dependency_prefix)DEPENDENCY_LDFLAGS)
  $(dependency_prefix)DEPENDENCY_$(1)_HEADER ?= $(1).h
  $(dependency_prefix)DEPENDENCY_$(1)_LIB ?= $(1)
- $(dependency_prefix)LDLIBS += -l$($(dependency_prefix)DEPENDENCY_$(1)_LIB)
  dependency_$(1)_infile := $(shell $(MKTEMP) -t dependency_$(1)_XXXXXX.c)
  dependency_$(1)_outfile := $(shell $(MKTEMP) -t dependency_$(1)_XXXXXX.o)
 endef
@@ -318,6 +317,7 @@ ifeq ($(strip $(DEPENDENCY_HOOK)),)
 	  then echo "build: *** The dependency \"$(@F)\" was not found."; \
 	  exit 1; \
 	fi
+	@$(eval LDLIBS += -l$(DEPENDENCY_$(@F)_LIB))
 else
 	@echo "invoking depencency hook: $(DEPENDENCY_HOOK)"
 	@$(DEPENDENCY_HOOK) $(@F)
@@ -337,6 +337,7 @@ ifeq ($(strip $(DEPENDENCY_HOOK)),)
 	  then echo "build: *** The test dependency \"$(@F)\" was not found."; \
 	  exit 1; \
 	fi
+	@$(eval $(dependency_prefix)LDLIBS += -l$(DEPENDENCY_$(@F)_LIB))
 else
 	@echo "invoking test depencency hook: $(TEST_DEPENDENCY_HOOK)"
 	$(TEST_DEPENDENCY_HOOK) $(@F)
