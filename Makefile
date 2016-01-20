@@ -280,17 +280,22 @@ endif
 # Compatibility target
 check: test
 
+define help =
+usage: make <goal>
+
+The value of <goal> can be one of:
+
+clean    - remove all build artifacts
+compile  - build object files
+target   - build the target library or program
+test     - build and run the test harness
+package  - collect the target artifacts info a distributable bundle
+install  - install the target artifacts onto the local system
+endef
+
 help:
-	@echo "usage: make <goal>"; \
-	echo ""; \
-	echo "The value of <goal> can be one of:"; \
-	echo ""; \
-	echo "clean    - remove all build artifacts"; \
-	echo "compile  - build object files"; \
-	echo "target   - build the target library or program"; \
-	echo "test     - build and run the test harness"; \
-	echo "package  - collect the target artifacts info a distributable bundle"; \
-	echo "install  - install the target artifacts onto the local system"
+	@$(info $(help))
+	@:
 
 ## Suport Emacs flymake syntax checker
 check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS)
