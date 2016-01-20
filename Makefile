@@ -381,13 +381,13 @@ $(GENERATED_DEPEND_DIR):
 
 $(GENERATED_DEPEND_DIR)/%.d: %.c | $(GENERATED_DEPEND_DIR)
 	@mkdir -p $(dir $@)
-	@$(CC) -MM -MG -MT '$(OBJECT_DIR)/$(*F).o $@' $(CFLAGS) $(INCLUDES) $< > $@
+	$(CC) -MM -MG -MT '$(OBJECT_DIR)/$(*F).o $@' $(CFLAGS) $(INCLUDES) $< > $@
 
 $(GENERATED_TEST_DEPEND_DIR):
 	@mkdir -p $(GENERATED_TEST_DEPEND_DIR)
 
 $(GENERATED_TEST_DEPEND_DIR)/%.d: %.c | $(GENERATED_TEST_DEPEND_DIR)
-	@$(CC) -MM -MG -MT '$(TEST_OBJECT_DIR)/$(*F).o $@' $(TEST_CFLAGS) $(TEST_INCLUDES) $< > $@
+	$(CC) -MM -MG -MT '$(TEST_OBJECT_DIR)/$(*F).o $@' $(TEST_CFLAGS) $(TEST_INCLUDES) $< > $@
 
 ## Main build rules
 $(OBJECT_DIR):
@@ -473,7 +473,12 @@ ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
 	@$(info $(call announce_section_detail_message,Generating sources,Executing $(words $(GENERATE_SOURCES_HOOKS)) source hooks))
 endif
 
-generate-sources: ensure-dependencies announce-generate-sources $(GENERATE_SOURCES_HOOKS) $(DEPENDS)
+announce-generate-source-dependencies:
+	$(info $(call announce_section_detail_message,Generating source dependencies,Evaluating $(words $(OBJECTS)) source files))
+
+generate-source-dependencies: announce-generate-source-dependencies $(DEPENDS)
+
+generate-sources: ensure-dependencies announce-generate-sources $(GENERATE_SOURCES_HOOKS) generate-source-dependencies
 
 process-sources: generate-sources $(PROCESS_SOURCES_HOOKS)
 
@@ -518,7 +523,12 @@ ifneq ($(strip $(GENERATE_TEST_SOURCES_HOOKS)),)
 	@$(info $(call announce_section_detail_message,Generating test sources,Executing $(words $(GENERATE_TEST_SOURCES_HOOKS)) test source hooks))
 endif
 
-generate-test-sources: ensure-test-dependencies announce-generate-test-sources $(GENERATE_TEST_SOURCES_HOOKS)
+announce-test-generate-source-dependencies:
+	$(info $(call announce_section_detail_message,Generating test source dependencies,Evaluating $(words $(TEST_OBJECTS)) source files))
+
+generate-test-source-dependencies: announce-test-generate-source-dependencies $(TEST_DEPENDS)
+
+generate-test-sources: ensure-test-dependencies announce-generate-test-sources $(GENERATE_TEST_SOURCES_HOOKS) announce-test-generate-source-dependencies
 
 process-test-sources: generate-test-sources $(PROCESS_TEST_SOURCES_HOOKS)
 
