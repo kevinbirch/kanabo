@@ -411,19 +411,13 @@ $(TEST_RESOURCES_TARGET_DIR)/%: $(TEST_RESOURCES_DIR)/%
 	cp -r $< $(TEST_RESOURCES_TARGET_DIR)
 
 $(LIBRARY_TARGET): $(LIBRARY_OBJECTS)
-	@echo ""; \
-	echo " -- Builing library $(LIBRARY_TARGET)"; \
-	echo "------------------------------------------------------------------------"; \
-	echo ""
+	@$(info $(call announce_section_message,Builing library $(LIBRARY_TARGET)))
 	$(AR) rcs $(LIBRARY_TARGET) $(shell $(FIND) $(OBJECT_DIR) -type f -name '*.o')
 
 $(LIBRARY_NAME): $(LIBRARY_TARGET)
 
 $(PROGRAM_TARGET): $(LIBRARY_TARGET) $(PROGRAM_OBJECTS)
-	@echo ""; \
-	echo " -- Building program $(PROGRAM_TARGET)"; \
-	echo "------------------------------------------------------------------------"; \
-	echo ""
+	@$(info $(call announce_section_message,Building program $(PROGRAM_TARGET)))
 	$(CC) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_NAME_BASE) $(LDFLAGS) $(LDLIBS) -o $(PROGRAM_TARGET)
 
 $(PROGRAM_NAME): $(PROGRAM_TARGET)
