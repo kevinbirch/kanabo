@@ -398,7 +398,7 @@ $(TEST_OBJECT_DIR):
 
 $(OBJECT_DIR)/%.o: %.c | $(OBJECT_DIR)
 	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(TEST_OBJECT_DIR)/%.o: %.c | $(TEST_OBJECT_DIR)
 	@mkdir -p $(dir $@)
