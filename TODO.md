@@ -104,6 +104,7 @@ LICENSE file for more details.
 * use type generic macro instead of vtable
 * use sentinels for vararg parsers instead of NULL, error on null args
 * create parser error classes with context for building message
+* try to reuse parsers instead of creating new every time
 
 ### loader
 
