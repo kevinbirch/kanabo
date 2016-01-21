@@ -67,6 +67,7 @@ static Parser *predicate_expression(void);
 static Parser *predicate(void);
 static Parser *subscript(void);
 static Parser *slice(void);
+/*
 static Parser *join(void);
 
 static Parser *filter_expression(void);
@@ -79,16 +80,32 @@ static Parser *addititve_op(void);
 static Parser *multiplicative_expression(void);
 static Parser *multiplicative_op(void);
 static Parser *unary_expression(void);
+*/
+static Parser *scalar(void);
 
 static Parser *boolean(void);
 
-
+/**
+ * jsonpath
+ *   = absolute path
+ *   | relative path
+ *   ;
+ */
 Parser *jsonpath(void)
 {
-    return rule(choice(absolute_path(),
-                       relative_path()));
+    return rule(
+        choice(
+            absolute_path(),
+            relative_path()));
 }
 
+// xxx - qualified_path parser?
+
+/**
+ * absolute path
+ *   = root step, { qualified step }
+ *   ;
+ */
 static Parser *absolute_path(void)
 {
     return rule(
@@ -97,6 +114,11 @@ static Parser *absolute_path(void)
             repetition(qualified_step())));
 }
 
+/**
+ * root step
+ *   = "$", [ predicate expression ]
+ *   ;
+ */
 static Parser *root_step(void)
 {
     return rule(
@@ -105,6 +127,12 @@ static Parser *root_step(void)
             option(predicate_expression())));
 }
 
+/**
+ * qualified step
+ *   = recursive step
+ *   | relative step
+ *   ;
+ */
 static Parser *qualified_step(void)
 {
     return rule(
@@ -113,6 +141,11 @@ static Parser *qualified_step(void)
             relative_step()));
 }
 
+/**
+ * recurisive step
+ *   = "..", step
+ *   ;
+ */
 static Parser *recursive_step(void)
 {
     return rule(
@@ -121,6 +154,11 @@ static Parser *recursive_step(void)
             step()));
 }
 
+/**
+ * relative step
+ *   = ".", step
+ *   ;
+ */
 static Parser *relative_step(void)
 {
     return rule(
@@ -129,6 +167,11 @@ static Parser *relative_step(void)
             step()));
 }
 
+/**
+ * relative path
+ *   = ( relative head step | step ), { qualified step }
+ *   ;
+ */
 static Parser *relative_path(void)
 {
     return rule(
@@ -139,6 +182,11 @@ static Parser *relative_path(void)
             repetition(qualified_step())));
 }
 
+/**
+ * relative head step
+ *   = "@" , [ predicate expression ]
+ *   ;
+ */
 static Parser *relative_head_step(void)
 {
     return rule(
@@ -147,6 +195,12 @@ static Parser *relative_head_step(void)
             option(predicate_expression())));
 }
 
+/**
+ * step
+ *   = transformer
+ *   | ( selector, [ predicate expression ] )
+ *   ;
+ */
 static Parser *step(void)
 {
     return rule(
@@ -157,6 +211,11 @@ static Parser *step(void)
                 option(predicate_expression()))));
 }
 
+/**
+ * transformer
+ *   = "=", value
+ *   ;
+ */
 static Parser *transformer(void)
 {
     return rule(
@@ -165,6 +224,11 @@ static Parser *transformer(void)
             value()));
 }
 
+/**
+ * object
+ *   = "{",  [ key value, { ",", key value } ], "}"
+ *   ;
+ */
 static Parser *object(void)
 {
     return rule(
@@ -178,6 +242,11 @@ static Parser *object(void)
             literal("}")));
 }
 
+/**
+ * key value
+ *   = string, ":", value
+ *   ;
+ */
 static Parser *key_value(void)
 {
     return rule(
@@ -187,6 +256,11 @@ static Parser *key_value(void)
             value()));
 }
 
+/**
+ * array
+ *   = "[", [ value, { ",", value } ], "]"
+ *   ;
+ */
 static Parser *array(void)
 {
     return rule
@@ -200,16 +274,30 @@ static Parser *array(void)
             literal("]")));
 }
 
+/**
+ * value
+ *   = array
+ *   | object
+ *   | additive expr
+ *   ;
+ */
 static Parser *value(void)
 {
     return rule(
         choice(
             array(),
-            object()//,
-            //addititve_expression()
-               ));
+            object(),
+            scalar()));
 }
 
+/**
+ * selector
+ *   = tag selector
+ *   | anchor selector
+ *   | type selector
+ *   | name selector
+ *   ;
+ */
 static Parser *selector(void)
 {
     return rule(
@@ -220,6 +308,11 @@ static Parser *selector(void)
             name_selector()));
 }
 
+/**
+ * tag selector
+ *   = "!", name
+ *   ;
+ */
 static Parser *tag_selector(void)
 {
     return rule(
@@ -228,6 +321,11 @@ static Parser *tag_selector(void)
             name()));
 }
 
+/**
+ * anchor selector
+ *   = "&", name
+ *   ;
+ */
 static Parser *anchor_selector(void)
 {
     return rule(
@@ -236,6 +334,11 @@ static Parser *anchor_selector(void)
             name()));
 }
 
+/**
+ * type selector
+ *   = type, "(", ")"
+ *   ;
+ */
 static Parser *type_selector(void)
 {
     return rule(
@@ -245,6 +348,19 @@ static Parser *type_selector(void)
             literal(")")));
 }
 
+/**
+ * type
+ *   = "object"
+ *   | "array"
+ *   | "string"
+ *   | "number"
+ *   | "integer"
+ *   | "decimal"
+ *   | "timestamp"
+ *   | "boolean"
+ *   | "null"
+ *   ;
+ */
 static Parser *type(void)
 {
     return rule(
@@ -260,6 +376,12 @@ static Parser *type(void)
             literal("null")));
 }
 
+/**
+ * name selector
+ *   = wildcard
+ *   | name
+ *   ;
+ */
 static Parser *name_selector(void)
 {
     return rule(
@@ -268,12 +390,23 @@ static Parser *name_selector(void)
             name()));
 }
 
+/**
+ * wildcard
+ *   = "*"
+ *   ;
+ */
 static Parser *wildcard(void)
 {
     return rule(
         literal("*"));
 }
 
+/**
+ * name
+ *   = "'", quoted name character, { quoted name character }, "'"
+ *   | name character, { name character }
+ *   ;
+ */
 static Parser *name(void)
 {
     return rule(
@@ -282,32 +415,54 @@ static Parser *name(void)
             string()));
 }
 
+/**
+ * predicate expression
+ *   = "[", predicate, "]"
+ *   | filter expression
+ *   ;
+ */
 static Parser *predicate_expression(void)
 {
     return rule(
         sequence(
             literal("["),
             predicate(),
-            literal("]"),
-            filter_expression()));
+            literal("]")));
 }
 
+/**
+ * predicate
+ *   = wildcard
+ *   | subscript
+ *   | slice
+ *   | join
+ *   ;
+ */
 static Parser *predicate(void)
 {
     return rule(
         choice(
             wildcard(),
             subscript(),
-            slice(),
-            join()));
+            slice()));
 }
 
+/**
+ * subscript
+ *    = signed integer
+ *    ;
+ */
 static Parser *subscript(void)
 {
     return rule(
         signed_integer());
 }
 
+/**
+ * slice
+ *   = [ signed integer ], ":", [ signed integer ], [ ":", [ non-zero signed integer ] ]
+ *   ;
+ */
 static Parser *slice(void)
 {
     return rule(
@@ -323,16 +478,23 @@ static Parser *slice(void)
                     option(non_zero_signed_integer())))));
 }
 
+/*
+ * join
+ *   = additive expr, ",", additive expr, { ",", additive expr }
+ *   ;
+ */
+/*
 static Parser *join(void)
 {
     return rule(
         sequence(
-            //addititve_expression(),
-            literal(",")//,
-            //addititve_expression(),
-            //repetition(sequence(literal(","), addititve_expression()))
-                 )
-                );
+            addititve_expression(),
+            literal(","),
+            addititve_expression(),
+            repetition(
+                sequence(
+                    literal(","),
+                    addititve_expression()))));
 }
 
 static Parser *filter_expression(void)
@@ -432,12 +594,35 @@ static Parser *unary_expression(void)
 {
     return rule(
         choice(
+            relative_path(),
+            scalar()));
+}
+*/
+
+/**
+ * scalar
+ *   = number
+ *   | string
+ *   | boolean
+ *   | "null"
+ *   ;
+ */
+static Parser *scalar(void)
+{
+    return rule(
+        choice(
             number(),
             string(),
             boolean(),
             literal("null")));
 }
 
+/**
+ * boolean
+ *   = "true"
+ *   | "false"
+ *   ;
+ */
 static Parser *boolean(void)
 {
     return rule(
