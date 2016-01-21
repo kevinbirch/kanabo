@@ -224,7 +224,11 @@ multiplicative op
 
 unary expr
     = relative path
-    | number
+    | scalar
+    ;
+
+scalar
+    = number
     | string
     | boolean
     | "null"
