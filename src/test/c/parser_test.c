@@ -1075,7 +1075,7 @@ Suite *jsonpath_suite(void)
     tcase_add_test(api_case, iteration);
     tcase_add_test(api_case, fail_iteration);
 
-    Suite *suite = suite_create("JSONPath");
+    Suite *suite = suite_create("Parser");
     suite_add_tcase(suite, bad_input_case);
     suite_add_tcase(suite, basic_case);
     suite_add_tcase(suite, node_type_case);
