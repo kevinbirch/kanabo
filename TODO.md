@@ -103,6 +103,7 @@ LICENSE file for more details.
 * create common maybe.h for enum and others
 * use type generic macro instead of vtable
 * use sentinels for vararg parsers instead of NULL, error on null args
+* create parser error classes with context for building message
 
 ### loader
 
