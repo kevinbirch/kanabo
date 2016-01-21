@@ -380,7 +380,7 @@ $(GENERATED_DEPEND_DIR):
 
 $(GENERATED_DEPEND_DIR)/%.d: %.c | $(GENERATED_DEPEND_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) -MM -MG -MT '$(OBJECT_DIR)/$(*F).o $@' $(CFLAGS) $(INCLUDES) $< > $@
+	@$(CC) -MM -MG -MT '$(OBJECT_DIR)/$(*F).o $@' $(CFLAGS) $(INCLUDES) $< > $@
 
 $(GENERATED_TEST_DEPEND_DIR):
 	@mkdir -p $(GENERATED_TEST_DEPEND_DIR)
