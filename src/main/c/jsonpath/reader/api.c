@@ -72,7 +72,7 @@ static inline MaybeJsonPath resolve_ast(MaybeAst *ast, Input *input)
         char *msg = parser_status_message(ast->error.code,
                                           ast->error.argument,
                                           input);
-        return nothing(ast->error.code, cursor(input), msg);
+        return nothing(ast->error.code, position(input), msg);
         
     }
     return (MaybeJsonPath){JSONPATH, .path=build_path(ast->value)};

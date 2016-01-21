@@ -46,7 +46,7 @@ struct input_s
 {
     const uint8_t *data;
     size_t         length;
-    size_t         cursor;
+    size_t         position;
     size_t         mark;
 };
 
@@ -55,7 +55,7 @@ typedef struct input_s Input;
 #define make_input(data, length) (Input){data, length, 0ul, 0ul}
 
 
-size_t cursor(Input *input);
+size_t position(Input *input);
 
 void set_mark(Input *input);
 void reset_to_mark(Input *input);
