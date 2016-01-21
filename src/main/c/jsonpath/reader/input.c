@@ -40,35 +40,37 @@
 
 #include "jsonpath/input.h"
 
+#define cursor(SELF) (SELF)->data + (SELF)->position
 
-size_t cursor(Input *self)
+
+size_t position(Input *self)
 {
-    return self->cursor;
+    return self->position;
 }
 
 void reset(Input *self)
 {
-    self->cursor = 0;
+    self->position = 0;
 }
 
 void set_mark(Input *self)
 {
-    self->mark = self->cursor;
+    self->mark = self->position;
 }
 
 void reset_to_mark(Input *self)
 {
-    self->cursor = self->mark;
+    self->position = self->mark;
 }
 
 bool has_more(Input *self)
 {
-    return self->cursor < self->length;
+    return self->position < self->length;
 }
 
 size_t remaining(Input *self)
 {
-    return self->length - self->cursor;
+    return self->length - self->position;
 }
 
 void skip_whitespace(Input *self)
@@ -89,7 +91,7 @@ uint8_t peek(Input *self)
     {
         return 0;
     }
-    return self->data[self->cursor];
+    return self->data[self->position];
 }
 
 uint8_t consume_char(Input *self)
@@ -98,7 +100,7 @@ uint8_t consume_char(Input *self)
     {
         return 0;
     }
-    return self->data[self->cursor++];
+    return self->data[self->position++];
 }
 
 void consume_many(Input *self, size_t count)
@@ -109,11 +111,11 @@ void consume_many(Input *self, size_t count)
     }
     else if(count > remaining(self))
     {
-        self->cursor = self->length - 1;
+        self->position = self->length - 1;
     }
     else
     {
-        self->cursor += count;
+        self->position += count;
     }
 }
 
@@ -125,17 +127,22 @@ bool consume_if(Input *self, const char *value)
     }
 
     size_t length = strlen(value);
-    if(0 == memcmp(self->data, value, length))
+    if(length > remaining(self))
+    {
+        return false;
+    }
+    if(0 == memcmp(cursor(self), value, length))
     {
         consume_many(self, length);
         return true;
     }
+
     return false;
 }
 
 void push_back(Input *self)
 {
-    self->cursor--;
+    self->position--;
 }
 
 bool looking_at(Input *self, const char *value)
@@ -145,7 +152,11 @@ bool looking_at(Input *self, const char *value)
         return false;
     }
     size_t length = strlen(value);
-    if(0 == memcmp(self->data, value, length))
+    if(length > remaining(self))
+    {
+        return false;
+    }
+    if(0 == memcmp(cursor(self), value, length))
     {
         return true;
     }
@@ -159,6 +170,6 @@ size_t find(Input *self, const char *value)
     {
         return 0;
     }
-    return strcspn((char *)self->data + self->cursor, value);
+    return strcspn((char *)cursor(self), value);
 
 }
