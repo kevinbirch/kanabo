@@ -43,11 +43,17 @@
 #include "jsonpath/model.h"
 #include "jsonpath/logging.h"
 
+#undef nothing
+#define nothing(CODE, CURSOR, MSG) (MaybeJsonPath){ERROR, .error.code=(CODE), .error.position=(CURSOR), .error.message=(MSG)}
+#undef just
+#define just(PATH) (MaybeJsonPath){JSONPATH, .path=(PATH)}
+
 #define PRECOND_ELSE_NOTHING(ERR_CODE, ...)                       \
     if(is_false(__VA_ARGS__, -1))                                 \
     {                                                             \
         char *msg = parser_status_message((ERR_CODE), 0, NULL);   \
-        return (MaybeJsonPath){ERROR, .error.message=msg};        \
+        printf("parser status: %s\n", msg);                             \
+        return (MaybeJsonPath){.tag=ERROR, .error.code=(ERR_CODE), .error.message=msg}; \
     }
 
 
@@ -67,9 +73,7 @@ static inline MaybeJsonPath resolve_ast(MaybeAst *ast, Input *input)
         char *msg = parser_status_message(ast->error.code,
                                           ast->error.argument,
                                           input);
-        return (MaybeJsonPath){
-            .tag=ERROR, .error.message=msg, .error.position=cursor(input)
-        };
+        return nothing(ast->error.code, cursor(input), msg);
         
     }
     return (MaybeJsonPath){JSONPATH, .path=build_path(ast->value)};
@@ -78,7 +82,7 @@ static inline MaybeJsonPath resolve_ast(MaybeAst *ast, Input *input)
 
 static inline MaybeAst execute(Parser *parser, Input *input)
 {
-    MaybeAst ast = just(make_ast_root_node());
+    MaybeAst ast = (MaybeAst){AST_VALUE, .value=make_ast_root_node()};
     return bind(parser, ast, input);
 }
 

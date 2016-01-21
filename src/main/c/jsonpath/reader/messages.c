@@ -73,7 +73,6 @@ static const char * const MESSAGES[] =
 
 char *parser_status_message(parser_result_code code, uint8_t argument, Input *input)
 {
-    PRECOND_NONNULL_ELSE_NULL(input);
     char *message = NULL;
     int result = 0;
 
