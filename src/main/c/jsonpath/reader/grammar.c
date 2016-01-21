@@ -205,8 +205,9 @@ static Parser *value(void)
     return rule(
         choice(
             array(),
-            object(),
-            addititve_expression()));
+            object()//,
+            //addititve_expression()
+               ));
 }
 
 static Parser *selector(void)
@@ -326,13 +327,12 @@ static Parser *join(void)
 {
     return rule(
         sequence(
-            addititve_expression(),
-            literal(","),
-            addititve_expression(),
-            repetition(
-                sequence(
-                    literal(","),
-                    addititve_expression()))));
+            //addititve_expression(),
+            literal(",")//,
+            //addititve_expression(),
+            //repetition(sequence(literal(","), addititve_expression()))
+                 )
+                );
 }
 
 static Parser *filter_expression(void)
@@ -432,7 +432,6 @@ static Parser *unary_expression(void)
 {
     return rule(
         choice(
-            relative_path(),
             number(),
             string(),
             boolean(),

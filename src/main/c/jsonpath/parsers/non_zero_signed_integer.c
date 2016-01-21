@@ -48,7 +48,13 @@ static MaybeAst non_zero_signed_integer_delegate(Parser *parser __attribute__((u
 
 Parser *non_zero_signed_integer(void)
 {
+    parser_trace("building non zero signed interger parser");
     Parser *self = make_parser(NON_ZERO_SIGNED_INTEGER);
+    if(NULL == self)
+    {
+        parser_trace("failed building non zero signed interger parser");
+        return NULL;
+    }
     self->vtable.delegate = non_zero_signed_integer_delegate;
 
     return self;

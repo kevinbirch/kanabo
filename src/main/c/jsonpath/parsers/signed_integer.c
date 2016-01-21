@@ -48,7 +48,12 @@ static MaybeAst signed_integer_delegate(Parser *parser __attribute__((unused)), 
 
 Parser *signed_integer(void)
 {
+    parser_trace("building signed interger parser");
     Parser *self = make_parser(SIGNED_INTEGER);
+    if(NULL == self)
+    {
+        return NULL;
+    }
     self->vtable.delegate = signed_integer_delegate;
 
     return self;

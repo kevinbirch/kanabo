@@ -79,6 +79,7 @@ Parser *literal(const char *value)
         return NULL;
     }
 
+    parser_trace("building literal parser %s", value);
     parser_init((Parser *)self, LITERAL);
     self->base.vtable.delegate = literal_delegate;
     self->value = value;

@@ -101,6 +101,7 @@ Parser *choice_parser(Parser *one, Parser *two, ...)
         }
         return NULL;
     }
+    parser_trace("building choice parser");
     va_list rest;
     va_start(rest, two);
     CompoundParser *self = make_compound_parser(CHOICE, one, two, rest);

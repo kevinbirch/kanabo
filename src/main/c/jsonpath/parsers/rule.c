@@ -78,6 +78,7 @@ Parser *rule_parser(const char *name, Parser *expression)
         return NULL;
     }
 
+    parser_trace("building rule parser %s", name);
     parser_init((Parser *)self, RULE);
     self->base.vtable.delegate = rule_delegate;
     self->base.vtable.free = rule_free;

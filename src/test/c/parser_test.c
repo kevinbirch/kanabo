@@ -160,6 +160,7 @@ START_TEST (missing_step_test)
 }
 END_TEST
 
+/*
 START_TEST (missing_recursive_step_test)
 {
     char *expression = "$..";
@@ -1005,6 +1006,7 @@ START_TEST (bad_predicate_input)
     path_free(maybe);
 }
 END_TEST
+*/
 
 Suite *jsonpath_suite(void)
 {
@@ -1012,6 +1014,7 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input_case, null_expression);
     tcase_add_test(bad_input_case, zero_length);
     tcase_add_test(bad_input_case, missing_step_test);
+    /*
     tcase_add_test(bad_input_case, missing_recursive_step_test);
     tcase_add_test(bad_input_case, missing_dot);
     tcase_add_test(bad_input_case, relative_path_begins_with_dot);
@@ -1074,13 +1077,16 @@ Suite *jsonpath_suite(void)
     tcase_add_test(api_case, bad_predicate_input);
     tcase_add_test(api_case, iteration);
     tcase_add_test(api_case, fail_iteration);
+    */
 
     Suite *suite = suite_create("Parser");
     suite_add_tcase(suite, bad_input_case);
+    /*
     suite_add_tcase(suite, basic_case);
     suite_add_tcase(suite, node_type_case);
     suite_add_tcase(suite, predicate_case);
     suite_add_tcase(suite, api_case);
+    */
 
     return suite;
 }
