@@ -61,6 +61,8 @@ Parser *sequence_parser(Parser *one, Parser *two, ...);
 Parser *option(Parser *optional);
 Parser *repetition(Parser *repeated);
 
+Parser *reference(const char *value);
+
 /* Terminal parsers */
 
 Parser *literal(const char *value);

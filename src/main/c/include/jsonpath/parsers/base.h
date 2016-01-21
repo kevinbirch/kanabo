@@ -50,6 +50,7 @@ enum parser_kind
     SEQUENCE,
     OPTION,
     REPETITION,
+    REFERENCE,
     LITERAL,
     NUMBER,
     INTEGER,
