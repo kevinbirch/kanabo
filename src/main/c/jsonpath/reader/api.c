@@ -52,7 +52,6 @@
     if(is_false(__VA_ARGS__, -1))                                 \
     {                                                             \
         char *msg = parser_status_message((ERR_CODE), 0, NULL);   \
-        printf("parser status: %s\n", msg);                             \
         return (MaybeJsonPath){.tag=ERROR, .error.code=(ERR_CODE), .error.message=msg}; \
     }
 
