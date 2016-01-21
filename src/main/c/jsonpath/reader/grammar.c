@@ -47,11 +47,13 @@ static Parser *relative_path(void);
 static Parser *relative_head_step(void);
 static Parser *step(void);
 
+/*
 static Parser *transformer(void);
 static Parser *object(void);
 static Parser *key_value(void);
 static Parser *array(void);
 static Parser *value(void);
+*/
 
 static Parser *selector(void);
 static Parser *tag_selector(void);
@@ -80,10 +82,10 @@ static Parser *addititve_op(void);
 static Parser *multiplicative_expression(void);
 static Parser *multiplicative_op(void);
 static Parser *unary_expression(void);
-*/
 static Parser *scalar(void);
 
 static Parser *boolean(void);
+*/
 
 /**
  * jsonpath
@@ -204,11 +206,9 @@ static Parser *relative_head_step(void)
 static Parser *step(void)
 {
     return rule(
-        choice(
-            transformer(),
-            sequence(
-                selector(),
-                option(predicate_expression()))));
+        sequence(
+            selector(),
+            option(predicate_expression())));
 }
 
 /**
@@ -216,6 +216,7 @@ static Parser *step(void)
  *   = "=", value
  *   ;
  */
+/*
 static Parser *transformer(void)
 {
     return rule(
@@ -223,12 +224,14 @@ static Parser *transformer(void)
             literal("="),
             value()));
 }
+*/
 
 /**
  * object
  *   = "{",  [ key value, { ",", key value } ], "}"
  *   ;
  */
+/*
 static Parser *object(void)
 {
     return rule(
@@ -241,12 +244,14 @@ static Parser *object(void)
                                       key_value())))),
             literal("}")));
 }
+*/
 
 /**
  * key value
  *   = string, ":", value
  *   ;
  */
+/*
 static Parser *key_value(void)
 {
     return rule(
@@ -255,16 +260,18 @@ static Parser *key_value(void)
             literal(":"),
             value()));
 }
+*/
 
 /**
  * array
  *   = "[", [ value, { ",", value } ], "]"
  *   ;
  */
+/*
 static Parser *array(void)
 {
-    return rule
-        (sequence(
+    return rule(
+        sequence(
             literal("["),
             option(sequence(
                        value(),
@@ -273,6 +280,7 @@ static Parser *array(void)
                                       value())))),
             literal("]")));
 }
+*/
 
 /**
  * value
@@ -281,14 +289,18 @@ static Parser *array(void)
  *   | additive expr
  *   ;
  */
+/*
 static Parser *value(void)
 {
+    // xxx - need a latch here to return a reference when tripped
     return rule(
         choice(
+            scalar(),
             array(),
-            object(),
-            scalar()));
+            object()));
+    // xxx - reset latch here
 }
+*/
 
 /**
  * selector
@@ -607,6 +619,7 @@ static Parser *unary_expression(void)
  *   | "null"
  *   ;
  */
+/*
 static Parser *scalar(void)
 {
     return rule(
@@ -616,6 +629,7 @@ static Parser *scalar(void)
             boolean(),
             literal("null")));
 }
+*/
 
 /**
  * boolean
@@ -623,6 +637,7 @@ static Parser *scalar(void)
  *   | "false"
  *   ;
  */
+/*
 static Parser *boolean(void)
 {
     return rule(
@@ -630,3 +645,4 @@ static Parser *boolean(void)
             literal("true"),
             literal("false")));
 }
+*/
