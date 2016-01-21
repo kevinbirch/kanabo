@@ -41,7 +41,7 @@
 
 static const char * const PARSER_NAMES[] =
 {
-    "rule"
+    "rule",
     "choice",
     "sequence",
     "option",
