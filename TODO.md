@@ -46,6 +46,7 @@ LICENSE file for more details.
   * http://www.reddit.com/r/C_Programming/comments/1u1ofw/is_this_code_clike/cednu4t
 * interesting competitor: http://jmespath.org/
 * various getopt alternatvies: https://news.ycombinator.com/item?id=10687375
+* fix license to point to bsd 3 clause
 
 ### evaluator
 
@@ -91,13 +92,8 @@ LICENSE file for more details.
   * can the union item ever be a or expr?
 * string functions
 * other built-in functions
-* pratt parser?
-  * http://l-lang.org/blog/TDOP---Pratt-parser-in-pictures/
-* parser combinator - https://github.com/orangeduck/mpc
-* use sentinels for vararg parsers instead of NULL, error on null args
 
 * use maybe parser in grammar to handle builder errors
-* push parser functions down to parser modules
 * build the jsonpath inline with custom rule parsers
 * rename emit package to emitter
 * move jsonpath/reader to parser?
@@ -105,16 +101,8 @@ LICENSE file for more details.
 * rename model package to document?
 * move nodelist creation to evaluate function evaluator/api.c
 * create common maybe.h for enum and others
-* fix license to point to bsd 3 clause
 * use type generic macro instead of vtable
-parser model todo:
- - upcast
- - downcast
- - static cast?
- - vtable for d'tor
-
-current change is: moving parser delegate into vtable, removing log from vtable
-the vtable itself doens't need to be a ptr, it can be a static struct of ptr's
+* use sentinels for vararg parsers instead of NULL, error on null args
 
 ### loader
 
@@ -133,6 +121,7 @@ the vtable itself doens't need to be a ptr, it can be a static struct of ptr's
 * eliminate check's end_test macro by creating hidden trampoline function that delegates to user's test function
 * fuzz testing: https://en.wikipedia.org/wiki/API_Sanity_Checker
 * find undefined behavior code: http://css.csail.mit.edu/stack/
+  * clang ubsan
 
 ### documentation
 
