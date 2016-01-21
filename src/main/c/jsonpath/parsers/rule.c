@@ -61,13 +61,20 @@ static MaybeAst rule_delegate(Parser *parser, MaybeAst ast, Input *input)
 
     parser_debug("entering %s rule", self->name);
     MaybeAst result = bind(self->expression, ast, input);
-    parser_debug("leaving %s rule", self->name);
+    const char *status = AST_ERROR == result.tag ? "failure": "success";
+    parser_debug("leaving %s rule, with %s", self->name, status);
 
     return result;
 }
 
 Parser *rule_parser(const char *name, Parser *expression)
 {
+    if(NULL == name)
+    {
+        return NULL;
+    }
+    // xxx - find rule parser in cache here
+    // xxx - how to auto-initialize the rule cache and hold it elsewhere?
     if(NULL == expression)
     {
         return NULL;

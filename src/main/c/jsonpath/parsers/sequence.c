@@ -57,12 +57,12 @@ static MaybeAst sequence_delegate(Parser *parser, MaybeAst ast, Input *input)
         }
         else
         {
-            parser_trace("leaving sequence parser, failure");
+            parser_trace("leaving sequence parser, with failure");
             return branch_result;
         }
     }
 
-    parser_trace("leaving sequence parser, success");
+    parser_trace("leaving sequence parser, with success");
     return ast;
 }
 
