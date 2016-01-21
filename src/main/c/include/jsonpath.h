@@ -41,6 +41,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "jsonpath/codes.h"
+
+
  /* JSONPath Entities */
 
 typedef struct jsonpath_s JsonPath;
@@ -99,8 +102,9 @@ struct maybe_jsonpath_s
     {
         struct
         {
-            char   *message;
-            size_t  position;
+            parser_result_code code;
+            size_t             position;
+            char              *message;
         } error;
         JsonPath *path;
     };
