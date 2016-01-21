@@ -40,8 +40,6 @@
 
 #include "jsonpath/input.h"
 
-#define cursor(SELF) (SELF)->data + (SELF)->position
-
 
 size_t position(Input *self)
 {

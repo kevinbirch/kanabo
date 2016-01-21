@@ -53,6 +53,12 @@ static MaybeAst literal_delegate(Parser *parser, MaybeAst ast, Input *input)
     LiteralParser *self = (LiteralParser *)parser;
     parser_trace("entering literal parser, '%s'", self->value);
 
+    skip_whitespace(input);
+    if(!has_more(input))
+    {
+        parser_trace("leaving literal parser, with error: no more input");
+        return error(ERR_PREMATURE_END_OF_INPUT);
+    }
     if(consume_if(input, self->value))
     {
         // xxx - add literal to ast
@@ -62,7 +68,7 @@ static MaybeAst literal_delegate(Parser *parser, MaybeAst ast, Input *input)
     else
     {
         // xxx - need to return the expected literal here! `error_with_context`? error structs and handlers?
-        parser_trace("leaving literal parser, with error");
+        parser_trace("leaving literal parser, with error '%s'", cursor(input));
         return error(ERR_UNEXPECTED_VALUE);
     }
 }

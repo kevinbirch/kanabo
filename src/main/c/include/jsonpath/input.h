@@ -54,6 +54,8 @@ typedef struct input_s Input;
 
 #define make_input(data, length) (Input){data, length, 0ul, 0ul}
 
+#define cursor(SELF) (SELF)->data + (SELF)->position
+
 
 size_t position(Input *input);
 
