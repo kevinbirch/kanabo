@@ -37,8 +37,6 @@
 
 #include "jsonpath/ast.h"
 
-static void ast_destructor(void *each);
-
 
 Ast *make_ast_node(enum ast_node_tag tag, void *value)
 {
@@ -91,6 +89,7 @@ void ast_free(Ast *value)
         return;
     }
 
+    // xxx - this is all broken
     free(value->value);
     vector_destroy(value->children, ast_destructor);
     free(value);
