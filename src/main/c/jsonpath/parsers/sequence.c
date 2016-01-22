@@ -44,7 +44,6 @@
 static MaybeAst sequence_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
     CompoundParser *self = (CompoundParser *)parser;
-    parser_trace("entering sequence parser, %zd branches", vector_length(self->children));
 
     for(size_t i = 0; i < vector_length(self->children); i++)
     {
@@ -57,12 +56,10 @@ static MaybeAst sequence_delegate(Parser *parser, MaybeAst ast, Input *input)
         }
         else
         {
-            parser_trace("leaving sequence parser, with failure");
             return branch_result;
         }
     }
 
-    parser_trace("leaving sequence parser, with success");
     return ast;
 }
 
@@ -81,7 +78,6 @@ Parser *sequence_parser(Parser *one, Parser *two, ...)
         return NULL;
     }
 
-    parser_trace("building sequence parser");
     va_list rest;
     va_start(rest, two);
     CompoundParser *self = make_compound_parser(SEQUENCE, one, two, rest);

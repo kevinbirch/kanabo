@@ -46,12 +46,13 @@ static const char * const PARSER_NAMES[] =
     "sequence",
     "option",
     "repetition",
+    "reference",
     "literal",
     "number",
     "integer",
-    "signed_integer",
-    "non_zero_signed_integer",
-    "quoted_string",
+    "signed integer",
+    "non zero signed integer",
+    "quoted string",
     "string"
 };
 
@@ -60,12 +61,10 @@ static void base_free(Parser *self __attribute__((unused)))
 {
 }
 
-static MaybeAst base_delegate(Parser *self,
+static MaybeAst base_delegate(Parser *self __attribute__((unused)),
                               MaybeAst ast,
                               Input *input __attribute__((unused)))
 {
-    parser_trace("entering parser: %s", parser_name(self));
-    parser_trace("leaving parser: %s", parser_name(self));
     return ast;
 }
 
@@ -119,5 +118,11 @@ MaybeAst bind(Parser *self, MaybeAst ast, Input *input)
     {
         return ast;    
     }
-    return self->vtable.delegate(self, ast, input);
+    parser_trace("entering %s parser", parser_name(self));
+    MaybeAst result = self->vtable.delegate(self, ast, input);
+    parser_trace(
+        "leaving %s parser, %s",
+        parser_name(self),
+        AST_ERROR == result.tag ? "failure" : "success");
+    return result;
 }

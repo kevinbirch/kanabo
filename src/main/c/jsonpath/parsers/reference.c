@@ -60,7 +60,6 @@ Parser *reference(const char *value)
         return NULL;
     }
 
-    parser_trace("building reference parser %s", value);
     parser_init((Parser *)self, REFERENCE);
     self->value = value;
 

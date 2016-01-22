@@ -41,7 +41,6 @@
 static MaybeAst repetition_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
     WrappedParser *self = (WrappedParser *)parser;
-    parser_trace("entering option parser for %s", parser_name(self->child));
 
     MaybeAst result = bind(self->child, ast, input);
     if(AST_VALUE == result.tag)
@@ -49,7 +48,6 @@ static MaybeAst repetition_delegate(Parser *parser, MaybeAst ast, Input *input)
         ast_add_child(ast.value, result.value);
     }
 
-    parser_trace("leaving option parser");
     return ast;
 }
 
@@ -60,7 +58,6 @@ Parser *option(Parser *expression)
         return NULL;
     }
 
-    parser_trace("building option parser");
     WrappedParser *self = make_wrapped_parser(REPETITION, expression);
     self->base.vtable.delegate = repetition_delegate;
 

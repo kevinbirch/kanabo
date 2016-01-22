@@ -73,17 +73,14 @@ static bool choice_iterator(void *each, void *paramter)
 static MaybeAst choice_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
     CompoundParser *self = (CompoundParser *)parser;
-    parser_trace("entering choice parser, %zd branches", vector_length(self->children));
 
     Context context = {input, ast};
     if(!vector_any(self->children, choice_iterator, &context))
     {
         // TODO free ast
-        parser_trace("leaving choice parser, failure");
         return error(ERR_NO_ALTERNATIVE);
     }
 
-    parser_trace("leaving choice parser, success");
     return ast;
 }
 
@@ -101,7 +98,6 @@ Parser *choice_parser(Parser *one, Parser *two, ...)
         }
         return NULL;
     }
-    parser_trace("building choice parser");
     va_list rest;
     va_start(rest, two);
     CompoundParser *self = make_compound_parser(CHOICE, one, two, rest);

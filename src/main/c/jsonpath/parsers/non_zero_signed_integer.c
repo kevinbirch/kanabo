@@ -39,20 +39,18 @@
 #include "jsonpath/parsers/base.h"
 
 
-static MaybeAst non_zero_signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeAst ast, Input *input __attribute__((unused)))
+static MaybeAst non_zero_signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeAst ast, Input *input)
 {
-    parser_trace("entering non-zero signed integer parser");
-    parser_trace("leaving non-zero signed integer parser");
+    ensure_more_input(input);
+    skip_whitespace(input);
     return ast;
 }
 
 Parser *non_zero_signed_integer(void)
 {
-    parser_trace("building non zero signed interger parser");
     Parser *self = make_parser(NON_ZERO_SIGNED_INTEGER);
     if(NULL == self)
     {
-        parser_trace("failed building non zero signed interger parser");
         return NULL;
     }
     self->vtable.delegate = non_zero_signed_integer_delegate;

@@ -70,6 +70,11 @@ struct parser_s
     } vtable;
 };
 
+#define ensure_more_input(INPUT) if(!has_more(INPUT)) \
+    {                                                 \
+        return error(ERR_PREMATURE_END_OF_INPUT);     \
+    }
+
 
 Parser *make_parser(enum parser_kind kind);
 Parser *parser_init(Parser *self, enum parser_kind kind);

@@ -51,24 +51,18 @@ typedef struct literal_parser_s LiteralParser;
 static MaybeAst literal_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
     LiteralParser *self = (LiteralParser *)parser;
-    parser_trace("entering literal parser, '%s'", self->value);
 
+    ensure_more_input(input);
     skip_whitespace(input);
-    if(!has_more(input))
-    {
-        parser_trace("leaving literal parser, with error: no more input");
-        return error(ERR_PREMATURE_END_OF_INPUT);
-    }
+    parser_trace("checking for literal '%s'", self->value);
     if(consume_if(input, self->value))
     {
         // xxx - add literal to ast
-        parser_trace("leaving literal parser, with success");
         return ast;
     }
     else
     {
         // xxx - need to return the expected literal here! `error_with_context`? error structs and handlers?
-        parser_trace("leaving literal parser, with error '%s'", cursor(input));
         return error(ERR_UNEXPECTED_VALUE);
     }
 }
@@ -85,7 +79,6 @@ Parser *literal(const char *value)
         return NULL;
     }
 
-    parser_trace("building literal parser %s", value);
     parser_init((Parser *)self, LITERAL);
     self->base.vtable.delegate = literal_delegate;
     self->value = value;

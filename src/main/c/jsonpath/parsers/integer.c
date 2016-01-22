@@ -39,10 +39,10 @@
 #include "jsonpath/parsers/base.h"
 
 
-static MaybeAst integer_delegate(Parser *parser __attribute__((unused)), MaybeAst ast, Input *input __attribute__((unused)))
+static MaybeAst integer_delegate(Parser *parser __attribute__((unused)), MaybeAst ast, Input *input)
 {
-    parser_trace("entering integer parser");
-    parser_trace("leaving integer parser");
+    ensure_more_input(input);
+    skip_whitespace(input);
     return ast;
 }
 

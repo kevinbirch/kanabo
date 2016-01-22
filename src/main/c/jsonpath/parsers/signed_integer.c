@@ -39,16 +39,15 @@
 #include "jsonpath/parsers/base.h"
 
 
-static MaybeAst signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeAst ast, Input *input __attribute__((unused)))
+static MaybeAst signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeAst ast, Input *input)
 {
-    parser_trace("entering signed integer parser");
-    parser_trace("leaving signed integer parser");
+    ensure_more_input(input);
+    skip_whitespace(input);
     return ast;
 }
 
 Parser *signed_integer(void)
 {
-    parser_trace("building signed interger parser");
     Parser *self = make_parser(SIGNED_INTEGER);
     if(NULL == self)
     {

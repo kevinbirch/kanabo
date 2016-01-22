@@ -41,7 +41,6 @@
 static MaybeAst repetition_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
     WrappedParser *self = (WrappedParser *)parser;
-    parser_trace("entering repetition parser for %s", parser_name(self->child));
 
     MaybeAst result = bind(self->child, ast, input);
     if(AST_VALUE != result.tag)
@@ -56,7 +55,6 @@ static MaybeAst repetition_delegate(Parser *parser, MaybeAst ast, Input *input)
     }
 
     // xxx - log count of repetitions found
-    parser_trace("leaving repetition parser");
     return ast;
 }
 
@@ -67,7 +65,6 @@ Parser *repetition(Parser *expression)
         return NULL;
     }
 
-    parser_trace("building repetition parser");
     WrappedParser *self = make_wrapped_parser(REPETITION, expression);
     self->base.vtable.delegate = repetition_delegate;
 
