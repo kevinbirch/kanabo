@@ -71,11 +71,7 @@ struct parser_s
 };
 
 #define ensure_more_input(INPUT) if(!has_more(INPUT)) \
-    {                                                 \
-        if(AST_VALUE == ast.tag)                      \
-        {                                             \
-            ast_free(ast.value);                      \
-        }                                             \
+    {                                                 \                                         \
         return error(ERR_PREMATURE_END_OF_INPUT);     \
     }
 
