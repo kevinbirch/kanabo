@@ -66,6 +66,10 @@ Parser *repetition(Parser *expression)
     }
 
     WrappedParser *self = make_wrapped_parser(REPETITION, expression);
+    if(NULL == self)
+    {
+        return NULL;
+    }
     self->base.vtable.delegate = repetition_delegate;
 
     return (Parser *)self;

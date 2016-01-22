@@ -48,8 +48,15 @@ static MaybeAst string_delegate(Parser *parser __attribute__((unused)), MaybeAst
 
 Parser *string(void)
 {
+    parser_trace("xxx - building string parser");
     Parser *self = make_parser(STRING);
+    if(NULL == self)
+    {
+        parser_trace("failed to build string parser");
+        return NULL;
+    }
     self->vtable.delegate = string_delegate;
+    parser_trace("built string parser: %d", self->kind);
 
     return self;
 }

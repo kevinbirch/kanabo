@@ -50,6 +50,10 @@ static MaybeAst quoted_string_delegate(Parser *parser __attribute__((unused)), M
 Parser *quoted_string(void)
 {
     Parser *self = make_parser(QUOTED_STRING);
+    if(NULL == self)
+    {
+        return NULL;
+    }
     self->vtable.delegate = quoted_string_delegate;
 
     return self;

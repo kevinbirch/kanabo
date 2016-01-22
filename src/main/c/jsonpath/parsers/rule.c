@@ -57,6 +57,7 @@ static void rule_free(Parser *value)
 
 static MaybeAst rule_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
+    ensure_more_input(input);
     RuleParser *self = (RuleParser *)parser;
 
     parser_trace("evaluating rule: %s", self->name);

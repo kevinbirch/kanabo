@@ -50,10 +50,10 @@ struct sequence_context_s
 typedef struct sequence_context_s Context;
 
 
-static bool choice_iterator(void *each, void *paramter)
+static bool choice_iterator(void *each, void *parameter)
 {
     Parser *expression = (Parser *)each;
-    Context *context = (Context *)paramter;
+    Context *context = (Context *)parameter;
 
     set_mark(context->input);
     skip_whitespace(context->input);    
@@ -72,12 +72,12 @@ static bool choice_iterator(void *each, void *paramter)
 
 static MaybeAst choice_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
+    ensure_more_input(input);
     CompoundParser *self = (CompoundParser *)parser;
-
     Context context = {input, ast};
     if(!vector_any(self->children, choice_iterator, &context))
     {
-        // TODO free ast
+        ast_free(ast.value);
         return error(ERR_NO_ALTERNATIVE);
     }
 

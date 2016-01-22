@@ -49,6 +49,10 @@ static MaybeAst integer_delegate(Parser *parser __attribute__((unused)), MaybeAs
 Parser *integer(void)
 {
     Parser *self = make_parser(INTEGER);
+    if(NULL == self)
+    {
+        return NULL;
+    }
     self->vtable.delegate = integer_delegate;
 
     return self;

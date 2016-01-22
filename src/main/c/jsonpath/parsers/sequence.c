@@ -43,6 +43,7 @@
 
 static MaybeAst sequence_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
+    ensure_more_input(input);
     CompoundParser *self = (CompoundParser *)parser;
 
     for(size_t i = 0; i < vector_length(self->children); i++)

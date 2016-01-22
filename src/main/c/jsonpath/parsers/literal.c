@@ -52,9 +52,9 @@ static MaybeAst literal_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
     LiteralParser *self = (LiteralParser *)parser;
 
+    parser_trace("checking for literal '%s'", self->value);
     ensure_more_input(input);
     skip_whitespace(input);
-    parser_trace("checking for literal '%s'", self->value);
     if(consume_if(input, self->value))
     {
         // xxx - add literal to ast
