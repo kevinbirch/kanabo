@@ -185,14 +185,14 @@ static int apply_expression(const struct settings *settings, document_model *mod
     int result = EXIT_SUCCESS;
 
     MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));    
-    if(ERROR == maybe.tag)
+    if(PATH_ERROR == maybe.tag)
     {
         error("while parsing jsonpath expression", maybe.error.message, settings);
         result = EXIT_FAILURE;
         goto parse_error;
     }
 
-    nodelist *list = evaluate_expression(settings, model, maybe.path);
+    nodelist *list = evaluate_expression(settings, model, maybe.value);
     if(NULL == list)
     {
         result = EXIT_FAILURE;

@@ -55,11 +55,11 @@ void path_free(MaybeJsonPath result)
 {
     switch(result.tag)
     {
-        case ERROR:
+        case PATH_ERROR:
             free(result.error.message);
             break;
-        case JSONPATH:
-            jsonpath_free(result.path);
+        case PATH_VALUE:
+            jsonpath_free(result.value);
             break;
     }
 }

@@ -94,8 +94,8 @@ struct maybe_jsonpath_s
 {
     enum
     {
-        ERROR,
-        JSONPATH,
+        PATH_ERROR,
+        PATH_VALUE,
     } tag;
 
     union
@@ -106,7 +106,7 @@ struct maybe_jsonpath_s
             size_t             position;
             char              *message;
         } error;
-        JsonPath *path;
+        JsonPath *value;
     };
 };
 
