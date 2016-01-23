@@ -40,21 +40,20 @@
 
 static MaybeAst repetition_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
+    ensure_more_input(input);
     WrappedParser *self = (WrappedParser *)parser;
 
     MaybeAst result = bind(self->child, ast, input);
-    if(AST_VALUE != result.tag)
+    if(ERR_PREMATURE_END_OF_INPUT == result.code)
     {
-        return error(ERR_NO_ALTERNATIVE);
+        return result;
     }
     while(AST_VALUE == result.tag)
     {
         ast_add_child(ast.value, result.value);
         result = bind(self->child, ast, input);
-        // xxx - which ast object to return from this function?
     }
 
-    // xxx - log count of repetitions found
     return ast;
 }
 
@@ -71,6 +70,7 @@ Parser *repetition(Parser *expression)
         return NULL;
     }
     self->base.vtable.delegate = repetition_delegate;
+    asprintf(&self->base.repr, "repetition of %s", parser_repr(expression));
 
     return (Parser *)self;
 }

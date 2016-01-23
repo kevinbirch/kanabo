@@ -52,7 +52,6 @@ static MaybeAst literal_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
     LiteralParser *self = (LiteralParser *)parser;
 
-    parser_trace("checking for literal '%s'", self->value);
     ensure_more_input(input);
     skip_whitespace(input);
     if(consume_if(input, self->value))
@@ -81,6 +80,7 @@ Parser *literal(const char *value)
 
     parser_init((Parser *)self, LITERAL);
     self->base.vtable.delegate = literal_delegate;
+    asprintf(&self->base.repr, "literal '%s'", value);
     self->value = value;
 
     return (Parser *)self;

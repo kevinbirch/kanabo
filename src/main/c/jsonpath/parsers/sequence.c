@@ -49,7 +49,6 @@ static MaybeAst sequence_delegate(Parser *parser, MaybeAst ast, Input *input)
     for(size_t i = 0; i < vector_length(self->children); i++)
     {
         Parser *each = vector_get(self->children, i);
-        parser_trace("attempting sequence parser branch: %s", parser_name(each));
         MaybeAst branch_result = bind(each, ast, input);
         if(AST_VALUE == branch_result.tag)
         {
@@ -88,6 +87,7 @@ Parser *sequence_parser(Parser *one, Parser *two, ...)
         return NULL;
     }
     self->base.vtable.delegate = sequence_delegate;
+    asprintf(&self->base.repr, "sequence %zd branches", vector_length(self->children));
 
     return (Parser *)self;
 }

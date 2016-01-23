@@ -38,8 +38,9 @@
 #include "jsonpath/parsers/wrapped.h"
 
 
-static MaybeAst repetition_delegate(Parser *parser, MaybeAst ast, Input *input)
+static MaybeAst option_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
+    ensure_more_input(input);
     WrappedParser *self = (WrappedParser *)parser;
 
     MaybeAst result = bind(self->child, ast, input);
@@ -63,7 +64,8 @@ Parser *option(Parser *expression)
     {
         return NULL;
     }
-    self->base.vtable.delegate = repetition_delegate;
+    self->base.vtable.delegate = option_delegate;
+    asprintf(&self->base.repr, "option for %s", parser_name(expression));
 
     return (Parser *)self;
 }

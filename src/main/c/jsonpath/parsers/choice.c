@@ -41,47 +41,30 @@
 #include "jsonpath/parsers/compound.h"
 
 
-struct sequence_context_s
-{
-    Input    *input;
-    MaybeAst  ast;
-};
-
-typedef struct sequence_context_s Context;
-
-
-static bool choice_iterator(void *each, void *parameter)
-{
-    Parser *expression = (Parser *)each;
-    Context *context = (Context *)parameter;
-
-    set_mark(context->input);
-    skip_whitespace(context->input);    
-
-    parser_trace("attempting choice parser branch: %s", parser_name(expression));
-    MaybeAst result = bind(expression, context->ast, context->input);
-    if(AST_VALUE == result.tag)
-    {
-        ast_add_child(context->ast.value, result.value);
-        return true;
-    }
-
-    reset_to_mark(context->input);
-    return false;
-}
-
 static MaybeAst choice_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
     ensure_more_input(input);
     CompoundParser *self = (CompoundParser *)parser;
-    Context context = {input, ast};
-    if(!vector_any(self->children, choice_iterator, &context))
+
+    set_mark(input);
+    for(size_t i = 0; i < vector_length(self->children); i++)
     {
-        ast_free(ast.value);
-        return error(ERR_NO_ALTERNATIVE);
+        reset_to_mark(input);
+        Parser *each = vector_get(self->children, i);
+
+        MaybeAst result = bind(each, ast, input);
+        if(AST_VALUE == result.tag)
+        {
+            ast_add_child(ast.value, result.value);
+            return ast;
+        }
+        else if(ERR_PREMATURE_END_OF_INPUT == result.code)
+        {
+            return result;
+        }
     }
 
-    return ast;
+    return error(ERR_NO_ALTERNATIVE);
 }
 
 Parser *choice_parser(Parser *one, Parser *two, ...)
@@ -107,6 +90,7 @@ Parser *choice_parser(Parser *one, Parser *two, ...)
         return NULL;
     }
     self->base.vtable.delegate = choice_delegate;
+    asprintf(&self->base.repr, "choice %zd branches", vector_length(self->children));
 
     return (Parser *)self;
 }

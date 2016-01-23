@@ -51,16 +51,16 @@ typedef struct rule_parser_s RuleParser;
 
 static void rule_free(Parser *value)
 {
+    free(value->repr);
     RuleParser *self = (RuleParser *)value;
     parser_free(self->expression);
 }
 
 static MaybeAst rule_delegate(Parser *parser, MaybeAst ast, Input *input)
 {
-    ensure_more_input(input);
     RuleParser *self = (RuleParser *)parser;
+    ensure_more_input(input);
 
-    parser_trace("evaluating rule: %s", self->name);
     return bind(self->expression, ast, input);
 }
 
@@ -85,6 +85,7 @@ Parser *rule_parser(const char *name, Parser *expression)
     parser_init((Parser *)self, RULE);
     self->base.vtable.delegate = rule_delegate;
     self->base.vtable.free = rule_free;
+    asprintf(&self->base.repr, "rule %s", name);
     self->name = name;
     self->expression = expression;
 
