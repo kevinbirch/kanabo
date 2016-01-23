@@ -43,17 +43,15 @@
 #include "jsonpath/model.h"
 #include "jsonpath/logging.h"
 
-#undef nothing
-#define nothing(CODE, CURSOR, MSG) (MaybeJsonPath){ERROR, .error.code=(CODE), .error.position=(CURSOR), .error.message=(MSG)}
-#undef just
-#define just(PATH) (MaybeJsonPath){JSONPATH, .path=(PATH)}
 
-#define PRECOND_ELSE_NOTHING(ERR_CODE, ...)                       \
-    if(is_false(__VA_ARGS__, -1))                                 \
-    {                                                             \
-        char *msg = parser_status_message((ERR_CODE), 0, NULL);   \
-        return (MaybeJsonPath){.tag=ERROR, .error.code=(ERR_CODE), .error.message=msg}; \
+#define PRECOND_ELSE_NOTHING(CODE, ...)                                 \
+    if(is_false(__VA_ARGS__, -1))                                       \
+    {                                                                   \
+        return (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=0, .error.message=parser_status_message((CODE), NULL)}; \
     }
+
+#define path_error(CODE, INPUT) (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=position((INPUT)), .error.message=parser_status_message((CODE), (INPUT))}
+#define just_path(VALUE) (MaybeJsonPath){PATH_VALUE, .value=(VALUE)}
 
 
 static inline JsonPath *build_path(Ast *ast)
@@ -65,24 +63,14 @@ static inline JsonPath *build_path(Ast *ast)
     return NULL;
 }
 
-static inline MaybeJsonPath resolve_ast(MaybeAst *ast, Input *input)
+static inline MaybeJsonPath transform(MaybeAst *ast, Input *input)
 {
     if(AST_ERROR == ast->tag)
     {
-        char *msg = parser_status_message(ast->error.code,
-                                          ast->error.argument,
-                                          input);
-        return nothing(ast->error.code, position(input), msg);
-        
+        return path_error(ast->code, input);
     }
-    return (MaybeJsonPath){JSONPATH, .path=build_path(ast->value)};
+    return (MaybeJsonPath){PATH_VALUE, .value=build_path(ast->value)};
 
-}
-
-static inline MaybeAst execute(Parser *parser, Input *input)
-{
-    MaybeAst ast = (MaybeAst){AST_VALUE, .value=make_ast_root_node()};
-    return bind(parser, ast, input);
 }
 
 MaybeJsonPath parse(const uint8_t *expression, size_t length)
@@ -95,8 +83,14 @@ MaybeJsonPath parse(const uint8_t *expression, size_t length)
     Input input = make_input(expression, length);
 
     Parser *parser = jsonpath();
-    MaybeAst ast = execute(parser, &input);
-    parser_free(parser);
+    MaybeAst ast = just(make_ast_root_node());
+    MaybeAst result = bind(parser, ast, &input);
+    if(has_more(&input))
+    {
+        return path_error(ERR_UNEXPECTED_VALUE, &input);
+    }
+    // xxx - free parser!
+    //parser_free(parser);
 
-    return resolve_ast(&ast, &input);
+    return transform(&result, &input);
 }
