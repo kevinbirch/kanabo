@@ -68,10 +68,11 @@ struct parser_s
         void (*free)(Parser *self);
         MaybeAst (*delegate)(Parser *parser, MaybeAst ast, Input *input);
     } vtable;
+    char *repr;
 };
 
 #define ensure_more_input(INPUT) if(!has_more(INPUT)) \
-    {                                                 \                                         \
+    {                                                 \
         return error(ERR_PREMATURE_END_OF_INPUT);     \
     }
 
@@ -84,3 +85,6 @@ void parser_destructor(void *each);
 
 enum parser_kind parser_kind(Parser *self);
 const char *parser_name(Parser *self);
+const char *parser_repr(Parser *self);
+bool is_terminal(Parser *self);
+bool is_nonterminal(Parser *self);

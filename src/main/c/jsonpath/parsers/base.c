@@ -112,17 +112,33 @@ const char *parser_name(Parser *self)
     return PARSER_NAMES[parser_kind(self)];
 }
 
+const char *parser_repr(Parser *self)
+{
+    return NULL != self->repr ? (const char *)self->repr : parser_name(self);
+}
+
+bool is_terminal(Parser *self)
+{
+    return REPETITION < self->kind;
+}
+
+bool is_nonterminal(Parser *self)
+{
+    return !is_terminal(self);
+}
+
 MaybeAst bind(Parser *self, MaybeAst ast, Input *input)
 {
+    static size_t padding = 0;
     if(AST_ERROR == ast.tag)
     {
         return ast;    
     }
-    parser_trace("entering %s parser", parser_name(self));
+    parser_trace("%*sentering %s", (2 * padding++), "", parser_repr(self));
     MaybeAst result = self->vtable.delegate(self, ast, input);
     parser_trace(
-        "leaving %s parser, %s",
-        parser_name(self),
+        "%*sleaving %s, %s", (2 * --padding), "",
+        is_nonterminal(self) ? parser_repr(self) : parser_name(self),
         AST_ERROR == result.tag ? "failure" : "success");
     return result;
 }
