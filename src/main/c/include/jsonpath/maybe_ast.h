@@ -52,20 +52,14 @@ struct maybe_ast_s
 
     union
     {
-        struct
-        {
-            parser_result_code  code;
-            uint8_t argument;
-        } error;
+        parser_result_code code;
         Ast *value;
     };
 };
 
 typedef struct maybe_ast_s MaybeAst;
 
-#define collection() (MaybeAst){AST_VALUE, .value=make_ast_node(AST_COLLECTION, NULL)}
-#define error(CODE) (MaybeAst){AST_ERROR, .error.code=(CODE), .error.argument=0}
-#define fail()
+#define error(CODE) (MaybeAst){AST_ERROR, .code=(CODE)}
 #define nothing() (MaybeAst){AST_VALUE, .value=&AST_NONE_VALUE}
 #define just(AST) (MaybeAst){AST_VALUE, .value=(AST)}
 

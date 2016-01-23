@@ -58,7 +58,7 @@ static const char * const MESSAGES[] =
     "Unable to allocate memory.",
     "Not a JSONPath expression.",
     "At position %d: premature end of input.",
-    "At position %d: unexpected character '%c', was expecting '%c' instead.",
+    "At position %d: unexpected character '%c'.",
     "At position %d: empty predicate.",
     "At position %d: missing closing predicate delimiter `]' before end of step.",
     "At position %d: unsupported predicate found.",
@@ -71,7 +71,7 @@ static const char * const MESSAGES[] =
 };
 
 
-char *parser_status_message(parser_result_code code, uint8_t argument, Input *input)
+char *parser_status_message(parser_result_code code, Input *input)
 {
     char *message = NULL;
     int result = 0;
@@ -91,12 +91,6 @@ char *parser_status_message(parser_result_code code, uint8_t argument, Input *in
             result = asprintf(&message, MESSAGES[code], position(input) + 1);
             break;
         case ERR_UNEXPECTED_VALUE:
-            result = asprintf(&message,
-                              MESSAGES[code],
-                              position(input) + 1,
-                              input->data[input->position],
-                              argument);
-            break;
         case ERR_EXPECTED_NAME_CHAR:
             result = asprintf(&message,
                               MESSAGES[code],

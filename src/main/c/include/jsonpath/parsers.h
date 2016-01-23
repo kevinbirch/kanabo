@@ -81,4 +81,4 @@ void parser_free(Parser *value);
 
 /* Parser Execution */
 
-char *parser_status_message(parser_result_code code, uint8_t argument, Input *input);
+char *parser_status_message(parser_result_code code, Input *input);
