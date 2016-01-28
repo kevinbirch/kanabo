@@ -64,7 +64,7 @@ static MaybeAst choice_delegate(Parser *parser, MaybeAst ast, Input *input)
         }
     }
 
-    return error(ERR_NO_ALTERNATIVE);
+    return error(ERR_UNEXPECTED_VALUE);
 }
 
 Parser *choice_parser(Parser *one, Parser *two, ...)
