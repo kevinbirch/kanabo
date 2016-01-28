@@ -173,21 +173,83 @@ END_TEST
 START_TEST (missing_dot)
 {
     char *expression = "$x";
-    reset_errno();
     MaybeJsonPath maybe = parse((uint8_t *)expression, 2);
-    
+
     assert_parser_failure(expression, maybe, ERR_UNEXPECTED_VALUE, 1);
     path_free(maybe);
 }
 END_TEST
 
-/*
+START_TEST (unclosed_empty_root_predicate)
+{
+    char *expression = "$[";
+    MaybeJsonPath maybe = parse((uint8_t *)expression, 2);
+
+    assert_parser_failure(expression, maybe, ERR_PREMATURE_END_OF_INPUT, 2);
+    path_free(maybe);
+}
+END_TEST
+
+START_TEST (stray_root_predicate_closure)
+{
+    char *expression = "$]";
+    MaybeJsonPath maybe = parse((uint8_t *)expression, 2);
+
+    assert_parser_failure(expression, maybe, ERR_UNEXPECTED_VALUE, 1);
+    path_free(maybe);
+}
+END_TEST
+
 START_TEST (relative_path_begins_with_dot)
 {
     char *expression = ".x";
     MaybeJsonPath maybe = parse((uint8_t *)expression, 2);
-    
+
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NAME_CHAR, 0);
+    path_free(maybe);
+}
+END_TEST
+
+// need tests for all forbidden control chars
+
+/*
+
+START_TEST (empty_root_predicate)
+{
+    char *expression = "$[].bar";
+    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    
+    assert_parser_failure(expression, maybe, ERR_EMPTY_PREDICATE, 2);
+    path_free(maybe);
+}
+END_TEST
+
+START_TEST (premature_unclosed_quoted_step)
+{
+    char *expression = "$.foo.'";
+    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+
+    assert_parser_failure(expression, maybe, ERR_PREMATURE_END_OF_INPUT, 7);
+    path_free(maybe);
+}
+END_TEST
+
+START_TEST (unclosed_quoted_step)
+{
+    char *expression = "$.foo.'bar";
+    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+
+    assert_parser_failure(expression, maybe, ERR_PREMATURE_END_OF_INPUT, 10);
+    path_free(maybe);
+}
+END_TEST
+
+START_TEST (unclosed_escaped_quoted_step)
+{
+    char *expression = "$.foo.'bar\\'";
+    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+
+    assert_parser_failure(expression, maybe, ERR_PREMATURE_END_OF_INPUT, 11);
     path_free(maybe);
 }
 END_TEST
@@ -196,9 +258,8 @@ START_TEST (quoted_empty_step)
 {
     char *expression = "$.foo.''.bar";
     MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
-    
+
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NAME_CHAR, 7);
-    
     path_free(maybe);
 }
 END_TEST
@@ -395,6 +456,24 @@ START_TEST (relative_multi_step)
     assert_no_predicate(maybe.value, 0);
     assert_no_predicate(maybe.value, 1);
     assert_no_predicate(maybe.value, 2);
+
+    path_free(maybe);
+}
+END_TEST
+
+START_TEST (quoted_escape_step)
+{
+    char *expression = "$.foo.'mon\\'key'.bar";
+    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+
+    assert_parser_success(expression, maybe, ABSOLUTE_PATH, 4);
+    assert_root_step(maybe.value);
+    assert_single_name_step(maybe.value, 1, "foo");
+    assert_single_name_step(maybe.value, 2, "mon'key");
+    assert_single_name_step(maybe.value, 3, "bar");
+    assert_no_predicate(maybe.value, 1);
+    assert_no_predicate(maybe.value, 2);
+    assert_no_predicate(maybe.value, 3);
 
     path_free(maybe);
 }
