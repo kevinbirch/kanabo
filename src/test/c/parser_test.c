@@ -61,7 +61,7 @@
         assert_int_eq(PATH_ERROR, (MAYBE).tag);                              \
         assert_int_eq((EXPECTED_RESULT), (MAYBE).error.code);           \
         assert_not_null((MAYBE).error.message);                         \
-        log_info("parser test", "for expression: '%s', received expected failure message: '%s'", (EXPRESSION), (MAYBE).error.message); \
+        log_debug("parser test", "for expression: '%s', received expected failure message: '%s'", (EXPRESSION), (MAYBE).error.message); \
         assert_uint_eq((EXPECTED_POSITION), (MAYBE).error.position);    \
     } while(0)
 
