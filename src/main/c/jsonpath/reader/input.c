@@ -117,14 +117,13 @@ void consume_many(Input *self, size_t count)
     }
 }
 
-bool consume_if(Input *self, const char *value)
+bool consume_if(Input *self, const uint8_t *value, size_t length)
 {
     if(!has_more(self))
     {
         return false;
     }
 
-    size_t length = strlen(value);
     if(length > remaining(self))
     {
         return false;
