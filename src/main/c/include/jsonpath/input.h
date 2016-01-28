@@ -70,7 +70,7 @@ void skip_whitespace(Input *input);
 uint8_t peek(Input *input);
 uint8_t consume_char(Input *input);
 void consume_many(Input *input, size_t count);
-bool consume_if(Input *input, const char *value);
+bool consume_if(Input *input, const uint8_t *value, size_t length);
 void push_back(Input *input);
 
 bool looking_at(Input *input, const char *value);
