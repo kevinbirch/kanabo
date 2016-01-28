@@ -41,8 +41,9 @@
 
 struct literal_parser_s
 {
-    Parser      base;
-    const char *value;
+    Parser   base;
+    size_t   length;
+    uint8_t  value[];
 };
 
 typedef struct literal_parser_s LiteralParser;
@@ -54,14 +55,13 @@ static MaybeAst literal_delegate(Parser *parser, MaybeAst ast, Input *input)
 
     ensure_more_input(input);
     skip_whitespace(input);
-    if(consume_if(input, self->value))
+    if(consume_if(input, self->value, self->length))
     {
         // xxx - add literal to ast
         return ast;
     }
     else
     {
-        // xxx - need to return the expected literal here! `error_with_context`? error structs and handlers?
         return error(ERR_UNEXPECTED_VALUE);
     }
 }
@@ -72,7 +72,8 @@ Parser *literal(const char *value)
     {
         return NULL;
     }
-    LiteralParser *self = (LiteralParser *)calloc(1, sizeof(LiteralParser));
+    size_t length = strlen(value);
+    LiteralParser *self = calloc(1, sizeof(LiteralParser) + length);
     if(NULL == self)
     {
         return NULL;
@@ -81,7 +82,8 @@ Parser *literal(const char *value)
     parser_init((Parser *)self, LITERAL);
     self->base.vtable.delegate = literal_delegate;
     asprintf(&self->base.repr, "literal '%s'", value);
-    self->value = value;
+    memcpy(self->value, value, length);
+    self->length = length;
 
     return (Parser *)self;
 }
