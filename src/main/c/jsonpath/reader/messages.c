@@ -54,20 +54,21 @@ static const char * const MESSAGES[] =
 {
     "Success.",
     "Expression was NULL.",
-    "Expression length was 0.",
+    "Expression length was zero.",
     "Unable to allocate memory.",
-    "Not a JSONPath expression.",
-    "At position %d: premature end of input.",
-    "At position %d: unexpected character '%c'.",
-    "At position %d: empty predicate.",
-    "At position %d: missing closing predicate delimiter `]' before end of step.",
-    "At position %d: unsupported predicate found.",
-    "At position %d: extra characters after valid predicate definition.",
-    "At position %d: expected a name character, but found '%c' instead.",
-    "At position %d: expected a node type test.",
-    "At position %d: expected an integer.",
-    "At position %d: invalid number.",
-    "At position %d: slice step value must be non-zero."
+    "At position %zd: premature end of input.",
+    "At position %zd: unexpected character.",
+    "At position %zd: expected a name character.",
+    "At position %zd: invalid control character.",
+    "At position %zd: unsupported escape sequence.",
+    "At position %zd: empty predicate.",
+    "At position %zd: missing closing predicate delimiter `]' before end of step.",
+    "At position %zd: unsupported predicate found.",
+    "At position %zd: extra characters after valid predicate definition.",
+    "At position %zd: expected a node type test.",
+    "At position %zd: expected an integer.",
+    "At position %zd: invalid number.",
+    "At position %zd: slice step value must be non-zero."
 };
 
 
