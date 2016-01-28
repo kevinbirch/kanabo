@@ -105,6 +105,15 @@ LICENSE file for more details.
 * use sentinels for vararg parsers instead of NULL, error on null args
 * create parser error classes with context for building message
 * try to reuse parsers instead of creating new every time
+* need a balance parser to control bracket balancing
+* need to feed stop chars into unqoted name parser
+* error on unknown escape sequence
+* feed quote char into quoted string parser
+* create simplifed static error message reprs for logging
+* need tests for all forbidden control chars
+* make repr dynamic
+* use balanced parser for quoted string
+* add character filter delegate to string parser
 
 ### loader
 
