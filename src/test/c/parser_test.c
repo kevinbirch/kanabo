@@ -973,8 +973,11 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input_case, missing_step_test);
     tcase_add_test(bad_input_case, missing_recursive_step_test);
     tcase_add_test(bad_input_case, missing_dot);
-    /*
+    tcase_add_test(bad_input_case, unclosed_empty_root_predicate);
+    tcase_add_test(bad_input_case, stray_root_predicate_closure);
     tcase_add_test(bad_input_case, relative_path_begins_with_dot);
+    /*
+    tcase_add_test(bad_input_case, empty_root_predicate);
     tcase_add_test(bad_input_case, quoted_empty_step);
     tcase_add_test(bad_input_case, bogus_type_test_name);
     tcase_add_test(bad_input_case, bogus_type_test_name_oblong);
