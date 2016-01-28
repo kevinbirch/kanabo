@@ -896,22 +896,15 @@ END_TEST
 
 START_TEST (bad_path_input)
 {
-    reset_errno();
     assert_path_length(NULL, 0);
-    assert_errno(EINVAL);
-    reset_errno();
     assert_null(path_get(NULL, 0));
-    assert_errno(EINVAL);
     
-    reset_errno();
     char *expression = "$";
     MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
 
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 1);
 
-    reset_errno();
     assert_null(path_get(maybe.value, 1));
-    assert_errno(EINVAL);
 
     path_free(maybe);
 }
@@ -919,32 +912,21 @@ END_TEST
 
 START_TEST (bad_step_input)
 {
-    reset_errno();
     assert_false(step_has_predicate(NULL));
-    assert_errno(EINVAL);
 
-    reset_errno();
     assert_null(step_predicate(NULL));
-    assert_errno(EINVAL);
     
-    reset_errno();
     char *expression = "$.foo.array()";
     MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
 
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
 
     Step *step2 = path_get(maybe.value, 2);
-    reset_errno();
     assert_uint_eq(0, name_test_step_length(step2));
-    assert_errno(EINVAL);
 
-    reset_errno();
     assert_null(name_test_step_name(step2));
-    assert_errno(EINVAL);
 
-    reset_errno();
     assert_null(step_predicate(step2));
-    assert_errno(EINVAL);
 
     path_free(maybe);
 }
@@ -952,56 +934,31 @@ END_TEST
 
 START_TEST (bad_predicate_input)
 {
-    reset_errno();
     assert_subscript_index(NULL, 0);
-    assert_errno(EINVAL);
 
-    reset_errno();
     assert_slice_from(NULL, 0);
-    assert_errno(EINVAL);
 
-    reset_errno();
     assert_slice_to(NULL, 0);
-    assert_errno(EINVAL);
 
-    reset_errno();
     assert_slice_step(NULL, 0);
-    assert_errno(EINVAL);
 
-    reset_errno();
     assert_null(join_predicate_left(NULL));
-    assert_errno(EINVAL);
 
-    reset_errno();
     assert_null(join_predicate_right(NULL));
-    assert_errno(EINVAL);
 
-    reset_errno();
     char *expression = "$.foo[42].bar[*]";
     MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
 
     Predicate *subscript = step_predicate(path_get(maybe.value, 1));
-    reset_errno();
     assert_int_eq(0, slice_predicate_to(subscript));
-    assert_errno(EINVAL);
-    reset_errno();
     assert_int_eq(0, slice_predicate_from(subscript));
-    assert_errno(EINVAL);
-    reset_errno();
     assert_int_eq(0, slice_predicate_step(subscript));
-    assert_errno(EINVAL);
 
     Predicate *wildcard_pred = step_predicate(path_get(maybe.value, 2));
-    reset_errno();
     assert_uint_eq(0, subscript_predicate_index(wildcard_pred));
-    assert_errno(EINVAL);
-    reset_errno();
     assert_null(join_predicate_left(wildcard_pred));
-    assert_errno(EINVAL);
-    reset_errno();
     assert_null(join_predicate_right(wildcard_pred));
-    assert_errno(EINVAL);
 
     path_free(maybe);
 }
