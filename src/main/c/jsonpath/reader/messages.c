@@ -76,12 +76,12 @@ char *parser_status_message(parser_result_code code, Input *input)
 {
     char *message = NULL;
     int result = 0;
+    size_t reported_position = position(input) + 1;
 
     switch(code)
     {
         case ERR_PREMATURE_END_OF_INPUT:
-            result = asprintf(&message, MESSAGES[code], position(input));
-            break;
+            reported_position--;
         case ERR_EXPECTED_NODE_TYPE_TEST:
         case ERR_EMPTY_PREDICATE:
         case ERR_UNBALANCED_PRED_DELIM:
@@ -89,14 +89,9 @@ char *parser_status_message(parser_result_code code, Input *input)
         case ERR_UNSUPPORTED_PRED_TYPE:
         case ERR_EXPECTED_INTEGER:
         case ERR_INVALID_NUMBER:
-            result = asprintf(&message, MESSAGES[code], position(input) + 1);
-            break;
         case ERR_UNEXPECTED_VALUE:
         case ERR_EXPECTED_NAME_CHAR:
-            result = asprintf(&message,
-                              MESSAGES[code],
-                              position(input) + 1,
-                              input->data[input->position]);
+            result = asprintf(&message, MESSAGES[code], reported_position);
             break;
         default:
             message = strdup(MESSAGES[code]);
