@@ -423,7 +423,7 @@ static Parser *name(void)
 {
     return rule(
         choice(
-            quoted_string(),
+            quoted_string('\''),
             string()));
 }
 
