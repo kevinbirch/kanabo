@@ -43,9 +43,9 @@ static MaybeAst quoted_string_delegate(Parser *parser __attribute__((unused)), M
 {
     ensure_more_input(input);
     skip_whitespace(input);
+
     return ast;
 }
-
 
 Parser *quoted_string(void)
 {
@@ -56,5 +56,5 @@ Parser *quoted_string(void)
     }
     self->vtable.delegate = quoted_string_delegate;
 
-    return self;
+    return (Parser *)self;
 }
