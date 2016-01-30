@@ -38,30 +38,13 @@
 
 #pragma once
 
+#include "maybe.h"
 #include "jsonpath/parsers.h"
 #include "jsonpath/ast.h"
 
+define_maybe(MaybeAst, Ast *)
 
-struct maybe_ast_s
-{
-    enum
-    {
-        AST_ERROR,
-        AST_VALUE
-    } tag;
-
-    union
-    {
-        parser_result_code code;
-        Ast *value;
-    };
-};
-
-typedef struct maybe_ast_s MaybeAst;
-
-#define error(CODE) (MaybeAst){AST_ERROR, .code=(CODE)}
-#define nothing() (MaybeAst){AST_VALUE, .value=&AST_NONE_VALUE}
-#define just(AST) (MaybeAst){AST_VALUE, .value=(AST)}
-
+#define just_ast(VALUE) (MaybeAst){JUST, .value=(VALUE)}
+#define nothing_ast(CODE) (MaybeAst){NOTHING, .code=(CODE)}
 
 MaybeAst bind(Parser *parser, MaybeAst ast, Input *input);

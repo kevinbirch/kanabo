@@ -71,9 +71,9 @@ struct parser_s
     char *repr;
 };
 
-#define ensure_more_input(INPUT) if(!has_more(INPUT)) \
-    {                                                 \
-        return error(ERR_PREMATURE_END_OF_INPUT);     \
+#define ensure_more_input(INPUT) if(!has_more(INPUT))   \
+    {                                                   \
+        return nothing_ast(ERR_PREMATURE_END_OF_INPUT); \
     }
 
 

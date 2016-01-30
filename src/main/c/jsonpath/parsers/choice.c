@@ -53,7 +53,7 @@ static MaybeAst choice_delegate(Parser *parser, MaybeAst ast, Input *input)
         Parser *each = vector_get(self->children, i);
 
         MaybeAst result = bind(each, ast, input);
-        if(AST_VALUE == result.tag)
+        if(is_value(result))
         {
             ast_add_child(ast.value, result.value);
             return ast;
@@ -64,7 +64,7 @@ static MaybeAst choice_delegate(Parser *parser, MaybeAst ast, Input *input)
         }
     }
 
-    return error(ERR_UNEXPECTED_VALUE);
+    return nothing_ast(ERR_UNEXPECTED_VALUE);
 }
 
 Parser *choice_parser(Parser *one, Parser *two, ...)

@@ -62,7 +62,7 @@ static MaybeAst literal_delegate(Parser *parser, MaybeAst ast, Input *input)
     }
     else
     {
-        return error(ERR_UNEXPECTED_VALUE);
+        return nothing_ast(ERR_UNEXPECTED_VALUE);
     }
 }
 

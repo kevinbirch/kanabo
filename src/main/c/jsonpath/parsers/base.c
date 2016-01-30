@@ -130,7 +130,7 @@ bool is_nonterminal(Parser *self)
 MaybeAst bind(Parser *self, MaybeAst ast, Input *input)
 {
     static size_t padding = 0;
-    if(AST_ERROR == ast.tag)
+    if(is_nothing(ast))
     {
         return ast;    
     }
@@ -139,6 +139,6 @@ MaybeAst bind(Parser *self, MaybeAst ast, Input *input)
     parser_trace(
         "%*sleaving %s, %s", (2 * --padding), "",
         is_nonterminal(self) ? parser_repr(self) : parser_name(self),
-        AST_ERROR == result.tag ? "failure" : "success");
+        is_nothing(result) ? "failure" : "success");
     return result;
 }

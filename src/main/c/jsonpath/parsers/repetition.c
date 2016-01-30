@@ -48,7 +48,7 @@ static MaybeAst repetition_delegate(Parser *parser, MaybeAst ast, Input *input)
     {
         return result;
     }
-    while(AST_VALUE == result.tag)
+    while(is_value(result))
     {
         ast_add_child(ast.value, result.value);
         result = bind(self->child, ast, input);

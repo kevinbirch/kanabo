@@ -44,7 +44,7 @@ static MaybeAst option_delegate(Parser *parser, MaybeAst ast, Input *input)
     WrappedParser *self = (WrappedParser *)parser;
 
     MaybeAst result = bind(self->child, ast, input);
-    if(AST_VALUE == result.tag)
+    if(is_value(result))
     {
         ast_add_child(ast.value, result.value);
     }

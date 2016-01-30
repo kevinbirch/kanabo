@@ -50,7 +50,7 @@ static MaybeAst sequence_delegate(Parser *parser, MaybeAst ast, Input *input)
     {
         Parser *each = vector_get(self->children, i);
         MaybeAst branch_result = bind(each, ast, input);
-        if(AST_VALUE == branch_result.tag)
+        if(is_value(branch_result))
         {
             ast_add_child(ast.value, branch_result.value);
         }
