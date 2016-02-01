@@ -80,7 +80,6 @@ struct parser_s
 Parser *make_parser(enum parser_kind kind);
 Parser *parser_init(Parser *self, enum parser_kind kind);
 
-void parser_free(Parser *self);
 void parser_destructor(void *each);
 
 enum parser_kind parser_kind(Parser *self);
