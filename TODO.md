@@ -114,6 +114,7 @@ LICENSE file for more details.
 * make repr dynamic
 * use balanced parser for quoted string
 * add character filter delegate to string parser
+* use push_back to reset input position to simplify parser message handling
 
 ### loader
 
