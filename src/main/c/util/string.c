@@ -99,6 +99,11 @@ size_t string_get_length(String *self)
     return self->length;
 }
 
+uint8_t string_get_char(const String *self, size_t index)
+{
+    return self->value[index];
+}
+
 const char *string_as_c_str(String *self)
 {
     return (const char *)self->value;
@@ -186,6 +191,11 @@ void mstring_free(MutableString *self)
 size_t mstring_get_length(MutableString *self)
 {
     return self->base.length;
+}
+
+uint8_t mstring_get_char(const MutableString *self, size_t index)
+{
+    return self->base.value[index];
 }
 
 size_t mstring_get_capacity(MutableString *self)
