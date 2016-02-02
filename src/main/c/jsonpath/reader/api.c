@@ -47,10 +47,10 @@
 #define PRECOND_ELSE_NOTHING(CODE, ...)                                 \
     if(is_false(__VA_ARGS__, -1))                                       \
     {                                                                   \
-        return (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=0, .error.message=parser_status_message((CODE), NULL)}; \
+        return (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=0, .error.message=parser_status_message((CODE), 0)}; \
     }
 
-#define path_error(CODE, INPUT) (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=position((INPUT)), .error.message=parser_status_message((CODE), (INPUT))}
+#define path_error(CODE, POSITION) (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=(POSITION), .error.message=parser_status_message((CODE), (POSITION))}
 #define just_path(VALUE) (MaybeJsonPath){PATH_VALUE, .value=(VALUE)}
 
 
@@ -65,9 +65,9 @@ static inline JsonPath *build_path(Ast *ast)
 
 static inline MaybeJsonPath transform(MaybeAst *ast, Input *input)
 {
-    if(AST_ERROR == ast->tag)
+    if(is_nothing(*ast))
     {
-        return path_error(ast->code, input);
+        return path_error(ast->code, position(input));
     }
     return (MaybeJsonPath){PATH_VALUE, .value=build_path(ast->value)};
 
@@ -83,11 +83,11 @@ MaybeJsonPath parse(const uint8_t *expression, size_t length)
     Input input = make_input(expression, length);
 
     Parser *parser = jsonpath();
-    MaybeAst ast = just(make_ast_root_node());
+    MaybeAst ast = just_ast(make_ast_root_node());
     MaybeAst result = bind(parser, ast, &input);
     if(has_more(&input))
     {
-        return path_error(ERR_UNEXPECTED_VALUE, &input);
+        return path_error(ERR_UNEXPECTED_VALUE, position(&input));
     }
     // xxx - free parser!
     //parser_free(parser);
