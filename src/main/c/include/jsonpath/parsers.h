@@ -39,13 +39,16 @@
 #pragma once
 
 
-#include <stdint.h>
+#include "maybe.h"
+#include "str.h"
 
 #include "jsonpath/input.h"
 #include "jsonpath/codes.h"
 
 typedef struct parser_s Parser;
 
+#define just_string(VALUE) (MaybeString){JUST, .value=(VALUE)}
+#define nothing_string(CODE) (MaybeString){NOTHING, .code=(CODE)}
 
 /* Non-terminal parsers */
 
@@ -72,8 +75,11 @@ Parser *integer(void);
 Parser *signed_integer(void);
 Parser *non_zero_signed_integer(void);
 
-Parser *quoted_string(void);
-Parser *string(void);
+define_maybe(MaybeString, MutableString *)
+
+typedef MaybeString (*character_filter)(Input *input);
+MaybeString default_filter(Input *input);
+Parser *string(character_filter filter, const char *stop_characters);
 
 /* Destructor */
 
