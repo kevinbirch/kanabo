@@ -39,24 +39,93 @@
 #include "jsonpath/parsers/base.h"
 
 
-static MaybeAst string_delegate(Parser *parser __attribute__((unused)), MaybeAst ast, Input *input)
+struct string_parser_s
 {
-    ensure_more_input(input);
+    Parser           base;
+    character_filter filter;
+    String          *stop;
+};
+
+typedef struct string_parser_s StringParser;
+
+
+MaybeString default_filter(Input *input)
+{
+    uint8_t current = consume_char(input);
+    MutableString *result = make_mstring_with_char(current);
+    if(NULL == result)
+    {
+        return nothing_string(ERR_PARSER_OUT_OF_MEMORY);
+    }
+    return just_string(result);
+}
+
+static void string_parser_free(Parser *parser)
+{
+    StringParser *self = (StringParser *)parser;
+    string_free(self->stop);
+    free(self);
+}
+
+static inline bool is_stop_char(StringParser *self, uint8_t value)
+{
+    for(size_t i = 0; i < string_length(self->stop); i++)
+    {
+        if(value == string_get(self->stop, i))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+static MaybeAst string_delegate(Parser *parser, MaybeAst ast, Input *input)
+{
     skip_whitespace(input);
+    ensure_more_input(input);
+
+    StringParser *self = (StringParser *)parser;
+
+    MutableString *result = make_mstring(4);
+    while(true)
+    {
+        if(!has_more(input) || is_stop_char(self, peek(input)))
+        {
+            break;
+        }
+        MaybeString maybe = self->filter(input);
+        if(is_nothing(maybe))
+        {
+            mstring_free(result);
+            return nothing_ast(code(maybe));
+        }
+        mstring_append(&result, value(maybe));
+    }
+
+    String *string = mstring_as_string(result);
+    Ast *string_node = make_ast_node(AST_STRING, string);
+    ast_add_child(value(ast), string_node);
+    mstring_free(result);
     return ast;
 }
 
-Parser *string(void)
+Parser *string(character_filter filter, const char *stop_characters)
 {
-    parser_trace("xxx - building string parser");
-    Parser *self = make_parser(STRING);
-    if(NULL == self)
+    if(NULL == filter)
     {
-        parser_trace("failed to build string parser");
         return NULL;
     }
-    self->vtable.delegate = string_delegate;
-    parser_trace("built string parser: %d", self->kind);
+    StringParser *self = calloc(1, sizeof(StringParser));
+    if(NULL == self)
+    {
+        return NULL;
+    }
 
-    return self;
+    parser_init((Parser *)self, STRING);
+    self->base.vtable.delegate = string_delegate;
+    self->base.vtable.free = string_parser_free;
+    self->filter = filter;
+    self->stop = make_string(stop_characters);
+
+    return (Parser *)self;
 }

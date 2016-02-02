@@ -51,17 +51,22 @@ String *make_string(const char *value);
 void    string_free(String *self);
 
 String *string_copy(const String *self);
+uint8_t string_get_char(const String *self, size_t index);
 
 size_t string_get_length(String *self);
 const char *string_as_c_str(String *self);
 
 #define string_length(SELF) _Generic((SELF),                           \
-                                     String: string_get_length,        \
-                                     MutableString: mstring_get_length \
+                                     String *: string_get_length,        \
+                                     MutableString *: mstring_get_length \
                                      )(SELF)
+#define string_get(SELF, INDEX) _Generic((SELF),                    \
+                                         String *: string_get_char,     \
+                                         MutableString *: mstring_get_char \
+                                  )(SELF, INDEX)
 #define string_as_c_string(SELF) _Generic((SELF), \
-                                          String: string_as_c_str, \
-                                          MutableString: mstring_as_c_str, \
+                                          String *: string_as_c_str, \
+                                          MutableString *: mstring_as_c_str, \
                                           )(SELF)
 
 MutableString *make_mstring(size_t capacity);
@@ -70,9 +75,10 @@ MutableString *make_mstring_with_c_str(const char *value);
 MutableString *make_mstring_with_string(const String *value);
 void           mstring_free(MutableString *self);
 
-size_t      mstring_get_length(MutableString *self);
-size_t      mstring_get_capacity(MutableString *self);
-bool        mstring_has_capacity(MutableString *self, size_t length);
+size_t   mstring_get_length(MutableString *self);
+size_t   mstring_get_capacity(MutableString *self);
+bool     mstring_has_capacity(MutableString *self, size_t length);
+uint8_t  mstring_get_char(const MutableString *self, size_t index);
 
 MutableString *mstring_copy(MutableString *self);
 String        *mstring_as_string(MutableString *self);
