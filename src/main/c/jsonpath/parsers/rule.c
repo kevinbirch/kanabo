@@ -41,9 +41,10 @@
 
 struct rule_parser_s
 {
-    Parser      base;
-    const char *name;
-    Parser     *expression;
+    Parser        base;
+    const char   *name;
+    Parser       *expression;
+    ast_rewriter  rewriter;
 };
 
 typedef struct rule_parser_s RuleParser;
@@ -61,10 +62,15 @@ static MaybeAst rule_delegate(Parser *parser, MaybeAst ast, Input *input)
     RuleParser *self = (RuleParser *)parser;
     ensure_more_input(input);
 
-    return bind(self->expression, ast, input);
+    return self->rewriter(bind(self->expression, ast, input));
 }
 
-Parser *rule_parser(const char *name, Parser *expression)
+MaybeAst default_rewriter(MaybeAst ast)
+{
+    return ast;
+}
+
+Parser *rule_parser(const char *name, Parser *expression, ast_rewriter rewriter)
 {
     if(NULL == name)
     {
@@ -88,6 +94,7 @@ Parser *rule_parser(const char *name, Parser *expression)
     asprintf(&self->base.repr, "rule %s", name);
     self->name = name;
     self->expression = expression;
+    self->rewriter = rewriter;
 
     return (Parser *)self;
 }

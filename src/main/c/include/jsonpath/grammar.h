@@ -35,7 +35,9 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
 #pragma once
+
 
 #include "jsonpath/parsers.h"
 

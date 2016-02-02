@@ -35,8 +35,11 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
 #include "jsonpath/grammar.h"
 #include "jsonpath/filters.h"
+#include "jsonpath/filters.h"
+#include "jsonpath/rewriters.h"
 
 
 static Parser *absolute_path(void);
@@ -96,7 +99,7 @@ static Parser *boolean(void);
  */
 Parser *jsonpath(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             absolute_path(),
             relative_path()));
@@ -111,7 +114,7 @@ Parser *jsonpath(void)
  */
 static Parser *absolute_path(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             root_step(),
             repetition(qualified_step())));
@@ -124,7 +127,7 @@ static Parser *absolute_path(void)
  */
 static Parser *root_step(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             literal("$"),
             option(predicate_expression())));
@@ -138,7 +141,7 @@ static Parser *root_step(void)
  */
 static Parser *qualified_step(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             recursive_step(),
             relative_step()));
@@ -151,7 +154,7 @@ static Parser *qualified_step(void)
  */
 static Parser *recursive_step(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             literal(".."),
             step()));
@@ -164,7 +167,7 @@ static Parser *recursive_step(void)
  */
 static Parser *relative_step(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             literal("."),
             step()));
@@ -177,7 +180,7 @@ static Parser *relative_step(void)
  */
 static Parser *relative_path(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             choice(
                 relative_head_step(),
@@ -192,7 +195,7 @@ static Parser *relative_path(void)
  */
 static Parser *relative_head_step(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             literal("@"),
             option(predicate_expression())));
@@ -206,7 +209,7 @@ static Parser *relative_head_step(void)
  */
 static Parser *step(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             selector(),
             option(predicate_expression())));
@@ -220,7 +223,7 @@ static Parser *step(void)
 /*
 static Parser *transformer(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             literal("="),
             value()));
@@ -235,7 +238,7 @@ static Parser *transformer(void)
 /*
 static Parser *object(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             literal("{"),
             option(sequence(
@@ -255,7 +258,7 @@ static Parser *object(void)
 /*
 static Parser *key_value(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             string(),
             literal(":"),
@@ -271,7 +274,7 @@ static Parser *key_value(void)
 /*
 static Parser *array(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             literal("["),
             option(sequence(
@@ -294,7 +297,7 @@ static Parser *array(void)
 static Parser *value(void)
 {
     // xxx - need a latch here to return a reference when tripped
-    return rule(
+    return simple_rule(
         choice(
             scalar(),
             array(),
@@ -313,7 +316,7 @@ static Parser *value(void)
  */
 static Parser *selector(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             tag_selector(),
             anchor_selector(),
@@ -328,7 +331,7 @@ static Parser *selector(void)
  */
 static Parser *tag_selector(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             literal("!"),
             name()));
@@ -341,7 +344,7 @@ static Parser *tag_selector(void)
  */
 static Parser *anchor_selector(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             literal("&"),
             name()));
@@ -354,7 +357,7 @@ static Parser *anchor_selector(void)
  */
 static Parser *type_selector(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             type(),
             literal("("),
@@ -376,7 +379,7 @@ static Parser *type_selector(void)
  */
 static Parser *type(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             literal("object"),
             literal("array"),
@@ -397,7 +400,7 @@ static Parser *type(void)
  */
 static Parser *name_selector(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             wildcard(),
             name()));
@@ -410,7 +413,7 @@ static Parser *name_selector(void)
  */
 static Parser *wildcard(void)
 {
-    return rule(
+    return simple_rule(
         literal("*"));
 }
 
@@ -441,7 +444,8 @@ static Parser *name(void)
                 literal("'"),
                 term(quoted_name_filter, "'"),
                 literal("'")),
-            term(name_filter, ".[")));
+            term(name_filter, ".[")),
+        name_rule_rewriter);
 }
 
 /**
@@ -452,7 +456,7 @@ static Parser *name(void)
  */
 static Parser *predicate_expression(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             literal("["),
             predicate(),
@@ -469,7 +473,7 @@ static Parser *predicate_expression(void)
  */
 static Parser *predicate(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             wildcard(),
             subscript(),
@@ -483,7 +487,7 @@ static Parser *predicate(void)
  */
 static Parser *subscript(void)
 {
-    return rule(
+    return simple_rule(
         signed_integer());
 }
 
@@ -494,7 +498,7 @@ static Parser *subscript(void)
  */
 static Parser *slice(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             option(
                 signed_integer()),
@@ -515,7 +519,7 @@ static Parser *slice(void)
 /*
 static Parser *join(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             addititve_expression(),
             literal(","),
@@ -528,7 +532,7 @@ static Parser *join(void)
 
 static Parser *filter_expression(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             literal("?("),
             or_expression(),
@@ -537,7 +541,7 @@ static Parser *filter_expression(void)
 
 static Parser *or_expression(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             and_expression(),
             option(
@@ -548,7 +552,7 @@ static Parser *or_expression(void)
 
 static Parser *and_expression(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             comparison_expression(),
             option(
@@ -559,7 +563,7 @@ static Parser *and_expression(void)
 
 static Parser *comparison_expression(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             addititve_expression(),
             option(
@@ -570,7 +574,7 @@ static Parser *comparison_expression(void)
 
 static Parser *comparison_op(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             literal(">"),
             literal("<"),
@@ -582,7 +586,7 @@ static Parser *comparison_op(void)
 
 static Parser *addititve_expression(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             multiplicative_expression(),
             option(
@@ -593,7 +597,7 @@ static Parser *addititve_expression(void)
 
 static Parser *addititve_op(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             literal("+"),
             literal("-")));
@@ -601,7 +605,7 @@ static Parser *addititve_op(void)
 
 static Parser *multiplicative_expression(void)
 {
-    return rule(
+    return simple_rule(
         sequence(
             unary_expression(),
             option(
@@ -612,7 +616,7 @@ static Parser *multiplicative_expression(void)
 
 static Parser *multiplicative_op(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             literal("*"),
             literal("/"),
@@ -621,7 +625,7 @@ static Parser *multiplicative_op(void)
 
 static Parser *unary_expression(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             relative_path(),
             scalar()));
@@ -639,7 +643,7 @@ static Parser *unary_expression(void)
 /*
 static Parser *scalar(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             number(),
             string(),
@@ -657,7 +661,7 @@ static Parser *scalar(void)
 /*
 static Parser *boolean(void)
 {
-    return rule(
+    return simple_rule(
         choice(
             literal("true"),
             literal("false")));

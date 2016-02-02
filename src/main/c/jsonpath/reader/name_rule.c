@@ -36,63 +36,11 @@
  */
 
 
-#pragma once
+#include "jsonpath/rewriters.h"
 
 
-#include "maybe.h"
-#include "str.h"
-
-#include "jsonpath/codes.h"
-#include "jsonpath/input.h"
-#include "jsonpath/maybe_ast.h"
-
-typedef struct parser_s Parser;
-
-define_maybe(MaybeString, MutableString *)
-
-#define just_string(VALUE) (MaybeString){JUST, .value=(VALUE)}
-#define nothing_string(CODE) (MaybeString){NOTHING, .code=(CODE)}
-
-typedef MaybeString (*character_filter)(Input *input);
-typedef MaybeAst (*ast_rewriter)(MaybeAst ast);
-
-
-MaybeAst bind(Parser *parser, MaybeAst ast, Input *input);
-
-/* Non-terminal parsers */
-
-MaybeAst default_rewriter(MaybeAst ast);
-Parser *rule_parser(const char *name, Parser *expression, ast_rewriter rewriter);
-#define rule(PARSER, FUNC) rule_parser(__func__, (PARSER), (FUNC))
-#define simple_rule(PARSER) rule_parser(__func__, (PARSER), default_rewriter)
-
-Parser *choice_parser(Parser *one, Parser *two, ...);
-#define choice(...) choice_parser(__VA_ARGS__, NULL)
-
-Parser *sequence_parser(Parser *one, Parser *two, ...);
-#define sequence(...) sequence_parser(__VA_ARGS__, NULL)
-
-Parser *option(Parser *optional);
-Parser *repetition(Parser *repeated);
-
-Parser *reference(const char *value);
-
-/* Terminal parsers */
-
-Parser *literal(const char *value);
-
-Parser *number(void);
-Parser *integer(void);
-Parser *signed_integer(void);
-Parser *non_zero_signed_integer(void);
-
-MaybeString default_filter(Input *input);
-Parser *term(character_filter filter, const char *stop_characters);
-
-/* Destructor */
-
-void parser_free(Parser *value);
-
-/* Parser Execution */
-
-char *parser_status_message(parser_result_code code, size_t reported_position);
+MaybeAst name_rule_rewriter(MaybeAst ast)
+{
+    return ast;
+    
+}
