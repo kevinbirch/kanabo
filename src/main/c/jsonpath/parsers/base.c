@@ -57,8 +57,9 @@ static const char * const PARSER_NAMES[] =
 };
 
 
-static void base_free(Parser *self __attribute__((unused)))
+static void base_free(Parser *self)
 {
+    free(self);
 }
 
 static MaybeAst base_delegate(Parser *self __attribute__((unused)),
