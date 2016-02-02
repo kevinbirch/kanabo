@@ -52,7 +52,6 @@ static const char * const PARSER_NAMES[] =
     "integer",
     "signed integer",
     "non zero signed integer",
-    "quoted string",
     "string"
 };
 

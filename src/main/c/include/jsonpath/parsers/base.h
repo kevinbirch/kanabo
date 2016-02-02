@@ -56,7 +56,6 @@ enum parser_kind
     INTEGER,
     SIGNED_INTEGER,
     NON_ZERO_SIGNED_INTEGER,
-    QUOTED_STRING,
     STRING
 };
 
