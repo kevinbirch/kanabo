@@ -71,17 +71,16 @@ static const char * const MESSAGES[] =
     "At position %zd: slice step value must be non-zero."
 };
 
-
-char *parser_status_message(parser_result_code code, Input *input)
+char *parser_status_message(parser_result_code code, size_t reported_position)
 {
     char *message = NULL;
     int result = 0;
-    size_t reported_position = position(input) + 1;
+    size_t position = reported_position + 1;
 
     switch(code)
     {
         case ERR_PREMATURE_END_OF_INPUT:
-            reported_position--;
+            position--;
         case ERR_EXPECTED_NODE_TYPE_TEST:
         case ERR_EMPTY_PREDICATE:
         case ERR_UNBALANCED_PRED_DELIM:
@@ -91,7 +90,7 @@ char *parser_status_message(parser_result_code code, Input *input)
         case ERR_INVALID_NUMBER:
         case ERR_UNEXPECTED_VALUE:
         case ERR_EXPECTED_NAME_CHAR:
-            result = asprintf(&message, MESSAGES[code], reported_position);
+            result = asprintf(&message, MESSAGES[code], position);
             break;
         default:
             message = strdup(MESSAGES[code]);

@@ -87,4 +87,4 @@ void parser_free(Parser *value);
 
 /* Parser Execution */
 
-char *parser_status_message(parser_result_code code, Input *input);
+char *parser_status_message(parser_result_code code, size_t reported_position);
