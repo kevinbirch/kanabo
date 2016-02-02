@@ -36,6 +36,7 @@
  */
 
 #include "jsonpath/grammar.h"
+#include "jsonpath/filters.h"
 
 
 static Parser *absolute_path(void);
@@ -418,13 +419,29 @@ static Parser *wildcard(void)
  *   = "'", quoted name character, { quoted name character }, "'"
  *   | name character, { name character }
  *   ;
+ *
+ * quoted name character
+ *     = ? any unicode character except ' or control characters ?
+ *     | "\'"
+ *     | escape
+ *     ;
+ *
+ * name character
+ *     = ? any unicode character except . or [ or control characters ?
+ *     | "\."
+ *     | "\["
+ *     | escape
+ *     ;
  */
 static Parser *name(void)
 {
     return rule(
         choice(
-            quoted_string('\''),
-            string()));
+            sequence(
+                literal("'"),
+                string(quoted_name_filter, "'"),
+                literal("'")),
+            string(name_filter, ".[")));
 }
 
 /**
