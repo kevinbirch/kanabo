@@ -39,12 +39,9 @@
 #pragma once
 
 #include "maybe.h"
-#include "jsonpath/parsers.h"
 #include "jsonpath/ast.h"
 
 define_maybe(MaybeAst, Ast *)
 
 #define just_ast(VALUE) (MaybeAst){JUST, .value=(VALUE)}
 #define nothing_ast(CODE) (MaybeAst){NOTHING, .code=(CODE)}
-
-MaybeAst bind(Parser *parser, MaybeAst ast, Input *input);
