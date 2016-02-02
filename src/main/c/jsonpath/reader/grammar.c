@@ -439,9 +439,9 @@ static Parser *name(void)
         choice(
             sequence(
                 literal("'"),
-                string(quoted_name_filter, "'"),
+                term(quoted_name_filter, "'"),
                 literal("'")),
-            string(name_filter, ".[")));
+            term(name_filter, ".[")));
 }
 
 /**

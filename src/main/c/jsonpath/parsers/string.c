@@ -39,14 +39,14 @@
 #include "jsonpath/parsers/base.h"
 
 
-struct string_parser_s
+struct term_parser_s
 {
     Parser           base;
     character_filter filter;
     String          *stop;
 };
 
-typedef struct string_parser_s StringParser;
+typedef struct term_parser_s TermParser;
 
 
 MaybeString default_filter(Input *input)
@@ -62,12 +62,12 @@ MaybeString default_filter(Input *input)
 
 static void string_parser_free(Parser *parser)
 {
-    StringParser *self = (StringParser *)parser;
+    TermParser *self = (TermParser *)parser;
     string_free(self->stop);
     free(self);
 }
 
-static inline bool is_stop_char(StringParser *self, uint8_t value)
+static inline bool is_stop_char(TermParser *self, uint8_t value)
 {
     for(size_t i = 0; i < string_length(self->stop); i++)
     {
@@ -84,7 +84,7 @@ static MaybeAst string_delegate(Parser *parser, MaybeAst ast, Input *input)
     skip_whitespace(input);
     ensure_more_input(input);
 
-    StringParser *self = (StringParser *)parser;
+    TermParser *self = (TermParser *)parser;
 
     MutableString *result = make_mstring(4);
     while(true)
@@ -102,20 +102,20 @@ static MaybeAst string_delegate(Parser *parser, MaybeAst ast, Input *input)
         mstring_append(&result, value(maybe));
     }
 
-    String *string = mstring_as_string(result);
-    Ast *string_node = make_ast_node(AST_STRING, string);
-    ast_add_child(value(ast), string_node);
+    String *term = mstring_as_string(result);
+    Ast *node = make_ast_node(AST_STRING, term);
+    ast_add_child(value(ast), node);
     mstring_free(result);
     return ast;
 }
 
-Parser *string(character_filter filter, const char *stop_characters)
+Parser *term(character_filter filter, const char *stop_characters)
 {
     if(NULL == filter)
     {
         return NULL;
     }
-    StringParser *self = calloc(1, sizeof(StringParser));
+    TermParser *self = calloc(1, sizeof(TermParser));
     if(NULL == self)
     {
         return NULL;

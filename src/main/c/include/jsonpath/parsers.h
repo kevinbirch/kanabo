@@ -79,7 +79,7 @@ define_maybe(MaybeString, MutableString *)
 
 typedef MaybeString (*character_filter)(Input *input);
 MaybeString default_filter(Input *input);
-Parser *string(character_filter filter, const char *stop_characters);
+Parser *term(character_filter filter, const char *stop_characters);
 
 /* Destructor */
 
