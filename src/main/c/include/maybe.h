@@ -55,8 +55,8 @@ struct maybe_s
 
     union
     {
-        int_fast16_t  code;
-        void         *value;
+        uint_fast16_t  code;
+        void          *value;
     };
 };
 
@@ -70,6 +70,6 @@ typedef struct maybe_s Maybe;
 
 #define define_maybe(NAME, TYPE) struct NAME##_maybe_s {                \
         maybe_tag tag;                                                  \
-        union {int_fast16_t code; TYPE value;};                         \
+        union {uint_fast16_t code; TYPE value;};                        \
     };                                                                  \
     typedef struct NAME##_maybe_s (NAME);
