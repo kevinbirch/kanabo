@@ -73,11 +73,7 @@ size_t remaining(Input *self)
 
 void skip_whitespace(Input *self)
 {
-    if(!has_more(self))
-    {
-        return;
-    }
-    while(isspace(peek(self)))
+    while(has_more(self) && isspace(peek(self)))
     {
         consume_char(self);
     }
