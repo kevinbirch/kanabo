@@ -122,6 +122,7 @@ LICENSE file for more details.
 * break code into smaller files
 * regex's can use '{}' repetition counts
 * support sets and ordered maps
+* http://cbor.io/ ?
 
 ### unit testing
 
