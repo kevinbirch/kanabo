@@ -38,47 +38,32 @@
 
 #pragma once
 
-#include "vector.h"
-
 
 enum ast_node_tag
 {
-    AST_NONE,
-    AST_ROOT,
-    AST_COLLECTION,
-    AST_ROOT_STEP,
-    AST_RECURSIVE_STEP,
+    AST_PATH = 0,
+    AST_HEAD_STEP,
     AST_RELATIVE_STEP,
-    AST_WILDCARD,
+    AST_RECURSIVE_STEP,
+    AST_TRANSFORMER,
+    AST_TAG_SELECTOR,
+    AST_ANCHOR_SELECTOR,
+    AST_TYPE_SELECTOR,
+    AST_NAME_SELECTOR,
+    AST_WILDCARD_SELECTOR,
     AST_TYPE,
     AST_OBJECT,
     AST_ARRAY,
-    AST_NUMBER,
-    AST_BOOLEAN,
-    AST_NULL,
-    AST_NAME,
-    AST_STRING,
-    AST_SUBSCRIPT,
-    AST_SLICE,
-    AST_INTEGER
+    AST_SCALAR_NUMBER,
+    AST_SCALAR_BOOLEAN,
+    AST_SCALAR_NULL,
+    AST_SCALAR_STRING,
+    AST_SCALAR_INTEGER,
+    AST_SUBSCRIPT_PREDICATE,
+    AST_SLICE_PREDICATE,
+    AST_JOIN_PREDICATE,
+    AST_FILTER,
+    AST_BOOLEAN_OP,
+    AST_COMPARISON_OP,
+    AST_BINARY_OP,
 };
-
-struct ast_node_s
-{
-    enum ast_node_tag tag;
-
-    void   *value;
-    Vector *children;
-};
-
-typedef struct ast_node_s Ast;
-
-
-static Ast AST_NONE_VALUE = {AST_NONE, NULL, NULL};
-
-Ast *make_ast_node(enum ast_node_tag tag, void *value);
-#define make_ast_root_node() make_ast_node(AST_ROOT, NULL)
-
-void ast_free(Ast *value);
-
-void ast_add_child(Ast *parent, Ast *child);

@@ -36,76 +36,27 @@
  */
 
 
+#pragma once
+
 #include <stdint.h>
 
-#include "vector.h"
-#include "str.h"
 
-#include "jsonpath/syntax.h"
-
-
-struct syntax_node_s
+enum cst_node_tag
 {
-    uint_fast16_t tag;
-    size_t        location[2];
-    String       *value;
-    Vector       *children;
+    CST_ROOT = 0,
+    CST_RULE,
+    CST_COLLECTION,
+    CST_LITERAL,
+    CST_NUMBER,
+    CST_INTEGER,
+    CST_TERM
 };
 
+typedef struct syntax_node_s SyntaxNode;
 
-SyntaxNode *make_syntax_node(uint_fast16_t tag, void *value)
-{
-    SyntaxNode *result = calloc(1, sizeof(SyntaxNode));
 
-    if(NULL != result)
-    {
-        result->tag = tag;
-        result->value = value;
-    }
-    return result;
-}
+SyntaxNode *make_syntax_node(uint_fast16_t tag, void *value);
 
-void syntax_node_add_child(SyntaxNode *self, SyntaxNode *child)
-{
-    if(NULL == self || NULL == child)
-    {
-        return;
-    }
+void syntax_node_free(SyntaxNode *self);
 
-    if(NULL == self->children)
-    {
-        self->children = make_vector();
-        if(NULL == self->children)
-        {
-            return;
-        }
-    }
-
-    vector_add(self->children, child);
-}
-
-static void syntax_node_destructor(void *each)
-{
-    if(NULL == each)
-    {
-        return;
-    }
-
-    SyntaxNode *current = (SyntaxNode *)each;
-    free(current->value);
-    vector_destroy(current->children, syntax_node_destructor);
-    free(current);
-}
-
-void syntax_node_free(SyntaxNode *self)
-{
-    if(NULL == self)
-    {
-        return;
-    }
-
-    // xxx - this is all broken
-    free(self->value);
-    vector_destroy(self->children, syntax_node_destructor);
-    free(self);
-}
+void syntax_node_add_child(SyntaxNode *self, SyntaxNode *child);
