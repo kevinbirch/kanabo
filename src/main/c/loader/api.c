@@ -144,7 +144,7 @@ static loader_context *make_loader(void)
         return NULL;
     }
     
-    context->anchors = make_hashtable_with_function(string_comparitor, shift_add_xor_string_hash);
+    context->anchors = make_hashtable_with_function(string_comparitor, fnv1a_string_hash);
     if(NULL == context->anchors)
     {
         loader_error("uh oh! out of memory, can't allocate the anchor table");

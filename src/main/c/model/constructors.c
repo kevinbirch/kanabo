@@ -167,7 +167,7 @@ static inline node *make_node(enum node_kind kind)
 static hashcode scalar_hash(const void *key)
 {
     node *scalar = (node *)key;
-    return shift_add_xor_string_buffer_hash(scalar_value(scalar), node_size(scalar));
+    return fnv1a_string_buffer_hash(scalar_value(scalar), node_size(scalar));
 }
 
 static bool scalar_comparitor(const void *one, const void *two)
