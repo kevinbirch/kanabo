@@ -169,6 +169,12 @@ LICENSE file for more details.
 * CI - http://about.travis-ci.org/docs/user/build-configuration/
 * release step
   * https://github.com/manuelbua/gitver
+* record build command
+  * https://news.ycombinator.com/item?id=11228515
+  * $(builddir)/compiler_flags: force mkdir -p $(builddir) echo '$(CPPFLAGS) $(CFLAGS)' | cmp -s - $@ || echo '$(CPPFLAGS) $(CFLAGS)' > $@
+  * $(LIBOBJECTS) $(RTLLIBOBJECTS) $(OPTLIBOBJECTS) $(TESTOBJECTS) $(builddir)/init_qt_workdir: $(builddir)/compiler_flags
+* meson - http://mesonbuild.com/
+* https://bitbucket.org/scons/scons/wiki/SconsVsOtherBuildTools
 
 [home]: https://github.com/kevinbirch/kanabo "project home"
 [license]: http://www.opensource.org/licenses/ncsa
