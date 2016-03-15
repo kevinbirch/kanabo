@@ -39,6 +39,11 @@
 #pragma once
 
 
+#include "maybe.h"
+
+#include "jsonpath/syntax.h"
+
+
 enum ast_node_tag
 {
     AST_PATH = 0,
@@ -67,3 +72,10 @@ enum ast_node_tag
     AST_COMPARISON_OP,
     AST_BINARY_OP,
 };
+
+typedef enum ast_node_tag AbstractSyntaxNodeType;
+
+define_maybe(MaybeAst, SyntaxNode *)
+
+#define just_ast(VALUE) (MaybeAst){JUST, .value=(VALUE)}
+#define nothing_ast(CODE) (MaybeAst){NOTHING, .code=(CODE)}
