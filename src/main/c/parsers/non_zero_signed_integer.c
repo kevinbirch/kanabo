@@ -36,19 +36,24 @@
  */
 
 
-#pragma once
+#include "parsers/base.h"
 
 
-#include "jsonpath/parsers/base.h"
-
-
-struct wrapped_parser_s
+static MaybeSyntaxNode non_zero_signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode node, Input *input)
 {
-    Parser  base;
-    Parser *child;
-};
+    ensure_more_input(input);
+    skip_whitespace(input);
+    return node;
+}
 
-typedef struct wrapped_parser_s WrappedParser;
+Parser *non_zero_signed_integer(void)
+{
+    Parser *self = make_parser(NON_ZERO_SIGNED_INTEGER);
+    if(NULL == self)
+    {
+        return NULL;
+    }
+    self->vtable.delegate = non_zero_signed_integer_delegate;
 
-
-WrappedParser *make_wrapped_parser(enum parser_kind kind, Parser *child);
+    return self;
+}

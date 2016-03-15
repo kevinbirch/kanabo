@@ -36,68 +36,58 @@
  */
 
 
-#include "jsonpath/parsers/base.h"
+#include "vector.h"
+
+#include "parsers/compound.h"
 
 
-struct rule_parser_s
+static MaybeSyntaxNode sequence_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
 {
-    Parser         base;
-    const char    *name;
-    Parser        *expression;
-    tree_rewriter  rewriter;
-};
-
-typedef struct rule_parser_s RuleParser;
-
-
-static void rule_free(Parser *value)
-{
-    free(value->repr);
-    RuleParser *self = (RuleParser *)value;
-    parser_free(self->expression);
-}
-
-static MaybeSyntaxNode rule_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
-{
-    RuleParser *self = (RuleParser *)parser;
     ensure_more_input(input);
+    CompoundParser *self = (CompoundParser *)parser;
 
-    return self->rewriter(bind(self->expression, node, input));
-}
+    for(size_t i = 0; i < vector_length(self->children); i++)
+    {
+        Parser *each = vector_get(self->children, i);
+        MaybeSyntaxNode branch_result = bind(each, node, input);
+        if(is_value(branch_result))
+        {
+            syntax_node_add_child(node.value, branch_result.value);
+        }
+        else
+        {
+            return branch_result;
+        }
+    }
 
-MaybeSyntaxNode default_rewriter(MaybeSyntaxNode node)
-{
     return node;
 }
 
-Parser *rule_parser(const char *name, Parser *expression, tree_rewriter rewriter)
+Parser *sequence_parser(Parser *one, Parser *two, ...)
 {
-    if(NULL == name)
+    if(NULL == one || NULL == two)
     {
+        if(NULL != one)
+        {
+            parser_free(one);
+        }
+        if(NULL != two)
+        {
+            parser_free(two);
+        }
         return NULL;
     }
-    // xxx - find rule parser in cache here
-    // xxx - how to auto-initialize the rule cache and hold it elsewhere?
-    if(NULL == expression)
-    {
-        return NULL;
-    }
-    RuleParser *self = (RuleParser *)calloc(1, sizeof(RuleParser));
+
+    va_list rest;
+    va_start(rest, two);
+    CompoundParser *self = make_compound_parser(SEQUENCE, one, two, rest);
+    va_end(rest);
     if(NULL == self)
     {
         return NULL;
     }
-
-    parser_init((Parser *)self, RULE);
-    self->base.vtable.delegate = rule_delegate;
-    self->base.vtable.free = rule_free;
-    asprintf(&self->base.repr, "rule %s", name);
-    self->name = name;
-    self->expression = expression;
-    self->rewriter = rewriter;
+    self->base.vtable.delegate = sequence_delegate;
+    asprintf(&self->base.repr, "sequence %zd branches", vector_length(self->children));
 
     return (Parser *)self;
 }
-
-
-

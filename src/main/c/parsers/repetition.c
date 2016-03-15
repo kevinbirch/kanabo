@@ -35,110 +35,42 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#include "parsers/wrapped.h"
 
-#include "jsonpath/parsers/base.h"
 
-
-static const char * const PARSER_NAMES[] =
+static MaybeSyntaxNode repetition_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
 {
-    "rule",
-    "choice",
-    "sequence",
-    "option",
-    "repetition",
-    "reference",
-    "literal",
-    "number",
-    "integer",
-    "signed integer",
-    "non zero signed integer",
-    "string"
-};
+    ensure_more_input(input);
+    WrappedParser *self = (WrappedParser *)parser;
 
+    MaybeSyntaxNode result = bind(self->child, node, input);
+    if(ERR_PREMATURE_END_OF_INPUT == result.code)
+    {
+        return result;
+    }
+    while(is_value(result))
+    {
+        syntax_node_add_child(node.value, result.value);
+        result = bind(self->child, node, input);
+    }
 
-static void base_free(Parser *self)
-{
-    free(self);
-}
-
-static MaybeSyntaxNode base_delegate(Parser *self __attribute__((unused)),
-                                     MaybeSyntaxNode node,
-                                     Input *input __attribute__((unused)))
-{
     return node;
 }
 
-Parser *make_parser(enum parser_kind kind)
+Parser *repetition(Parser *expression)
 {
-    Parser *parser = (Parser *)calloc(1, sizeof(Parser));
-    return parser_init(parser, kind);
-}
+    if(NULL == expression)
+    {
+        return NULL;
+    }
 
-Parser *parser_init(Parser *self, enum parser_kind kind)
-{
+    WrappedParser *self = make_wrapped_parser(REPETITION, expression);
     if(NULL == self)
     {
         return NULL;
     }
-    self->kind = kind;
-    self->vtable.free = base_free;
-    self->vtable.delegate = base_delegate;
+    self->base.vtable.delegate = repetition_delegate;
+    asprintf(&self->base.repr, "repetition of %s", parser_repr(expression));
 
-    return self;
-}
-
-void parser_free(Parser *self)
-{
-    if(NULL == self)
-    {
-        return;
-    }
-    self->vtable.free(self);
-    free(self);
-}
-
-void parser_destructor(void *each)
-{
-    parser_free((Parser *)each);
-}
-
-enum parser_kind parser_kind(Parser *self)
-{
-    return self->kind;
-}
-
-const char *parser_name(Parser *self)
-{
-    return PARSER_NAMES[parser_kind(self)];
-}
-
-const char *parser_repr(Parser *self)
-{
-    return NULL != self->repr ? (const char *)self->repr : parser_name(self);
-}
-
-bool is_terminal(Parser *self)
-{
-    return REPETITION < self->kind;
-}
-
-bool is_nonterminal(Parser *self)
-{
-    return !is_terminal(self);
-}
-
-MaybeSyntaxNode bind(Parser *self, MaybeSyntaxNode node, Input *input)
-{
-    static size_t padding = 0;
-    if(is_nothing(node))
-    {
-        return node;    
-    }
-    parser_trace("%*sentering %s", (2 * padding++), "", parser_repr(self));
-    MaybeSyntaxNode result = self->vtable.delegate(self, node, input);
-    parser_trace(
-        "%*sleaving %s, %s", (2 * --padding), "",
-        is_nonterminal(self) ? parser_repr(self) : parser_name(self),
-        is_nothing(result) ? "failure" : "success");
-    return result;
+    return (Parser *)self;
 }

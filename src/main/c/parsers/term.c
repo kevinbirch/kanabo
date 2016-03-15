@@ -35,42 +35,97 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include "jsonpath/parsers/wrapped.h"
+
+#include "parsers/base.h"
 
 
-static MaybeSyntaxNode repetition_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
+struct term_parser_s
 {
+    Parser           base;
+    character_filter filter;
+    String          *stop;
+};
+
+typedef struct term_parser_s TermParser;
+
+
+MaybeString default_filter(Input *input)
+{
+    uint8_t current = consume_char(input);
+    MutableString *result = make_mstring_with_char(current);
+    if(NULL == result)
+    {
+        return nothing_string(ERR_PARSER_OUT_OF_MEMORY);
+    }
+    return just_string(result);
+}
+
+static void string_parser_free(Parser *parser)
+{
+    TermParser *self = (TermParser *)parser;
+    string_free(self->stop);
+    free(self);
+}
+
+static inline bool is_stop_char(TermParser *self, uint8_t value)
+{
+    for(size_t i = 0; i < string_length(self->stop); i++)
+    {
+        if(value == string_get(self->stop, i))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+static MaybeSyntaxNode string_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
+{
+    skip_whitespace(input);
     ensure_more_input(input);
-    WrappedParser *self = (WrappedParser *)parser;
 
-    MaybeSyntaxNode result = bind(self->child, node, input);
-    if(ERR_PREMATURE_END_OF_INPUT == result.code)
+    TermParser *self = (TermParser *)parser;
+
+    MutableString *result = make_mstring(4);
+    while(true)
     {
-        return result;
-    }
-    while(is_value(result))
-    {
-        syntax_node_add_child(node.value, result.value);
-        result = bind(self->child, node, input);
+        if(!has_more(input) || is_stop_char(self, peek(input)))
+        {
+            break;
+        }
+        MaybeString maybe = self->filter(input);
+        if(is_nothing(maybe))
+        {
+            mstring_free(result);
+            return nothing_node(code(maybe));
+        }
+        mstring_append(&result, value(maybe));
     }
 
+    String *term = mstring_as_string(result);
+    SyntaxNode *term_node = make_syntax_node(CST_TERM, term, location_from_input(input));
+    syntax_node_add_child(value(node), term_node);
+    mstring_free(result);
     return node;
 }
 
-Parser *repetition(Parser *expression)
+Parser *term(character_filter filter, const char *stop_characters)
 {
-    if(NULL == expression)
+    if(NULL == filter)
     {
         return NULL;
     }
-
-    WrappedParser *self = make_wrapped_parser(REPETITION, expression);
+    TermParser *self = calloc(1, sizeof(TermParser));
     if(NULL == self)
     {
         return NULL;
     }
-    self->base.vtable.delegate = repetition_delegate;
-    asprintf(&self->base.repr, "repetition of %s", parser_repr(expression));
+
+    parser_init((Parser *)self, STRING);
+    self->base.vtable.delegate = string_delegate;
+    self->base.vtable.free = string_parser_free;
+    self->filter = filter;
+    self->stop = make_string(stop_characters);
 
     return (Parser *)self;
 }

@@ -36,58 +36,24 @@
  */
 
 
-#include "vector.h"
-
-#include "jsonpath/parsers/compound.h"
+#include "parsers/base.h"
 
 
-static MaybeSyntaxNode sequence_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
+static MaybeSyntaxNode signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode node, Input *input)
 {
     ensure_more_input(input);
-    CompoundParser *self = (CompoundParser *)parser;
-
-    for(size_t i = 0; i < vector_length(self->children); i++)
-    {
-        Parser *each = vector_get(self->children, i);
-        MaybeSyntaxNode branch_result = bind(each, node, input);
-        if(is_value(branch_result))
-        {
-            syntax_node_add_child(node.value, branch_result.value);
-        }
-        else
-        {
-            return branch_result;
-        }
-    }
-
+    skip_whitespace(input);
     return node;
 }
 
-Parser *sequence_parser(Parser *one, Parser *two, ...)
+Parser *signed_integer(void)
 {
-    if(NULL == one || NULL == two)
-    {
-        if(NULL != one)
-        {
-            parser_free(one);
-        }
-        if(NULL != two)
-        {
-            parser_free(two);
-        }
-        return NULL;
-    }
-
-    va_list rest;
-    va_start(rest, two);
-    CompoundParser *self = make_compound_parser(SEQUENCE, one, two, rest);
-    va_end(rest);
+    Parser *self = make_parser(SIGNED_INTEGER);
     if(NULL == self)
     {
         return NULL;
     }
-    self->base.vtable.delegate = sequence_delegate;
-    asprintf(&self->base.repr, "sequence %zd branches", vector_length(self->children));
+    self->vtable.delegate = signed_integer_delegate;
 
-    return (Parser *)self;
+    return self;
 }

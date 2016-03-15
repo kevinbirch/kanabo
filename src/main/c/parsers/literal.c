@@ -36,24 +36,54 @@
  */
 
 
-#include "jsonpath/parsers/base.h"
+#include "parsers/base.h"
 
 
-static MaybeSyntaxNode signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode node, Input *input)
+struct literal_parser_s
 {
+    Parser   base;
+    size_t   length;
+    uint8_t  value[];
+};
+
+typedef struct literal_parser_s LiteralParser;
+
+
+static MaybeSyntaxNode literal_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
+{
+    LiteralParser *self = (LiteralParser *)parser;
+
     ensure_more_input(input);
     skip_whitespace(input);
-    return node;
+    if(consume_if(input, self->value, self->length))
+    {
+        // xxx - add literal to node
+        return node;
+    }
+    else
+    {
+        return nothing_node(ERR_UNEXPECTED_VALUE);
+    }
 }
 
-Parser *signed_integer(void)
+Parser *literal(const char *value)
 {
-    Parser *self = make_parser(SIGNED_INTEGER);
+    if(NULL == value)
+    {
+        return NULL;
+    }
+    size_t length = strlen(value);
+    LiteralParser *self = calloc(1, sizeof(LiteralParser) + length);
     if(NULL == self)
     {
         return NULL;
     }
-    self->vtable.delegate = signed_integer_delegate;
 
-    return self;
+    parser_init((Parser *)self, LITERAL);
+    self->base.vtable.delegate = literal_delegate;
+    asprintf(&self->base.repr, "literal '%s'", value);
+    memcpy(self->value, value, length);
+    self->length = length;
+
+    return (Parser *)self;
 }

@@ -36,24 +36,24 @@
  */
 
 
-#include "jsonpath/parsers/base.h"
+#include "parsers/base.h"
 
 
-static MaybeSyntaxNode integer_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode node, Input *input)
+static MaybeSyntaxNode number_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode node, Input *input)
 {
     ensure_more_input(input);
     skip_whitespace(input);
     return node;
 }
 
-Parser *integer(void)
+Parser *number(void)
 {
-    Parser *self = make_parser(INTEGER);
+    Parser *self = make_parser(NUMBER);
     if(NULL == self)
     {
         return NULL;
     }
-    self->vtable.delegate = integer_delegate;
+    self->vtable.delegate = number_delegate;
 
     return self;
 }

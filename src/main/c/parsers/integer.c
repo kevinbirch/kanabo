@@ -36,24 +36,24 @@
  */
 
 
-#include "jsonpath/parsers/base.h"
+#include "parsers/base.h"
 
 
-static MaybeSyntaxNode non_zero_signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode node, Input *input)
+static MaybeSyntaxNode integer_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode node, Input *input)
 {
     ensure_more_input(input);
     skip_whitespace(input);
     return node;
 }
 
-Parser *non_zero_signed_integer(void)
+Parser *integer(void)
 {
-    Parser *self = make_parser(NON_ZERO_SIGNED_INTEGER);
+    Parser *self = make_parser(INTEGER);
     if(NULL == self)
     {
         return NULL;
     }
-    self->vtable.delegate = non_zero_signed_integer_delegate;
+    self->vtable.delegate = integer_delegate;
 
     return self;
 }

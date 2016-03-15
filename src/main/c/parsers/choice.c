@@ -36,96 +36,61 @@
  */
 
 
-#include "jsonpath/parsers/base.h"
+#include "vector.h"
+
+#include "parsers/compound.h"
 
 
-struct term_parser_s
+static MaybeSyntaxNode choice_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
 {
-    Parser           base;
-    character_filter filter;
-    String          *stop;
-};
-
-typedef struct term_parser_s TermParser;
-
-
-MaybeString default_filter(Input *input)
-{
-    uint8_t current = consume_char(input);
-    MutableString *result = make_mstring_with_char(current);
-    if(NULL == result)
-    {
-        return nothing_string(ERR_PARSER_OUT_OF_MEMORY);
-    }
-    return just_string(result);
-}
-
-static void string_parser_free(Parser *parser)
-{
-    TermParser *self = (TermParser *)parser;
-    string_free(self->stop);
-    free(self);
-}
-
-static inline bool is_stop_char(TermParser *self, uint8_t value)
-{
-    for(size_t i = 0; i < string_length(self->stop); i++)
-    {
-        if(value == string_get(self->stop, i))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-static MaybeSyntaxNode string_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
-{
-    skip_whitespace(input);
     ensure_more_input(input);
+    CompoundParser *self = (CompoundParser *)parser;
 
-    TermParser *self = (TermParser *)parser;
-
-    MutableString *result = make_mstring(4);
-    while(true)
+    set_mark(input);
+    for(size_t i = 0; i < vector_length(self->children); i++)
     {
-        if(!has_more(input) || is_stop_char(self, peek(input)))
+        reset_to_mark(input);
+        Parser *each = vector_get(self->children, i);
+
+        MaybeSyntaxNode result = bind(each, node, input);
+        if(is_value(result))
         {
-            break;
+            syntax_node_add_child(node.value, result.value);
+            return node;
         }
-        MaybeString maybe = self->filter(input);
-        if(is_nothing(maybe))
+        else if(ERR_PREMATURE_END_OF_INPUT == result.code)
         {
-            mstring_free(result);
-            return nothing_node(code(maybe));
+            return result;
         }
-        mstring_append(&result, value(maybe));
     }
 
-    String *term = mstring_as_string(result);
-    SyntaxNode *term_node = make_syntax_node(CST_TERM, term, location_from_input(input));
-    syntax_node_add_child(value(node), term_node=);
-    mstring_free(result);
-    return node;
+    return nothing_node(ERR_UNEXPECTED_VALUE);
 }
 
-Parser *term(character_filter filter, const char *stop_characters)
+Parser *choice_parser(Parser *one, Parser *two, ...)
 {
-    if(NULL == filter)
+    if(NULL == one || NULL == two)
     {
+        if(NULL != one)
+        {
+            parser_free(one);
+        }
+        if(NULL != two)
+        {
+            parser_free(two);
+        }
         return NULL;
     }
-    TermParser *self = calloc(1, sizeof(TermParser));
+    va_list rest;
+    va_start(rest, two);
+    CompoundParser *self = make_compound_parser(CHOICE, one, two, rest);
+    va_end(rest);
     if(NULL == self)
     {
         return NULL;
     }
-
-    parser_init((Parser *)self, STRING);
-    self->base.vtable.delegate = string_delegate;
-    self->base.vtable.free = string_parser_free;
-    self->filter = filter;
-    self->stop = make_string(stop_characters);
+    self->base.vtable.delegate = choice_delegate;
+    asprintf(&self->base.repr, "choice %zd branches", vector_length(self->children));
 
     return (Parser *)self;
 }

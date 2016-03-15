@@ -36,32 +36,46 @@
  */
 
 
-#include "jsonpath/parsers/base.h"
+#include "vector.h"
+
+#include "parsers/compound.h"
 
 
-struct reference_parser_s
+static void compound_free(Parser *value)
 {
-    Parser      base;
-    const char *value;
-};
+    CompoundParser *self = (CompoundParser *)value;
+    vector_destroy(self->children, parser_destructor);
+}
 
-typedef struct reference_parser_s ReferenceParser;
-
-
-Parser *reference(const char *value)
+CompoundParser *make_compound_parser(enum parser_kind kind,
+                             Parser *one, Parser *two, va_list rest)
 {
-    if(NULL == value)
-    {
-        return NULL;
-    }
-    ReferenceParser *self = (ReferenceParser *)calloc(1, sizeof(ReferenceParser));
+    CompoundParser *self = (CompoundParser *)calloc(1, sizeof(CompoundParser));
     if(NULL == self)
     {
         return NULL;
     }
+    
+    Vector *children = make_vector();
+    if(NULL == children)
+    {
+        parser_free((Parser *)self);
+        return NULL;
+    }
+    vector_add(children, one);
+    vector_add(children, two);
 
-    parser_init((Parser *)self, REFERENCE);
-    self->value = value;
+    Parser *each = va_arg(rest, Parser *);
+    while(NULL != each)
+    {
+        vector_add(children, each);
+        each = va_arg(rest, Parser *);
+    }
 
-    return (Parser *)self;
+    parser_init((Parser *)self, kind);
+    self->base.vtable.free = &compound_free;
+    self->children = children;
+
+    return self;
 }
+

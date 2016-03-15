@@ -36,46 +36,68 @@
  */
 
 
-#include "vector.h"
-
-#include "jsonpath/parsers/compound.h"
+#include "parsers/base.h"
 
 
-static void compound_free(Parser *value)
+struct rule_parser_s
 {
-    CompoundParser *self = (CompoundParser *)value;
-    vector_destroy(self->children, parser_destructor);
+    Parser         base;
+    const char    *name;
+    Parser        *expression;
+    tree_rewriter  rewriter;
+};
+
+typedef struct rule_parser_s RuleParser;
+
+
+static void rule_free(Parser *value)
+{
+    free(value->repr);
+    RuleParser *self = (RuleParser *)value;
+    parser_free(self->expression);
 }
 
-CompoundParser *make_compound_parser(enum parser_kind kind,
-                             Parser *one, Parser *two, va_list rest)
+static MaybeSyntaxNode rule_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
 {
-    CompoundParser *self = (CompoundParser *)calloc(1, sizeof(CompoundParser));
+    RuleParser *self = (RuleParser *)parser;
+    ensure_more_input(input);
+
+    return self->rewriter(bind(self->expression, node, input));
+}
+
+MaybeSyntaxNode default_rewriter(MaybeSyntaxNode node)
+{
+    return node;
+}
+
+Parser *rule_parser(const char *name, Parser *expression, tree_rewriter rewriter)
+{
+    if(NULL == name)
+    {
+        return NULL;
+    }
+    // xxx - find rule parser in cache here
+    // xxx - how to auto-initialize the rule cache and hold it elsewhere?
+    if(NULL == expression)
+    {
+        return NULL;
+    }
+    RuleParser *self = (RuleParser *)calloc(1, sizeof(RuleParser));
     if(NULL == self)
     {
         return NULL;
     }
-    
-    Vector *children = make_vector();
-    if(NULL == children)
-    {
-        parser_free((Parser *)self);
-        return NULL;
-    }
-    vector_add(children, one);
-    vector_add(children, two);
 
-    Parser *each = va_arg(rest, Parser *);
-    while(NULL != each)
-    {
-        vector_add(children, each);
-        each = va_arg(rest, Parser *);
-    }
+    parser_init((Parser *)self, RULE);
+    self->base.vtable.delegate = rule_delegate;
+    self->base.vtable.free = rule_free;
+    asprintf(&self->base.repr, "rule %s", name);
+    self->name = name;
+    self->expression = expression;
+    self->rewriter = rewriter;
 
-    parser_init((Parser *)self, kind);
-    self->base.vtable.free = &compound_free;
-    self->children = children;
-
-    return self;
+    return (Parser *)self;
 }
+
+
 

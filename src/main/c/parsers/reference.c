@@ -36,27 +36,32 @@
  */
 
 
-#include "jsonpath/parsers/wrapped.h"
+#include "parsers/base.h"
 
 
-static void wrapped_free(Parser *value)
+struct reference_parser_s
 {
-    WrappedParser *self = (WrappedParser *)value;
-    parser_free(self->child);
-}
+    Parser      base;
+    const char *value;
+};
 
-WrappedParser *make_wrapped_parser(enum parser_kind kind, Parser *child)
+typedef struct reference_parser_s ReferenceParser;
+
+
+Parser *reference(const char *value)
 {
-    WrappedParser *self = (WrappedParser *)calloc(1, sizeof(WrappedParser));
+    if(NULL == value)
+    {
+        return NULL;
+    }
+    ReferenceParser *self = (ReferenceParser *)calloc(1, sizeof(ReferenceParser));
     if(NULL == self)
     {
         return NULL;
     }
-    
-    parser_init((Parser *)self, kind);
-    self->child = child;
-    self->base.vtable.free = &wrapped_free;
 
-    return self;
+    parser_init((Parser *)self, REFERENCE);
+    self->value = value;
+
+    return (Parser *)self;
 }
-

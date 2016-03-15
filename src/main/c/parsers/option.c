@@ -35,62 +35,37 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-
-#include "vector.h"
-
-#include "jsonpath/parsers/compound.h"
+#include "parsers/wrapped.h"
 
 
-static MaybeSyntaxNode choice_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
+static MaybeSyntaxNode option_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
 {
     ensure_more_input(input);
-    CompoundParser *self = (CompoundParser *)parser;
+    WrappedParser *self = (WrappedParser *)parser;
 
-    set_mark(input);
-    for(size_t i = 0; i < vector_length(self->children); i++)
+    MaybeSyntaxNode result = bind(self->child, node, input);
+    if(is_value(result))
     {
-        reset_to_mark(input);
-        Parser *each = vector_get(self->children, i);
-
-        MaybeSyntaxNode result = bind(each, node, input);
-        if(is_value(result))
-        {
-            syntax_node_add_child(node.value, result.value);
-            return node;
-        }
-        else if(ERR_PREMATURE_END_OF_INPUT == result.code)
-        {
-            return result;
-        }
+        syntax_node_add_child(node.value, result.value);
     }
 
-    return nothing_node(ERR_UNEXPECTED_VALUE);
+    return node;
 }
 
-Parser *choice_parser(Parser *one, Parser *two, ...)
+Parser *option(Parser *expression)
 {
-    if(NULL == one || NULL == two)
+    if(NULL == expression)
     {
-        if(NULL != one)
-        {
-            parser_free(one);
-        }
-        if(NULL != two)
-        {
-            parser_free(two);
-        }
         return NULL;
     }
-    va_list rest;
-    va_start(rest, two);
-    CompoundParser *self = make_compound_parser(CHOICE, one, two, rest);
-    va_end(rest);
+
+    WrappedParser *self = make_wrapped_parser(REPETITION, expression);
     if(NULL == self)
     {
         return NULL;
     }
-    self->base.vtable.delegate = choice_delegate;
-    asprintf(&self->base.repr, "choice %zd branches", vector_length(self->children));
+    self->base.vtable.delegate = option_delegate;
+    asprintf(&self->base.repr, "option for %s", parser_name(expression));
 
     return (Parser *)self;
 }

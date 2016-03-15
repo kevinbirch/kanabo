@@ -36,21 +36,27 @@
  */
 
 
-#pragma once
+#include "parsers/wrapped.h"
 
 
-#include <stdarg.h>
-
-#include "jsonpath/parsers/base.h"
-
-
-struct compound_parser_s
+static void wrapped_free(Parser *value)
 {
-    Parser  base;
-    Vector *children;
-};
+    WrappedParser *self = (WrappedParser *)value;
+    parser_free(self->child);
+}
 
-typedef struct compound_parser_s CompoundParser;
+WrappedParser *make_wrapped_parser(enum parser_kind kind, Parser *child)
+{
+    WrappedParser *self = (WrappedParser *)calloc(1, sizeof(WrappedParser));
+    if(NULL == self)
+    {
+        return NULL;
+    }
+    
+    parser_init((Parser *)self, kind);
+    self->child = child;
+    self->base.vtable.free = &wrapped_free;
 
+    return self;
+}
 
-CompoundParser *make_compound_parser(enum parser_kind kind, Parser *one, Parser *two, va_list rest);

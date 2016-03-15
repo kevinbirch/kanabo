@@ -35,37 +35,20 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include "jsonpath/parsers/wrapped.h"
+
+#pragma once
 
 
-static MaybeSyntaxNode option_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
+#include "parsers/base.h"
+
+
+struct wrapped_parser_s
 {
-    ensure_more_input(input);
-    WrappedParser *self = (WrappedParser *)parser;
+    Parser  base;
+    Parser *child;
+};
 
-    MaybeSyntaxNode result = bind(self->child, node, input);
-    if(is_value(result))
-    {
-        syntax_node_add_child(node.value, result.value);
-    }
+typedef struct wrapped_parser_s WrappedParser;
 
-    return node;
-}
 
-Parser *option(Parser *expression)
-{
-    if(NULL == expression)
-    {
-        return NULL;
-    }
-
-    WrappedParser *self = make_wrapped_parser(REPETITION, expression);
-    if(NULL == self)
-    {
-        return NULL;
-    }
-    self->base.vtable.delegate = option_delegate;
-    asprintf(&self->base.repr, "option for %s", parser_name(expression));
-
-    return (Parser *)self;
-}
+WrappedParser *make_wrapped_parser(enum parser_kind kind, Parser *child);

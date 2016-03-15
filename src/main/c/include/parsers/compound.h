@@ -36,24 +36,21 @@
  */
 
 
-#include "jsonpath/parsers/base.h"
+#pragma once
 
 
-static MaybeSyntaxNode number_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode node, Input *input)
+#include <stdarg.h>
+
+#include "parsers/base.h"
+
+
+struct compound_parser_s
 {
-    ensure_more_input(input);
-    skip_whitespace(input);
-    return node;
-}
+    Parser  base;
+    Vector *children;
+};
 
-Parser *number(void)
-{
-    Parser *self = make_parser(NUMBER);
-    if(NULL == self)
-    {
-        return NULL;
-    }
-    self->vtable.delegate = number_delegate;
+typedef struct compound_parser_s CompoundParser;
 
-    return self;
-}
+
+CompoundParser *make_compound_parser(enum parser_kind kind, Parser *one, Parser *two, va_list rest);

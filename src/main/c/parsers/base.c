@@ -36,54 +36,109 @@
  */
 
 
-#include "jsonpath/parsers/base.h"
+#include "parsers/base.h"
 
 
-struct literal_parser_s
+static const char * const PARSER_NAMES[] =
 {
-    Parser   base;
-    size_t   length;
-    uint8_t  value[];
+    "rule",
+    "choice",
+    "sequence",
+    "option",
+    "repetition",
+    "reference",
+    "literal",
+    "number",
+    "integer",
+    "signed integer",
+    "non zero signed integer",
+    "string"
 };
 
-typedef struct literal_parser_s LiteralParser;
 
-
-static MaybeSyntaxNode literal_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
+static void base_free(Parser *self)
 {
-    LiteralParser *self = (LiteralParser *)parser;
-
-    ensure_more_input(input);
-    skip_whitespace(input);
-    if(consume_if(input, self->value, self->length))
-    {
-        // xxx - add literal to node
-        return node;
-    }
-    else
-    {
-        return nothing_node(ERR_UNEXPECTED_VALUE);
-    }
+    free(self);
 }
 
-Parser *literal(const char *value)
+static MaybeSyntaxNode base_delegate(Parser *self __attribute__((unused)),
+                                     MaybeSyntaxNode node,
+                                     Input *input __attribute__((unused)))
 {
-    if(NULL == value)
-    {
-        return NULL;
-    }
-    size_t length = strlen(value);
-    LiteralParser *self = calloc(1, sizeof(LiteralParser) + length);
+    return node;
+}
+
+Parser *make_parser(enum parser_kind kind)
+{
+    Parser *parser = (Parser *)calloc(1, sizeof(Parser));
+    return parser_init(parser, kind);
+}
+
+Parser *parser_init(Parser *self, enum parser_kind kind)
+{
     if(NULL == self)
     {
         return NULL;
     }
+    self->kind = kind;
+    self->vtable.free = base_free;
+    self->vtable.delegate = base_delegate;
 
-    parser_init((Parser *)self, LITERAL);
-    self->base.vtable.delegate = literal_delegate;
-    asprintf(&self->base.repr, "literal '%s'", value);
-    memcpy(self->value, value, length);
-    self->length = length;
+    return self;
+}
 
-    return (Parser *)self;
+void parser_free(Parser *self)
+{
+    if(NULL == self)
+    {
+        return;
+    }
+    self->vtable.free(self);
+    free(self);
+}
+
+void parser_destructor(void *each)
+{
+    parser_free((Parser *)each);
+}
+
+enum parser_kind parser_kind(Parser *self)
+{
+    return self->kind;
+}
+
+const char *parser_name(Parser *self)
+{
+    return PARSER_NAMES[parser_kind(self)];
+}
+
+const char *parser_repr(Parser *self)
+{
+    return NULL != self->repr ? (const char *)self->repr : parser_name(self);
+}
+
+bool is_terminal(Parser *self)
+{
+    return REPETITION < self->kind;
+}
+
+bool is_nonterminal(Parser *self)
+{
+    return !is_terminal(self);
+}
+
+MaybeSyntaxNode bind(Parser *self, MaybeSyntaxNode node, Input *input)
+{
+    static size_t padding = 0;
+    if(is_nothing(node))
+    {
+        return node;    
+    }
+    parser_trace("%*sentering %s", (2 * padding++), "", parser_repr(self));
+    MaybeSyntaxNode result = self->vtable.delegate(self, node, input);
+    parser_trace(
+        "%*sleaving %s, %s", (2 * --padding), "",
+        is_nonterminal(self) ? parser_repr(self) : parser_name(self),
+        is_nothing(result) ? "failure" : "success");
+    return result;
 }
