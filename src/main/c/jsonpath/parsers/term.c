@@ -79,7 +79,7 @@ static inline bool is_stop_char(TermParser *self, uint8_t value)
     return false;
 }
 
-static MaybeSyntaxNode string_delegate(Parser *parser, MaybeSyntaxNode ast, Input *input)
+static MaybeSyntaxNode string_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
 {
     skip_whitespace(input);
     ensure_more_input(input);
@@ -104,9 +104,9 @@ static MaybeSyntaxNode string_delegate(Parser *parser, MaybeSyntaxNode ast, Inpu
 
     String *term = mstring_as_string(result);
     SyntaxNode *node = make_syntax_node(CST_TERM, term, location_from_input(input));
-    syntax_node_add_child(value(ast), node);
+    syntax_node_add_child(value(node), node);
     mstring_free(result);
-    return ast;
+    return node;
 }
 
 Parser *term(character_filter filter, const char *stop_characters)

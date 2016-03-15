@@ -49,7 +49,7 @@ struct literal_parser_s
 typedef struct literal_parser_s LiteralParser;
 
 
-static MaybeSyntaxNode literal_delegate(Parser *parser, MaybeSyntaxNode ast, Input *input)
+static MaybeSyntaxNode literal_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
 {
     LiteralParser *self = (LiteralParser *)parser;
 
@@ -57,8 +57,8 @@ static MaybeSyntaxNode literal_delegate(Parser *parser, MaybeSyntaxNode ast, Inp
     skip_whitespace(input);
     if(consume_if(input, self->value, self->length))
     {
-        // xxx - add literal to ast
-        return ast;
+        // xxx - add literal to node
+        return node;
     }
     else
     {

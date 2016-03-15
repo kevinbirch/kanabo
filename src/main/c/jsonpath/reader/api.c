@@ -54,22 +54,22 @@
 #define just_path(VALUE) (MaybeJsonPath){PATH_VALUE, .value=(VALUE)}
 
 
-static inline JsonPath *build_path(SyntaxNode *ast)
+static inline JsonPath *build_path(SyntaxNode *node)
 {
-    if(NULL == ast)
+    if(NULL == node)
     {
         return NULL;
     }
     return NULL;
 }
 
-static inline MaybeJsonPath transform(MaybeSyntaxNode *ast, Input *input)
+static inline MaybeJsonPath transform(MaybeSyntaxNode *node, Input *input)
 {
-    if(is_nothing(*ast))
+    if(is_nothing(*node))
     {
-        return path_error(ast->code, position(input));
+        return path_error(node->code, position(input));
     }
-    return (MaybeJsonPath){PATH_VALUE, .value=build_path(ast->value)};
+    return (MaybeJsonPath){PATH_VALUE, .value=build_path(node->value)};
 
 }
 
@@ -83,8 +83,8 @@ MaybeJsonPath parse(const uint8_t *expression, size_t length)
     Input input = make_input(expression, length);
 
     Parser *parser = jsonpath();
-    MaybeSyntaxNode ast = just_node(make_syntax_node(CST_ROOT, NULL, location_from_input(input)));
-    MaybeSyntaxNode result = bind(parser, ast, &input);
+    MaybeSyntaxNode node = just_node(make_syntax_node(CST_ROOT, NULL, location_from_input(input)));
+    MaybeSyntaxNode result = bind(parser, node, &input);
     if(has_more(&input))
     {
         return path_error(ERR_UNEXPECTED_VALUE, position(&input));

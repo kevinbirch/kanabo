@@ -41,7 +41,7 @@
 #include "jsonpath/parsers/compound.h"
 
 
-static MaybeSyntaxNode choice_delegate(Parser *parser, MaybeSyntaxNode ast, Input *input)
+static MaybeSyntaxNode choice_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
 {
     ensure_more_input(input);
     CompoundParser *self = (CompoundParser *)parser;
@@ -52,11 +52,11 @@ static MaybeSyntaxNode choice_delegate(Parser *parser, MaybeSyntaxNode ast, Inpu
         reset_to_mark(input);
         Parser *each = vector_get(self->children, i);
 
-        MaybeSyntaxNode result = bind(each, ast, input);
+        MaybeSyntaxNode result = bind(each, node, input);
         if(is_value(result))
         {
-            syntax_node_add_child(ast.value, result.value);
-            return ast;
+            syntax_node_add_child(node.value, result.value);
+            return node;
         }
         else if(ERR_PREMATURE_END_OF_INPUT == result.code)
         {

@@ -41,4 +41,4 @@
 #include "jsonpath/ast.h"
 
 
-MaybeSyntaxNode name_rule_rewriter(MaybeSyntaxNode ast);
+MaybeSyntaxNode name_rule_rewriter(MaybeSyntaxNode node);

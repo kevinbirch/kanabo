@@ -39,11 +39,11 @@
 #include "jsonpath/parsers/base.h"
 
 
-static MaybeSyntaxNode non_zero_signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode ast, Input *input)
+static MaybeSyntaxNode non_zero_signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode node, Input *input)
 {
     ensure_more_input(input);
     skip_whitespace(input);
-    return ast;
+    return node;
 }
 
 Parser *non_zero_signed_integer(void)

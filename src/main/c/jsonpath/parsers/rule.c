@@ -44,7 +44,7 @@ struct rule_parser_s
     Parser        base;
     const char   *name;
     Parser       *expression;
-    ast_rewriter  rewriter;
+    node_rewriter  rewriter;
 };
 
 typedef struct rule_parser_s RuleParser;
@@ -57,17 +57,17 @@ static void rule_free(Parser *value)
     parser_free(self->expression);
 }
 
-static MaybeSyntaxNode rule_delegate(Parser *parser, MaybeSyntaxNode ast, Input *input)
+static MaybeSyntaxNode rule_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
 {
     RuleParser *self = (RuleParser *)parser;
     ensure_more_input(input);
 
-    return self->rewriter(bind(self->expression, ast, input));
+    return self->rewriter(bind(self->expression, node, input));
 }
 
-MaybeSyntaxNode default_rewriter(MaybeSyntaxNode ast)
+MaybeSyntaxNode default_rewriter(MaybeSyntaxNode node)
 {
-    return ast;
+    return node;
 }
 
 Parser *rule_parser(const char *name, Parser *expression, tree_rewriter rewriter)

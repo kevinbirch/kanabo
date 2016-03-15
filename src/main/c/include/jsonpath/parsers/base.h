@@ -65,7 +65,7 @@ struct parser_s
     struct
     {
         void (*free)(Parser *self);
-        MaybeSyntaxNode (*delegate)(Parser *parser, MaybeSyntaxNode ast, Input *input);
+        MaybeSyntaxNode (*delegate)(Parser *parser, MaybeSyntaxNode node, Input *input);
     } vtable;
     char *repr;
 };
