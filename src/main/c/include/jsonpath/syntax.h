@@ -73,7 +73,7 @@ SyntaxNode *make_syntax_node(uint_fast16_t type, String *value, Location locatio
 
 void dispose_syntax_node(SyntaxNode *self);
 
-SyntaxNodeType syntax_node_type(SyntaxNode *self);
+uint_fast16_t  syntax_node_type(SyntaxNode *self);
 String        *syntax_node_value(SyntaxNode *self);
 
 void syntax_node_add_child(SyntaxNode *self, SyntaxNode *child);
