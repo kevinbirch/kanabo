@@ -38,7 +38,7 @@
 
 #pragma once
 
-#include "jsonpath/maybe_ast.h"
+#include "jsonpath/ast.h"
 
 
 MaybeAst name_rule_rewriter(MaybeAst ast);

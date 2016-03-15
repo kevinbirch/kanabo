@@ -44,7 +44,7 @@
 
 #include "jsonpath/codes.h"
 #include "jsonpath/input.h"
-#include "jsonpath/maybe_ast.h"
+#include "jsonpath/ast.h"
 
 typedef struct parser_s Parser;
 
