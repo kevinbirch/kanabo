@@ -38,7 +38,7 @@
 
 #include "conditions.h"
 
-#include "jsonpath/maybe_ast.h"
+#include "jsonpath/ast.h"
 #include "jsonpath/grammar.h"
 #include "jsonpath/model.h"
 #include "jsonpath/logging.h"
