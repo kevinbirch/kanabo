@@ -70,11 +70,12 @@ struct parser_s
     char *repr;
 };
 
-#define ensure_more_input(INPUT) if(!has_more(INPUT))   \
+#define ensure_more_input(INPUT) if(!has_more((INPUT)))  \
     {                                                   \
         return nothing_ast(ERR_PREMATURE_END_OF_INPUT); \
     }
 
+#define location_from_input(INPUT) (Location){NULL, 1, position((INPUT))}
 
 Parser *make_parser(enum parser_kind kind);
 Parser *parser_init(Parser *self, enum parser_kind kind);
