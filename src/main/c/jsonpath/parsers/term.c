@@ -79,7 +79,7 @@ static inline bool is_stop_char(TermParser *self, uint8_t value)
     return false;
 }
 
-static MaybeAst string_delegate(Parser *parser, MaybeAst ast, Input *input)
+static MaybeSyntaxNode string_delegate(Parser *parser, MaybeSyntaxNode ast, Input *input)
 {
     skip_whitespace(input);
     ensure_more_input(input);

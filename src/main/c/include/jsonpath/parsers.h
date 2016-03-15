@@ -54,14 +54,14 @@ define_maybe(MaybeString, MutableString *)
 #define nothing_string(CODE) (MaybeString){NOTHING, .code=(CODE)}
 
 typedef MaybeString (*character_filter)(Input *input);
-typedef MaybeAst (*ast_rewriter)(MaybeAst ast);
+typedef MaybeSyntaxNode (*ast_rewriter)(MaybeSyntaxNode ast);
 
 
-MaybeAst bind(Parser *parser, MaybeAst ast, Input *input);
+MaybeSyntaxNode bind(Parser *parser, MaybeSyntaxNode ast, Input *input);
 
 /* Non-terminal parsers */
 
-MaybeAst default_rewriter(MaybeAst ast);
+MaybeSyntaxNode default_rewriter(MaybeSyntaxNode ast);
 Parser *rule_parser(const char *name, Parser *expression, ast_rewriter rewriter);
 #define rule(PARSER, FUNC) rule_parser(__func__, (PARSER), (FUNC))
 #define simple_rule(PARSER) rule_parser(__func__, (PARSER), default_rewriter)

@@ -38,12 +38,12 @@
 #include "jsonpath/parsers/wrapped.h"
 
 
-static MaybeAst option_delegate(Parser *parser, MaybeAst ast, Input *input)
+static MaybeSyntaxNode option_delegate(Parser *parser, MaybeSyntaxNode ast, Input *input)
 {
     ensure_more_input(input);
     WrappedParser *self = (WrappedParser *)parser;
 
-    MaybeAst result = bind(self->child, ast, input);
+    MaybeSyntaxNode result = bind(self->child, ast, input);
     if(is_value(result))
     {
         syntax_node_add_child(ast.value, result.value);

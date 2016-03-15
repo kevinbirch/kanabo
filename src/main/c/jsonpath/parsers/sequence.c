@@ -41,7 +41,7 @@
 #include "jsonpath/parsers/compound.h"
 
 
-static MaybeAst sequence_delegate(Parser *parser, MaybeAst ast, Input *input)
+static MaybeSyntaxNode sequence_delegate(Parser *parser, MaybeSyntaxNode ast, Input *input)
 {
     ensure_more_input(input);
     CompoundParser *self = (CompoundParser *)parser;
@@ -49,7 +49,7 @@ static MaybeAst sequence_delegate(Parser *parser, MaybeAst ast, Input *input)
     for(size_t i = 0; i < vector_length(self->children); i++)
     {
         Parser *each = vector_get(self->children, i);
-        MaybeAst branch_result = bind(each, ast, input);
+        MaybeSyntaxNode branch_result = bind(each, ast, input);
         if(is_value(branch_result))
         {
             syntax_node_add_child(ast.value, branch_result.value);

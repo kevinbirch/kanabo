@@ -39,7 +39,7 @@
 #include "jsonpath/rewriters.h"
 
 
-MaybeAst name_rule_rewriter(MaybeAst ast)
+MaybeSyntaxNode name_rule_rewriter(MaybeSyntaxNode ast)
 {
     // xxx - the basic ast tree building needs to be sorted out
     return ast;

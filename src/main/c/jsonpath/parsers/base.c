@@ -61,8 +61,8 @@ static void base_free(Parser *self)
     free(self);
 }
 
-static MaybeAst base_delegate(Parser *self __attribute__((unused)),
-                              MaybeAst ast,
+static MaybeSyntaxNode base_delegate(Parser *self __attribute__((unused)),
+                              MaybeSyntaxNode ast,
                               Input *input __attribute__((unused)))
 {
     return ast;
@@ -127,7 +127,7 @@ bool is_nonterminal(Parser *self)
     return !is_terminal(self);
 }
 
-MaybeAst bind(Parser *self, MaybeAst ast, Input *input)
+MaybeSyntaxNode bind(Parser *self, MaybeSyntaxNode ast, Input *input)
 {
     static size_t padding = 0;
     if(is_nothing(ast))
@@ -135,7 +135,7 @@ MaybeAst bind(Parser *self, MaybeAst ast, Input *input)
         return ast;    
     }
     parser_trace("%*sentering %s", (2 * padding++), "", parser_repr(self));
-    MaybeAst result = self->vtable.delegate(self, ast, input);
+    MaybeSyntaxNode result = self->vtable.delegate(self, ast, input);
     parser_trace(
         "%*sleaving %s, %s", (2 * --padding), "",
         is_nonterminal(self) ? parser_repr(self) : parser_name(self),

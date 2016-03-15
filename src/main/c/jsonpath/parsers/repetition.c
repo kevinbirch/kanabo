@@ -38,12 +38,12 @@
 #include "jsonpath/parsers/wrapped.h"
 
 
-static MaybeAst repetition_delegate(Parser *parser, MaybeAst ast, Input *input)
+static MaybeSyntaxNode repetition_delegate(Parser *parser, MaybeSyntaxNode ast, Input *input)
 {
     ensure_more_input(input);
     WrappedParser *self = (WrappedParser *)parser;
 
-    MaybeAst result = bind(self->child, ast, input);
+    MaybeSyntaxNode result = bind(self->child, ast, input);
     if(ERR_PREMATURE_END_OF_INPUT == result.code)
     {
         return result;

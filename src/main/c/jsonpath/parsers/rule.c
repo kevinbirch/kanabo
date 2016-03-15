@@ -57,7 +57,7 @@ static void rule_free(Parser *value)
     parser_free(self->expression);
 }
 
-static MaybeAst rule_delegate(Parser *parser, MaybeAst ast, Input *input)
+static MaybeSyntaxNode rule_delegate(Parser *parser, MaybeSyntaxNode ast, Input *input)
 {
     RuleParser *self = (RuleParser *)parser;
     ensure_more_input(input);
@@ -65,7 +65,7 @@ static MaybeAst rule_delegate(Parser *parser, MaybeAst ast, Input *input)
     return self->rewriter(bind(self->expression, ast, input));
 }
 
-MaybeAst default_rewriter(MaybeAst ast)
+MaybeSyntaxNode default_rewriter(MaybeSyntaxNode ast)
 {
     return ast;
 }
