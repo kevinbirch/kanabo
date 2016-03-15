@@ -55,7 +55,7 @@ static MaybeAst choice_delegate(Parser *parser, MaybeAst ast, Input *input)
         MaybeAst result = bind(each, ast, input);
         if(is_value(result))
         {
-            ast_add_child(ast.value, result.value);
+            syntax_node_add_child(ast.value, result.value);
             return ast;
         }
         else if(ERR_PREMATURE_END_OF_INPUT == result.code)

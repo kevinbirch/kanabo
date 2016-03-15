@@ -50,7 +50,7 @@ static MaybeAst repetition_delegate(Parser *parser, MaybeAst ast, Input *input)
     }
     while(is_value(result))
     {
-        ast_add_child(ast.value, result.value);
+        syntax_node_add_child(ast.value, result.value);
         result = bind(self->child, ast, input);
     }
 

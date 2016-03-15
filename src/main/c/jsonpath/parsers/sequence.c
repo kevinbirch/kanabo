@@ -52,7 +52,7 @@ static MaybeAst sequence_delegate(Parser *parser, MaybeAst ast, Input *input)
         MaybeAst branch_result = bind(each, ast, input);
         if(is_value(branch_result))
         {
-            ast_add_child(ast.value, branch_result.value);
+            syntax_node_add_child(ast.value, branch_result.value);
         }
         else
         {

@@ -54,7 +54,7 @@
 #define just_path(VALUE) (MaybeJsonPath){PATH_VALUE, .value=(VALUE)}
 
 
-static inline JsonPath *build_path(Ast *ast)
+static inline JsonPath *build_path(SyntaxNode *ast)
 {
     if(NULL == ast)
     {
@@ -83,7 +83,7 @@ MaybeJsonPath parse(const uint8_t *expression, size_t length)
     Input input = make_input(expression, length);
 
     Parser *parser = jsonpath();
-    MaybeAst ast = just_ast(make_ast_root_node());
+    MaybeAst ast = just_ast(make_syntax_node(CST_ROOT, NULL, location_from_input(input)));
     MaybeAst result = bind(parser, ast, &input);
     if(has_more(&input))
     {
@@ -93,4 +93,3 @@ MaybeJsonPath parse(const uint8_t *expression, size_t length)
     //parser_free(parser);
 
     return transform(&result, &input);
-}

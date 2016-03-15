@@ -103,8 +103,8 @@ static MaybeAst string_delegate(Parser *parser, MaybeAst ast, Input *input)
     }
 
     String *term = mstring_as_string(result);
-    Ast *node = make_ast_node(AST_STRING, term);
-    ast_add_child(value(ast), node);
+    SyntaxNode *node = make_syntax_node(CST_TERM, term, location_from_input(input));
+    syntax_node_add_child(value(ast), node);
     mstring_free(result);
     return ast;
 }
