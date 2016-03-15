@@ -78,4 +78,4 @@ typedef enum ast_node_tag AbstractSyntaxNodeType;
 define_maybe(MaybeSyntaxNode, SyntaxNode *)
 
 #define just_node(VALUE) (MaybeSyntaxNode){JUST, .value=(VALUE)}
-#define nothing_ast(CODE) (MaybeSyntaxNode){NOTHING, .code=(CODE)}
+#define nothing_node(CODE) (MaybeSyntaxNode){NOTHING, .code=(CODE)}

@@ -64,7 +64,7 @@ static MaybeSyntaxNode choice_delegate(Parser *parser, MaybeSyntaxNode ast, Inpu
         }
     }
 
-    return nothing_ast(ERR_UNEXPECTED_VALUE);
+    return nothing_node(ERR_UNEXPECTED_VALUE);
 }
 
 Parser *choice_parser(Parser *one, Parser *two, ...)

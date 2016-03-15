@@ -54,7 +54,7 @@ define_maybe(MaybeString, MutableString *)
 #define nothing_string(CODE) (MaybeString){NOTHING, .code=(CODE)}
 
 typedef MaybeString (*character_filter)(Input *input);
-typedef MaybeSyntaxNode (*ast_rewriter)(MaybeSyntaxNode ast);
+typedef MaybeSyntaxNode (*tree_rewriter)(MaybeSyntaxNode ast);
 
 
 MaybeSyntaxNode bind(Parser *parser, MaybeSyntaxNode ast, Input *input);
@@ -62,7 +62,7 @@ MaybeSyntaxNode bind(Parser *parser, MaybeSyntaxNode ast, Input *input);
 /* Non-terminal parsers */
 
 MaybeSyntaxNode default_rewriter(MaybeSyntaxNode ast);
-Parser *rule_parser(const char *name, Parser *expression, ast_rewriter rewriter);
+Parser *rule_parser(const char *name, Parser *expression, tree_rewriter rewriter);
 #define rule(PARSER, FUNC) rule_parser(__func__, (PARSER), (FUNC))
 #define simple_rule(PARSER) rule_parser(__func__, (PARSER), default_rewriter)
 

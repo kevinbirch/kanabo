@@ -62,7 +62,7 @@ static MaybeSyntaxNode literal_delegate(Parser *parser, MaybeSyntaxNode ast, Inp
     }
     else
     {
-        return nothing_ast(ERR_UNEXPECTED_VALUE);
+        return nothing_node(ERR_UNEXPECTED_VALUE);
     }
 }
 

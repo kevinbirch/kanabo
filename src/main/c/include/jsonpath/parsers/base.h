@@ -72,7 +72,7 @@ struct parser_s
 
 #define ensure_more_input(INPUT) if(!has_more((INPUT)))  \
     {                                                   \
-        return nothing_ast(ERR_PREMATURE_END_OF_INPUT); \
+        return nothing_node(ERR_PREMATURE_END_OF_INPUT); \
     }
 
 #define location_from_input(INPUT) (Location){NULL, 1, position((INPUT))}

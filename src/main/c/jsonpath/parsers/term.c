@@ -97,7 +97,7 @@ static MaybeSyntaxNode string_delegate(Parser *parser, MaybeSyntaxNode ast, Inpu
         if(is_nothing(maybe))
         {
             mstring_free(result);
-            return nothing_ast(code(maybe));
+            return nothing_node(code(maybe));
         }
         mstring_append(&result, value(maybe));
     }

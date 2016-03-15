@@ -70,7 +70,7 @@ MaybeSyntaxNode default_rewriter(MaybeSyntaxNode ast)
     return ast;
 }
 
-Parser *rule_parser(const char *name, Parser *expression, ast_rewriter rewriter)
+Parser *rule_parser(const char *name, Parser *expression, tree_rewriter rewriter)
 {
     if(NULL == name)
     {
