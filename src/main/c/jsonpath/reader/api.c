@@ -83,7 +83,8 @@ MaybeJsonPath parse(const uint8_t *expression, size_t length)
     Input input = make_input(expression, length);
 
     Parser *parser = jsonpath();
-    MaybeSyntaxNode node = just_node(make_syntax_node(CST_ROOT, NULL, location_from_input(input)));
+    SyntaxNode *root = make_syntax_node(CST_ROOT, NULL, location_from_input(&input));
+    MaybeSyntaxNode node = just_node(root);
     MaybeSyntaxNode result = bind(parser, node, &input);
     if(has_more(&input))
     {
@@ -93,3 +94,4 @@ MaybeJsonPath parse(const uint8_t *expression, size_t length)
     //parser_free(parser);
 
     return transform(&result, &input);
+}

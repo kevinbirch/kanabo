@@ -46,6 +46,9 @@
 #include "jsonpath/input.h"
 #include "jsonpath/ast.h"
 
+
+#define location_from_input(INPUT) (Location){NULL, 1, position((INPUT))}
+
 typedef struct parser_s Parser;
 
 define_maybe(MaybeString, MutableString *)
@@ -62,6 +65,7 @@ MaybeSyntaxNode bind(Parser *parser, MaybeSyntaxNode node, Input *input);
 /* Non-terminal parsers */
 
 MaybeSyntaxNode default_rewriter(MaybeSyntaxNode node);
+
 Parser *rule_parser(const char *name, Parser *expression, tree_rewriter rewriter);
 #define rule(PARSER, FUNC) rule_parser(__func__, (PARSER), (FUNC))
 #define simple_rule(PARSER) rule_parser(__func__, (PARSER), default_rewriter)

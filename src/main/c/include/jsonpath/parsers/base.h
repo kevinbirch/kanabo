@@ -75,8 +75,6 @@ struct parser_s
         return nothing_node(ERR_PREMATURE_END_OF_INPUT); \
     }
 
-#define location_from_input(INPUT) (Location){NULL, 1, position((INPUT))}
-
 Parser *make_parser(enum parser_kind kind);
 Parser *parser_init(Parser *self, enum parser_kind kind);
 

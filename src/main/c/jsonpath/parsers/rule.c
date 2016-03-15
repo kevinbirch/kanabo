@@ -41,10 +41,10 @@
 
 struct rule_parser_s
 {
-    Parser        base;
-    const char   *name;
-    Parser       *expression;
-    node_rewriter  rewriter;
+    Parser         base;
+    const char    *name;
+    Parser        *expression;
+    tree_rewriter  rewriter;
 };
 
 typedef struct rule_parser_s RuleParser;

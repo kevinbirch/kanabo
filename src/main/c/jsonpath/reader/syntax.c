@@ -88,7 +88,7 @@ void dispose_syntax_node(SyntaxNode *self)
     free(self);
 }
 
-SyntaxNodeType syntax_node_type(SyntaxNode *self)
+uint_fast16_t syntax_node_type(SyntaxNode *self)
 {
     return self->type;
 }
