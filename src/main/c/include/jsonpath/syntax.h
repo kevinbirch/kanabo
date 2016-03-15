@@ -40,6 +40,8 @@
 
 #include <stdint.h>
 
+#include "str.h"
+
 
 enum cst_node_tag
 {
@@ -52,11 +54,27 @@ enum cst_node_tag
     CST_TERM
 };
 
+typedef enum cst_node_tag ConcreteSyntaxNodeType;
+
+struct location_s
+{
+    String *filename;
+    size_t  line;
+    size_t  offset;
+};
+
+typedef struct location_s Location;
+
 typedef struct syntax_node_s SyntaxNode;
 
+typedef void (*SyntaxNodeVisitor)(SyntaxNode *node, void *context);
 
-SyntaxNode *make_syntax_node(uint_fast16_t tag, void *value);
+SyntaxNode *make_syntax_node(uint_fast16_t type, String *value, Location location);
 
-void syntax_node_free(SyntaxNode *self);
+void dispose_syntax_node(SyntaxNode *self);
+
+SyntaxNodeType syntax_node_type(SyntaxNode *self);
+String        *syntax_node_value(SyntaxNode *self);
 
 void syntax_node_add_child(SyntaxNode *self, SyntaxNode *child);
+void syntax_node_visit_pre_order(SyntaxNode *self, SyntaxNodeVisitor visitor, void *parameter);
