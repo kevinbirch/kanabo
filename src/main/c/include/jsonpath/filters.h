@@ -38,7 +38,7 @@
 
 #pragma once
 
-#include "jsonpath/parsers.h"
+#include "parsers.h"
 
 
 MaybeString quoted_name_filter(Input *input);

@@ -40,7 +40,7 @@
 
 #include <stdint.h>
 
-#include "jsonpath/parsers.h"
+#include "parsers.h"
 
 
 MaybeString unescape_type(uint8_t type);

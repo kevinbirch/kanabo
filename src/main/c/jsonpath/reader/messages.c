@@ -47,7 +47,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "jsonpath/parsers.h"
+#include "parsers.h"
 #include "conditions.h"
 
 static const char * const MESSAGES[] =

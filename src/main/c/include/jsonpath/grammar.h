@@ -39,7 +39,7 @@
 #pragma once
 
 
-#include "jsonpath/parsers.h"
+#include "parsers.h"
 
 
 Parser *jsonpath(void);
