@@ -35,7 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include "parsers/wrapped.h"
+#include "parser/wrapped.h"
 
 
 static MaybeSyntaxNode repetition_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)

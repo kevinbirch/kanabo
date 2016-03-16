@@ -36,7 +36,7 @@
  */
 
 
-#include "parsers/wrapped.h"
+#include "parser/wrapped.h"
 
 
 static void wrapped_free(Parser *value)

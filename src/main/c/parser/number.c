@@ -36,7 +36,7 @@
  */
 
 
-#include "parsers/base.h"
+#include "parser/base.h"
 
 
 static MaybeSyntaxNode number_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode node, Input *input)

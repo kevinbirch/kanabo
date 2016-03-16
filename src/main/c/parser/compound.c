@@ -38,7 +38,7 @@
 
 #include "vector.h"
 
-#include "parsers/compound.h"
+#include "parser/compound.h"
 
 
 static void compound_free(Parser *value)

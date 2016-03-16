@@ -38,7 +38,7 @@
 
 #include "vector.h"
 
-#include "parsers/compound.h"
+#include "parser/compound.h"
 
 
 static MaybeSyntaxNode choice_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)

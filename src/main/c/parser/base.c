@@ -36,7 +36,7 @@
  */
 
 
-#include "parsers/base.h"
+#include "parser/base.h"
 
 
 static const char * const PARSER_NAMES[] =

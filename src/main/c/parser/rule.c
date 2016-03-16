@@ -36,7 +36,7 @@
  */
 
 
-#include "parsers/base.h"
+#include "parser/base.h"
 
 
 struct rule_parser_s

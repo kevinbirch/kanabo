@@ -39,16 +39,18 @@
 #pragma once
 
 
-#include "parsers/base.h"
+#include <stdarg.h>
+
+#include "parser/base.h"
 
 
-struct wrapped_parser_s
+struct compound_parser_s
 {
     Parser  base;
-    Parser *child;
+    Vector *children;
 };
 
-typedef struct wrapped_parser_s WrappedParser;
+typedef struct compound_parser_s CompoundParser;
 
 
-WrappedParser *make_wrapped_parser(enum parser_kind kind, Parser *child);
+CompoundParser *make_compound_parser(enum parser_kind kind, Parser *one, Parser *two, va_list rest);

@@ -36,7 +36,7 @@
  */
 
 
-#include "parsers/base.h"
+#include "parser/base.h"
 
 
 struct term_parser_s
