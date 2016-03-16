@@ -67,7 +67,7 @@ const char *string_as_c_str(String *self);
                                   )(SELF, INDEX)
 #define string_as_c_string(SELF) _Generic((SELF), \
                                           String *: string_as_c_str, \
-                                          MutableString *: mstring_as_c_str, \
+                                          MutableString *: mstring_as_c_str \
                                           )(SELF)
 
 MutableString *make_mstring(size_t capacity);
