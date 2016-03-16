@@ -62,7 +62,15 @@ static MaybeSyntaxNode rule_delegate(Parser *parser, MaybeSyntaxNode node, Input
     RuleParser *self = (RuleParser *)parser;
     ensure_more_input(input);
 
-    return self->rewriter(bind(self->expression, node, input));
+    String *rule_name = make_string(self->name);
+    SyntaxNode *rule_node = make_syntax_node(CST_RULE, rule_name, location_from_input(input));
+    MaybeSyntaxNode expression_node = bind(self->expression, node, input);
+    if(is_value(expression_node))
+    {
+        syntax_node_add_child(rule_node, value(expression_node));
+        return self->rewriter(just_node(rule_node));
+    }
+    return expression_node;
 }
 
 MaybeSyntaxNode default_rewriter(MaybeSyntaxNode node)
