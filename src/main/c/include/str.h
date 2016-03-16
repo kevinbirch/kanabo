@@ -48,9 +48,10 @@ typedef struct mutable_string_s MutableString;
 
 
 String *make_string(const char *value);
+String *make_string_with_bytestring(const uint8_t *value);
 void    string_free(String *self);
 
-String *string_copy(const String *self);
+String *string_clone(const String *self);
 uint8_t string_get_char(const String *self, size_t index);
 
 size_t string_get_length(String *self);
@@ -80,7 +81,7 @@ size_t   mstring_get_capacity(MutableString *self);
 bool     mstring_has_capacity(MutableString *self, size_t length);
 uint8_t  mstring_get_char(const MutableString *self, size_t index);
 
-MutableString *mstring_copy(MutableString *self);
+MutableString *mstring_clone(MutableString *self);
 String        *mstring_as_string(MutableString *self);
 String        *mstring_as_string_no_copy(MutableString *self);
 const char    *mstring_as_c_str(MutableString *self);

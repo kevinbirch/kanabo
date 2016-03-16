@@ -84,7 +84,7 @@ void string_free(String *self)
     free(self);
 }
 
-String *string_copy(const String *self)
+String *string_clone(const String *self)
 {
     String *that = string_alloc(self->length);
     if(NULL == that)
@@ -208,7 +208,7 @@ bool mstring_has_capacity(MutableString *self, size_t length)
     return (self->capacity - self->base.length) >= length;
 }
 
-MutableString *mstring_copy(MutableString *self)
+MutableString *mstring_clone(MutableString *self)
 {
     MutableString *that = mstring_alloc(self->capacity);
     if(NULL == that)
