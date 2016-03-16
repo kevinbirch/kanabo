@@ -47,6 +47,7 @@ LICENSE file for more details.
 * interesting competitor: http://jmespath.org/
 * various getopt alternatvies: https://news.ycombinator.com/item?id=10687375
 * fix license to point to bsd 3 clause
+* X_free to dispose_X
 
 ### evaluator
 
