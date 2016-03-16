@@ -42,8 +42,7 @@
 struct literal_parser_s
 {
     Parser   base;
-    size_t   length;
-    uint8_t  value[];
+    String   *value;
 };
 
 typedef struct literal_parser_s LiteralParser;
@@ -55,10 +54,14 @@ static MaybeSyntaxNode literal_delegate(Parser *parser, MaybeSyntaxNode node, In
 
     ensure_more_input(input);
     skip_whitespace(input);
-    if(consume_if(input, self->value, self->length))
+    const uint8_t *bytestring = (const uint8_t *)string_as_c_string(self->value);
+    if(consume_if(input, bytestring, string_length(self->value)))
     {
-        // xxx - add literal to node
-        return node;
+        Location location = location_from_input(input);
+        SyntaxNode *literal = make_syntax_node(CST_LITERAL, self->value, location);
+        syntax_node_add_child(value(node), literal);
+
+        return just_node(literal);
     }
     else
     {
@@ -72,8 +75,7 @@ Parser *literal(const char *value)
     {
         return NULL;
     }
-    size_t length = strlen(value);
-    LiteralParser *self = calloc(1, sizeof(LiteralParser) + length);
+    LiteralParser *self = calloc(1, sizeof(LiteralParser));
     if(NULL == self)
     {
         return NULL;
@@ -82,8 +84,7 @@ Parser *literal(const char *value)
     parser_init((Parser *)self, LITERAL);
     self->base.vtable.delegate = literal_delegate;
     asprintf(&self->base.repr, "literal '%s'", value);
-    memcpy(self->value, value, length);
-    self->length = length;
+    self->value = make_string(value);
 
     return (Parser *)self;
 }
