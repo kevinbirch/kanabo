@@ -65,6 +65,8 @@ struct location_s
 
 typedef struct location_s Location;
 
+static const Location NO_LOCATION = {NULL, 0, 0};
+
 typedef struct syntax_node_s SyntaxNode;
 
 typedef void (*SyntaxNodeVisitor)(SyntaxNode *node, void *context);
