@@ -36,6 +36,8 @@
  */
 
 
+#include "log.h"
+
 #include "parser/base.h"
 
 
@@ -134,9 +136,9 @@ MaybeSyntaxNode bind(Parser *self, MaybeSyntaxNode node, Input *input)
     {
         return node;    
     }
-    parser_trace("%*sentering %s", (2 * padding++), "", parser_repr(self));
+    log_trace("parser", "%*sentering %s", (2 * padding++), "", parser_repr(self));
     MaybeSyntaxNode result = self->vtable.delegate(self, node, input);
-    parser_trace(
+    log_trace("parser",
         "%*sleaving %s, %s", (2 * --padding), "",
         is_nonterminal(self) ? parser_repr(self) : parser_name(self),
         is_nothing(result) ? "failure" : "success");

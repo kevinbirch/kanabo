@@ -35,114 +35,134 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#include <string.h>
+#include <ctype.h>
 
-#include "vector.h"
-
-#include "jsonpath/syntax.h"
+#include "parser/input.h"
 
 
-struct syntax_node_s
+size_t position(Input *self)
 {
-    uint_fast16_t type;
+    return self->position;
+}
 
-    Location  location;
-    String   *value;
-    Vector   *children;
-};
-
-
-SyntaxNode *make_syntax_node(uint_fast16_t type, String *value, Location location)
+void reset(Input *self)
 {
-    SyntaxNode *self = calloc(1, sizeof(SyntaxNode));
+    self->position = 0;
+}
 
-    if(NULL != self)
+void set_mark(Input *self)
+{
+    self->mark = self->position;
+}
+
+void reset_to_mark(Input *self)
+{
+    self->position = self->mark;
+}
+
+bool has_more(Input *self)
+{
+    return self->position < self->length;
+}
+
+size_t remaining(Input *self)
+{
+    return self->length - self->position;
+}
+
+void skip_whitespace(Input *self)
+{
+    while(has_more(self) && isspace(peek(self)))
     {
-        self->type = type;
-        self->location = location;
-        self->value = value;
+        consume_char(self);
     }
-    return self;
 }
 
-static void syntax_node_destructor(void *value)
+uint8_t peek(Input *self)
 {
-    SyntaxNode *self = (SyntaxNode *)value;
-    dispose_syntax_node(self);
+    if(!has_more(self))
+    {
+        return 0;
+    }
+    return self->data[self->position];
 }
 
-void dispose_syntax_node(SyntaxNode *self)
+uint8_t consume_char(Input *self)
 {
-    if(NULL == self)
+    if(!has_more(self))
+    {
+        return 0;
+    }
+    return self->data[self->position++];
+}
+
+void consume_many(Input *self, size_t count)
+{
+    if(!has_more(self))
     {
         return;
     }
-
-    if(NULL != self->children)
+    else if(count > remaining(self))
     {
-        vector_destroy(self->children, syntax_node_destructor);
+        self->position = self->length - 1;
     }
-    if(NULL != self->value)
+    else
     {
-        string_free(self->value);
+        self->position += count;
     }
-    free(self);
 }
 
-uint_fast16_t syntax_node_type(SyntaxNode *self)
+bool consume_if(Input *self, const uint8_t *value, size_t length)
 {
-    return self->type;
-}
-
-inline String *syntax_node_value(SyntaxNode *self)
-{
-    return self->value;
-}
-
-void syntax_node_add_child(SyntaxNode *self, SyntaxNode *child)
-{
-    if(NULL == self || NULL == child)
+    if(!has_more(self))
     {
-        return;
+        return false;
     }
 
-    if(NULL == self->children)
+    if(length > remaining(self))
     {
-        self->children = make_vector();
-        if(NULL == self->children)
-        {
-            return;
-        }
+        return false;
+    }
+    if(0 == memcmp(cursor(self), value, length))
+    {
+        consume_many(self, length);
+        return true;
     }
 
-    vector_add(self->children, child);
+    return false;
 }
 
-struct iteration_context_s
+void push_back(Input *self)
 {
-    SyntaxNodeVisitor visitor;
-    void *parameter;
-};
-
-static bool visitor_adapter(void *each, void *parameter)
-{
-    SyntaxNode *node = (SyntaxNode *)each;
-    struct iteration_context_s *context = (struct iteration_context_s *)parameter;
-    syntax_node_visit_pre_order(node, context->visitor, context->parameter);
-
-    return true;
+    self->position--;
 }
 
-void syntax_node_visit_pre_order(SyntaxNode *self, SyntaxNodeVisitor visitor, void *parameter)
+bool looking_at(Input *self, const char *value)
 {
-    if(NULL == self || NULL == visitor)
+    if(!has_more(self))
     {
-        return;
+        return false;
     }
+    size_t length = strlen(value);
+    if(length > remaining(self))
+    {
+        return false;
+    }
+    if(0 == memcmp(cursor(self), value, length))
+    {
+        return true;
+    }
+    return false;
 
-    visitor(self, parameter);
-    if(NULL != self->children)
+}
+
+size_t find(Input *self, const char *value)
+{
+    if(!has_more(self))
     {
-        struct iteration_context_s context = {visitor, parameter};
-        vector_iterate(self->children, visitor_adapter, &context);
+        return 0;
     }
+    return strcspn((char *)cursor(self), value);
+
 }

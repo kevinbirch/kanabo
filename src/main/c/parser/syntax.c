@@ -35,134 +35,114 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <string.h>
-#include <ctype.h>
 
-#include "jsonpath/input.h"
+#include "vector.h"
+
+#include "parser/syntax.h"
 
 
-size_t position(Input *self)
+struct syntax_node_s
 {
-    return self->position;
-}
+    uint_fast16_t type;
 
-void reset(Input *self)
-{
-    self->position = 0;
-}
+    Location  location;
+    String   *value;
+    Vector   *children;
+};
 
-void set_mark(Input *self)
-{
-    self->mark = self->position;
-}
 
-void reset_to_mark(Input *self)
+SyntaxNode *make_syntax_node(uint_fast16_t type, String *value, Location location)
 {
-    self->position = self->mark;
-}
+    SyntaxNode *self = calloc(1, sizeof(SyntaxNode));
 
-bool has_more(Input *self)
-{
-    return self->position < self->length;
-}
-
-size_t remaining(Input *self)
-{
-    return self->length - self->position;
-}
-
-void skip_whitespace(Input *self)
-{
-    while(has_more(self) && isspace(peek(self)))
+    if(NULL != self)
     {
-        consume_char(self);
+        self->type = type;
+        self->location = location;
+        self->value = value;
     }
+    return self;
 }
 
-uint8_t peek(Input *self)
+static void syntax_node_destructor(void *value)
 {
-    if(!has_more(self))
-    {
-        return 0;
-    }
-    return self->data[self->position];
+    SyntaxNode *self = (SyntaxNode *)value;
+    dispose_syntax_node(self);
 }
 
-uint8_t consume_char(Input *self)
+void dispose_syntax_node(SyntaxNode *self)
 {
-    if(!has_more(self))
-    {
-        return 0;
-    }
-    return self->data[self->position++];
-}
-
-void consume_many(Input *self, size_t count)
-{
-    if(!has_more(self))
+    if(NULL == self)
     {
         return;
     }
-    else if(count > remaining(self))
+
+    if(NULL != self->children)
     {
-        self->position = self->length - 1;
+        vector_destroy(self->children, syntax_node_destructor);
     }
-    else
+    if(NULL != self->value)
     {
-        self->position += count;
+        string_free(self->value);
     }
+    free(self);
 }
 
-bool consume_if(Input *self, const uint8_t *value, size_t length)
+uint_fast16_t syntax_node_type(SyntaxNode *self)
 {
-    if(!has_more(self))
-    {
-        return false;
-    }
-
-    if(length > remaining(self))
-    {
-        return false;
-    }
-    if(0 == memcmp(cursor(self), value, length))
-    {
-        consume_many(self, length);
-        return true;
-    }
-
-    return false;
+    return self->type;
 }
 
-void push_back(Input *self)
+inline String *syntax_node_value(SyntaxNode *self)
 {
-    self->position--;
+    return self->value;
 }
 
-bool looking_at(Input *self, const char *value)
+void syntax_node_add_child(SyntaxNode *self, SyntaxNode *child)
 {
-    if(!has_more(self))
+    if(NULL == self || NULL == child)
     {
-        return false;
+        return;
     }
-    size_t length = strlen(value);
-    if(length > remaining(self))
-    {
-        return false;
-    }
-    if(0 == memcmp(cursor(self), value, length))
-    {
-        return true;
-    }
-    return false;
 
+    if(NULL == self->children)
+    {
+        self->children = make_vector();
+        if(NULL == self->children)
+        {
+            return;
+        }
+    }
+
+    vector_add(self->children, child);
 }
 
-size_t find(Input *self, const char *value)
+struct iteration_context_s
 {
-    if(!has_more(self))
-    {
-        return 0;
-    }
-    return strcspn((char *)cursor(self), value);
+    SyntaxNodeVisitor visitor;
+    void *parameter;
+};
 
+static bool visitor_adapter(void *each, void *parameter)
+{
+    SyntaxNode *node = (SyntaxNode *)each;
+    struct iteration_context_s *context = (struct iteration_context_s *)parameter;
+    syntax_node_visit_pre_order(node, context->visitor, context->parameter);
+
+    return true;
+}
+
+void syntax_node_visit_pre_order(SyntaxNode *self, SyntaxNodeVisitor visitor, void *parameter)
+{
+    if(NULL == self || NULL == visitor)
+    {
+        return;
+    }
+
+    visitor(self, parameter);
+    if(NULL != self->children)
+    {
+        struct iteration_context_s context = {visitor, parameter};
+        vector_iterate(self->children, visitor_adapter, &context);
+    }
 }

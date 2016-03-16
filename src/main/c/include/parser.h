@@ -43,7 +43,7 @@
 #include "str.h"
 
 #include "jsonpath/codes.h"
-#include "jsonpath/input.h"
+#include "parser/input.h"
 #include "jsonpath/ast.h"
 
 

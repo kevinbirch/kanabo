@@ -40,7 +40,6 @@
 
 
 #include "parsers.h"
-#include "jsonpath/logging.h"
 
 
 enum parser_kind
