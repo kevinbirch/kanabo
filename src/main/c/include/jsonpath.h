@@ -102,9 +102,9 @@ struct maybe_jsonpath_s
     {
         struct
         {
-            parser_result_code code;
-            size_t             position;
-            char              *message;
+            ResultCode  code;
+            size_t      position;
+            char       *message;
         } error;
         JsonPath *value;
     };

@@ -41,7 +41,7 @@
 
 #include "maybe.h"
 
-#include "jsonpath/syntax.h"
+#include "parser/syntax.h"
 
 
 enum ast_node_tag
@@ -74,8 +74,3 @@ enum ast_node_tag
 };
 
 typedef enum ast_node_tag AbstractSyntaxNodeType;
-
-define_maybe(MaybeSyntaxNode, SyntaxNode *)
-
-#define just_node(VALUE) (MaybeSyntaxNode){JUST, .value=(VALUE)}
-#define nothing_node(CODE) (MaybeSyntaxNode){NOTHING, .code=(CODE)}

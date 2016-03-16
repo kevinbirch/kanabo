@@ -38,14 +38,10 @@
 #pragma once
 
 
-enum parser_result_code
+enum jsonpath_parser_result_code_e
 {
-    PARSER_SUCCESS = 0,
-    ERR_NULL_EXPRESSION,             // the expression argument given was NULL
+    ERR_NULL_EXPRESSION = ERR_UNEXPECTED_VALUE + 1, // the expression argument given was NULL
     ERR_ZERO_LENGTH,                 // expression length was 0
-    ERR_PARSER_OUT_OF_MEMORY,        // unable to allocate memory
-    ERR_PREMATURE_END_OF_INPUT,      // premature end of input
-    ERR_UNEXPECTED_VALUE,            // expected one character but found another
     ERR_EXPECTED_NAME_CHAR,          // expected a name character
     ERR_CONTROL_CODE,                // forbidden control code in string/name
     ERR_ESCAPE_SEQUENCE,             // unuspported escape sequene
@@ -59,5 +55,5 @@ enum parser_result_code
     ERR_STEP_CANNOT_BE_ZERO,         // slice step value must be non-zero
 };
 
-typedef enum parser_result_code parser_result_code;
+typedef enum jsonpath_parser_result_code_e ResultCode;
 

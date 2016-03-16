@@ -42,14 +42,27 @@
 #include "maybe.h"
 #include "str.h"
 
-#include "jsonpath/codes.h"
 #include "parser/input.h"
-#include "jsonpath/ast.h"
 
+
+enum parser_result_code_e
+{
+    PARSER_SUCCESS = 0,
+    ERR_PARSER_OUT_OF_MEMORY,        // unable to allocate memory
+    ERR_PREMATURE_END_OF_INPUT,      // premature end of input
+    ERR_UNEXPECTED_VALUE,            // expected one value but found another
+};
+
+typedef enum parser_result_code_e ParserResultCode;
 
 #define location_from_input(INPUT) (Location){NULL, 1, position((INPUT))}
 
 typedef struct parser_s Parser;
+
+define_maybe(MaybeSyntaxNode, SyntaxNode *)
+
+#define just_node(VALUE) (MaybeSyntaxNode){JUST, .value=(VALUE)}
+#define nothing_node(CODE) (MaybeSyntaxNode){NOTHING, .code=(CODE)}
 
 define_maybe(MaybeString, MutableString *)
 
@@ -58,7 +71,6 @@ define_maybe(MaybeString, MutableString *)
 
 typedef MaybeString (*character_filter)(Input *input);
 typedef MaybeSyntaxNode (*tree_rewriter)(MaybeSyntaxNode node);
-
 
 MaybeSyntaxNode bind(Parser *parser, MaybeSyntaxNode node, Input *input);
 
@@ -99,4 +111,4 @@ void parser_free(Parser *value);
 
 /* Parser Execution */
 
-char *parser_status_message(parser_result_code code, size_t reported_position);
+char *parser_status_message(ParserResultCode code, size_t reported_position);

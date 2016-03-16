@@ -47,17 +47,17 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "parsers.h"
+#include "jsonpath/codes.h"
 #include "conditions.h"
 
 static const char * const MESSAGES[] =
 {
     "Success.",
-    "Expression was NULL.",
-    "Expression length was zero.",
     "Unable to allocate memory.",
     "At position %zd: premature end of input.",
     "At position %zd: unexpected character.",
+    "Expression was NULL.",
+    "Expression length was zero.",
     "At position %zd: expected a name character.",
     "At position %zd: invalid control character.",
     "At position %zd: unsupported escape sequence.",
@@ -71,7 +71,7 @@ static const char * const MESSAGES[] =
     "At position %zd: slice step value must be non-zero."
 };
 
-char *parser_status_message(parser_result_code code, size_t reported_position)
+char *parser_status_message(ResultCode code, size_t reported_position)
 {
     char *message = NULL;
     int result = 0;
