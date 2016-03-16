@@ -42,19 +42,25 @@ static MaybeSyntaxNode repetition_delegate(Parser *parser, MaybeSyntaxNode node,
 {
     ensure_more_input(input);
     WrappedParser *self = (WrappedParser *)parser;
-
-    MaybeSyntaxNode result = bind(self->child, node, input);
-    if(ERR_PREMATURE_END_OF_INPUT == result.code)
+    SyntaxNode *collection = make_syntax_node(CST_COLLECTION, NULL, NO_LOCATION);
+    if(NULL == collection)
     {
-        return result;
+        return nothing_node(ERR_PARSER_OUT_OF_MEMORY);
     }
-    while(is_value(result))
+    syntax_node_add_child(value(node), collection);
+    MaybeSyntaxNode maybe_collection = just_node(collection);
+ 
+    MaybeSyntaxNode branch_result = bind(self->child, maybe_collection, input);
+    if(ERR_PREMATURE_END_OF_INPUT == branch_result.code)
     {
-        syntax_node_add_child(node.value, result.value);
-        result = bind(self->child, node, input);
+        return branch_result;
+    }
+    while(is_value(branch_result))
+    {
+        branch_result = bind(self->child, maybe_collection, input);
     }
 
-    return node;
+    return maybe_collection;
 }
 
 Parser *repetition(Parser *expression)

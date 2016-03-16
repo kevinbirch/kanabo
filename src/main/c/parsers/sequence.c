@@ -45,25 +45,25 @@ static MaybeSyntaxNode sequence_delegate(Parser *parser, MaybeSyntaxNode node, I
 {
     ensure_more_input(input);
     CompoundParser *self = (CompoundParser *)parser;
-    SyntaxNode *sequence = make_syntax_node(CST_COLLECTION, NULL, NO_LOCATION);
-    if(NULL == sequence)
+    SyntaxNode *collection = make_syntax_node(CST_COLLECTION, NULL, NO_LOCATION);
+    if(NULL == collection)
     {
         return nothing_node(ERR_PARSER_OUT_OF_MEMORY);
     }
-    syntax_node_add_child(value(node), sequence);
-    MaybeSyntaxNode maybe_sequence = just_node(sequence);
+    syntax_node_add_child(value(node), collection);
+    MaybeSyntaxNode maybe_collection = just_node(collection);
     
     for(size_t i = 0; i < vector_length(self->children); i++)
     {
         Parser *each = vector_get(self->children, i);
-        MaybeSyntaxNode branch_result = bind(each, maybe_sequence, input);
+        MaybeSyntaxNode branch_result = bind(each, maybe_collection, input);
         if(is_nothing(branch_result))
         {
             return branch_result;
         }
     }
 
-    return maybe_sequence;
+    return maybe_collection;
 }
 
 Parser *sequence_parser(Parser *one, Parser *two, ...)
