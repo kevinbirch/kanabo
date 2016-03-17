@@ -48,6 +48,7 @@ LICENSE file for more details.
 * various getopt alternatvies: https://news.ycombinator.com/item?id=10687375
 * fix license to point to bsd 3 clause
 * X_free to dispose_X
+* break down large modules into smaller function level units
 
 ### evaluator
 
