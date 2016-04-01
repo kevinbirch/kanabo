@@ -80,7 +80,7 @@ MaybeSyntaxNode default_rewriter(MaybeSyntaxNode node);
 
 Parser *rule_parser(const char *name, Parser *expression, tree_rewriter rewriter);
 #define rule(PARSER, FUNC) rule_parser(__func__, (PARSER), (FUNC))
-#define simple_rule(PARSER) rule_parser(__func__, (PARSER), default_rewriter)
+#define simple_rule(PARSER) rule((PARSER), default_rewriter)
 
 Parser *choice_parser(Parser *one, Parser *two, ...);
 #define choice(...) choice_parser(__VA_ARGS__, NULL)
