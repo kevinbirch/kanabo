@@ -47,11 +47,11 @@ enum maybe_tag_e
     JUST
 };
 
-typedef enum maybe_tag_e maybe_tag;
+typedef enum maybe_tag_e MaybeTag;
     
 struct maybe_s
 {
-    maybe_tag tag;
+    MaybeTag tag;
 
     union
     {
@@ -69,7 +69,7 @@ typedef struct maybe_s Maybe;
 #define code(MAYBE) (MAYBE).code
 
 #define define_maybe(NAME, TYPE) struct NAME##_maybe_s {                \
-        maybe_tag tag;                                                  \
+        MaybeTag tag;                                                  \
         union {uint_fast16_t code; TYPE value;};                        \
     };                                                                  \
     typedef struct NAME##_maybe_s (NAME);
