@@ -56,7 +56,7 @@ MaybeString quoted_name_filter(Input *input)
         switch(type)
         {
             case 0:
-                return nothing_string(ERR_PREMATURE_END_OF_INPUT);                
+                return nothing_string(ERR_PARSER_END_OF_INPUT);
             case '\'':
                 return unescape_type(type);
             default:

@@ -54,10 +54,10 @@
 enum parser_result_code_e
 {
     PARSER_SUCCESS = 0,
-    ERR_PARSER_OUT_OF_MEMORY,           // unable to allocate memory
-    ERR_PARSER_EMPTY_INPUT,             // no input to parse
-    ERR_PARSER_PREMATURE_END_OF_INPUT,  // premature end of input
-    ERR_PARSER_UNEXPECTED_VALUE,        // expected one value but found another
+    ERR_PARSER_OUT_OF_MEMORY,     // unable to allocate memory
+    ERR_PARSER_EMPTY_INPUT,       // no input to parse
+    ERR_PARSER_END_OF_INPUT,      // premature end of input
+    ERR_PARSER_UNEXPECTED_VALUE,  // expected one value but found another
 };
 
 typedef enum parser_result_code_e ParserResultCode;

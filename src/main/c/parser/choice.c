@@ -58,13 +58,13 @@ static MaybeSyntaxNode choice_delegate(Parser *parser, MaybeSyntaxNode node, Inp
             syntax_node_add_child(node.value, result.value);
             return node;
         }
-        else if(ERR_PREMATURE_END_OF_INPUT == result.code)
+        else if(ERR_PARSER_END_OF_INPUT == result.code)
         {
             return result;
         }
     }
 
-    return nothing_node(ERR_UNEXPECTED_VALUE);
+    return nothing_node(ERR_PARSER_UNEXPECTED_VALUE);
 }
 
 Parser *choice_parser(Parser *one, Parser *two, ...)

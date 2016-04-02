@@ -65,7 +65,7 @@ static MaybeString build_escape_from_input(Input *input, size_t length)
     if(length > remaining(input))
     {
         consume_many(input, remaining(input));
-        return nothing_string(ERR_PREMATURE_END_OF_INPUT);
+        return nothing_string(ERR_PARSER_END_OF_INPUT);
     }
     MutableString *result = make_mstring(6);
     if(NULL == result)

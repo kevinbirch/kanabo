@@ -51,7 +51,7 @@ static MaybeSyntaxNode repetition_delegate(Parser *parser, MaybeSyntaxNode node,
     MaybeSyntaxNode maybe_collection = just_node(collection);
  
     MaybeSyntaxNode branch_result = bind(self->child, maybe_collection, input);
-    if(ERR_PREMATURE_END_OF_INPUT == branch_result.code)
+    if(ERR_PARSER_END_OF_INPUT == branch_result.code)
     {
         return branch_result;
     }

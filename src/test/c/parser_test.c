@@ -155,7 +155,7 @@ START_TEST (missing_step_test)
     char *expression = "$.";
     MaybeJsonPath maybe = parse((uint8_t *)expression, 2);
 
-    assert_parser_failure(expression, maybe, ERR_PREMATURE_END_OF_INPUT, 2);
+    assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 2);
     path_free(maybe);
 }
 END_TEST
@@ -165,7 +165,7 @@ START_TEST (missing_recursive_step_test)
     char *expression = "$..";
     MaybeJsonPath maybe = parse((uint8_t *)expression, 3);
     
-    assert_parser_failure(expression, maybe, ERR_PREMATURE_END_OF_INPUT, 3);
+    assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 3);
     path_free(maybe);
 }
 END_TEST
@@ -185,7 +185,7 @@ START_TEST (unclosed_empty_root_predicate)
     char *expression = "$[";
     MaybeJsonPath maybe = parse((uint8_t *)expression, 2);
 
-    assert_parser_failure(expression, maybe, ERR_PREMATURE_END_OF_INPUT, 2);
+    assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 2);
     path_free(maybe);
 }
 END_TEST
@@ -229,7 +229,7 @@ START_TEST (premature_unclosed_quoted_step)
     char *expression = "$.foo.'";
     MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
 
-    assert_parser_failure(expression, maybe, ERR_PREMATURE_END_OF_INPUT, 7);
+    assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 7);
     path_free(maybe);
 }
 END_TEST
@@ -239,7 +239,7 @@ START_TEST (unclosed_quoted_step)
     char *expression = "$.foo.'bar";
     MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
 
-    assert_parser_failure(expression, maybe, ERR_PREMATURE_END_OF_INPUT, 10);
+    assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 10);
     path_free(maybe);
 }
 END_TEST
@@ -249,7 +249,7 @@ START_TEST (unclosed_escaped_quoted_step)
     char *expression = "$.foo.'bar\\'";
     MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
 
-    assert_parser_failure(expression, maybe, ERR_PREMATURE_END_OF_INPUT, 11);
+    assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 11);
     path_free(maybe);
 }
 END_TEST

@@ -70,8 +70,8 @@ struct parser_s
 };
 
 #define ensure_more_input(INPUT) if(!has_more((INPUT)))  \
-    {                                                   \
-        return nothing_node(ERR_PREMATURE_END_OF_INPUT); \
+    {                                                    \
+        return nothing_node(ERR_PARSER_END_OF_INPUT);    \
     }
 
 Parser *make_parser(enum parser_kind kind);
