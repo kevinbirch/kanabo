@@ -35,6 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
 #ifdef __linux__
 #define _POSIX_C_SOURCE 200809L
 #define _GNU_SOURCE
@@ -47,59 +48,55 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "jsonpath/codes.h"
 #include "conditions.h"
+#include "jsonpath.h"
+#include "jsonpath/messages.h"
 
-static const char * const MESSAGES[] =
+
+typedef char *(*MessageHandler)(const char *message, size_t reported_position);
+
+struct handler_s
 {
-    "Success.",
-    "Unable to allocate memory.",
-    "At position %zd: premature end of input.",
-    "At position %zd: unexpected character.",
-    "Expression was NULL.",
-    "Expression length was zero.",
-    "At position %zd: expected a name character.",
-    "At position %zd: invalid control character.",
-    "At position %zd: unsupported escape sequence.",
-    "At position %zd: empty predicate.",
-    "At position %zd: missing closing predicate delimiter `]' before end of step.",
-    "At position %zd: unsupported predicate found.",
-    "At position %zd: extra characters after valid predicate definition.",
-    "At position %zd: expected a node type test.",
-    "At position %zd: expected an integer.",
-    "At position %zd: invalid number.",
-    "At position %zd: slice step value must be non-zero."
+    MessageHandler formatter;
+    const char * const message;
 };
 
-char *parser_status_message(ResultCode code, size_t reported_position)
+static char *just_dup_it(const char *message, size_t reported_position __attribute__((unused)))
+{
+    return strdup(message);
+}
+
+static char *format_it(const char *format, size_t reported_position)
 {
     char *message = NULL;
     int result = 0;
-    size_t position = reported_position + 1;
+    result = asprintf(&message, format, reported_position + 1);
+    return -1 == result ? NULL : message;
+}
 
-    switch(code)
-    {
-        case ERR_PREMATURE_END_OF_INPUT:
-            position--;
-        case ERR_EXPECTED_NODE_TYPE_TEST:
-        case ERR_EMPTY_PREDICATE:
-        case ERR_UNBALANCED_PRED_DELIM:
-        case ERR_EXTRA_JUNK_AFTER_PREDICATE:
-        case ERR_UNSUPPORTED_PRED_TYPE:
-        case ERR_EXPECTED_INTEGER:
-        case ERR_INVALID_NUMBER:
-        case ERR_UNEXPECTED_VALUE:
-        case ERR_EXPECTED_NAME_CHAR:
-            result = asprintf(&message, MESSAGES[code], position);
-            break;
-        default:
-            message = strdup(MESSAGES[code]);
-            break;
-    }
-    if(-1 == result)
-    {
-        message = NULL;
-    }
+static struct handler_s HANDLERS[] =
+{
+    {just_dup_it, "Success."},
+    {just_dup_it, "Unable to allocate memory."},
+    {just_dup_it, "No input data to parse."},
+    {just_dup_it, "Premature end of input."},
+    {format_it, "At position %zd: unexpected character."},
+    {format_it, "At position %zd: expected a name character."},
+    {format_it, "At position %zd: invalid control character."},
+    {format_it, "At position %zd: unsupported escape sequence."},
+    {format_it, "At position %zd: empty predicate."},
+    {format_it, "At position %zd: missing closing predicate delimiter `]' before end of step."},
+    {format_it, "At position %zd: unsupported predicate found."},
+    {format_it, "At position %zd: extra characters after valid predicate definition."},
+    {format_it, "At position %zd: expected a node type test."},
+    {format_it, "At position %zd: expected an integer."},
+    {format_it, "At position %zd: invalid number."},
+    {format_it, "At position %zd: slice step value must be non-zero."}
+};
 
-    return message;
+
+char *status_message(uint_fast16_t code, size_t reported_position)
+{
+    struct handler_s *handler = &HANDLERS[code];
+    return handler->formatter(handler->message, reported_position);
 }
