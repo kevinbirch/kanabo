@@ -43,20 +43,29 @@
 #include "str.h"
 
 #include "parser/input.h"
+#include "parser/syntax.h"
 
+
+#define location_from_input(INPUT) (Location){NULL, 1, position((INPUT))}
+
+
+/* Parser Results  */
 
 enum parser_result_code_e
 {
     PARSER_SUCCESS = 0,
-    ERR_PARSER_OUT_OF_MEMORY,    // unable to allocate memory
-    ERR_PARSER_EMPTY_INPUT,      // no input to parse
-    ERR_PREMATURE_END_OF_INPUT,  // premature end of input
-    ERR_UNEXPECTED_VALUE,        // expected one value but found another
+    ERR_PARSER_OUT_OF_MEMORY,           // unable to allocate memory
+    ERR_PARSER_EMPTY_INPUT,             // no input to parse
+    ERR_PARSER_PREMATURE_END_OF_INPUT,  // premature end of input
+    ERR_PARSER_UNEXPECTED_VALUE,        // expected one value but found another
 };
 
 typedef enum parser_result_code_e ParserResultCode;
 
-#define location_from_input(INPUT) (Location){NULL, 1, position((INPUT))}
+typedef char *(*StatusMessageFormatter)(uint_fast16_t code, size_t reported_position);
+
+
+/* Parser Entities */
 
 typedef struct parser_s Parser;
 
@@ -70,13 +79,17 @@ define_maybe(MaybeString, MutableString *)
 #define just_string(VALUE) (MaybeString){JUST, .value=(VALUE)}
 #define nothing_string(CODE) (MaybeString){NOTHING, .code=(CODE)}
 
-typedef MaybeString (*character_filter)(Input *input);
-typedef MaybeSyntaxNode (*tree_rewriter)(MaybeSyntaxNode node);
-
 MaybeSyntaxNode bind(Parser *parser, MaybeSyntaxNode node, Input *input);
 
-/* Non-terminal parsers */
 
+/* Parser Destructor */
+
+void parser_free(Parser *value);
+
+
+/* Non-Terminal Grammar Parsers */
+
+typedef MaybeSyntaxNode (*tree_rewriter)(MaybeSyntaxNode node);
 MaybeSyntaxNode default_rewriter(MaybeSyntaxNode node);
 
 Parser *rule_parser(const char *name, Parser *expression, tree_rewriter rewriter);
@@ -94,7 +107,8 @@ Parser *repetition(Parser *repeated);
 
 Parser *reference(const char *value);
 
-/* Terminal parsers */
+
+/* Terminal Grammar Parsers */
 
 Parser *literal(const char *value);
 
@@ -103,13 +117,7 @@ Parser *integer(void);
 Parser *signed_integer(void);
 Parser *non_zero_signed_integer(void);
 
+typedef MaybeString (*character_filter)(Input *input);
 MaybeString default_filter(Input *input);
+
 Parser *term(character_filter filter, const char *stop_characters);
-
-/* Destructor */
-
-void parser_free(Parser *value);
-
-/* Parser Execution */
-
-char *parser_status_message(ParserResultCode code, size_t reported_position);
