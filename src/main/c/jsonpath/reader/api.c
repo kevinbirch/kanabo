@@ -38,6 +38,8 @@
 
 #include "conditions.h"
 
+#include "jsonpath.h"
+
 #include "jsonpath/ast.h"
 #include "jsonpath/grammar.h"
 #include "jsonpath/model.h"
@@ -75,8 +77,8 @@ static inline MaybeJsonPath transform(MaybeSyntaxNode *node, Input *input)
 
 MaybeJsonPath parse(const uint8_t *expression, size_t length)
 {
-    PRECOND_ELSE_NOTHING(ERR_NULL_EXPRESSION, NULL != expression);
-    PRECOND_ELSE_NOTHING(ERR_ZERO_LENGTH, 0 != length);
+    PRECOND_ELSE_NOTHING(ERR_PARSER_EMPTY_INPUT, NULL != expression);
+    PRECOND_ELSE_NOTHING(ERR_PARSER_EMPTY_INPUT, 0 != length);
 
     debug_string("parsing expression: '%s'", expression, length);
 
@@ -88,7 +90,7 @@ MaybeJsonPath parse(const uint8_t *expression, size_t length)
     MaybeSyntaxNode result = bind(parser, node, &input);
     if(has_more(&input))
     {
-        return path_error(ERR_UNEXPECTED_VALUE, position(&input));
+        return path_error(ERR_PARSER_UNEXPECTED_VALUE, position(&input));
     }
     // xxx - free parser!
     //parser_free(parser);
