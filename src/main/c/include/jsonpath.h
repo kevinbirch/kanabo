@@ -104,6 +104,7 @@ enum jsonpath_parser_result_code_e
     ERR_EXPECTED_INTEGER,            // expected an integer
     ERR_INVALID_NUMBER,              // invalid number
     ERR_STEP_CANNOT_BE_ZERO,         // slice step value must be non-zero
+    ERR_CODE_MAX = ERR_STEP_CANNOT_BE_ZERO
 };
 
 typedef enum jsonpath_parser_result_code_e ResultCode;

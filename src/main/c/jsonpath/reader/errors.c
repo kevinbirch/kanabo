@@ -97,6 +97,10 @@ static struct handler_s HANDLERS[] =
 
 char *status_message(uint_fast16_t code, size_t reported_position)
 {
+    if(ERR_CODE_MAX < code)
+    {
+        return NULL;
+    }
     struct handler_s *handler = &HANDLERS[code];
     return handler->formatter(handler->message, reported_position);
 }
