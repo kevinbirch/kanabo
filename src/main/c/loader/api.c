@@ -37,8 +37,8 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include <stdio.h>            /* for fileno() */
-#include <sys/stat.h>         /* for fstat() */
+#include <stdio.h>     // for fileno()
+#include <sys/stat.h>  // for fstat()
 
 #include "conditions.h"
 #include "loader.h"
