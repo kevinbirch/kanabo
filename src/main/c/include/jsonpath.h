@@ -136,7 +136,7 @@ MaybeJsonPath parse(const uint8_t *expression, size_t length);
 
 /* Destructor */
 
-void path_free(JsonPath *result);
+void path_free(MaybeJsonPath result);
 
 /* Path API */
 
