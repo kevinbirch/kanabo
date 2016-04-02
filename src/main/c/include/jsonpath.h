@@ -120,9 +120,9 @@ struct maybe_jsonpath_s
     {
         struct
         {
-            ResultCode  code;
-            size_t      position;
-            char       *message;
+            uint_fast16_t  code;
+            size_t         position;
+            char          *message;
         } error;
         JsonPath *value;
     };
