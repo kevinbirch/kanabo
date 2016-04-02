@@ -62,6 +62,9 @@ struct maybe_s
 
 typedef struct maybe_s Maybe;
 
+#define just(VALUE) (Maybe){.tag=JUST, .value=(VALUE)}
+#define nothing(CODE) (Maybe){.tag=NOTHING, .code=(CODE)}
+
 #define is_nothing(MAYBE) NOTHING == (MAYBE).tag
 #define is_value(MAYBE) JUST == (MAYBE).tag
 
