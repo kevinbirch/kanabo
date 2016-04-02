@@ -41,14 +41,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "jsonpath/codes.h"
+#include "parser.h"
 
 
- /* JSONPath Entities */
-
-typedef struct jsonpath_s JsonPath;
-typedef struct step_s Step;
-typedef struct predicate_s Predicate;
+/* JSONPath Entity Types */
 
 enum path_kind
 {
@@ -88,7 +84,31 @@ enum predicate_kind
     JOIN
 };
 
- /* JSONPath Parser Api */
+ /* JSONPath Entities */
+
+typedef struct step_s Step;
+typedef struct predicate_s Predicate;
+
+typedef struct jsonpath_s JsonPath;
+
+enum jsonpath_parser_result_code_e
+{
+    ERR_NULL_EXPRESSION = ERR_UNEXPECTED_VALUE + 1, // the expression argument given was NULL
+    ERR_ZERO_LENGTH,                 // expression length was 0
+    ERR_EXPECTED_NAME_CHAR,          // expected a name character
+    ERR_CONTROL_CODE,                // forbidden control code in string/name
+    ERR_ESCAPE_SEQUENCE,             // unuspported escape sequene
+    ERR_EMPTY_PREDICATE,             // a predicate is empty
+    ERR_UNBALANCED_PRED_DELIM,       // missing closing predicate delimiter `]'
+    ERR_UNSUPPORTED_PRED_TYPE,       // unsupported predicate found
+    ERR_EXTRA_JUNK_AFTER_PREDICATE,  // extra characters after valid predicate
+    ERR_EXPECTED_NODE_TYPE_TEST,     // expected a node type test
+    ERR_EXPECTED_INTEGER,            // expected an integer
+    ERR_INVALID_NUMBER,              // invalid number
+    ERR_STEP_CANNOT_BE_ZERO,         // slice step value must be non-zero
+};
+
+typedef enum jsonpath_parser_result_code_e ResultCode;
 
 struct maybe_jsonpath_s
 {
@@ -118,7 +138,7 @@ MaybeJsonPath parse(const uint8_t *expression, size_t length);
 
 /* Destructor */
 
-void          path_free(MaybeJsonPath result);
+void path_free(JsonPath *result);
 
 /* Path API */
 
