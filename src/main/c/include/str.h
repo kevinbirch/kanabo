@@ -43,48 +43,75 @@
 #include <stdbool.h>
 
 
+// String Entities
+
 typedef struct string_s String;
 typedef struct mutable_string_s MutableString;
 
 
+// String Constructors
+
 String *make_string(const char *value);
 String *make_string_with_bytestring(const uint8_t *value);
-void    string_free(String *self);
 
 String *string_clone(const String *self);
+
+
+// String Destructor
+
+void    string_free(String *self);
+
+
+// String Data API
+
 uint8_t string_get_char(const String *self, size_t index);
 
+
+// String Attribute API
+
 size_t string_get_length(const String *self);
+
+
+// Mutable String Coercion API
+
 const char *string_as_c_str(const String *self);
 
-#define string_length(SELF) _Generic((SELF),                           \
-                                     const String *: string_get_length,        \
-                                     const MutableString *: mstring_get_length \
-                                     )(SELF)
-#define string_get(SELF, INDEX) _Generic((SELF),                    \
-                                         const String *: string_get_char,     \
-                                         const MutableString *: mstring_get_char \
-                                  )(SELF, INDEX)
-#define string_as_c_string(SELF) _Generic((SELF), \
-                                          const String *: string_as_c_str, \
-                                          const MutableString *: mstring_as_c_str \
-                                          )(SELF)
+
+// Mutable String Constructors
 
 MutableString *make_mstring(size_t capacity);
 MutableString *make_mstring_with_char(const uint8_t value);
 MutableString *make_mstring_with_c_str(const char *value);
 MutableString *make_mstring_with_string(const String *value);
+
+MutableString *mstring_clone(const MutableString *self);
+
+
+// Mutable String Destructor
+
 void           mstring_free(MutableString *self);
+
+
+// Mutable String Attribute API
 
 size_t   mstring_get_length(const MutableString *self);
 size_t   mstring_get_capacity(const MutableString *self);
 bool     mstring_has_capacity(const MutableString *self, size_t length);
+
+
+// String Data API
+
 uint8_t  mstring_get_char(const MutableString *self, size_t index);
 
-MutableString *mstring_clone(const MutableString *self);
+
+// Mutable String Coercion API
+
 String        *mstring_as_string(const MutableString *self);
-String        *mstring_as_string_no_copy(const MutableString *self);
+String        *mstring_as_string_no_copy(MutableString *self);
 const char    *mstring_as_c_str(const MutableString *self);
+
+
+// Mutable String Mutation API
 
 bool mstring_append_char(MutableString **self, const uint8_t value);
 bool mstring_append_c_str(MutableString **self, const char *value);
@@ -108,3 +135,18 @@ bool mstring_append_stream(MutableString **self, const uint8_t *value, size_t le
 void mstring_set(MutableString *self, size_t position, uint8_t value);
 void mstring_set_range(MutableString *self, size_t position, size_t length, const uint8_t *value);
 
+
+// Generic API
+
+#define string_length(SELF) _Generic((SELF),                           \
+                                     const String *: string_get_length,        \
+                                     const MutableString *: mstring_get_length \
+                                     )(SELF)
+#define string_get(SELF, INDEX) _Generic((SELF),                    \
+                                         const String *: string_get_char,     \
+                                         const MutableString *: mstring_get_char \
+                                  )(SELF, INDEX)
+#define string_as_c_string(SELF) _Generic((SELF), \
+                                          const String *: string_as_c_str, \
+                                          const MutableString *: mstring_as_c_str \
+                                          )(SELF)

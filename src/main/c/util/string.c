@@ -94,7 +94,7 @@ String *string_clone(const String *self)
     return string_init(that, (const char *)self->value, self->length);
 }
 
-size_t string_get_length(String *self)
+size_t string_get_length(const String *self)
 {
     return self->length;
 }
@@ -104,7 +104,7 @@ uint8_t string_get_char(const String *self, size_t index)
     return self->value[index];
 }
 
-const char *string_as_c_str(String *self)
+const char *string_as_c_str(const String *self)
 {
     return (const char *)self->value;
 }
@@ -114,7 +114,7 @@ static inline size_t calculate_allocation_size(size_t capacity)
     return sizeof(MutableString) + capacity + 1;
 }
 
-static inline MutableString *mstring_alloc(size_t capacity)
+static inline MutableString *mstring_alloc(const size_t capacity)
 {
     return calloc(1, calculate_allocation_size(capacity));
 }
@@ -188,7 +188,7 @@ void mstring_free(MutableString *self)
     free(self);
 }
 
-size_t mstring_get_length(MutableString *self)
+size_t mstring_get_length(const MutableString *self)
 {
     return self->base.length;
 }
@@ -198,17 +198,17 @@ uint8_t mstring_get_char(const MutableString *self, size_t index)
     return self->base.value[index];
 }
 
-size_t mstring_get_capacity(MutableString *self)
+size_t mstring_get_capacity(const MutableString *self)
 {
     return self->capacity;
 }
 
-bool mstring_has_capacity(MutableString *self, size_t length)
+bool mstring_has_capacity(const MutableString *self, size_t length)
 {
     return (self->capacity - self->base.length) >= length;
 }
 
-MutableString *mstring_clone(MutableString *self)
+MutableString *mstring_clone(const MutableString *self)
 {
     MutableString *that = mstring_alloc(self->capacity);
     if(NULL == that)
@@ -223,7 +223,7 @@ MutableString *mstring_clone(MutableString *self)
     return that;
 }
 
-String *mstring_as_string(MutableString *self)
+String *mstring_as_string(const MutableString *self)
 {
     String *that = string_alloc(self->base.length);
     if(NULL == self)
@@ -238,7 +238,7 @@ String *mstring_as_string_no_copy(MutableString *self)
     return &self->base;
 }
 
-const char *mstring_as_c_str(MutableString *self)
+const char *mstring_as_c_str(const MutableString *self)
 {
     return (const char *)self->base.value;
 }
