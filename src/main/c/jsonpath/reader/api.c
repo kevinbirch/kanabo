@@ -50,11 +50,11 @@
 #define PRECOND_ELSE_NOTHING(CODE, ...)                                 \
     if(is_false(__VA_ARGS__, -1))                                       \
     {                                                                   \
-        return (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=0, .error.message=status_message((CODE), 0)}; \
+        return (MaybeJsonPath){NOTHING, .error.code=(CODE), .error.position=0, .error.message=status_message((CODE), 0)}; \
     }
 
-#define path_error(CODE, POSITION) (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=(POSITION), .error.message=status_message((CODE), (POSITION))}
-#define just_path(VALUE) (MaybeJsonPath){PATH_VALUE, .value=(VALUE)}
+#define path_error(CODE, POSITION) (MaybeJsonPath){NOTHING, .error.code=(CODE), .error.position=(POSITION), .error.message=status_message((CODE), (POSITION))}
+#define just_path(VALUE) (MaybeJsonPath){JUST, .value=(VALUE)}
 
 
 static inline JsonPath *build_path(SyntaxNode *node)
@@ -72,18 +72,19 @@ static inline MaybeJsonPath transform(MaybeSyntaxNode *node, Input *input)
     {
         return path_error(node->code, position(input));
     }
-    return (MaybeJsonPath){PATH_VALUE, .value=build_path(node->value)};
+    return (MaybeJsonPath){JUST, .value=build_path(node->value)};
 
 }
 
-MaybeJsonPath parse(const uint8_t *expression, size_t length)
+MaybeJsonPath parse(const String *expression)
 {
     PRECOND_ELSE_NOTHING(ERR_PARSER_EMPTY_INPUT, NULL != expression);
-    PRECOND_ELSE_NOTHING(ERR_PARSER_EMPTY_INPUT, 0 != length);
+    PRECOND_ELSE_NOTHING(ERR_PARSER_EMPTY_INPUT, 0 != string_length(expression));
 
-    debug_string("parsing expression: '%s'", expression, length);
+    parser_debug("parsing expression: '%s'", string_as_c_string(expression));
 
-    Input input = make_input(expression, length);
+    Input input;
+    input_init_from_string(&input, expression);
 
     Parser *parser = jsonpath();
     SyntaxNode *root = make_syntax_node(CST_ROOT, NULL, location_from_input(&input));
