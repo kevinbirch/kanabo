@@ -129,7 +129,7 @@ typedef struct maybe_jsonpath_s MaybeJsonPath;
 
 /* Parser API */
 
-MaybeJsonPath parse(const uint8_t *expression, size_t length);
+MaybeJsonPath parse(const String *expression);
 
 /* Destructor */
 
