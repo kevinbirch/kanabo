@@ -117,6 +117,63 @@ bool string_iterate(const String *self, string_iterator iterator, void *paramete
     return true;
 }
 
+bool string_startswith(const String *self, const String *value)
+{
+    if(value->length > self->length)
+    {
+        return false;
+    }
+
+    return 0 == memcmp(self->value, value->value, value->length);
+}
+
+bool string_startswith_c_string(const String *self, const char *value)
+{
+    size_t length = strlen(value);
+    if(length > self->length)
+    {
+        return false;
+    }
+
+    return 0 == memcmp(self->value, value, length);
+}
+
+bool string_endswith(const String *self, const String *value)
+{
+    if(value->length > self->length)
+    {
+        return false;
+    }
+
+    size_t offset = self->length - value->length;
+    return 0 == memcmp(self->value + offset, value->value, value->length);
+}
+
+bool string_endswith_c_string(const String *self, const char *value)
+{
+    size_t length = strlen(value);
+    if(length > self->length)
+    {
+        return false;
+    }
+
+    size_t offset = self->length - length;
+    return 0 == memcmp(self->value + offset, value, length);
+}
+
+bool string_contains(const String *self, uint8_t value)
+{
+    for(size_t i = 0; i < self->length; i++)
+    {
+        if(value == self->value[i])
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 const char *string_as_c_str(const String *self)
 {
     return (const char *)self->value;
@@ -213,15 +270,32 @@ uint8_t mstring_get_char(const MutableString *self, size_t index)
 
 bool mstring_iterate(const MutableString *self, string_iterator iterator, void *parameter)
 {
-    for(size_t i = 0; i < string_length(self); i++)
-    {
-        if(!iterator(i, self->base.value[i], parameter))
-        {
-            return false;
-        }
-    }
+    return string_iterate(&self->base, iterator, parameter);
+}
 
-    return true;
+bool mstring_startswith(const MutableString *self, const String *value)
+{
+    return string_startswith(&self->base, value);
+}
+
+bool mstring_startswith_c_string(const MutableString *self, const char *value)
+{
+    return string_startswith_c_string(&self->base, value);
+}
+
+bool mstring_endswith(const MutableString *self, const String *value)
+{
+    return string_endswith(&self->base, value);
+}
+
+bool mstring_endswith_c_string(const MutableString *self, const char *value)
+{
+    return string_endswith_c_string(&self->base, value);
+}
+
+bool mstring_contains(const MutableString *self, uint8_t value)
+{
+    return string_contains(&self->base, value);
 }
 
 size_t mstring_get_capacity(const MutableString *self)

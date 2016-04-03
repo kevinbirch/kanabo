@@ -73,6 +73,14 @@ typedef bool (*string_iterator)(size_t index, uint8_t value, void *parameter);
 
 bool string_iterate(const String *self, string_iterator iterator, void *parameter);
 
+bool string_startswith(const String *self, const String *value);
+bool string_startswith_c_string(const String *self, const char *value);
+
+bool string_endswith(const String *self, const String *value);
+bool string_endswith_c_string(const String *self, const char *value);
+
+bool string_contains(const String *self, uint8_t value);
+
 
 // String Attribute API
 
@@ -115,6 +123,14 @@ uint8_t  mstring_get_char(const MutableString *self, size_t index);
 
 bool mstring_iterate(const MutableString *self, string_iterator iterator, void *parameter);
 
+bool mstring_startswith(const MutableString *self, const String *value);
+bool mstring_startswith_c_string(const MutableString *self, const char *value);
+
+bool mstring_endswith(const MutableString *self, const String *value);
+bool mstring_endswith_c_string(const MutableString *self, const char *value);
+
+bool mstring_contains(const MutableString *self, uint8_t value);
+
 
 // Mutable String Coercion API
 
@@ -150,15 +166,21 @@ void mstring_set_range(MutableString *self, size_t position, size_t length, cons
 
 // Generic API
 
-#define string_length(SELF) _Generic((SELF),                           \
-                                     const String *: string_get_length,        \
+#define string_length(SELF) _Generic((SELF),                            \
+                                     String *: string_get_length,       \
+                                     const String *: string_get_length, \
+                                     MutableString *: mstring_get_length, \
                                      const MutableString *: mstring_get_length \
                                      )(SELF)
-#define string_get(SELF, INDEX) _Generic((SELF),                    \
-                                         const String *: string_get_char,     \
+#define string_get(SELF, INDEX) _Generic((SELF),                        \
+                                         String *: string_get_char,     \
+                                         const String *: string_get_char, \
+                                         MutableString *: mstring_get_char, \
                                          const MutableString *: mstring_get_char \
-                                  )(SELF, INDEX)
-#define string_as_c_string(SELF) _Generic((SELF), \
+                                         )(SELF, INDEX)
+#define string_as_c_string(SELF) _Generic((SELF),                       \
+                                          String *: string_as_c_str,    \
                                           const String *: string_as_c_str, \
+                                          MutableString *: mstring_as_c_str, \
                                           const MutableString *: mstring_as_c_str \
                                           )(SELF)

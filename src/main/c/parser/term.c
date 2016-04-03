@@ -70,14 +70,7 @@ static void string_parser_free(Parser *parser)
 
 static inline bool is_stop_char(TermParser *self, uint8_t value)
 {
-    for(size_t i = 0; i < string_length(self->stop); i++)
-    {
-        if(value == string_get(self->stop, i))
-        {
-            return true;
-        }
-    }
-    return false;
+    return string_contains(self->stop, value);
 }
 
 static MaybeSyntaxNode string_delegate(Parser *parser, MaybeSyntaxNode node, Input *input)
