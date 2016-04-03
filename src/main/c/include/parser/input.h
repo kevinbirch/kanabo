@@ -52,7 +52,12 @@ struct input_s
 
 typedef struct input_s Input;
 
-#define make_input(data, length) (Input){data, length, 0ul, 0ul}
+Input *input_alloc(void);
+
+void input_init(Input *self, const uint8_t *data, size_t length);
+void input_init_from_string(Input *self, const String *data);
+
+Input *make_input(const uint8_t *data, size_t length);
 
 #define cursor(SELF) (SELF)->data + (SELF)->position
 

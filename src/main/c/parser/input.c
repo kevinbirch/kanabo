@@ -35,11 +35,47 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
 #include "parser/input.h"
 
+
+Input *input_alloc(void)
+{
+    return calloc(1, sizeof(Input));
+}
+
+void input_init(Input *self, const uint8_t *data, size_t length)
+{
+    if(NULL == self)
+    {
+        return;
+    }
+    self->data = data;
+    self->length = length;
+    self->position = 0;
+    self->mark = 0;
+}
+
+void input_init_from_string(Input *self, const String *data)
+{
+    input_init(self, string_as_c_string(data), string_length(data));
+}
+
+Input *make_input(const uint8_t *data, size_t length)
+{
+    Input *self = input_alloc();
+    if(NULL == self)
+    {
+        return NULL;
+    }
+    input_init(self, data, length);
+
+    return self;
+}
 
 size_t position(Input *self)
 {
