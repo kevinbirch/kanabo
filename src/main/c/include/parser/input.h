@@ -41,6 +41,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "str.h"
+
 
 struct input_s
 {
