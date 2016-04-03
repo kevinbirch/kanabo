@@ -46,9 +46,6 @@
 #include "parser/syntax.h"
 
 
-#define location_from_input(INPUT) (Location){NULL, 1, position((INPUT))}
-
-
 /* Parser Results  */
 
 enum parser_result_code_e

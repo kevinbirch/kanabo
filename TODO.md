@@ -117,6 +117,11 @@ LICENSE file for more details.
 * use balanced parser for quoted string
 * add character filter delegate to string parser
 * use push_back to reset input position to simplify parser message handling
+* better source location handling ala dylan reader
+* use generic maybe everywhere instead of define maybe macro? the void can be freely cast to/from the actual type
+* concrete predicate subtypes
+* does position_from_input need to be in parser.h?
+* move all repr to dynamic calls
 
 ### loader
 

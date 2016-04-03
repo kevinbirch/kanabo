@@ -36,6 +36,8 @@
  */
 
 
+#include "parser/location.h"
+
 #include "conditions.h"
 
 #include "jsonpath.h"

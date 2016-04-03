@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 
+#include "parser/location.h"
 #include "parser/base.h"
 
 

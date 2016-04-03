@@ -72,7 +72,7 @@ uint8_t string_get_char(const String *self, size_t index);
 size_t string_get_length(const String *self);
 
 
-// Mutable String Coercion API
+// String Coercion API
 
 const char *string_as_c_str(const String *self);
 

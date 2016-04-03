@@ -36,6 +36,7 @@
  */
 
 
+#include "parser/location.h"
 #include "parser/base.h"
 
 
