@@ -52,7 +52,9 @@ typedef struct mutable_string_s MutableString;
 // String Constructors
 
 String *make_string(const char *value);
-String *make_string_with_bytestring(const uint8_t *value);
+String *make_string_with_bytestring(const uint8_t *value, size_t length);
+
+#define S(VALUE) make_string((VALUE))
 
 String *string_clone(const String *self);
 

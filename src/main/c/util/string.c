@@ -65,6 +65,16 @@ static inline String *string_init(String *self, const char *value, size_t length
     self->length = length;
     memcpy(self->value, value, length);
     self->value[self->length] = '\0';
+
+    return self;
+}
+
+static inline String *string_init_with_bytestring(String *self, const uint8_t *value, size_t length)
+{
+    self->length = length;
+    memcpy(self->value, value, length);
+    self->value[self->length] = '\0';
+
     return self;
 }
 
@@ -77,6 +87,17 @@ String *make_string(const char *value)
         return NULL;
     }
     return string_init(self, value, length);
+}
+
+String *make_string_with_bytestring(const uint8_t *value, size_t length)
+{
+    String *self = string_alloc(length);
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
+    return string_init_with_bytestring(self, value, length);
 }
 
 void string_free(String *self)
