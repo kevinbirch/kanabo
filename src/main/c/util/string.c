@@ -104,6 +104,19 @@ uint8_t string_get_char(const String *self, size_t index)
     return self->value[index];
 }
 
+bool string_iterate(const String *self, string_iterator iterator, void *parameter)
+{
+    for(size_t i = 0; i < string_length(self); i++)
+    {
+        if(!iterator(i, self->value[i], parameter))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 const char *string_as_c_str(const String *self)
 {
     return (const char *)self->value;
@@ -196,6 +209,19 @@ size_t mstring_get_length(const MutableString *self)
 uint8_t mstring_get_char(const MutableString *self, size_t index)
 {
     return self->base.value[index];
+}
+
+bool mstring_iterate(const MutableString *self, string_iterator iterator, void *parameter)
+{
+    for(size_t i = 0; i < string_length(self); i++)
+    {
+        if(!iterator(i, self->base.value[i], parameter))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 size_t mstring_get_capacity(const MutableString *self)

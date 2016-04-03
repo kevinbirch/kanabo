@@ -67,6 +67,13 @@ void    string_free(String *self);
 uint8_t string_get_char(const String *self, size_t index);
 
 
+// String Iteration API
+
+typedef bool (*string_iterator)(size_t index, uint8_t value, void *parameter);
+
+bool string_iterate(const String *self, string_iterator iterator, void *parameter);
+
+
 // String Attribute API
 
 size_t string_get_length(const String *self);
@@ -102,6 +109,11 @@ bool     mstring_has_capacity(const MutableString *self, size_t length);
 // String Data API
 
 uint8_t  mstring_get_char(const MutableString *self, size_t index);
+
+
+// Mutable String Iteration API
+
+bool mstring_iterate(const MutableString *self, string_iterator iterator, void *parameter);
 
 
 // Mutable String Coercion API
