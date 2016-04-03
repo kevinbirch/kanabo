@@ -111,11 +111,7 @@ typedef enum jsonpath_parser_result_code_e ResultCode;
 
 struct maybe_jsonpath_s
 {
-    enum
-    {
-        PATH_ERROR,
-        PATH_VALUE,
-    } tag;
+    MaybeTag tag;
 
     union
     {
