@@ -36,6 +36,8 @@
  */
 
 
+#include <stdio.h>
+
 #include "parser/base.h"
 
 
@@ -65,7 +67,7 @@ static MaybeSyntaxNode literal_delegate(Parser *parser, MaybeSyntaxNode node, In
     }
     else
     {
-        return nothing_node(ERR_UNEXPECTED_VALUE);
+        return nothing_node(ERR_PARSER_UNEXPECTED_VALUE);
     }
 }
 

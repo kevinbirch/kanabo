@@ -36,6 +36,7 @@
  */
 
 
+#include "jsonpath.h"
 #include "jsonpath/escape.h"
 
 

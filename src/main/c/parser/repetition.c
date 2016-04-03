@@ -35,6 +35,9 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
+#include <stdio.h>
+
 #include "parser/wrapped.h"
 
 

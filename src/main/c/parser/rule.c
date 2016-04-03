@@ -36,6 +36,8 @@
  */
 
 
+#include <stdio.h>
+
 #include "parser/base.h"
 
 

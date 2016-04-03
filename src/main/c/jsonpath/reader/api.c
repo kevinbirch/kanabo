@@ -43,16 +43,17 @@
 #include "jsonpath/ast.h"
 #include "jsonpath/grammar.h"
 #include "jsonpath/model.h"
+#include "jsonpath/messages.h"
 #include "jsonpath/logging.h"
 
 
 #define PRECOND_ELSE_NOTHING(CODE, ...)                                 \
     if(is_false(__VA_ARGS__, -1))                                       \
     {                                                                   \
-        return (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=0, .error.message=parser_status_message((CODE), 0)}; \
+        return (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=0, .error.message=status_message((CODE), 0)}; \
     }
 
-#define path_error(CODE, POSITION) (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=(POSITION), .error.message=parser_status_message((CODE), (POSITION))}
+#define path_error(CODE, POSITION) (MaybeJsonPath){PATH_ERROR, .error.code=(CODE), .error.position=(POSITION), .error.message=status_message((CODE), (POSITION))}
 #define just_path(VALUE) (MaybeJsonPath){PATH_VALUE, .value=(VALUE)}
 
 

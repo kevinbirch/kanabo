@@ -39,6 +39,7 @@
 #include <stdint.h>
 #include <ctype.h>
 
+#include "jsonpath.h"
 #include "jsonpath/filters.h"
 #include "jsonpath/escape.h"
 
