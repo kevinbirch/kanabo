@@ -91,7 +91,7 @@ static int_fast32_t normalize_extent(bool specified_p, int_fast32_t actual, int_
 
 #define current_step(CONTEXT) path_get((CONTEXT)->path, (CONTEXT)->current_step)
 #ifdef USE_LOGGING
-#define guard(EXPR) EXPR ? true : (evaluator_error("uh oh! out of memory, aborting. (line: " S(__LINE__) ")"), context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false)
+#define guard(EXPR) EXPR ? true : (evaluator_error("uh oh! out of memory, aborting. (line: " STRFY(__LINE__) ")"), context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false)
 #else
 #define guard(EXPR) EXPR ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false)
 #endif

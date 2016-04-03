@@ -38,7 +38,7 @@
 #pragma once
 
 #define _STRINGIFY(VALUE) #VALUE
-#define S(VALUE) _STRINGIFY(VALUE)
+#define STRFY(VALUE) _STRINGIFY(VALUE)
 
 #ifdef USE_LOGGING
 
@@ -68,12 +68,12 @@ void set_log_level_from_env(void);
 
 #define log_string(LEVEL, COMP, FORMAT, VALUE, LENGTH, ...)             \
     do {                                                                \
-    const uint8_t *_log_value = (VALUE);                      \
-    const size_t _log_length = (LENGTH);                                \
-    char _log_string[_log_length + 1];                                  \
-    memcpy(&_log_string, _log_value, _log_length);                      \
-    _log_string[_log_length] = '\0';                                    \
-    logger(LEVEL, COMP, FORMAT, _log_string, ##__VA_ARGS__);            \
+        const uint8_t *_log_value = (VALUE);                            \
+        const size_t _log_length = (LENGTH);                            \
+        char _log_string[_log_length + 1];                              \
+        memcpy(&_log_string, _log_value, _log_length);                  \
+        _log_string[_log_length] = '\0';                                \
+        logger(LEVEL, COMP, FORMAT, _log_string, ##__VA_ARGS__);        \
     } while(0)
 
 int logger(enum log_level level, const char *component, const char *format, ...);
