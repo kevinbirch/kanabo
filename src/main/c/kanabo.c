@@ -58,7 +58,7 @@ static int dispatch(enum command cmd, const struct settings *settings);
 
 static int interactive_mode(const struct settings *settings);
 static int expression_mode(const struct settings *settings);
-static int apply_expression(const struct settings *settings, document_model *model, const char *expression);
+static int apply_expression(const struct settings *settings, document_model *model, const String *expression);
 
 static document_model *load_model(const struct settings *settings);
 static nodelist *evaluate_expression(const struct settings *settings, const document_model *model, const JsonPath *path);
@@ -85,7 +85,10 @@ int main(const int argc, char * const *argv)
     memset(&settings, 0, sizeof(settings));
     enum command cmd = process_options(argc, argv, &settings);
 
-    return dispatch(cmd, &settings);
+    int result = dispatch(cmd, &settings);
+    free(settings.expression);
+
+    return result;
 }
 
 static int dispatch(enum command cmd, const struct settings *settings)
@@ -149,8 +152,11 @@ static int interactive_mode(const struct settings *settings)
             continue;
         }
         linenoiseHistoryAdd(input);
-        if(apply_expression(settings, model, input))
+        String *expression = make_string(input);
+        if(apply_expression(settings, model, expression))
         {
+            free(input);
+            string_free(expression);
             return EXIT_FAILURE;
         }
         if(!isatty(fileno(stdin)))
@@ -158,6 +164,7 @@ static int interactive_mode(const struct settings *settings)
             fprintf(stdout, "EOD\n");
             fflush(stdout);
         }
+        string_free(expression);
         free(input);
     }
     model_free(model);
@@ -180,11 +187,11 @@ static int expression_mode(const struct settings *settings)
     return result;
 }
 
-static int apply_expression(const struct settings *settings, document_model *model, const char *expression)
+static int apply_expression(const struct settings *settings, document_model *model, const String *expression)
 {
     int result = EXIT_SUCCESS;
 
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));    
+    MaybeJsonPath maybe = parse(expression);
     if(is_nothing(maybe))
     {
         error("while parsing jsonpath expression", maybe.error.message, settings);

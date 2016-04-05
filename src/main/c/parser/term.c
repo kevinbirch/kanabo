@@ -52,7 +52,7 @@ typedef struct term_parser_s TermParser;
 
 MaybeString default_filter(Input *input)
 {
-    uint8_t current = consume_char(input);
+    uint8_t current = consume_one(input);
     MutableString *result = make_mstring_with_char(current);
     if(NULL == result)
     {

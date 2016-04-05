@@ -42,6 +42,7 @@
 
 #include "str.h"
 
+#include "parser/location.h"
 
 enum cst_node_tag
 {
@@ -55,17 +56,6 @@ enum cst_node_tag
 };
 
 typedef enum cst_node_tag ConcreteSyntaxNodeType;
-
-struct location_s
-{
-    String *filename;
-    size_t  line;
-    size_t  offset;
-};
-
-typedef struct location_s Location;
-
-static const Location NO_LOCATION = {NULL, 0, 0};
 
 typedef struct syntax_node_s SyntaxNode;
 

@@ -36,55 +36,169 @@
  */
 
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
+#include <sys/stat.h>
+
 #include "parser/input.h"
 
 
-Input *input_alloc(void)
+struct source_s
 {
-    return calloc(1, sizeof(Input));
-}
+    size_t   length;
+};
 
-void input_init(Input *self, const uint8_t *data, size_t length)
+typedef struct source_s Source;
+
+struct file_source_s
 {
-    if(NULL == self)
+    Source   base;
+    String  *filename;
+    uint8_t  data[];
+};
+
+typedef struct file_source_s FileSource;
+
+struct buffer_source_s
+{
+    Source         base;
+    const uint8_t *data;
+};
+    
+typedef struct buffer_source_s BufferSource;
+
+struct input_s
+{
+    Postion position;
+    size_t  mark;
+};
+
+typedef struct input_s Input;
+
+struct file_input_s
+{
+    Input      base;
+    FileSource source;
+};
+
+struct buffer_input_s
+{
+    Input        base;
+    BufferSource source;
+};
+
+
+#define cursor(SELF) (SELF)->data + (SELF)->position
+
+
+static off_t file_size(FILE *file)
+{
+    struct stat stats;
+    if(fstat(fileno(file), &stats))
     {
-        return;
+        return -1;
     }
-    self->data = data;
-    self->length = length;
-    self->position = 0;
-    self->mark = 0;
+
+    return stats.st_size;
 }
 
-void input_init_from_string(Input *self, const String *data)
+static inline FileInput *file_input_alloc(size_t bufsize)
 {
-    input_init(self, string_as_c_string(data), string_length(data));
+    return calloc(1, sizeof(FileInput) + bufsize);
 }
 
-Input *make_input(const uint8_t *data, size_t length)
+static inline void file_input_init(FileInput *self, const char *filename, FILE *file, size_t size)
 {
-    Input *self = input_alloc();
-    if(NULL == self)
+    self->base.position.line = 1;
+    self->source.filename = make_string(filename);
+    size_t count = fread(self->source.data, 1, size, file);
+    self->source.base.length = count;
+}
+
+FileInput *make_file_input(const char *filename)
+{
+    FILE *file = fopen(filename, "r");
+    if(NULL == file)
     {
         return NULL;
     }
-    input_init(self, data, length);
+    off_t size = file_size(file);
+    if(0 > size)
+    {
+        return NULL;
+    }
+    
+    FileInput *self = file_input_alloc((size_t)size);
+    if(NULL == self)
+    {
+        fclose(file);
+        return NULL;
+    }
+    file_input_init(self, filename, file, (size_t)size);
 
     return self;
 }
 
-size_t position(Input *self)
+BufferInput *make_buffer_input(const uint8_t *data, size_t length)
+{
+    BufferInput *self = calloc(1, sizeof(BufferInput));
+    if(NULL == self)
+    {
+        return NULL;
+    }
+    self->source.data = data;
+    self->source.base.length = length;
+    
+    return self;
+}
+
+void dispose_file_input(FileInput *self)
+{
+    string_free(self->source.filename);
+    free(self);
+}
+
+void dispose_buffer_input(BufferInput *self)
+{
+    free(self);
+}
+
+String *file_input_name(FileInput *self)
+{
+    return self->source.filename;
+}
+
+Input *file_input_upcast(FileInput *self)
+{
+    return &self->base;
+}
+
+Input *buffer_input_upcast(BufferInput *self)
+{
+    return &self->base;
+}
+
+Postion input_position(const Input *self)
 {
     return self->position;
 }
 
-void reset(Input *self)
+void input_advance_to_end(Input *self)
 {
-    self->position = 0;
+    if(!has_more(self))
+    {
+        return;
+    }
+    self->position.offset = self->length - 1;
+}
+
+void rewind(Input *self)
+{
+    self->position.line = 1;
+    self->position.offset = 0;
 }
 
 void set_mark(Input *self)
@@ -107,14 +221,6 @@ size_t remaining(Input *self)
     return self->length - self->position;
 }
 
-void skip_whitespace(Input *self)
-{
-    while(has_more(self) && isspace(peek(self)))
-    {
-        consume_char(self);
-    }
-}
-
 uint8_t peek(Input *self)
 {
     if(!has_more(self))
@@ -124,7 +230,15 @@ uint8_t peek(Input *self)
     return self->data[self->position];
 }
 
-uint8_t consume_char(Input *self)
+void skip_whitespace(Input *self)
+{
+    while(has_more(self) && isspace(peek(self)))
+    {
+        consume_char(self);
+    }
+}
+
+uint8_t consume_one(Input *self)
 {
     if(!has_more(self))
     {
@@ -133,7 +247,7 @@ uint8_t consume_char(Input *self)
     return self->data[self->position++];
 }
 
-void consume_many(Input *self, size_t count)
+String *consume_many(Input *self, size_t count)
 {
     if(!has_more(self))
     {

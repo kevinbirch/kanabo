@@ -112,7 +112,7 @@ enum command process_options(const int argc, char * const *argv, struct settings
             case 'q':
                 ENSURE_COMMAND_ORTHOGONALITY(interaction_decided);
                 settings->command = EXPRESSION_MODE;
-                settings->expression = optarg;
+                settings->expression = make_string(optarg);
                 interaction_decided = true;
                 break;
             case 'o':

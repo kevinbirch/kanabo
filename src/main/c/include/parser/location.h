@@ -39,4 +39,18 @@
 #pragma once
 
 
+#include "parser/input.h"
+
+
+struct location_s
+{
+    String *filename;
+    size_t  line;
+    size_t  offset;
+};
+
+typedef struct location_s Location;
+
+static const Location NO_LOCATION = {NULL, 0, 0};
+
 #define location_from_input(INPUT) (Location){NULL, 1, position((INPUT))}

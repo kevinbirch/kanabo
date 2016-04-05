@@ -65,7 +65,7 @@ static MaybeString build_escape_from_input(Input *input, size_t length)
 {
     if(length > remaining(input))
     {
-        consume_many(input, remaining(input));
+        advance_to_end(input);
         return nothing_string(ERR_PARSER_END_OF_INPUT);
     }
     MutableString *result = make_mstring(6);
@@ -89,12 +89,17 @@ static MaybeString build_escape_from_input(Input *input, size_t length)
             }
         }
     }
-    if(!mstring_append_stream(&result, cursor(input), length))
+    String *sequence = consume_many(input, length);
+    if(NULL == sequence)
+    {
+        mstring_free(result);
+        return nothing_string(ERR_PARSER_END_OF_INPUT);
+    }
+    if(!mstring_append_string(&result, sequence))
     {
         mstring_free(result);
         return nothing_string(ERR_PARSER_OUT_OF_MEMORY);
     }
-    consume_many(input, length);
     return just_string(result);
 }
 

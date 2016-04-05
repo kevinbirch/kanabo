@@ -44,41 +44,111 @@
 #include "str.h"
 
 
-struct input_s
+// Input Entities
+
+struct postion_s
 {
-    const uint8_t *data;
-    size_t         length;
-    size_t         position;
-    size_t         mark;
+    size_t line;
+    size_t offset;
 };
 
+typedef struct postion_s Postion;
+
 typedef struct input_s Input;
-
-Input *input_alloc(void);
-
-void input_init(Input *self, const uint8_t *data, size_t length);
-void input_init_from_string(Input *self, const String *data);
-
-Input *make_input(const uint8_t *data, size_t length);
-
-#define cursor(SELF) (SELF)->data + (SELF)->position
+typedef struct file_input_s FileInput;
+typedef struct buffer_input_s BufferInput;
 
 
-size_t position(Input *input);
+// Input Constructors
 
-void set_mark(Input *input);
-void reset_to_mark(Input *input);
-void reset(Input *input);
+FileInput   *make_file_input(const char *filename);
+BufferInput *make_buffer_input(const uint8_t *data, size_t length);
 
-bool has_more(Input *input);
-size_t remaining(Input *input);
 
-void skip_whitespace(Input *input);
-uint8_t peek(Input *input);
-uint8_t consume_char(Input *input);
-void consume_many(Input *input, size_t count);
-bool consume_if(Input *input, const uint8_t *value, size_t length);
-void push_back(Input *input);
+// Input Destructor
 
-bool looking_at(Input *input, const char *value);
-size_t find(Input *input, const char *value);
+void dispose_file_input(FileInput *self);
+void dispose_buffer_input(BufferInput *self);
+
+#define dispose_input(SELF) _Generic((SELF),                            \
+                                     FileInput *: dispose_file_input,   \
+                                     BufferInput *: dispose_buffer_input \
+                                     )(SELF)
+
+
+// Input Property API
+
+String *file_input_name(FileInput *self);
+
+// Input Coercion API
+
+Input *file_input_upcast(FileInput *self);
+Input *buffer_input_upcast(BufferInput *self);
+
+#define input(SELF) _Generic((SELF),                            \
+                             FileInput *: file_input_upcast,    \
+                             BufferInput *: buffer_input_upcast \
+                             )(SELF)
+// Input Postion API
+
+Postion input_position(const Input *self);
+
+#define position(SELF) _Generic((SELF),                           \
+                                FileInput *: input_position,      \
+                                BufferInput *: input_position     \
+                                )(input(SELF))
+
+void    input_advance_to_end(Input *self);
+
+#define advance_to_end(SELF) _Generic((SELF),                           \
+                                      FileInput *: input_advance_to_end, \
+                                      BufferInput *: input_advance_to_end \
+                                      )(input(SELF))
+
+
+// Input Mark API
+
+void input_set_mark(Input *self);
+#define set_mark(SELF) _Generic((SELF),                           \
+                                FileInput *: input_set_mark,      \
+                                BufferInput *: input_set_mark     \
+                                )(input(SELF))
+
+void input_reset_to_mark(Input *self);
+#define reset_to_mark(SELF) _Generic((SELF),                            \
+                                     FileInput *: input_reset_to_mark,  \
+                                     BufferInput *: input_reset_to_mark \
+                                     )(input(SELF))
+
+void input_rewind(Input *self);
+#define rewind(SELF) _Generic((SELF),                             \
+                              FileInput *: input_rewind,          \
+                              BufferInput *: input_rewind         \
+                              )(input(SELF))
+
+
+// Input Consumption API
+
+uint8_t peek(Input *self);
+
+void    file_input_skip_whitespace(FileInput *self);
+void    buffer_input_skip_whitespace(BufferInput *self);
+
+#define skip_whitespace(SELF) _Generic((SELF),                          \
+                                       FileInput *: file_input_skip_whitespace, \
+                                       BufferInput *: buffer_input_skip_whitespace \
+                                       )(SELF)
+
+uint8_t  consume_one(Input *self);
+String  *consume_many(Input *self, size_t count);
+bool     consume_if(Input *self, const uint8_t *value, size_t length);
+void     push_back(Input *self);
+
+
+// Input Query API
+
+bool   has_more(Input *self);
+size_t remaining(Input *self);
+
+bool   looking_at(Input *self, const char *value);
+size_t find(Input *self, const char *value);

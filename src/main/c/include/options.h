@@ -35,11 +35,14 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
 #pragma once
 
 #include <getopt.h>
 
 #include "loader.h"
+#include "str.h"
+
 
 enum emit_mode
 {
@@ -62,7 +65,7 @@ struct settings
 {
     const char     *program_name;
     enum emit_mode  emit_mode;
-    const char     *expression;
+    String         *expression;
     const char     *input_file_name;
     enum command    command;
     enum loader_duplicate_key_strategy duplicate_strategy;

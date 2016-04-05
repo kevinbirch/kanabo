@@ -50,10 +50,10 @@ MaybeString quoted_name_filter(Input *input)
     {
         return nothing_string(ERR_CONTROL_CODE);
     }
-    uint8_t current = consume_char(input);
+    uint8_t current = consume_one(input);
     if('\\' == current)
     {
-        uint8_t type = consume_char(input);
+        uint8_t type = consume_one(input);
         switch(type)
         {
             case 0:
