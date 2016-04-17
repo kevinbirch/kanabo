@@ -44,54 +44,32 @@
 #include <sys/stat.h>
 
 #include "parser/input.h"
+#include "parser/source.h"
 
-
-struct source_s
-{
-    size_t   length;
-};
-
-typedef struct source_s Source;
-
-struct file_source_s
-{
-    Source   base;
-    String  *filename;
-    uint8_t  data[];
-};
-
-typedef struct file_source_s FileSource;
-
-struct buffer_source_s
-{
-    Source         base;
-    const uint8_t *data;
-};
-    
-typedef struct buffer_source_s BufferSource;
-
-struct input_s
-{
-    Postion position;
-    size_t  mark;
-};
-
-typedef struct input_s Input;
 
 struct file_input_s
 {
-    Input      base;
-    FileSource source;
+    union
+    {
+        struct input_s;
+        Input base;
+    };
+    String *filename;
+    Source  source;
 };
 
 struct buffer_input_s
 {
-    Input        base;
-    BufferSource source;
+    union
+    {
+        struct input_s;
+        Input base;
+    };
+    Source source;
 };
 
 
-#define cursor(SELF) (SELF)->data + (SELF)->position
+#define cursor(SELF) (SELF)->source.data + (SELF)->position.offset
 
 
 static off_t file_size(FILE *file)
@@ -113,9 +91,9 @@ static inline FileInput *file_input_alloc(size_t bufsize)
 static inline void file_input_init(FileInput *self, const char *filename, FILE *file, size_t size)
 {
     self->base.position.line = 1;
-    self->source.filename = make_string(filename);
+    self->filename = make_string(filename);
     size_t count = fread(self->source.data, 1, size, file);
-    self->source.base.length = count;
+    self->source.length = count;
 }
 
 FileInput *make_file_input(const char *filename)
@@ -142,22 +120,32 @@ FileInput *make_file_input(const char *filename)
     return self;
 }
 
+static inline BufferInput *buffer_input_alloc(size_t length)
+{
+    return calloc(1, sizeof(BufferInput) + length);
+}
+
+static inline void buffer_input_init(BufferInput *self, const uint8_t *data, size_t length)
+{
+    memcpy(self->source.data, data, length);
+    self->source.length = length;
+}
+
 BufferInput *make_buffer_input(const uint8_t *data, size_t length)
 {
-    BufferInput *self = calloc(1, sizeof(BufferInput));
+    BufferInput *self = buffer_input_alloc(length);
     if(NULL == self)
     {
         return NULL;
     }
-    self->source.data = data;
-    self->source.base.length = length;
-    
+    buffer_input_init(self, data, length);
+
     return self;
 }
 
 void dispose_file_input(FileInput *self)
 {
-    string_free(self->source.filename);
+    string_free(self->filename);
     free(self);
 }
 
@@ -168,7 +156,7 @@ void dispose_buffer_input(BufferInput *self)
 
 String *file_input_name(FileInput *self)
 {
-    return self->source.filename;
+    return self->filename;
 }
 
 Input *file_input_upcast(FileInput *self)
@@ -192,7 +180,7 @@ void input_advance_to_end(Input *self)
     {
         return;
     }
-    self->position.offset = self->length - 1;
+    self->position.offset = self->source.length - 1;
 }
 
 void rewind(Input *self)
