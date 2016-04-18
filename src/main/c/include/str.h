@@ -1,40 +1,3 @@
-/*
- * 金棒 (kanabō)
- * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
- * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
- * made stronger.
- *
- * For more information, consult the README file in the project root.
- *
- * Distributed under an [MIT-style][license] license.
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal with
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * - Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimers.
- * - Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimers in the documentation and/or
- *   other materials provided with the distribution.
- * - Neither the names of the copyright holders, nor the names of the authors, nor
- *   the names of other contributors may be used to endorse or promote products
- *   derived from this Software without specific prior written permission.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE CONTRIBUTORS
- * OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
- *
- * [license]: http://www.opensource.org/licenses/ncsa
- */
-
 
 #pragma once
 
@@ -67,6 +30,13 @@ void    string_free(String *self);
 // String Data API
 
 uint8_t string_get_char(const String *self, size_t index);
+
+
+// String Equality API
+
+bool string_equals(const String *self, const String *other);
+bool string_equals_c_string(const String *self, const char *other);
+bool string_equals_bytestring(const String *self, const uint8_t *other, size_t length);
 
 
 // String Iteration API
@@ -106,19 +76,27 @@ MutableString *mstring_clone(const MutableString *self);
 
 // Mutable String Destructor
 
-void           mstring_free(MutableString *self);
+void mstring_free(MutableString *self);
 
 
 // Mutable String Attribute API
 
-size_t   mstring_get_length(const MutableString *self);
-size_t   mstring_get_capacity(const MutableString *self);
-bool     mstring_has_capacity(const MutableString *self, size_t length);
+size_t mstring_get_length(const MutableString *self);
+size_t mstring_get_capacity(const MutableString *self);
+bool   mstring_has_capacity(const MutableString *self, size_t length);
 
 
-// String Data API
+// Mutable String Data API
 
 uint8_t  mstring_get_char(const MutableString *self, size_t index);
+
+
+// Mutable String Equality API
+
+bool mstring_equals(const MutableString *self, const MutableString *other);
+bool mstring_equals_string(const MutableString *self, const String *other);
+bool mstring_equals_c_string(const MutableString *self, const char *other);
+bool mstring_equals_bytestring(const MutableString *self, const uint8_t *other, size_t length);
 
 
 // Mutable String Iteration API
@@ -136,12 +114,12 @@ bool mstring_contains(const MutableString *self, uint8_t value);
 
 // Mutable String Coercion API
 
-String        *mstring_as_string(const MutableString *self);
-String        *mstring_as_string_no_copy(MutableString *self);
-const char    *mstring_as_c_str(const MutableString *self);
+String     *mstring_as_string(const MutableString *self);
+String     *mstring_as_string_no_copy(MutableString *self);
+const char *mstring_as_c_str(const MutableString *self);
 
 
-// Mutable String Mutation API
+// Mutable String Update API
 
 bool mstring_append_char(MutableString **self, const uint8_t value);
 bool mstring_append_c_str(MutableString **self, const char *value);
@@ -174,12 +152,12 @@ void mstring_set_range(MutableString *self, size_t position, size_t length, cons
                                      MutableString *: mstring_get_length, \
                                      const MutableString *: mstring_get_length \
                                      )(SELF)
-#define string_get(SELF, INDEX) _Generic((SELF),                        \
-                                         String *: string_get_char,     \
-                                         const String *: string_get_char, \
-                                         MutableString *: mstring_get_char, \
-                                         const MutableString *: mstring_get_char \
-                                         )(SELF, INDEX)
+#define stridx(SELF, INDEX) _Generic((SELF),                            \
+                                     String *: string_get,              \
+                                     const String *: string_get,        \
+                                     MutableString *: mstring_get,      \
+                                     const MutableString *: mstring_get \
+                                     )(SELF, INDEX)
 #define string_as_c_string(SELF) _Generic((SELF),                       \
                                           String *: string_as_c_str,    \
                                           const String *: string_as_c_str, \

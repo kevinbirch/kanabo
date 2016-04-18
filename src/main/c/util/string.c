@@ -125,6 +125,33 @@ uint8_t string_get_char(const String *self, size_t index)
     return self->value[index];
 }
 
+bool string_equals(const String *self, const String *other)
+{
+    if(self->length != other->length)
+    {
+        return false;
+    }
+    return 0 == memcmp(self->value, other->value, self->length);
+}
+
+bool string_equals_c_string(const String *self, const char *other)
+{
+    if(self->length != strlen(other))
+    {
+        return false;
+    }
+    return 0 == memcmp(self->value, other, self->length);
+}
+
+bool string_equals_bytestring(const String *self, const uint8_t *other, size_t length)
+{
+    if(self->length != length)
+    {
+        return false;
+    }
+    return 0 == memcmp(self->value, other, self->length);
+}
+
 bool string_iterate(const String *self, string_iterator iterator, void *parameter)
 {
     for(size_t i = 0; i < string_length(self); i++)
@@ -287,6 +314,42 @@ size_t mstring_get_length(const MutableString *self)
 uint8_t mstring_get_char(const MutableString *self, size_t index)
 {
     return self->base.value[index];
+}
+
+bool mstring_equals(const MutableString *self, const MutableString *other)
+{
+    if(self->base.length != other->base.length)
+    {
+        return false;
+    }
+    return 0 == memcmp(self->base.value, other->base.value, self->base.length);
+}
+
+bool mstring_equals_string(const MutableString *self, const String *other)
+{
+    if(self->base.length != other->length)
+    {
+        return false;
+    }
+    return 0 == memcmp(self->base.value, other->value, self->base.length);
+}
+
+bool mstring_equals_c_string(const MutableString *self, const char *other)
+{
+    if(self->base.length != strlen(other))
+    {
+        return false;
+    }
+    return 0 == memcmp(self->base.value, other, self->base.length);
+}
+
+bool mstring_equals_bytestring(const MutableString *self, const uint8_t *other, size_t length)
+{
+    if(self->base.length != length)
+    {
+        return false;
+    }
+    return 0 == memcmp(self->base.value, other, self->base.length);
 }
 
 bool mstring_iterate(const MutableString *self, string_iterator iterator, void *parameter)
