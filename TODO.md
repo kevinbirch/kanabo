@@ -98,30 +98,29 @@ LICENSE file for more details.
 * use maybe parser in grammar to handle builder errors
 * build the jsonpath inline with custom rule parsers
 * rename emit package to emitter
-* move jsonpath/reader to parser?
 * inline jsonpath/model package into jsonpath?
 * rename model package to document?
 * move nodelist creation to evaluate function evaluator/api.c
-* create common maybe.h for enum and others
 * use type generic macro instead of vtable
 * use sentinels for vararg parsers instead of NULL, error on null args
 * create parser error classes with context for building message
 * try to reuse parsers instead of creating new every time
 * need a balance parser to control bracket balancing
-* need to feed stop chars into unqoted name parser
-* error on unknown escape sequence
 * feed quote char into quoted string parser
 * create simplifed static error message reprs for logging
 * need tests for all forbidden control chars
-* make repr dynamic
 * use balanced parser for quoted string
 * add character filter delegate to string parser
 * use push_back to reset input position to simplify parser message handling
+
+* free_x -> dispose_x
 * better source location handling ala dylan reader
 * use generic maybe everywhere instead of define maybe macro? the void can be freely cast to/from the actual type
 * concrete predicate subtypes
 * does position_from_input need to be in parser.h?
 * move all repr to dynamic calls
+* break down api module
+* fix input, make polymorphic
 
 ### loader
 
