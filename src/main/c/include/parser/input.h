@@ -12,6 +12,7 @@
 
 struct postion_s
 {
+    size_t index;
     size_t line;
     size_t offset;
 };
@@ -117,34 +118,34 @@ void buffer_skip_whitespace(BufferInput *self);
 uint8_t file_consume_one(FileInput *self);
 uint8_t buffer_consume_one(BufferInput *self);
 
-#define input_consume_one(SELF) _Generic((SELF),                     \
-                                  FileInput *: file_consumme_one,    \
-                                  BufferInput *: buffer_consumme_one \
-                                  )(SELF)
+#define input_consume_one(SELF) _Generic((SELF),                        \
+                                         FileInput *: file_consumme_one, \
+                                         BufferInput *: buffer_consumme_one \
+                                         )(SELF)
 
 String *file_consume_many(FileInput *self, size_t count);
 String *buffer_consume_many(BufferInput *self, size_t count);
 
-#define input_consume_many(SELF) _Generic((SELF),                    \
-                                  FileInput *: file_consume_many,    \
-                                  BufferInput *: buffer_consume_many \
-                                  )(SELF)
+#define input_consume_many(SELF) _Generic((SELF),                       \
+                                          FileInput *: file_consume_many, \
+                                          BufferInput *: buffer_consume_many \
+                                          )(SELF)
 
-bool file_consume_if(FileInput *self, const uint8_t *value, size_t length);
-bool buffer_consume_if(BufferInput *self, const uint8_t *value, size_t length);
+bool file_consume_if(FileInput *self, const String *value);
+bool buffer_consume_if(BufferInput *self, const String *value);
 
-#define input_consume_if(SELF) _Generic((SELF),                    \
-                                  FileInput *: file_consume_if,    \
-                                  BufferInput *: buffer_consume_if \
-                                  )(SELF)
+#define input_consume_if(SELF) _Generic((SELF),                         \
+                                        FileInput *: file_consume_if,   \
+                                        BufferInput *: buffer_consume_if \
+                                        )(SELF)
 
 void file_push_back(FileInput *self);
 void buffer_push_back(BufferInput *self);
 
-#define input_push_back(SELF) _Generic((SELF),                    \
-                                  FileInput *: file_push_back,    \
-                                  BufferInput *: buffer_push_back \
-                                  )(SELF)
+#define input_push_back(SELF) _Generic((SELF),                          \
+                                       FileInput *: file_push_back,     \
+                                       BufferInput *: buffer_push_back  \
+                                       )(SELF)
 
 
 // Input Query API
@@ -152,31 +153,15 @@ void buffer_push_back(BufferInput *self);
 bool file_has_more(FileInput *self);
 bool buffer_has_more(BufferInput *self);
 
-#define input_has_more(SELF) _Generic((SELF),                    \
-                                  FileInput *: file_has_more,    \
-                                  BufferInput *: buffer_has_more \
-                                  )(SELF)
+#define input_has_more(SELF) _Generic((SELF),                           \
+                                      FileInput *: file_has_more,       \
+                                      BufferInput *: buffer_has_more    \
+                                      )(SELF)
 
 size_t file_remaining(FileInput *self);
 size_t buffer_remaining(BufferInput *self);
 
-#define input_remaining(SELF) _Generic((SELF),                    \
-                                  FileInput *: file_remaining,    \
-                                  BufferInput *: buffer_remaining \
-                                  )(SELF)
-
-bool file_looking_at(FileInput *self, const char *value);
-bool buffer_looking_at(BufferInput *self, const char *value);
-
-#define input_looking_at(SELF) _Generic((SELF),                    \
-                                  FileInput *: file_looking_at,    \
-                                  BufferInput *: buffer_looking_at \
-                                  )(SELF)
-
-size_t file_find(FileInput *self, const char *value);
-size_t buffer_find(BufferInput *self, const char *value);
-
-#define input_find(SELF) _Generic((SELF),                    \
-                                  FileInput *: file_find,    \
-                                  BufferInput *: buffer_find \
-                                  )(SELF)
+#define input_remaining(SELF) _Generic((SELF),                          \
+                                       FileInput *: file_remaining,     \
+                                       BufferInput *: buffer_remaining  \
+                                       )(SELF)
