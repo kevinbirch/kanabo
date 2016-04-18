@@ -141,8 +141,3 @@ void file_push_back(FileInput *self)
 {
     push_back(super(self), source(self));
 }
-
-bool file_looking_at(FileInput *self, const char *value)
-{
-    return looking_at(super(self), source(self), value);
-}
