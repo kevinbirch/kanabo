@@ -114,7 +114,5 @@ Parser *integer(void);
 Parser *signed_integer(void);
 Parser *non_zero_signed_integer(void);
 
-typedef MaybeString (*character_filter)(Input *input);
-MaybeString default_filter(Input *input);
-
-Parser *term(character_filter filter, const char *stop_characters);
+Parser *quoted_string(char quote);
+Parser *term(const char *stop_characters);
