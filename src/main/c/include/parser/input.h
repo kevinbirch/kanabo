@@ -27,7 +27,7 @@ typedef struct input_s Input;
 Input *make_input_from_file(const char *filename);
 Input *make_input_from_buffer(const uint8_t *data, size_t length);
 
-// Input Destructors
+// Input Destructor
 
 void dispose_input(Input *self);
 
