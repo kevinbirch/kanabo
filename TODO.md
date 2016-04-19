@@ -120,7 +120,8 @@ LICENSE file for more details.
 * does position_from_input need to be in parser.h?
 * move all repr to dynamic calls
 * break down api module
-* fix input, make polymorphic
+* replace memcmp with hash compare?
+* store hashcode with entry in bucket chain?
 
 ### loader
 
