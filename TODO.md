@@ -122,6 +122,10 @@ LICENSE file for more details.
 * break down api module
 * replace memcmp with hash compare?
 * store hashcode with entry in bucket chain?
+* interning for string module
+  * diable macro
+  * runtime enable disable
+* cstr helper macro for (M)String
 
 ### loader
 
