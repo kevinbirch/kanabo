@@ -12,7 +12,9 @@
 
 Input *input_alloc(size_t bufsiz)
 {
-    return calloc(1, sizeof(Input) + bufsiz);
+    Input *self = calloc(1, sizeof(Input) + bufsiz);
+    self->marks = make_vector();
+    return self;
 }
 
 void input_init(Input *self, const char *name, size_t size)
@@ -57,6 +59,7 @@ static inline void advance_by(Input *self, size_t amount)
 void dispose_input(Input *self)
 {
     string_free(self->source.name);
+    vector_destroy(self->marks, free);
     free(self);
 }
 
