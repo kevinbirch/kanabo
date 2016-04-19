@@ -17,151 +17,52 @@ struct postion_s
     size_t offset;
 };
 
-typedef struct postion_s Postion;
+typedef struct postion_s Position;
 
-typedef struct file_input_s FileInput;
-typedef struct buffer_input_s BufferInput;
+typedef struct input_s Input;
 
 
 // Input Constructors
 
-FileInput   *make_file_input(const char *filename);
-BufferInput *make_buffer_input(const uint8_t *data, size_t length);
-
+Input *make_input_from_file(const char *filename);
+Input *make_input_from_buffer(const uint8_t *data, size_t length);
 
 // Input Destructors
 
-void dispose_file_input(FileInput *self);
-void dispose_buffer_input(BufferInput *self);
-
-#define dispose_input(SELF) _Generic((SELF),                            \
-                                     FileInput *: dispose_file_input,   \
-                                     BufferInput *: dispose_buffer_input \
-                                     )(SELF)
+void dispose_input(Input *self);
 
 
 // Input Property API
 
-String *file_name(FileInput *self);
-String *buffer_name(BufferInput *self);
-
-#define input_name(SELF) _Generic((SELF),                     \
-                                  FileInput *: file_name,     \
-                                  BufferInput *: buffer_name  \
-                                  )(input(SELF))
+String *input_name(Input *self);
+size_t  input_length(Input *self);
 
 
 // Input Postion API
 
-Postion file_position(const FileInput *self);
-Postion buffer_position(const BufferInput *self);
+Position input_position(const Input *self);
 
-#define input_position(SELF) _Generic((SELF),                        \
-                                      FileInput *: file_position,    \
-                                      BufferInput *: buffer_position \
-                                      )(input(SELF))
-
-void file_advance_to_end(FileInput *self);
-void buffer_advance_to_end(BufferInput *self);
-
-#define input_advance_to_end(SELF) _Generic((SELF),                     \
-                                            FileInput *: file_advance_to_end, \
-                                            BufferInput *: buffer_advance_to_end \
-                                            )(input(SELF))
+void input_advance_to_end(Input *self);
+void input_reset(Input *self);
 
 
 // Input Mark API
 
-void file_set_mark(FileInput *self);
-void buffer_set_mark(BufferInput *self);
-
-#define input_set_mark(SELF) _Generic((SELF),                           \
-                                      FileInput *: file_set_mark,       \
-                                      BufferInput *: buffer_set_mark    \
-                                      )(input(SELF))
-
-void file_reset_to_mark(FileInput *self);
-void buffer_reset_to_mark(BufferInput *self);
-
-#define input_reset_to_mark(SELF) _Generic((SELF),                      \
-                                           FileInput *: file_reset_to_mark, \
-                                           BufferInput *: buffer_reset_to_mark \
-                                           )(input(SELF))
-
-void file_rewind(FileInput *self);
-void buffer_rewind(BufferInput *self);
-
-#define input_rewind(SELF) _Generic((SELF),                       \
-                                    FileInput *: file_rewind,     \
-                                    BufferInput *: buffer_rewind  \
-                                    )(input(SELF))
-
-
-// Input Consumption API
-
-uint8_t file_peek(FileInput *self);
-uint8_t buffer_peek(BufferInput *self);
-
-#define input_peek(SELF) _Generic((SELF),                    \
-                                  FileInput *: file_peek,    \
-                                  BufferInput *: buffer_peek \
-                                  )(SELF)
-
-void file_skip_whitespace(FileInput *self);
-void buffer_skip_whitespace(BufferInput *self);
-
-#define input_skip_whitespace(SELF) _Generic((SELF),                    \
-                                             FileInput *: file_skip_whitespace, \
-                                             BufferInput *: buffer_skip_whitespace \
-                                             )(SELF)
-
-uint8_t file_consume_one(FileInput *self);
-uint8_t buffer_consume_one(BufferInput *self);
-
-#define input_consume_one(SELF) _Generic((SELF),                        \
-                                         FileInput *: file_consumme_one, \
-                                         BufferInput *: buffer_consumme_one \
-                                         )(SELF)
-
-String *file_consume_many(FileInput *self, size_t count);
-String *buffer_consume_many(BufferInput *self, size_t count);
-
-#define input_consume_many(SELF) _Generic((SELF),                       \
-                                          FileInput *: file_consume_many, \
-                                          BufferInput *: buffer_consume_many \
-                                          )(SELF)
-
-bool file_consume_if(FileInput *self, const String *value);
-bool buffer_consume_if(BufferInput *self, const String *value);
-
-#define input_consume_if(SELF) _Generic((SELF),                         \
-                                        FileInput *: file_consume_if,   \
-                                        BufferInput *: buffer_consume_if \
-                                        )(SELF)
-
-void file_push_back(FileInput *self);
-void buffer_push_back(BufferInput *self);
-
-#define input_push_back(SELF) _Generic((SELF),                          \
-                                       FileInput *: file_push_back,     \
-                                       BufferInput *: buffer_push_back  \
-                                       )(SELF)
+void input_push_mark(Input *self);
+void input_pop_mark(Input *self);
 
 
 // Input Query API
 
-bool file_has_more(FileInput *self);
-bool buffer_has_more(BufferInput *self);
+bool   input_has_more(Input *self);
+size_t input_remaining(Input *self);
 
-#define input_has_more(SELF) _Generic((SELF),                           \
-                                      FileInput *: file_has_more,       \
-                                      BufferInput *: buffer_has_more    \
-                                      )(SELF)
 
-size_t file_remaining(FileInput *self);
-size_t buffer_remaining(BufferInput *self);
+// Input Consumption API
 
-#define input_remaining(SELF) _Generic((SELF),                          \
-                                       FileInput *: file_remaining,     \
-                                       BufferInput *: buffer_remaining  \
-                                       )(SELF)
+uint8_t input_peek(Input *self);
+void    input_skip_whitespace(Input *self);
+uint8_t input_consume_one(Input *self);
+String *input_consume_many(Input *self, size_t count);
+bool    input_consume_if(Input *self, const String *value);
+void    input_push_back(Input *self);

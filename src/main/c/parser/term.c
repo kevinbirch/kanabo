@@ -12,17 +12,6 @@ struct term_parser_s
 typedef struct term_parser_s TermParser;
 
 
-MaybeString default_filter(Input *input)
-{
-    uint8_t current = input_consume_one(input);
-    MutableString *result = make_mstring_with_char(current);
-    if(NULL == result)
-    {
-        return nothing_string(ERR_PARSER_OUT_OF_MEMORY);
-    }
-    return just_string(result);
-}
-
 static void string_parser_free(Parser *parser)
 {
     TermParser *self = (TermParser *)parser;
@@ -43,19 +32,9 @@ static MaybeSyntaxNode string_delegate(Parser *parser, MaybeSyntaxNode node, Inp
     TermParser *self = (TermParser *)parser;
 
     MutableString *result = make_mstring(4);
-    while(true)
+    while(input_has_more(input) && !is_stop_char(self, input_peek(input)))
     {
-        if(!input_has_more(input) || is_stop_char(self, input_peek(input)))
-        {
-            break;
-        }
-        MaybeString maybe = self->filter(input);
-        if(is_nothing(maybe))
-        {
-            mstring_free(result);
-            return nothing_node(code(maybe));
-        }
-        mstring_append(&result, value(maybe));
+        mstring_append(&result, input_consume_one(input));
     }
 
     String *term = mstring_as_string(result);
