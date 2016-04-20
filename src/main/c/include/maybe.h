@@ -72,7 +72,7 @@ typedef struct maybe_s Maybe;
 #define code(MAYBE) (MAYBE).code
 
 #define define_maybe(NAME, TYPE) struct NAME##_maybe_s {                \
-        MaybeTag tag;                                                  \
+        MaybeTag tag;                                                   \
         union {uint_fast16_t code; TYPE value;};                        \
     };                                                                  \
     typedef struct NAME##_maybe_s (NAME);
