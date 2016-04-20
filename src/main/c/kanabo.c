@@ -191,7 +191,7 @@ static int apply_expression(const struct settings *settings, document_model *mod
 {
     int result = EXIT_SUCCESS;
 
-    MaybeJsonPath maybe = parse(expression);
+    MaybeJsonPath maybe = read_path(expression);
     if(is_nothing(maybe))
     {
         error("while parsing jsonpath expression", maybe.error.message, settings);

@@ -42,7 +42,7 @@
 static MaybeSyntaxNode signed_integer_delegate(Parser *parser __attribute__((unused)), MaybeSyntaxNode node, Input *input)
 {
     ensure_more_input(input);
-    skip_whitespace(input);
+    input_skip_whitespace(input);
     return node;
 }
 

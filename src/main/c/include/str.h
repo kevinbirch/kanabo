@@ -266,6 +266,8 @@ ing) \
                                MutableString *: mstring_as_c_str,       \
                                const MutableString *: mstring_as_c_str  \
                                )(SELF)
+#define cstr strcast
+
 #define strclone(SELF) _Generic((SELF),                              \
                                 String *: string_clone,              \
                                 const String *: string_clone,        \

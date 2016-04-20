@@ -125,7 +125,7 @@ LICENSE file for more details.
 * interning for string module
   * diable macro
   * runtime enable disable
-* cstr helper macro for (M)String
+* kill complex integer parsers
 
 ### loader
 

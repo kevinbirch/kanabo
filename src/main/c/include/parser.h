@@ -76,6 +76,10 @@ define_maybe(MaybeString, MutableString *)
 #define just_string(VALUE) (MaybeString){JUST, .value=(VALUE)}
 #define nothing_string(CODE) (MaybeString){NOTHING, .code=(CODE)}
 
+
+/* Parser API */
+
+MaybeSyntaxNode parse(Parser *parser, Input *input);
 MaybeSyntaxNode bind(Parser *parser, MaybeSyntaxNode node, Input *input);
 
 

@@ -26,6 +26,7 @@ typedef struct input_s Input;
 
 Input *make_input_from_file(const char *filename);
 Input *make_input_from_buffer(const uint8_t *data, size_t length);
+Input *make_input_from_string(const String *data);
 
 // Input Destructor
 
@@ -52,8 +53,8 @@ void input_push_mark(Input *self);
 void input_pop_mark(Input *self);
 
 
-// Input Query API
 
+// Input Query API
 bool   input_has_more(Input *self);
 size_t input_remaining(Input *self);
 

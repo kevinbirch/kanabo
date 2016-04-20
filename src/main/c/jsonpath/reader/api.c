@@ -1,42 +1,3 @@
-/*
- * 金棒 (kanabō)
- * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- *
- * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
- * made stronger.
- *
- * For more information, consult the README file in the project root.
- *
- * Distributed under an [MIT-style][license] license.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal with
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * - Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimers.
- * - Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimers in the documentation and/or
- *   other materials provided with the distribution.
- * - Neither the names of the copyright holders, nor the names of the authors, nor
- *   the names of other contributors may be used to endorse or promote products
- *   derived from this Software without specific prior written permission.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE CONTRIBUTORS
- * OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
- *
- * [license]: http://www.opensource.org/licenses/ncsa
- */
-
-
-#include "parser/location.h"
 
 #include "conditions.h"
 
@@ -49,14 +10,22 @@
 #include "jsonpath/logging.h"
 
 
+#define path_error(CODE, POSITION)                                      \
+    (MaybeJsonPath){                                                    \
+        .tag=NOTHING,                                                   \
+            .error.code=(CODE),                                         \
+            .error.position=(POSITION),                                 \
+            .error.message=status_message((CODE), (POSITION))           \
+            }
+
 #define PRECOND_ELSE_NOTHING(CODE, ...)                                 \
     if(is_false(__VA_ARGS__, -1))                                       \
     {                                                                   \
-        return (MaybeJsonPath){NOTHING, .error.code=(CODE), .error.position=0, .error.message=status_message((CODE), 0)}; \
+        return path_error(CODE, 0);                                     \
     }
 
-#define path_error(CODE, POSITION) (MaybeJsonPath){NOTHING, .error.code=(CODE), .error.position=(POSITION), .error.message=status_message((CODE), (POSITION))}
 #define just_path(VALUE) (MaybeJsonPath){JUST, .value=(VALUE)}
+#define input_index(INPUT) input_position((INPUT)).index
 
 
 static inline JsonPath *build_path(SyntaxNode *node)
@@ -72,32 +41,51 @@ static inline MaybeJsonPath transform(MaybeSyntaxNode *node, Input *input)
 {
     if(is_nothing(*node))
     {
-        return path_error(node->code, position(input));
+        return path_error(node->code, input_index(input));
     }
-    return (MaybeJsonPath){JUST, .value=build_path(node->value)};
+    return just_path(build_path(node->value));
 
 }
 
-MaybeJsonPath parse(const String *expression)
+MaybeJsonPath read_path(const String *expression)
 {
     PRECOND_ELSE_NOTHING(ERR_PARSER_EMPTY_INPUT, NULL != expression);
     PRECOND_ELSE_NOTHING(ERR_PARSER_EMPTY_INPUT, 0 != string_length(expression));
 
-    parser_debug("parsing expression: '%s'", string_as_c_string(expression));
+    parser_debug("parsing expression: '%s'", cstr(expression));
 
-    Input input;
-    input_init_from_string(&input, expression);
+    MaybeJsonPath result;
 
-    Parser *parser = jsonpath();
-    SyntaxNode *root = make_syntax_node(CST_ROOT, NULL, location_from_input(&input));
-    MaybeSyntaxNode node = just_node(root);
-    MaybeSyntaxNode result = bind(parser, node, &input);
-    if(has_more(&input))
+    Input *input = make_input_from_string(expression);
+    if(NULL == input)
     {
-        return path_error(ERR_PARSER_UNEXPECTED_VALUE, position(&input));
+        result = path_error(ERR_PARSER_OUT_OF_MEMORY, 0);
+        goto exit;
     }
+    Parser *parser = jsonpath();
+    if(NULL == parser)
+    {
+        result = path_error(ERR_PARSER_OUT_OF_MEMORY, 0);
+        goto exit;
+    }
+    MaybeSyntaxNode root = parse(parser, input);
+    /* if(input_has_more(input)) */
+    /* { */
+    /*     result = path_error(ERR_PARSER_UNEXPECTED_VALUE, input_position(input)); */
+    /*     goto cleanup; */
+    /* } */
+    if(is_nothing(root))
+    {
+        result = path_error(code(root), input_index(input));
+        goto cleanup;
+    }
+
+    result = transform(&root, input);
+
+  cleanup:
     // xxx - free parser!
     //parser_free(parser);
-
-    return transform(&result, &input);
+    dispose_input(input);
+  exit:
+    return result;
 }

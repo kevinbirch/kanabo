@@ -21,20 +21,23 @@ enum parser_kind
     TERM
 };
 
+typedef MaybeSyntaxNode (*parser_delegate)(Parser *parser, MaybeSyntaxNode node, Input *input);
+typedef void (*parser_disposer)(Parser *self);
+
 struct parser_s
 {
     enum parser_kind kind;
     struct
     {
-        void (*free)(Parser *self);
-        MaybeSyntaxNode (*delegate)(Parser *parser, MaybeSyntaxNode node, Input *input);
+        parser_disposer free;
+        parser_delegate delegate;
     } vtable;
     char *repr;
 };
 
-#define ensure_more_input(INPUT) if(!has_more((INPUT)))  \
-    {                                                    \
-        return nothing_node(ERR_PARSER_END_OF_INPUT);    \
+#define ensure_more_input(INPUT) if(!input_has_more((INPUT)))  \
+    {                                                          \
+        return nothing_node(ERR_PARSER_END_OF_INPUT);          \
     }
 
 Parser *make_parser(enum parser_kind kind);
@@ -45,5 +48,3 @@ void parser_destructor(void *each);
 enum parser_kind parser_kind(Parser *self);
 const char *parser_name(Parser *self);
 const char *parser_repr(Parser *self);
-bool is_terminal(Parser *self);
-bool is_nonterminal(Parser *self);

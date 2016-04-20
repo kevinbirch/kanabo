@@ -442,9 +442,9 @@ static Parser *name(void)
         choice(
             sequence(
                 literal("'"),
-                term(quoted_name_filter, "'"),
+                term("'"),
                 literal("'")),
-            term(name_filter, ".[")),
+            term(".[")),
         name_rule_rewriter);
 }
 

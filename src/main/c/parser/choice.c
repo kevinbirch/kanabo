@@ -48,10 +48,10 @@ static MaybeSyntaxNode choice_delegate(Parser *parser, MaybeSyntaxNode node, Inp
     ensure_more_input(input);
     CompoundParser *self = (CompoundParser *)parser;
 
-    set_mark(input);
+    input_push_mark(input);
     for(size_t i = 0; i < vector_length(self->children); i++)
     {
-        reset_to_mark(input);
+        input_pop_mark(input);
         Parser *each = vector_get(self->children, i);
 
         MaybeSyntaxNode result = bind(each, node, input);
