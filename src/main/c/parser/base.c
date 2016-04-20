@@ -15,9 +15,7 @@ static const char * const PARSER_NAMES[] =
     "literal",
     "number",
     "integer",
-    "signed integer",
-    "non zero signed integer",
-    "string"
+    "term"
 };
 
 

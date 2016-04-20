@@ -16,8 +16,6 @@ enum parser_kind
     LITERAL,
     NUMBER,
     INTEGER,
-    SIGNED_INTEGER,
-    NON_ZERO_SIGNED_INTEGER,
     TERM
 };
 

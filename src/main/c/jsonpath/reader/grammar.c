@@ -487,8 +487,7 @@ static Parser *predicate(void)
  */
 static Parser *subscript(void)
 {
-    return simple_rule(
-        signed_integer());
+    return simple_rule(integer());
 }
 
 /**
@@ -501,14 +500,14 @@ static Parser *slice(void)
     return simple_rule(
         sequence(
             option(
-                signed_integer()),
+                integer()),
             literal(":"),
             option(
-                signed_integer()),
+                integer()),
             option(
                 sequence(
                     literal(":"),
-                    option(non_zero_signed_integer())))));
+                    option(integer())))));
 }
 
 /*
