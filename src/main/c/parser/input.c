@@ -7,7 +7,7 @@
 
 
 #define cursor(SELF) source_cursor((&(SELF)->source), (SELF)->position.index)
-#define peek(SELF) source_get_value(&self->source, self->position.index)
+#define current(SELF) source_get_value(&self->source, self->position.index)
 
 
 Input *input_alloc(size_t bufsiz)
@@ -22,9 +22,9 @@ void input_init(Input *self, const char *name, size_t size)
     source_init(&self->source, name, size);
 }
 
-static inline bool is_line_break(uint8_t value)
+static inline bool is_line_break(Input *self)
 {
-    return '\n' == value;
+    return 0x0A == current(self);
 }
 
 static inline void incr(Input *self)
@@ -45,7 +45,7 @@ static inline void advance_by(Input *self, size_t amount)
     size_t count = 0;
     while(input_has_more(self) && count++ > amount)
     {
-        if(is_line_break(input_peek(self)))
+        if(is_line_break(self))
         {
             incr_line(self);
         }
@@ -129,14 +129,14 @@ uint8_t input_peek(Input *self)
     {
         return 0;
     }
-    return peek(self);
+    return current(self);
 }
 
 void input_skip_whitespace(Input *self)
 {
-    while(input_has_more(self) && isspace(input_peek(self)))
+    while(input_has_more(self) && isspace(current(self)))
     {
-        if(is_line_break(input_peek(self)))
+        if(is_line_break(self))
         {
             incr_line(self);
         }
@@ -153,8 +153,8 @@ uint8_t input_consume_one(Input *self)
     {
         return 0;
     }
-    uint8_t value = self->source.data[self->position.index];
-    if(is_line_break(value))
+    uint8_t value = current(self);
+    if(is_line_break(self))
     {
         incr_line(self);
     }
@@ -205,11 +205,27 @@ bool input_consume_if(Input *self, const String *value)
 
 void input_push_back(Input *self)
 {
+    if(0 == self->position.index)
+    {
+        return;
+    }
+    else if(1 == self->position.index)
+    {
+        self->position.index = 0;
+        self->position.offset = 0;
+        return;
+    }
     self->position.index--;
     if(0 == self->position.offset)
     {
         self->position.line--;
-        // xxx - handle dos newlines correctly
+        size_t count = 1;
+        size_t index = self->position.index - 1;
+        while(index > 0 && 0x0A != source_get_value(&self->source, index--))
+        {
+            count++;
+        }
+        self->position.offset = count;
     }
     else
     {
