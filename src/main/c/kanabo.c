@@ -58,7 +58,7 @@ static int dispatch(enum command cmd, const struct settings *settings);
 
 static int interactive_mode(const struct settings *settings);
 static int expression_mode(const struct settings *settings);
-static int apply_expression(const struct settings *settings, document_model *model, const String *expression);
+static int apply_expression(const struct settings *settings, document_model *model, const char *expression);
 
 static document_model *load_model(const struct settings *settings);
 static nodelist *evaluate_expression(const struct settings *settings, const document_model *model, const JsonPath *path);
@@ -86,7 +86,6 @@ int main(const int argc, char * const *argv)
     enum command cmd = process_options(argc, argv, &settings);
 
     int result = dispatch(cmd, &settings);
-    free(settings.expression);
 
     return result;
 }
@@ -152,11 +151,9 @@ static int interactive_mode(const struct settings *settings)
             continue;
         }
         linenoiseHistoryAdd(input);
-        String *expression = make_string(input);
-        if(apply_expression(settings, model, expression))
+        if(apply_expression(settings, model, input))
         {
             free(input);
-            string_free(expression);
             return EXIT_FAILURE;
         }
         if(!isatty(fileno(stdin)))
@@ -164,7 +161,6 @@ static int interactive_mode(const struct settings *settings)
             fprintf(stdout, "EOD\n");
             fflush(stdout);
         }
-        string_free(expression);
         free(input);
     }
     model_free(model);
@@ -187,7 +183,7 @@ static int expression_mode(const struct settings *settings)
     return result;
 }
 
-static int apply_expression(const struct settings *settings, document_model *model, const String *expression)
+static int apply_expression(const struct settings *settings, document_model *model, const char *expression)
 {
     int result = EXIT_SUCCESS;
 

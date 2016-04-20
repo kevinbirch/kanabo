@@ -44,21 +44,21 @@
 #define assert_parser_success(EXPRESSION, MAYBE, EXPECTED_KIND, EXPECTED_LENGTH) \
     do                                                                  \
     {                                                                   \
-        if(PATH_ERROR == (MAYBE).tag)                                        \
+        if(PATH_ERROR == (MAYBE).tag)                                   \
         {                                                               \
             assert_not_null((MAYBE).error.message);                     \
             log_error("parser test", "for the expression: '%s', received: '%s'", (EXPRESSION), (MAYBE).error.message); \
         }                                                               \
         assert_int_eq(JSONPATH, (MAYBE).tag);                           \
-        assert_path_kind((MAYBE).value, (EXPECTED_KIND));                \
-        assert_not_null((MAYBE).value->steps);                           \
-        assert_path_length((MAYBE).value, (EXPECTED_LENGTH));            \
+        assert_path_kind((MAYBE).value, (EXPECTED_KIND));               \
+        assert_not_null((MAYBE).value->steps);                          \
+        assert_path_length((MAYBE).value, (EXPECTED_LENGTH));           \
     } while(0)
 
 #define assert_parser_failure(EXPRESSION, MAYBE, EXPECTED_RESULT, EXPECTED_POSITION) \
     do                                                                  \
     {                                                                   \
-        assert_int_eq(PATH_ERROR, (MAYBE).tag);                              \
+        assert_int_eq(NOTHING, (MAYBE).tag);                            \
         assert_int_eq((EXPECTED_RESULT), (MAYBE).error.code);           \
         assert_not_null((MAYBE).error.message);                         \
         log_debug("parser test", "for expression: '%s', received expected failure message: '%s'", (EXPRESSION), (MAYBE).error.message); \
@@ -74,11 +74,11 @@
 
 #define assert_name_length(STEP, NAME) assert_uint_eq(strlen((NAME)), name_test_step_length((STEP)))
 #define assert_name(STEP, NAME)                                         \
-    assert_name_length((STEP), (NAME));                                  \
+    assert_name_length((STEP), (NAME));                                 \
     assert_buf_eq((NAME), strlen((NAME)), name_test_step_name((STEP)), name_test_step_length((STEP)))
 
 #define assert_no_predicate(PATH, INDEX)                             \
-    assert_false(step_has_predicate(path_get((PATH), (INDEX))));      \
+    assert_false(step_has_predicate(path_get((PATH), (INDEX))));     \
     assert_null(path_get((PATH), (INDEX))->predicate)
 
 #define assert_root_step(PATH)                  \
@@ -98,7 +98,7 @@
 #define assert_type_kind(STEP, EXPECTED) assert_int_eq((EXPECTED), type_test_step_kind((STEP)))
 
 #define assert_type_step(PATH, INDEX, EXPECTED_TYPE_KIND, EXPECTED_STEP_KIND) \
-    assert_step((PATH), (INDEX), (EXPECTED_STEP_KIND), TYPE_TEST);       \
+    assert_step((PATH), (INDEX), (EXPECTED_STEP_KIND), TYPE_TEST);      \
     assert_type_kind(path_get((PATH), INDEX), (EXPECTED_TYPE_KIND))
 
 #define assert_single_type_step(PATH, INDEX, EXPECTED_TYPE_KIND)    \
@@ -118,14 +118,14 @@
 
 #define assert_subscript_index(PREDICATE, VALUE) assert_uint_eq((VALUE), subscript_predicate_index((PREDICATE)))
 #define assert_subscript_predicate(PATH, PATH_INDEX, INDEX_VALUE)       \
-    assert_predicate((PATH), (PATH_INDEX), SUBSCRIPT);                   \
+    assert_predicate((PATH), (PATH_INDEX), SUBSCRIPT);                  \
     assert_subscript_index(step_predicate(path_get((PATH), (PATH_INDEX))), (INDEX_VALUE));
 
 #define assert_slice_from(PREDICATE, VALUE) assert_int_eq((VALUE), slice_predicate_from((PREDICATE)))
 #define assert_slice_to(PREDICATE, VALUE) assert_int_eq((VALUE), slice_predicate_to((PREDICATE)))
 #define assert_slice_step(PREDICATE, VALUE) assert_int_eq((VALUE), slice_predicate_step((PREDICATE)))
 #define assert_slice_predicate(PATH, PATH_INDEX, FROM_VALUE, TO_VALUE, STEP_VALUE) \
-    assert_predicate((PATH), (PATH_INDEX), (SLICE));                     \
+    assert_predicate((PATH), (PATH_INDEX), (SLICE));                    \
     assert_slice_from(step_predicate(path_get((PATH), (PATH_INDEX))), (FROM_VALUE)); \
     assert_slice_to(step_predicate(path_get((PATH), (PATH_INDEX))), (TO_VALUE)); \
     assert_slice_step(step_predicate(path_get(((PATH)), (PATH_INDEX))), (STEP_VALUE))
@@ -133,9 +133,9 @@
 START_TEST (null_expression)
 {
     char *expression = NULL;
-    MaybeJsonPath maybe = parse((uint8_t *)expression, 50);
+    MaybeJsonPath maybe = read_path(expression);
 
-    assert_parser_failure(expression, maybe, ERR_NULL_EXPRESSION, 0);
+    assert_parser_failure(expression, maybe, ERR_PARSER_EMPTY_INPUT, 0);
     path_free(maybe);
 }
 END_TEST
@@ -143,9 +143,9 @@ END_TEST
 START_TEST (zero_length)
 {
     char *expression = "";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, 0);
+    MaybeJsonPath maybe = read_path(expression);
 
-    assert_parser_failure(expression, maybe, ERR_ZERO_LENGTH, 0);
+    assert_parser_failure(expression, maybe, ERR_PARSER_EMPTY_INPUT, 0);
     path_free(maybe);
 }
 END_TEST
@@ -153,7 +153,7 @@ END_TEST
 START_TEST (missing_step_test)
 {
     char *expression = "$.";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, 2);
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 2);
     path_free(maybe);
@@ -163,7 +163,7 @@ END_TEST
 START_TEST (missing_recursive_step_test)
 {
     char *expression = "$..";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, 3);
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 3);
     path_free(maybe);
@@ -173,9 +173,9 @@ END_TEST
 START_TEST (missing_dot)
 {
     char *expression = "$x";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, 2);
+    MaybeJsonPath maybe = read_path(expression);
 
-    assert_parser_failure(expression, maybe, ERR_UNEXPECTED_VALUE, 1);
+    assert_parser_failure(expression, maybe, ERR_PARSER_UNEXPECTED_VALUE, 1);
     path_free(maybe);
 }
 END_TEST
@@ -183,7 +183,7 @@ END_TEST
 START_TEST (unclosed_empty_root_predicate)
 {
     char *expression = "$[";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, 2);
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 2);
     path_free(maybe);
@@ -193,9 +193,9 @@ END_TEST
 START_TEST (stray_root_predicate_closure)
 {
     char *expression = "$]";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, 2);
+    MaybeJsonPath maybe = read_path(expression);
 
-    assert_parser_failure(expression, maybe, ERR_UNEXPECTED_VALUE, 1);
+    assert_parser_failure(expression, maybe, ERR_PARSER_UNEXPECTED_VALUE, 1);
     path_free(maybe);
 }
 END_TEST
@@ -203,7 +203,7 @@ END_TEST
 START_TEST (relative_path_begins_with_dot)
 {
     char *expression = ".x";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, 2);
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NAME_CHAR, 0);
     path_free(maybe);
@@ -217,7 +217,7 @@ END_TEST
 START_TEST (empty_root_predicate)
 {
     char *expression = "$[].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_failure(expression, maybe, ERR_EMPTY_PREDICATE, 2);
     path_free(maybe);
@@ -227,7 +227,7 @@ END_TEST
 START_TEST (premature_unclosed_quoted_step)
 {
     char *expression = "$.foo.'";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 7);
     path_free(maybe);
@@ -237,7 +237,7 @@ END_TEST
 START_TEST (unclosed_quoted_step)
 {
     char *expression = "$.foo.'bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 10);
     path_free(maybe);
@@ -247,7 +247,7 @@ END_TEST
 START_TEST (unclosed_escaped_quoted_step)
 {
     char *expression = "$.foo.'bar\\'";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 11);
     path_free(maybe);
@@ -257,7 +257,7 @@ END_TEST
 START_TEST (quoted_empty_step)
 {
     char *expression = "$.foo.''.bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NAME_CHAR, 7);
     path_free(maybe);
@@ -267,7 +267,7 @@ END_TEST
 START_TEST (empty_predicate)
 {
     char *expression = "$.foo[].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_EMPTY_PREDICATE, 6);
     path_free(maybe);
@@ -277,7 +277,7 @@ END_TEST
 START_TEST (extra_junk_in_predicate)
 {
     char *expression = "$.foo[ * quux].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_EXTRA_JUNK_AFTER_PREDICATE, 9);
     path_free(maybe);
@@ -287,7 +287,7 @@ END_TEST
 START_TEST (whitespace_predicate)
 {
     char *expression = "$.foo[ \t ].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_EMPTY_PREDICATE, 9);
     path_free(maybe);
@@ -297,7 +297,7 @@ END_TEST
 START_TEST (bogus_predicate)
 {
     char *expression = "$.foo[asdf].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_UNSUPPORTED_PRED_TYPE, 6);
     path_free(maybe);
@@ -307,7 +307,7 @@ END_TEST
 START_TEST (bogus_type_test_name)
 {
     char *expression = "$.foo.monkey()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     path_free(maybe);
@@ -317,7 +317,7 @@ END_TEST
 START_TEST (bogus_type_test_name_oblong)
 {
     char *expression = "$.foo.oblong()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     path_free(maybe);
@@ -327,7 +327,7 @@ END_TEST
 START_TEST (bogus_type_test_name_alloy)
 {
     char *expression = "$.foo.alloy()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     path_free(maybe);
@@ -337,7 +337,7 @@ END_TEST
 START_TEST (bogus_type_test_name_strong)
 {
     char *expression = "$.foo.strong()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     path_free(maybe);
@@ -347,7 +347,7 @@ END_TEST
 START_TEST (bogus_type_test_name_numbered)
 {
     char *expression = "$.foo.numbered()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     path_free(maybe);
@@ -357,7 +357,7 @@ END_TEST
 START_TEST (bogus_type_test_name_booger)
 {
     char *expression = "$.foo.booger()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     path_free(maybe);
@@ -367,7 +367,7 @@ END_TEST
 START_TEST (bogus_type_test_name_narl)
 {
     char *expression = "$.foo.narl()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     path_free(maybe);
@@ -377,7 +377,7 @@ END_TEST
 START_TEST (empty_type_test_name)
 {
     char *expression = "$.foo.()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
     path_free(maybe);
@@ -387,7 +387,7 @@ END_TEST
 START_TEST (dollar_only)
 {
     char *expression = "$";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 1);
     assert_root_step(maybe.value);
@@ -399,7 +399,7 @@ END_TEST
 START_TEST (absolute_single_step)
 {
     char *expression = "$.foo";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 2);
     assert_root_step(maybe.value);
@@ -413,7 +413,7 @@ END_TEST
 START_TEST (absolute_recursive_step)
 {
     char *expression = "$..foo";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 2);
     assert_root_step(maybe.value);
@@ -427,7 +427,7 @@ END_TEST
 START_TEST (absolute_multi_step)
 {
     char *expression = "$.foo.baz..yobble.thingum";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 5);
     assert_root_step(maybe.value);
@@ -447,7 +447,7 @@ END_TEST
 START_TEST (relative_multi_step)
 {
     char *expression = "foo.bar..baz";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_success(expression, maybe, RELATIVE_PATH, 3);
     assert_single_name_step(maybe.value, 0, "foo");
@@ -464,7 +464,7 @@ END_TEST
 START_TEST (quoted_escape_step)
 {
     char *expression = "$.foo.'mon\\'key'.bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 4);
     assert_root_step(maybe.value);
@@ -482,7 +482,7 @@ END_TEST
 START_TEST (quoted_multi_step)
 {
     char *expression = "$.foo.'happy fun ball'.bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 4);
     assert_root_step(maybe.value);
@@ -500,7 +500,7 @@ END_TEST
 START_TEST (wildcard)
 {
     char *expression = "$.foo.*";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -516,7 +516,7 @@ END_TEST
 START_TEST (recursive_wildcard)
 {
     char *expression = "$.foo..*";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -532,7 +532,7 @@ END_TEST
 START_TEST (wildcard_with_subscript_predicate)
 {
     char *expression = "$.foo.* [0]";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -548,7 +548,7 @@ END_TEST
 START_TEST (whitespace)
 {
     char *expression = "  $ \r\n. foo \n.\n. \t'happy fun ball' . \t string()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 4);
     assert_root_step(maybe.value);
@@ -566,7 +566,7 @@ END_TEST
 START_TEST (type_test_missing_closing_paren)
 {
     char *expression = "$.foo.null(";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -582,7 +582,7 @@ END_TEST
 START_TEST (recursive_type_test)
 {
     char *expression = "$.foo..string()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -598,7 +598,7 @@ END_TEST
 START_TEST (object_type_test)
 {
     char *expression = "$.foo.object()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -614,7 +614,7 @@ END_TEST
 START_TEST (array_type_test)
 {
     char *expression = "$.foo.array()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -630,7 +630,7 @@ END_TEST
 START_TEST (string_type_test)
 {
     char *expression = "$.foo.string()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -646,7 +646,7 @@ END_TEST
 START_TEST (number_type_test)
 {
     char *expression = "$.foo.number()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -662,7 +662,7 @@ END_TEST
 START_TEST (boolean_type_test)
 {
     char *expression = "$.foo.boolean()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -678,7 +678,7 @@ END_TEST
 START_TEST (null_type_test)
 {
     char *expression = "$.foo.null()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -694,7 +694,7 @@ END_TEST
 START_TEST (wildcard_predicate)
 {
     char *expression = "$.store.book[*].author";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 4);
     assert_root_step(maybe.value);
@@ -712,7 +712,7 @@ END_TEST
 START_TEST (wildcard_predicate_with_whitespace)
 {
     char *expression = "$.foo  [\t*\n]  .bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -728,7 +728,7 @@ END_TEST
 START_TEST (subscript_predicate)
 {
     char *expression = "$.foo[42].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -744,7 +744,7 @@ END_TEST
 START_TEST (subscript_predicate_with_whitespace)
 {
     char *expression = "$.foo  [\t42\r]\n.bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -760,7 +760,7 @@ END_TEST
 START_TEST (type_test_with_subscript_predicate)
 {
     char *expression = "$.foo.array()[0]";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -776,7 +776,7 @@ END_TEST
 START_TEST (negative_subscript_predicate)
 {
     char *expression = "$.foo[ -3].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     // xxx - fixme! this should be ERR_EXPECTED_INTEGER instead!
     assert_parser_failure(expression, maybe, ERR_UNSUPPORTED_PRED_TYPE, 7);
@@ -787,7 +787,7 @@ END_TEST
 START_TEST (slice_predicate_form1)
 {
     char *expression = "$.foo[:-3].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -803,7 +803,7 @@ END_TEST
 START_TEST (slice_predicate_form1_with_step)
 {
     char *expression = "$.foo[:-3:2].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -819,7 +819,7 @@ END_TEST
 START_TEST (slice_predicate_form2)
 {
     char *expression = "$.foo[-3:].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -835,7 +835,7 @@ END_TEST
 START_TEST (slice_predicate_form2_with_step)
 {
     char *expression = "$.foo[-1::2].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -851,7 +851,7 @@ END_TEST
 START_TEST (slice_predicate_form3)
 {
     char *expression = "$.foo[3:5].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -867,7 +867,7 @@ END_TEST
 START_TEST (slice_predicate_form3_with_step)
 {
     char *expression = "$.foo[1:4:2].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -883,7 +883,7 @@ END_TEST
 START_TEST (slice_predicate_with_whitespace)
 {
     char *expression = "$.foo  [\t1\t:\t5\r:\n3\t]\n.bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -899,7 +899,7 @@ END_TEST
 START_TEST (negative_step_slice_predicate)
 {
     char *expression = "$.foo[1:3:-3].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
     assert_root_step(maybe.value);
@@ -915,7 +915,7 @@ END_TEST
 START_TEST (zero_step_slice_predicate)
 {
     char *expression = "$.foo[::0].bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     // xxx - fix me! this should be ERR_STEP_CANNOT_BE_ZERO instead
     // xxx - fix me! this should be position 8 instead, need a non-zero signed int parser
@@ -935,7 +935,7 @@ static bool count(Step *each __attribute__((unused)), void *context)
 START_TEST (iteration)
 {
     char *expression = "$.foo.bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
 
@@ -961,7 +961,7 @@ static bool fail_count(Step *each __attribute__((unused)), void *context)
 START_TEST (fail_iteration)
 {
     char *expression = "$.foo.bar";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
 
@@ -979,7 +979,7 @@ START_TEST (bad_path_input)
     assert_null(path_get(NULL, 0));
     
     char *expression = "$";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 1);
 
@@ -996,7 +996,7 @@ START_TEST (bad_step_input)
     assert_null(step_predicate(NULL));
     
     char *expression = "$.foo.array()";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
 
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
 
@@ -1026,7 +1026,7 @@ START_TEST (bad_predicate_input)
     assert_null(join_predicate_right(NULL));
 
     char *expression = "$.foo[42].bar[*]";
-    MaybeJsonPath maybe = parse((uint8_t *)expression, strlen(expression));
+    MaybeJsonPath maybe = read_path(expression);
     assert_parser_success(expression, maybe, ABSOLUTE_PATH, 3);
 
     Predicate *subscript = step_predicate(path_get(maybe.value, 1));
@@ -1070,8 +1070,10 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input_case, whitespace_predicate);
     tcase_add_test(bad_input_case, extra_junk_in_predicate);
     tcase_add_test(bad_input_case, bogus_predicate);
+    */
 
     TCase *basic_case = tcase_create("basic");
+    /*
     tcase_add_test(basic_case, dollar_only);
     tcase_add_test(basic_case, absolute_single_step);
     tcase_add_test(basic_case, absolute_recursive_step);
@@ -1082,8 +1084,10 @@ Suite *jsonpath_suite(void)
     tcase_add_test(basic_case, wildcard);
     tcase_add_test(basic_case, recursive_wildcard);
     tcase_add_test(basic_case, wildcard_with_subscript_predicate);
+    */
 
     TCase *node_type_case = tcase_create("node type test");
+    /*
     tcase_add_test(node_type_case, type_test_missing_closing_paren);
     tcase_add_test(node_type_case, recursive_type_test);
     tcase_add_test(node_type_case, object_type_test);
@@ -1092,8 +1096,10 @@ Suite *jsonpath_suite(void)
     tcase_add_test(node_type_case, number_type_test);
     tcase_add_test(node_type_case, boolean_type_test);
     tcase_add_test(node_type_case, null_type_test);
+    */
 
     TCase *predicate_case = tcase_create("predicate");
+    /*
     tcase_add_test(predicate_case, wildcard_predicate);
     tcase_add_test(predicate_case, wildcard_predicate_with_whitespace);
     tcase_add_test(predicate_case, subscript_predicate);
@@ -1109,8 +1115,10 @@ Suite *jsonpath_suite(void)
     tcase_add_test(predicate_case, slice_predicate_with_whitespace);
     tcase_add_test(predicate_case, negative_step_slice_predicate);
     tcase_add_test(predicate_case, zero_step_slice_predicate);
+    */
 
     TCase *api_case = tcase_create("api");
+    /*
     tcase_add_test(api_case, bad_path_input);
     tcase_add_test(api_case, bad_step_input);
     tcase_add_test(api_case, bad_predicate_input);
@@ -1120,12 +1128,10 @@ Suite *jsonpath_suite(void)
 
     Suite *suite = suite_create("Parser");
     suite_add_tcase(suite, bad_input_case);
-    /*
     suite_add_tcase(suite, basic_case);
     suite_add_tcase(suite, node_type_case);
     suite_add_tcase(suite, predicate_case);
     suite_add_tcase(suite, api_case);
-    */
 
     return suite;
 }

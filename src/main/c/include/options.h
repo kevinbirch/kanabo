@@ -65,7 +65,7 @@ struct settings
 {
     const char     *program_name;
     enum emit_mode  emit_mode;
-    String         *expression;
+    const char     *expression;
     const char     *input_file_name;
     enum command    command;
     enum loader_duplicate_key_strategy duplicate_strategy;

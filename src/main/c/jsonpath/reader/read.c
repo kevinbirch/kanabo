@@ -47,16 +47,16 @@ static inline MaybeJsonPath transform(MaybeSyntaxNode *node, Input *input)
 
 }
 
-MaybeJsonPath read_path(const String *expression)
+MaybeJsonPath read_path(const char *expression)
 {
     PRECOND_ELSE_NOTHING(ERR_PARSER_EMPTY_INPUT, NULL != expression);
-    PRECOND_ELSE_NOTHING(ERR_PARSER_EMPTY_INPUT, 0 != string_length(expression));
+    PRECOND_ELSE_NOTHING(ERR_PARSER_EMPTY_INPUT, 0 != strlen(expression));
 
-    parser_debug("parsing expression: '%s'", cstr(expression));
+    parser_debug("parsing expression: '%s'", expression);
 
     MaybeJsonPath result;
 
-    Input *input = make_input_from_string(expression);
+    Input *input = make_input_from_buffer((const uint8_t *)expression, strlen(expression));
     if(NULL == input)
     {
         result = path_error(ERR_PARSER_OUT_OF_MEMORY, 0);
@@ -69,11 +69,6 @@ MaybeJsonPath read_path(const String *expression)
         goto exit;
     }
     MaybeSyntaxNode root = parse(parser, input);
-    /* if(input_has_more(input)) */
-    /* { */
-    /*     result = path_error(ERR_PARSER_UNEXPECTED_VALUE, input_position(input)); */
-    /*     goto cleanup; */
-    /* } */
     if(is_nothing(root))
     {
         result = path_error(code(root), input_index(input));
