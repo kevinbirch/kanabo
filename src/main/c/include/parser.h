@@ -71,11 +71,6 @@ define_maybe(MaybeSyntaxNode, SyntaxNode *)
 #define just_node(VALUE) (MaybeSyntaxNode){JUST, .value=(VALUE)}
 #define nothing_node(CODE) (MaybeSyntaxNode){NOTHING, .code=(CODE)}
 
-define_maybe(MaybeString, MutableString *)
-
-#define just_string(VALUE) (MaybeString){JUST, .value=(VALUE)}
-#define nothing_string(CODE) (MaybeString){NOTHING, .code=(CODE)}
-
 
 /* Parser API */
 
