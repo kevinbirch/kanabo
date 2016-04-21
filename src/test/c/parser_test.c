@@ -200,6 +200,8 @@ START_TEST (stray_root_predicate_closure)
 }
 END_TEST
 
+/*
+
 START_TEST (relative_path_begins_with_dot)
 {
     char *expression = ".x";
@@ -211,8 +213,6 @@ START_TEST (relative_path_begins_with_dot)
 END_TEST
 
 // need tests for all forbidden control chars
-
-/*
 
 START_TEST (empty_root_predicate)
 {
@@ -1054,8 +1054,8 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input_case, missing_dot);
     tcase_add_test(bad_input_case, unclosed_empty_root_predicate);
     tcase_add_test(bad_input_case, stray_root_predicate_closure);
-    tcase_add_test(bad_input_case, relative_path_begins_with_dot);
     /*
+    tcase_add_test(bad_input_case, relative_path_begins_with_dot);
     tcase_add_test(bad_input_case, empty_root_predicate);
     tcase_add_test(bad_input_case, quoted_empty_step);
     tcase_add_test(bad_input_case, bogus_type_test_name);

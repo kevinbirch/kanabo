@@ -125,7 +125,8 @@ LICENSE file for more details.
 * interning for string module
   * diable macro
   * runtime enable disable
-* kill complex integer parsers
+* unexpected value special casing in parser? (parse.c#/parse)
+* input from file takes file pointer and name, not path, make client handle open probs
 
 ### loader
 
