@@ -49,6 +49,9 @@ LICENSE file for more details.
 * fix license to point to bsd 3 clause
 * X_free to dispose_X
 * break down large modules into smaller function level units
+* tools comparison: https://news.ycombinator.com/item?id=11649142
+* use stmt expressions
+* cleanup attribute
 
 ### evaluator
 
@@ -127,6 +130,9 @@ LICENSE file for more details.
   * runtime enable disable
 * unexpected value special casing in parser? (parse.c#/parse)
 * input from file takes file pointer and name, not path, make client handle open probs
+* make fatal errors helper for wrapper parser
+  * fail wrapper only on fatal errors
+* capture extent for sourece locations
 
 ### loader
 
