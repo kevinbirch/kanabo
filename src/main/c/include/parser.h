@@ -92,10 +92,10 @@ Parser *rule_parser(const char *name, Parser *expression, tree_rewriter rewriter
 #define simple_rule(EXPR) rule((EXPR), NULL)
 
 Parser *choice_parser(Parser *one, Parser *two, ...);
-#define choice(...) choice_parser(__VA_ARGS__, NULL)
+#define choice(ONE, TWO, ...) choice_parser((ONE), (TWO), ##__VA_ARGS__, NULL)
 
 Parser *sequence_parser(Parser *one, Parser *two, ...);
-#define sequence(...) sequence_parser(__VA_ARGS__, NULL)
+#define sequence(ONE, TWO, ...) sequence_parser((ONE), (TWO), ##__VA_ARGS__, NULL)
 
 Parser *option(Parser *optional);
 Parser *repetition(Parser *repeated);
