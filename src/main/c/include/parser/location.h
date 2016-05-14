@@ -7,7 +7,6 @@
 
 struct location_s
 {
-    String *name;
     size_t  line;
     size_t  offset;
     size_t  extent;
@@ -21,11 +20,13 @@ struct source_location_s
     Location location;
 };
 
+typedef struct source_location_s SourceLocation;
 
-#define location_from_input(INPUT) (Location){      \
-    input_name((INPUT)),                            \
-    input_line((INPUT)),                            \
-    input_offset((INPUT)),                          \
-    0                                               \
-}
+
+#define location_from_input(INPUT) (SourceLocation){      \
+        .input=(INPUT),                                   \
+            .location.line=input_line((INPUT)),           \
+            .location.offset=input_offset((INPUT)),       \
+            .location.extent=0                            \
+            }
     

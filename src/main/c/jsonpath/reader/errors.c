@@ -53,7 +53,7 @@
 #include "jsonpath/messages.h"
 
 
-typedef char *(*MessageHandler)(const char *message, size_t reported_position);
+typedef char *(*MessageHandler)(const char *message, SourceLocation location);
 
 struct handler_s
 {
@@ -61,16 +61,16 @@ struct handler_s
     const char * const message;
 };
 
-static char *just_dup_it(const char *message, size_t reported_position __attribute__((unused)))
+static char *just_dup_it(const char *message, SourceLocation location __attribute__((unused)))
 {
     return strdup(message);
 }
 
-static char *format_it(const char *format, size_t reported_position)
+static char *format_it(const char *format, SourceLocation srcloc)
 {
     char *message = NULL;
     int result = 0;
-    result = asprintf(&message, format, reported_position + 1);
+    result = asprintf(&message, format, srcloc.location.offset + 1);
     return -1 == result ? NULL : message;
 }
 
@@ -95,12 +95,12 @@ static struct handler_s HANDLERS[] =
 };
 
 
-char *status_message(uint_fast16_t code, size_t reported_position)
+char *status_message(uint_fast16_t code, SourceLocation srcloc)
 {
     if(ERR_CODE_MAX < code)
     {
         return NULL;
     }
     struct handler_s *handler = &HANDLERS[code];
-    return handler->formatter(handler->message, reported_position);
+    return handler->formatter(handler->message, srcloc);
 }
