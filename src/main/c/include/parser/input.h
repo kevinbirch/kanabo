@@ -42,6 +42,8 @@ size_t  input_length(Input *self);
 // Input Postion API
 
 Position input_position(const Input *self);
+#define input_line(INPUT) input_position((INPUT)).line
+#define input_offset(INPUT) input_position((INPUT)).offset
 
 void input_advance_to_end(Input *self);
 void input_reset(Input *self);
