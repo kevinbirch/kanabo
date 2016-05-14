@@ -71,14 +71,13 @@ static MaybeSyntaxNode rule_delegate(Parser *parser, MaybeSyntaxNode node, Input
     if(is_value(expression_node))
     {
         syntax_node_add_child(rule_node, value(expression_node));
-        return self->rewriter(just_node(rule_node));
+        if(NULL != self->rewriter)
+        {
+            return self->rewriter(just_node(rule_node));
+        }
+        return just_node(rule_node);
     }
     return expression_node;
-}
-
-MaybeSyntaxNode default_rewriter(MaybeSyntaxNode node)
-{
-    return node;
 }
 
 Parser *rule_parser(const char *name, Parser *expression, tree_rewriter rewriter)
