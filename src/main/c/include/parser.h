@@ -29,16 +29,10 @@ typedef char *(*StatusMessageFormatter)(uint_fast16_t code, SourceLocation locat
 
 typedef struct parser_s Parser;
 
-define_maybe(MaybeSyntaxNode, SyntaxNode *)
-
-#define just_node(VALUE) (MaybeSyntaxNode){JUST, .value=(VALUE)}
-#define nothing_node(CODE) (MaybeSyntaxNode){NOTHING, .code=(CODE)}
-
 
 /* Parser API */
 
-MaybeSyntaxNode parse(Parser *parser, Input *input);
-MaybeSyntaxNode bind(Parser *parser, MaybeSyntaxNode node, Input *input);
+Maybe parse(Parser *parser, Input *input);
 
 
 /* Parser Destructor */
@@ -48,7 +42,7 @@ void parser_free(Parser *value);
 
 /* Non-Terminal Grammar Parsers */
 
-typedef MaybeSyntaxNode (*tree_rewriter)(MaybeSyntaxNode node);
+typedef Maybe (*tree_rewriter)(Maybe node);
 
 Parser *rule_parser(const char *name, Parser *expression, tree_rewriter rewriter);
 #define rule(EXPR, FUNC) rule_parser(__func__, (EXPR), (FUNC))

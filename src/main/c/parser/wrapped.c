@@ -45,7 +45,7 @@ static void wrapped_free(Parser *value)
     parser_free(self->child);
 }
 
-WrappedParser *make_wrapped_parser(enum parser_kind kind, Parser *child)
+WrappedParser *make_wrapped_parser(ParserKind kind, Parser *child)
 {
     WrappedParser *self = (WrappedParser *)calloc(1, sizeof(WrappedParser));
     if(NULL == self)

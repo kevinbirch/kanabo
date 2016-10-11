@@ -47,8 +47,8 @@ static void compound_free(Parser *value)
     vector_destroy(self->children, parser_destructor);
 }
 
-CompoundParser *make_compound_parser(enum parser_kind kind,
-                             Parser *one, Parser *two, va_list rest)
+CompoundParser *make_compound_parser(
+    ParserKind kind, Parser *one, Parser *two, va_list rest)
 {
     CompoundParser *self = (CompoundParser *)calloc(1, sizeof(CompoundParser));
     if(NULL == self)

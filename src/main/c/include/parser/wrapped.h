@@ -51,4 +51,4 @@ struct wrapped_parser_s
 typedef struct wrapped_parser_s WrappedParser;
 
 
-WrappedParser *make_wrapped_parser(enum parser_kind kind, Parser *child);
+WrappedParser *make_wrapped_parser(ParserKind_kind kind, Parser *child);

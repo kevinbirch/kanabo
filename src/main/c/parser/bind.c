@@ -1,7 +1,7 @@
 
 #include "log.h"
 
-#include "parser/base.h"
+#include "parser.h"
 
 
 static bool is_terminal(Parser *self)
@@ -14,7 +14,9 @@ static bool is_nonterminal(Parser *self)
     return !is_terminal(self);
 }
 
-MaybeSyntaxNode bind(Parser *self, MaybeSyntaxNode node, Input *input)
+Maybe bind(Parser *parser, Input *input);
+
+Maybe bind(Parser *self, Input *input)
 {
     static size_t padding = 0;
     if(is_nothing(node))

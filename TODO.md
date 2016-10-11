@@ -50,7 +50,7 @@ LICENSE file for more details.
 * X_free to dispose_X
 * break down large modules into smaller function level units
 * tools comparison: https://news.ycombinator.com/item?id=11649142
-* use stmt expressions
+* use statement expressions
 * cleanup attribute
 
 ### evaluator
@@ -132,7 +132,8 @@ LICENSE file for more details.
 * input from file takes file pointer and name, not path, make client handle open probs
 * make fatal errors helper for wrapper parser
   * fail wrapper only on fatal errors
-* capture extent for sourece locations
+* capture extent for source locations
+* refactor parser_make to build subtypes (pass size?)
 
 ### loader
 

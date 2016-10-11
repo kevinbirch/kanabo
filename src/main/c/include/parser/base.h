@@ -19,12 +19,14 @@ enum parser_kind
     TERM
 };
 
-typedef MaybeSyntaxNode (*parser_delegate)(Parser *parser, MaybeSyntaxNode node, Input *input);
+typedef enum parser_kind ParserKind;
+
+typedef Maybe (*parser_delegate)(Parser *parser, Input *input);
 typedef void (*parser_disposer)(Parser *self);
 
 struct parser_s
 {
-    enum parser_kind kind;
+    ParserKind kind;
     struct
     {
         parser_disposer free;
@@ -35,14 +37,16 @@ struct parser_s
 
 #define ensure_more_input(INPUT) if(!input_has_more((INPUT)))  \
     {                                                          \
-        return nothing_node(ERR_PARSER_END_OF_INPUT);          \
+        return fail(ERR_PARSER_END_OF_INPUT);                  \
     }
 
-Parser *make_parser(enum parser_kind kind);
-Parser *parser_init(Parser *self, enum parser_kind kind);
+Parser *make_parser(ParserKind kind, parser_delegate delegate);
+Parser *parser_init(Parser *self, ParserKind kind, parser_delegate delegate);
 
 void parser_destructor(void *each);
 
-enum parser_kind parser_kind(Parser *self);
+ParserKind  parser_kind(Parser *self);
 const char *parser_name(Parser *self);
 const char *parser_repr(Parser *self);
+
+Maybe parser_execute(Parser *self, Input *input);

@@ -64,7 +64,6 @@ size_t string_length(const String *self);
 
 const char *string_as_c_str(const String *self);
 
-
 // Mutable String Constructors
 
 MutableString *make_mstring(size_t capacity);
@@ -195,12 +194,12 @@ void mstring_set_range(MutableString *self, size_t position, size_t length, cons
                                                                           uint8_t *: mstring_equals_bytestring, \
                                                                           const uint8_t *: mstring_equals_bytestring) \
                                           )(SELF, OTHER, ##__VA_ARGS__)
-#define striter(SELF, ITER, PARAM) _Generic((SELF),                     \
-                                            String *: string_iterate,   \
-                                            const String *: string_iterate, \
-                                            MutableString *: mstring_iterate, \
-                                            const MutableString *: mstring_iterate, \
-                                            )(SELF, ITER, PARAM)
+#define stritr(SELF, ITER, PARAM) _Generic((SELF),                     \
+                                           String *: string_iterate,    \
+                                           const String *: string_iterate, \
+                                           MutableString *: mstring_iterate, \
+                                           const MutableString *: mstring_iterate, \
+                                           )(SELF, ITER, PARAM)
 #define strbeg(SELF, TEST) _Generic((SELF),                             \
                                     String *: _Generic((OTHER),         \
                                                        String *: string_startswith, \
@@ -260,23 +259,24 @@ ing) \
 ing) \
                                     )(SELF, TEST)
 
-#define strcast(SELF) _Generic((SELF),                                  \
-                               String *: string_as_c_str,               \
-                               const String *: string_as_c_str,         \
-                               MutableString *: mstring_as_c_str,       \
-                               const MutableString *: mstring_as_c_str  \
-                               )(SELF)
-#define cstr strcast
+#define strcst(SELF) _Generic((SELF),                                  \
+                              String *: string_as_c_str,               \
+                              const String *: string_as_c_str,         \
+                              MutableString *: mstring_as_c_str,       \
+                              const MutableString *: mstring_as_c_str  \
+                              )(SELF)
+#define cstr strcst
+#define C strcst
 
-#define strclone(SELF) _Generic((SELF),                              \
-                                String *: string_clone,              \
-                                const String *: string_clone,        \
-                                MutableString *: mstring_clone,      \
-                                const MutableString *: mstring_clone \
-                               )(SELF)
-#define strdisp(SELF) _Generic((SELF),                                 \
-                               String *: string_dispose,               \
-                               const String *: string_dispose,         \
-                               MutableString *: mstring_dispose,       \
-                               const MutableString *: mstring_dispose  \
-                               )(SELF)
+#define strcln(SELF) _Generic((SELF),                              \
+                              String *: string_clone,              \
+                              const String *: string_clone,        \
+                              MutableString *: mstring_clone,      \
+                              const MutableString *: mstring_clone \
+                              )(SELF)
+#define strdsp(SELF) _Generic((SELF),                                 \
+                              String *: string_dispose,               \
+                              const String *: string_dispose,         \
+                              MutableString *: mstring_dispose,       \
+                              const MutableString *: mstring_dispose  \
+                              )(SELF)
