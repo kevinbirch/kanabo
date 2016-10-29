@@ -33,7 +33,7 @@ typedef enum maybe_tag_e MaybeTag;
 
 #define just(a, x) (Maybe(a)){.tag=JUST, .value=(x)}
 #define nothing(a) (Maybe(a)){.tag=NOTHING, .code=0}
-#define fail(v) (Maybe(a)){.tag=NOTHING, .code=(v)}
+#define fail(a, v) (Maybe(a)){.tag=NOTHING, .code=(v)}
 
 
 // Maybe functions
@@ -43,23 +43,16 @@ typedef enum maybe_tag_e MaybeTag;
 
 #define from_just(x) (x).value
 #define from_nothing(x) (x).code
-#define unwrap(x, fallback) is_just(x) ? from_just(x) : fallback
+#define maybe(x, fallback) is_just(x) ? from_just(x) : fallback
 
 
 // Maybe Monand functions
 
 // the >>= function
-typedef uint_fast16_t (*bind_fn)(void *a, void **result);
-Maybe bind(Maybe a, bind_fn fn);
-
-#define bind(a, x, f) is_nothing(x) ? x : 
+#define bind(x, f) is_nothing(x) ? x : f(from_just(x))
     
 // the >> function
-typedef uint_fast16_t (*then_fn)(void **result);
-Maybe then(Maybe a, then_fn fn);
-
-// todo - liftM2 applys f of contained types and returns maybe
-// ap?
+#define then(x, y) is_just(x) && is_just(y) ? y : is_just(y) ? x : y
 
 
 // Maybe MonadPlus functions
