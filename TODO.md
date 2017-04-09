@@ -135,6 +135,10 @@ LICENSE file for more details.
 * capture extent for source locations
 * refactor parser_make to build subtypes (pass size?)
 
+* use pratt parser?
+  * http://effbot.org/zone/simple-top-down-parsing.htm
+  * http://www.oilshell.org/blog/2017/03/31.html
+
 ### loader
 
 * simplify api with maybe result
@@ -194,6 +198,11 @@ LICENSE file for more details.
   * $(LIBOBJECTS) $(RTLLIBOBJECTS) $(OPTLIBOBJECTS) $(TESTOBJECTS) $(builddir)/init_qt_workdir: $(builddir)/compiler_flags
 * meson - http://mesonbuild.com/
 * https://bitbucket.org/scons/scons/wiki/SconsVsOtherBuildTools
+
+### alternatives
+
+* http://jmespath.org/
+* jq
 
 [home]: https://github.com/kevinbirch/kanabo "project home"
 [license]: http://www.opensource.org/licenses/ncsa
