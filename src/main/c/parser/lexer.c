@@ -262,17 +262,21 @@ static Maybe(Token) match_number(Input *input)
 
     enum token_kind found = INTEGER_LITERAL;
 
-    Maybe(size_t) seq = read_digit_sequence(input);
-    if(is_nothing(seq))
+    char next = input_peek(input);
+    if('0' <= next && next <= '9')
     {
-        return fail(Token, from_nothing(seq));
+        Maybe(size_t) seq = read_digit_sequence(input);
+        if(is_nothing(seq))
+        {
+            return fail(Token, from_nothing(seq));
+        }
     }
 
     if(input_peek(input) == '.')
     {
         found = REAL_LITERAL;
         input_consume_one(input);
-        seq = read_digit_sequence(input);
+        Maybe(size_t) seq = read_digit_sequence(input);
         if(is_nothing(seq))
         {
             return fail(Token, from_nothing(seq));
@@ -282,7 +286,7 @@ static Maybe(Token) match_number(Input *input)
     if(input_peek(input) == 'e')
     {
         input_consume_one(input);
-        seq = read_digit_sequence(input);
+        Maybe(size_t) seq = read_digit_sequence(input);
         if(is_nothing(seq))
         {
             return fail(Token, from_nothing(seq));
@@ -290,11 +294,12 @@ static Maybe(Token) match_number(Input *input)
     }
 
     Position end = input_position(input);    
-    Token name = PROTOTYPES[found];
-    name.lexeme = (SourceLocation){.input=input, .location.position=start};
-    name.lexeme.location.extent = end.index - start.index;
+    Token proto = PROTOTYPES[found];
+    proto.lexeme.input = input;
+    proto.lexeme.location.position = start;
+    proto.lexeme.location.extent = end.index - start.index;
     
-    return just(Token, name);
+    return just(Token, proto);
 }
 
 static Maybe(Token) match_name(Input *input)
@@ -328,11 +333,12 @@ static Maybe(Token) match_name(Input *input)
     }
 
     Position end = input_position(input);    
-    Token name = PROTOTYPES[NAME];
-    name.lexeme = (SourceLocation){.input=input, .location.position=start};
-    name.lexeme.location.extent = end.index - start.index;
+    Token proto = PROTOTYPES[NAME];
+    proto.lexeme.input = input;
+    proto.lexeme.location.position = start;
+    proto.lexeme.location.extent = end.index - start.index;
     
-    return just(Token, name);
+    return just(Token, proto);
 }
 
 static Maybe(Token) match_symbol(Input *input)
@@ -406,29 +412,6 @@ static Maybe(Token) match_symbol(Input *input)
     return just(Token, proto);
 }
 
-static Maybe(Token) match_term(Input *input)
-{
-    char current = input_peek(input);
-    if(current == '-')
-    {
-        input_push_mark(input);
-        Maybe(Token) number = match_number(input);
-        if(is_just(number))
-        {
-            return number;
-        }
-
-        input_reset_to_mark(input);
-        return match_name(input);
-    }
-    else if(isdigit(current))
-    {
-        return match_number(input);
-    }
-
-    return match_symbol(input);
-}
-
 Maybe(Token) next(Input *input) 
 {
     input_skip_whitespace(input);
@@ -453,10 +436,16 @@ Maybe(Token) next(Input *input)
         case '.':
         {
             found = DOT;
-            if(input_peek(input) == '.')
+            char next = input_peek(input);
+            if(next == '.')
             {
                 found = DOT_DOT;
                 input_consume_one(input);
+            }
+            else if('0' <= next && next <= '9')
+            {
+                input_push_back(input);
+                return match_number(input);
             }
             break;
         }
@@ -550,10 +539,22 @@ Maybe(Token) next(Input *input)
             return match_quoted_term(input, '"', STRING_LITERAL, read_escape_sequence);
         case '\'':
             return match_quoted_term(input, '\'', QUOTED_NAME, read_name_escape_sequence);
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            input_push_back(input);
+            return match_number(input);
         default:
         {
             input_push_back(input);
-            return match_term(input);
+            return match_symbol(input);
         }
     }
 

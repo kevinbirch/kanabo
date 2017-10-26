@@ -7,14 +7,16 @@
 
 #include "parser/lexer.h"
 
-#define expected_token(KIND, EXTENT, INDEX) (ExpectedToken){.kind=(KIND), .location.extent=(EXTENT), .location.index=(INDEX), .location.line=0, .location.offset=(INDEX)}
+#define expected_token(KIND, EXTENT, INDEX) (ExpectedToken){.kind=(KIND), .location.extent=(EXTENT), .location.index=(INDEX), .location.line=0, .location.offset=0}
 
-#define assert_just(X, I) ck_assert_msg(is_just((X)), "Assertion 'is_just("#X")' failed.  buffer:1:%d %s", input_index((I)), lexer_strerror(from_nothing((X))))
+#define assert_just(X, I) ck_assert_msg(is_just((X)), "Assertion 'is_just("#X")' failed.  input:%d %s", input_index((I)), lexer_strerror(from_nothing((X))))
+#define assert_nothing(X, C, I) ck_assert_msg(is_nothing((X)), "Assertion 'is_nothing("#X")' failed.  input:%d found %s instead", input_index((I)), token_name(from_just((X)).kind)); \
+    ck_assert_msg(from_nothing((X)) == (C), "Assertion 'from_nothing("#X") == %s' failed: from_nothing("#X")==%s", lexer_strerror(from_nothing((X))), lexer_strerror((C)))
 #define assert_token(E, A) ck_assert_msg((E).kind == (A).kind, "Assertion '"#E".kind == "#A".kind' failed: "#E".kind==%s, "#A".kind==%s", token_name((E).kind), token_name((A).kind)); \
-    assert_int_eq(E.location.extent, A.lexeme.location.extent);     \
-    assert_int_eq(E.location.index, A.lexeme.location.index);       \
-    assert_int_eq(E.location.line, A.lexeme.location.line);         \
-    assert_int_eq(E.location.offset, A.lexeme.location.offset)
+    assert_uint_eq(E.location.index, A.lexeme.location.index);       \
+    assert_uint_eq(E.location.extent, A.lexeme.location.extent);     \
+    assert_uint_eq(E.location.line, A.lexeme.location.line);         \
+    assert_uint_eq(E.location.offset, A.lexeme.location.offset)
 #define assert_expectations(E, I) for(size_t i = 0; i < sizeof((E))/sizeof(ExpectedToken); i++) \
     {                                                                   \
     Maybe(Token) token = next((I));                                     \
@@ -544,6 +546,189 @@ START_TEST (quoted_name_escaped_buffet)
 }
 END_TEST
 
+START_TEST (integer_expression)
+{
+    char *expression = "5-2";
+    ExpectedToken expectations[] = {
+        expected_token(INTEGER_LITERAL, 1, 0),
+        expected_token(MINUS, 1, 1),
+        expected_token(INTEGER_LITERAL, 1, 2),
+        expected_token(END_OF_INPUT, 0, 3),
+    };
+    Input *input = make_input_from_buffer(expression, strlen(expression));
+    assert_not_null(input);
+    assert_expectations(expectations, input);
+    dispose_input(input);
+}
+END_TEST
+
+START_TEST (real_expression)
+{
+    char *expression = "5*0.5";
+    ExpectedToken expectations[] = {
+        expected_token(INTEGER_LITERAL, 1, 0),
+        expected_token(ASTERISK, 1, 1),
+        expected_token(REAL_LITERAL, 3, 2),
+        expected_token(END_OF_INPUT, 0, 5),
+    };
+    Input *input = make_input_from_buffer(expression, strlen(expression));
+    assert_not_null(input);
+    assert_expectations(expectations, input);
+    dispose_input(input);
+}
+END_TEST
+
+START_TEST (real_expression_with_shorthand)
+{
+    char *expression = "5*.5";
+    ExpectedToken expectations[] = {
+        expected_token(INTEGER_LITERAL, 1, 0),
+        expected_token(ASTERISK, 1, 1),
+        expected_token(REAL_LITERAL, 2, 2),
+        expected_token(END_OF_INPUT, 0, 4),
+    };
+    Input *input = make_input_from_buffer(expression, strlen(expression));
+    assert_not_null(input);
+    assert_expectations(expectations, input);
+    dispose_input(input);
+}
+END_TEST
+
+START_TEST (unqoted_name_escape_dot_attempt)
+{
+    char *expression = "$.foo\\.bar";
+    ExpectedToken expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 4, 2),
+        expected_token(DOT, 1, 6),
+        expected_token(NAME, 3, 7),
+        expected_token(END_OF_INPUT, 0, 10),
+    };
+    Input *input = make_input_from_buffer(expression, strlen(expression));
+    assert_not_null(input);
+    assert_expectations(expectations, input);
+    dispose_input(input);
+}
+END_TEST
+
+START_TEST (unqoted_name_escape_sequence)
+{
+    char *expression = "$.foo\\\\bar";
+    ExpectedToken expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 8, 2),
+        expected_token(END_OF_INPUT, 0, 10),
+    };
+    Input *input = make_input_from_buffer(expression, strlen(expression));
+    assert_not_null(input);
+    assert_expectations(expectations, input);
+    dispose_input(input);
+}
+END_TEST
+
+START_TEST (unqoted_name_illegal_escape_sequence)
+{
+    char *expression = "$.foo\\zbar";
+    ExpectedToken expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 8, 2),
+        expected_token(END_OF_INPUT, 0, 10),
+    };
+    Input *input = make_input_from_buffer(expression, strlen(expression));
+    assert_not_null(input);
+    assert_expectations(expectations, input);
+    dispose_input(input);
+}
+END_TEST
+
+START_TEST (expression_with_bare_exponent)
+{
+    char *expression = "5+e10";
+    ExpectedToken expectations[] = {
+        expected_token(INTEGER_LITERAL, 1, 0),
+        expected_token(PLUS, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(END_OF_INPUT, 0, 5),
+    };
+    Input *input = make_input_from_buffer(expression, strlen(expression));
+    assert_not_null(input);
+    assert_expectations(expectations, input);
+    dispose_input(input);
+}
+END_TEST
+
+START_TEST (name_includes_newline)
+{
+    char *expression = "$.foo\nbar";
+    ExpectedToken expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 7, 2),
+        expected_token(END_OF_INPUT, 0, 9),
+    };
+    Input *input = make_input_from_buffer(expression, strlen(expression));
+    assert_not_null(input);
+    Maybe(Token) token = next(input);
+    assert_just(token, input);
+    assert_token(expectations[0], from_just(token));
+    token = next(input);
+    assert_just(token, input);
+    assert_token(expectations[1], from_just(token));
+    token = next(input);
+    assert_nothing(token, UNSUPPORTED_CONTROL_CHARACTER, input);
+    dispose_input(input);
+}
+END_TEST
+
+START_TEST (name_includes_tab)
+{
+    char *expression = "$.foo\tbar";
+    ExpectedToken expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 7, 2),
+        expected_token(END_OF_INPUT, 0, 9),
+    };
+    Input *input = make_input_from_buffer(expression, strlen(expression));
+    assert_not_null(input);
+    Maybe(Token) token = next(input);
+    assert_just(token, input);
+    assert_token(expectations[0], from_just(token));
+    token = next(input);
+    assert_just(token, input);
+    assert_token(expectations[1], from_just(token));
+    token = next(input);
+    assert_nothing(token, UNSUPPORTED_CONTROL_CHARACTER, input);
+    dispose_input(input);
+}
+END_TEST
+
+START_TEST (name_includes_ack)
+{
+    char *expression = "$.foo\006bar";
+    ExpectedToken expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 7, 2),
+        expected_token(END_OF_INPUT, 0, 9),
+    };
+    Input *input = make_input_from_buffer(expression, strlen(expression));
+    assert_not_null(input);
+    Maybe(Token) token = next(input);
+    assert_just(token, input);
+    assert_token(expectations[0], from_just(token));
+    token = next(input);
+    assert_just(token, input);
+    assert_token(expectations[1], from_just(token));
+    token = next(input);
+    assert_nothing(token, UNSUPPORTED_CONTROL_CHARACTER, input);
+    dispose_input(input);
+}
+END_TEST
+
 Suite *lexer_suite(void)
 {
     TCase *expected_case = tcase_create("expected");
@@ -574,9 +759,26 @@ Suite *lexer_suite(void)
     tcase_add_test(expected_case, quoted_name_escaped_utf16);
     tcase_add_test(expected_case, quoted_name_escaped_utf32);
     tcase_add_test(expected_case, quoted_name_escaped_buffet);
+    tcase_add_test(expected_case, integer_expression);
+    tcase_add_test(expected_case, real_expression);
+    tcase_add_test(expected_case, real_expression_with_shorthand);
+
+
+    TCase *subtleties_case = tcase_create("subtleties");
+    tcase_add_test(subtleties_case, unqoted_name_escape_dot_attempt);
+    tcase_add_test(subtleties_case, unqoted_name_escape_sequence);
+    tcase_add_test(subtleties_case, unqoted_name_illegal_escape_sequence);
+    tcase_add_test(subtleties_case, expression_with_bare_exponent);
+
+    TCase *errors_case = tcase_create("errors");
+    tcase_add_test(errors_case, name_includes_newline);
+    tcase_add_test(errors_case, name_includes_tab);
+    tcase_add_test(errors_case, name_includes_ack);
 
     Suite *suite = suite_create("Lexer");
     suite_add_tcase(suite, expected_case);
+    suite_add_tcase(suite, subtleties_case);
+    suite_add_tcase(suite, errors_case);
 
     return suite;
 }
