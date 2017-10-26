@@ -57,7 +57,7 @@ static const char * const MESSAGES[] =
     "Input argument was NULL.",
     "Input argument was zero length.",
     "Unable to allocate memory.",
-    "An error occured reading the input: %s at %zd.",
+    "An error occured reading the input: %s at %zu.",
     "An error occured scanning the input: %s at line %ld, column %ld.",
     "An error occured parsing the input: %s at line %ld, column %ld.",
     "A non-scalar mapping key was found on line %ld.",

@@ -48,7 +48,7 @@
 
 #define assert_null(X)              ck_assert_msg((X) == NULL, "Assertion '"#X" == NULL' failed")
 #define assert_not_null(X)          ck_assert_msg((X) != NULL, "Assertion '"#X" != NULL' failed")
-#define assert_buf_eq(X, N1, Y, N2) ck_assert_msg(memcmp((X), (Y), (N1) > (N2) ? (N2) : (N1)) == 0, "Assertion 'memcmp("#X", "#Y", %zd)' failed", (N1) > (N2) ? (N2) : (N1))
+#define assert_buf_eq(X, N1, Y, N2) ck_assert_msg(memcmp((X), (Y), (N1) > (N2) ? (N2) : (N1)) == 0, "Assertion 'memcmp("#X", "#Y", %zu)' failed", (N1) > (N2) ? (N2) : (N1))
 #define assert_true(X)              ck_assert_msg((X) == true, "Assertion '"#X" == true' failed")
 #define assert_false(X)             ck_assert_msg((X) == false, "Assertion '"#X" == false' failed")
 

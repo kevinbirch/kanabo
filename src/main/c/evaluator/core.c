@@ -131,7 +131,7 @@ static nodelist *evaluate_steps(evaluator_context *context)
 static bool evaluate_step(Step* each, void *argument)
 {
     evaluator_context *context = (evaluator_context *)argument;
-    evaluator_trace("step: %zd", context->current_step);
+    evaluator_trace("step: %zu", context->current_step);
 
     bool result = false;
     switch(step_kind(each))
@@ -167,10 +167,10 @@ static bool evaluate_root_step(evaluator_context *context)
 }
 
 #define evaluate_nodelist(NAME, TEST, FUNCTION)                         \
-    evaluator_trace("evaluating %s across %zd nodes", (NAME), nodelist_length(context->list)); \
+    evaluator_trace("evaluating %s across %zu nodes", (NAME), nodelist_length(context->list)); \
     nodelist *result = nodelist_map(context->list, (FUNCTION), context); \
     evaluator_trace("%s: %s", (TEST), NULL == result ? "failed" : "completed"); \
-    evaluator_trace("%s: added %zd nodes", (NAME), nodelist_length(result)); \
+    evaluator_trace("%s: added %zu nodes", (NAME), nodelist_length(result)); \
     return NULL == result ? false : (nodelist_free(context->list), context->list = result, true);
 
 static bool evaluate_recursive_step(evaluator_context *context)
@@ -207,11 +207,11 @@ static bool apply_recursive_node_test(node *each, void *argument, nodelist *targ
         switch(node_kind(each))
         {
             case MAPPING:
-                evaluator_trace("recursive step: processing %zd mapping values (%p)", node_size(each), each);
+                evaluator_trace("recursive step: processing %zu mapping values (%p)", node_size(each), each);
                 result = mapping_iterate(each, recursive_test_map_iterator, &(meta_context){context, target});
                 break;
             case SEQUENCE:
-                evaluator_trace("recursive step: processing %zd sequence items (%p)", node_size(each), each);
+                evaluator_trace("recursive step: processing %zu sequence items (%p)", node_size(each), each);
                 result = sequence_iterate(each, recursive_test_sequence_iterator, &(meta_context){context, target});
                 break;
             case SCALAR:
@@ -278,11 +278,11 @@ static bool apply_greedy_wildcard_test(node *each, void *argument, nodelist *tar
     switch(node_kind(each))
     {
         case MAPPING:
-            evaluator_trace("wildcard test: adding %zd mapping values (%p)", node_size(each), each);
+            evaluator_trace("wildcard test: adding %zu mapping values (%p)", node_size(each), each);
             result = guard(mapping_iterate(each, add_values_to_nodelist_map_iterator, &(meta_context){context, target}));
             break;
         case SEQUENCE:
-            evaluator_trace("wildcard test: adding %zd sequence items (%p)", node_size(each), each);
+            evaluator_trace("wildcard test: adding %zu sequence items (%p)", node_size(each), each);
             result = guard(sequence_iterate(each, add_to_nodelist_sequence_iterator, target));
             break;
         case SCALAR:
@@ -447,7 +447,7 @@ static bool apply_wildcard_predicate(node *value, evaluator_context *context, no
             result = guard(nodelist_add(target, value));
             break;
         case SEQUENCE:
-            evaluator_trace("wildcard predicate: adding %zd sequence (%p) items", node_size(value), value);
+            evaluator_trace("wildcard predicate: adding %zu sequence (%p) items", node_size(value), value);
             result = guard(sequence_iterate(value, add_to_nodelist_sequence_iterator, target));
             break;
         case DOCUMENT:
@@ -473,11 +473,11 @@ static bool apply_subscript_predicate(node *value, evaluator_context *context, n
     size_t index = subscript_predicate_index(subscript);
     if(index > node_size(value))
     {
-        evaluator_trace("subscript predicate: index %zd not valid for sequence (length: %zd), dropping (%p)", index, node_size(value), value);
+        evaluator_trace("subscript predicate: index %zu not valid for sequence (length: %zd), dropping (%p)", index, node_size(value), value);
         return true;
     }    
     node *selected = sequence_get(value, index);
-    evaluator_trace("subscript predicate: adding index %zd (%p) from sequence (%p) of %zd items", index, selected, value, node_size(value));
+    evaluator_trace("subscript predicate: adding index %zu (%p) from sequence (%p) of %zd items", index, selected, value, node_size(value));
     return nodelist_add(target, selected) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
 }
 
@@ -549,7 +549,7 @@ static bool add_values_to_nodelist_map_iterator(node *key __attribute__((unused)
             result = nodelist_add(iterator_context->target, value);
             break;
         case SEQUENCE:
-            evaluator_trace("wildcard test: adding %zd sequence mapping values (%p) items", node_size(value), value);
+            evaluator_trace("wildcard test: adding %zu sequence mapping values (%p) items", node_size(value), value);
             result = sequence_iterate(value, add_to_nodelist_sequence_iterator, iterator_context->target);
             break;
         case DOCUMENT:
@@ -571,7 +571,7 @@ static void normalize_interval(node *value, Predicate *slice, int_fast32_t *from
     int from_result __attribute__((unused)) = 0;
     int to_result __attribute__((unused)) = 0;
     int inc_result __attribute__((unused)) = 0;
-    evaluator_trace("slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items",
+    evaluator_trace("slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zu items",
                     slice_predicate_has_from(slice) ? (from_result = asprintf(&from_fmt, "%zd", slice_predicate_from(slice)), -1 == from_result ? "?" : from_fmt) : "_",
                     slice_predicate_has_to(slice) ? (to_result = asprintf(&to_fmt, "%zd", slice_predicate_to(slice)), -1 == to_result ? "?" : to_fmt) : "_",
                     slice_predicate_has_step(slice) ? (inc_result = asprintf(&increment_fmt, "%zd", slice_predicate_step(slice)), -1 == inc_result ? "?" : increment_fmt) : "_",

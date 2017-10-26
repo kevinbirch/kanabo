@@ -84,7 +84,7 @@ document_model *build_model(loader_context *context)
 
     if(LOADER_SUCCESS == context->code)
     {
-        loader_debug("done. found %zd documents.", model_document_count(context->model));
+        loader_debug("done. found %zu documents.", model_document_count(context->model));
     }
     else
     {
@@ -248,7 +248,7 @@ static enum scalar_kind resolve_scalar_kind(const loader_context *context, const
     else if(YAML_SINGLE_QUOTED_SCALAR_STYLE == event->data.scalar.style ||
             YAML_DOUBLE_QUOTED_SCALAR_STYLE == event->data.scalar.style)
     {
-        trace_string("found scalar string '%s', len: %zd", event->data.scalar.value, event->data.scalar.length, event->data.scalar.length);
+        trace_string("found scalar string '%s', len: %zu", event->data.scalar.value, event->data.scalar.length, event->data.scalar.length);
         kind = SCALAR_STRING;
     }
     else if(0 == memcmp("null", event->data.scalar.value, 4))
@@ -414,7 +414,7 @@ static bool end_sequence(loader_context *context)
 {
     node *sequence = context->target;
     loader_trace("completed sequence (%p)", sequence);
-    loader_trace("added sequence (%p) of length: %zd", sequence, node_size(sequence));
+    loader_trace("added sequence (%p) of length: %zu", sequence, node_size(sequence));
     vector_trim(sequence->content.sequence);
     context->target = sequence->parent;
     
@@ -453,7 +453,7 @@ static bool end_mapping(loader_context *context)
 {
     node *mapping = context->target;
     loader_trace("completed mapping (%p)", mapping);
-    loader_trace("loaded mapping of length: %zd", node_size(mapping));
+    loader_trace("loaded mapping of length: %zu", node_size(mapping));
     context->target = mapping->parent;
 
     return false;

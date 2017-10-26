@@ -55,7 +55,7 @@
         memcpy(&_actual_tag, _assert_name, _assert_name_len);           \
         _actual_tag[_assert_name_len] = '\0';                           \
         bool _assert_result = memcmp(_expected_tag, _actual_tag, _expected_len) == 0; \
-        ck_assert_msg(_assert_result, "Assertion 'memcmp("#TAG", \"%s\", %zd)' failed", _actual_tag, _expected_len); \
+        ck_assert_msg(_assert_result, "Assertion 'memcmp("#TAG", \"%s\", %zu)' failed", _actual_tag, _expected_len); \
     } while(0)
 
 #define assert_node_equals(X, Y)              assert_true(node_equals((X), (Y)))
@@ -77,6 +77,6 @@
         memcpy(&_actual_value, _assert_value, _actual_len);             \
         _actual_value[_actual_len] = '\0';                              \
         bool _assert_result = memcmp(_expected_value, _actual_value, _expected_len) == 0; \
-        ck_assert_msg(_assert_result, "Assertion 'memcmp("#VALUE", \"%s\", %zd)' failed", _actual_value, _expected_len); \
+        ck_assert_msg(_assert_result, "Assertion 'memcmp("#VALUE", \"%s\", %zu)' failed", _actual_value, _expected_len); \
     } while(0)
 

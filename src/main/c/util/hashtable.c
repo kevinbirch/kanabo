@@ -818,9 +818,9 @@ void hashtable_summary(const Hashtable *hashtable, FILE *stream)
 {
     fprintf(stream, "hashtable summary:\n");
     fprintf(stream, "mutable: %s\n", hashtable_is_mutable(hashtable) ? "yes" : "no");
-    fprintf(stream, "occupied: %zd of %zd\n", hashtable->occupied, hashtable->capacity);
-    fprintf(stream, "capacity: %zd (%zd * %g)\n", hashtable->capacity, hashtable->length >> 1, hashtable->load_factor);
-    fprintf(stream, "table length: %zd\n", hashtable->length);
+    fprintf(stream, "occupied: %zu of %zu\n", hashtable->occupied, hashtable->capacity);
+    fprintf(stream, "capacity: %zu (%zu * %g)\n", hashtable->capacity, hashtable->length >> 1, hashtable->load_factor);
+    fprintf(stream, "table length: %zu\n", hashtable->length);
     fprintf(stream, "load factor: %g\n", hashtable->load_factor);
     fprintf(stream, "bucket report:\n");
     size_t count = 0ul, min = 0ul, max = 0ul, total = 0ul;
@@ -831,10 +831,10 @@ void hashtable_summary(const Hashtable *hashtable, FILE *stream)
         {
             count++;
             Chain *chain = (Chain *)hashtable->entries[i + 1];
-            fprintf(stream, "[%zd]: chain (length: %zd, hash: 0x%zx)\n", i, chain->length, hashtable->hash(chain->entries[0]));
+            fprintf(stream, "[%zu]: chain (length: %zd, hash: 0x%zx)\n", i, chain->length, hashtable->hash(chain->entries[0]));
             for(size_t j = 0; j < chain->length && NULL != chain->entries[j]; j += 2)
             {
-                fprintf(stream, "  [%zd]: chained key: \"%s\"\n", j, chain->entries[j]);
+                fprintf(stream, "  [%zu]: chained key: \"%s\"\n", j, chain->entries[j]);
             }
             if(max < chain->length)
             {
@@ -849,8 +849,8 @@ void hashtable_summary(const Hashtable *hashtable, FILE *stream)
         }
         else if(NULL != hashtable->entries[i])
         {
-            fprintf(stream, "[%zd]: key: \"%s\" hash: 0x%zx\n", i, hashtable->entries[i], hashtable->hash(hashtable->entries[i]));
+            fprintf(stream, "[%zu]: key: \"%s\" hash: 0x%zx\n", i, hashtable->entries[i], hashtable->hash(hashtable->entries[i]));
         }
     }
-    fprintf(stream, "chains: %zd (length min: %zd, max: %zd, avg: %g)\n", count, min, max, avg);
+    fprintf(stream, "chains: %zu (length min: %zd, max: %zd, avg: %g)\n", count, min, max, avg);
 }
