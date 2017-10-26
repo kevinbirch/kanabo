@@ -526,6 +526,22 @@ START_TEST (quoted_name_escaped_utf32)
 }
 END_TEST
 
+START_TEST (quoted_name_escaped_buffet)
+{
+    char *expression = "$.'foo \\\"\\\\\\/\\ \\0\\a\\b\\e\\f\\n\\r\\t\\v\\L\\N\\P bar'";
+    ExpectedToken expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 40, 3),
+        expected_token(END_OF_INPUT, 0, 44),
+    };
+    Input *input = make_input_from_buffer(expression, strlen(expression));
+    assert_not_null(input);
+    assert_expectations(expectations, input);
+    dispose_input(input);
+}
+END_TEST
+
 Suite *lexer_suite(void)
 {
     TCase *expected_case = tcase_create("expected");
@@ -555,6 +571,7 @@ Suite *lexer_suite(void)
     tcase_add_test(expected_case, quoted_name_escaped_hex);
     tcase_add_test(expected_case, quoted_name_escaped_utf16);
     tcase_add_test(expected_case, quoted_name_escaped_utf32);
+    tcase_add_test(expected_case, quoted_name_escaped_buffet);
 
     Suite *suite = suite_create("Lexer");
     suite_add_tcase(suite, expected_case);
