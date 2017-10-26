@@ -59,9 +59,7 @@ make_maybe(size_t);
 
 static const char * const ERRORS[] =
 {
-    [UNEXPECTED_INPUT] = "unexpected input",
     [PREMATURE_END_OF_INPUT] = "premature end of input",
-    [MISSING_CLOSING_QUOTATION] = "missing closing quotation",
     [UNSUPPORTED_CONTROL_CHARCTER] = "unsupported control character",
     [UNSUPPORTED_ESCAPE_SEQUENCE] = "unsupported escape sequence"
 };
