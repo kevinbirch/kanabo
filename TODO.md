@@ -186,6 +186,7 @@ LICENSE file for more details.
 * http://facebook.github.io/buck/
 * http://aosabook.org/en/posa/ninja.html
 * http://www.reddit.com/r/programming/comments/204pau/what_are_your_gcc_flags/
+* https://bazel.build/
 * gnu make 4.0
   * try --trace to check out rule ordering
 * define, eval to create dynamic rules and shell?
