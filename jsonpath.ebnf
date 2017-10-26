@@ -112,7 +112,7 @@ anchor selector
     ;
 
 type selector
-    = type, "(", ")"
+    = type, "()"
     ;
 
 type
