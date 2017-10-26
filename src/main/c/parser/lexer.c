@@ -262,11 +262,6 @@ static Maybe(Token) match_number(Input *input)
 
     enum token_kind found = INTEGER_LITERAL;
 
-    if(input_peek(input) == '-')
-    {
-        input_consume_one(input);
-    }
-
     Maybe(size_t) seq = read_digit_sequence(input);
     if(is_nothing(seq))
     {
@@ -542,11 +537,6 @@ Maybe(Token) next(Input *input)
             break;
         case '-':
         {
-            if(isdigit(input_peek(input)))
-            {
-                input_push_back(input);
-                return match_number(input);
-            }
             found = MINUS;
             break;
         }
