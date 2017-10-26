@@ -15,10 +15,10 @@ enum maybe_tag_e
 
 typedef enum maybe_tag_e MaybeTag;
     
-#define Maybe(TYPE) maybe_ ## TYPE ## _s
+#define Maybe(TYPE) Maybe_ ## TYPE ## _s
 
-#define make_maybe(TYPE) \
-    typedef struct       \
+#define make_maybe(TYPE)                        \
+    typedef struct                              \
     {                                           \
         MaybeTag tag;                           \
         union                                   \
@@ -28,13 +28,11 @@ typedef enum maybe_tag_e MaybeTag;
         };                                      \
     } Maybe(TYPE)
 
-
 // Mabye Constructors
 
-#define just(a, x) (Maybe(a)){.tag=JUST, .value=(x)}
+#define just(a, x) (Maybe(a)){.tag=JUST,    .value=(x)}
 #define nothing(a) (Maybe(a)){.tag=NOTHING, .code=0}
 #define fail(a, v) (Maybe(a)){.tag=NOTHING, .code=(v)}
-
 
 // Maybe functions
 
@@ -45,7 +43,6 @@ typedef enum maybe_tag_e MaybeTag;
 #define from_nothing(x) (x).code
 #define maybe(x, fallback) is_just(x) ? from_just(x) : fallback
 
-
 // Maybe Monand functions
 
 // the >>= function
@@ -53,7 +50,6 @@ typedef enum maybe_tag_e MaybeTag;
     
 // the >> function
 #define then(x, y) is_just(x) && is_just(y) ? y : is_just(y) ? x : y
-
 
 // Maybe MonadPlus functions
 

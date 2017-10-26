@@ -55,7 +55,12 @@ typedef struct jsonpath_s JsonPath;
 
 enum jsonpath_parser_result_code_e
 {
-    ERR_EXPECTED_NAME_CHAR = ERR_PARSER_UNEXPECTED_VALUE + 1, // expected a name character
+    PARSER_SUCCESS = 0,
+    ERR_PARSER_OUT_OF_MEMORY,        // unable to allocate memory
+    ERR_PARSER_EMPTY_INPUT,          // no input to parse
+    ERR_PARSER_END_OF_INPUT,         // premature end of input
+    ERR_PARSER_UNEXPECTED_VALUE,     // expected one value but found another
+    ERR_EXPECTED_NAME_CHAR,          // expected a name character
     ERR_CONTROL_CODE,                // forbidden control code in string/name
     ERR_ESCAPE_SEQUENCE,             // unuspported escape sequene
     ERR_EMPTY_PREDICATE,             // a predicate is empty

@@ -1,19 +1,30 @@
-
 #pragma once
 
 
+#include <stddef.h>
+
+#include "str.h"
 #include "vector.h"
 
-#include "parser/source.h"
+#include "parser/input.h"
 
+
+struct source_s
+{
+    size_t length;
+    char   buffer[];
+};
+
+typedef struct source_s Source;
 
 struct input_s
 {
-    Position      position;
-    Vector       *marks;
-    BufferSource  source;
+    String   *name;
+    Position  position;
+    Vector   *marks;
+    Source   source;
 };
 
 
-Input *input_alloc(size_t bufsiz);
-void   input_init(Input *self, const char *name, size_t size);
+Input *input_alloc(size_t bufsize, const char *name);
+void input_init(Input *self);

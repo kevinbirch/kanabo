@@ -21,7 +21,7 @@ bool is_null(const void *first, ...)
     return result;
 }
 
-bool is_false(int_fast8_t first, ...)
+bool is_false(int first, ...)
 {
     va_list args;
     bool result = false;

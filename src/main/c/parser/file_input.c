@@ -1,9 +1,7 @@
-
 #include <stdio.h>  // for fileno
 
 #include <sys/stat.h>
 
-#include "parser/input.h"
 #include "parser/input_base.h"
 
 
@@ -33,16 +31,16 @@ Input *make_input_from_file(const char *filename)
     {
         goto cleanup;
     }
-    
-    self = input_alloc((size_t)size);
+
+    self = input_alloc((size_t)size, filename);
     if(NULL == self)
     {
         goto cleanup;
     }
+    input_init(self);
 
-    input_init(self, filename, (size_t)size);
-    size_t count = fread(self->source.data, (size_t)size, 1, file);
-    if(!count && ferror(file))
+    size_t count = fread(self->source.buffer, (size_t)size, 1, file);
+    if(count != (size_t)size || ferror(file))
     {
         dispose_input(self);
         self = NULL;

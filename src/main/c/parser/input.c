@@ -1,25 +1,42 @@
-
-#include <string.h>  // for memcmp
 #include <ctype.h>
+#include <stdlib.h>
+#include <string.h>  // for memcmp, memcpy
 
 #include "parser/input.h"
 #include "parser/input_base.h"
 
 
-#define cursor(SELF) source_cursor((&(SELF)->source), (SELF)->position.index)
-#define current(SELF) source_get_value(&self->source, self->position.index)
+#define current(INPUT) (INPUT)->source.buffer[(INPUT)->position.index]
+#define cursor(INPUT) (INPUT)->source.buffer + (INPUT)->position.index
+#define index(INPUT) (INPUT)->position.index
 
-
-Input *input_alloc(size_t bufsiz)
+Input *input_alloc(size_t bufsize, const char *name)
 {
-    Input *self = calloc(1, sizeof(Input) + bufsiz);
+    Input *self = calloc(1, sizeof(Input) + bufsize);
+    if(NULL == self)
+    {
+        return NULL;
+    }
     self->marks = make_vector();
+    if(NULL == self->marks)
+    {
+        dispose_input(self);
+        self = NULL;
+    }
+    if(NULL != name)
+    {
+        self->name = S(name);
+    }
+    self->source.length = bufsize;
+
     return self;
 }
 
-void input_init(Input *self, const char *name, size_t size)
+void input_init(Input *self)
 {
-    source_init(&self->source, name, size);
+    self->position.index = 0;
+    self->position.line = 0;
+    self->position.offset = 0;
 }
 
 static inline bool is_line_break(Input *self)
@@ -43,7 +60,7 @@ static inline void incr_line(Input *self)
 static inline void advance_by(Input *self, size_t amount)
 {
     size_t count = 0;
-    while(input_has_more(self) && count++ > amount)
+    while(index(self) < self->source.length && count++ < amount)
     {
         if(is_line_break(self))
         {
@@ -58,14 +75,14 @@ static inline void advance_by(Input *self, size_t amount)
 
 void dispose_input(Input *self)
 {
-    string_free(self->source.name);
+    string_free(self->name);
     vector_destroy(self->marks, free);
     free(self);
 }
 
 String *input_name(Input *self)
 {
-    return self->source.name;
+    return self->name;
 }
 
 size_t input_length(Input *self)
@@ -98,6 +115,16 @@ void input_push_mark(Input *self)
     vector_push(self->marks, mark);
 }
 
+void input_reset_to_mark(Input *self)
+{
+    if(vector_is_empty(self->marks))
+    {
+        return;
+    }
+    Position *mark = vector_peek(self->marks);
+    self->position = *mark;
+}
+
 void input_pop_mark(Input *self)
 {
     if(vector_is_empty(self->marks))
@@ -109,26 +136,38 @@ void input_pop_mark(Input *self)
     free(mark);
 }
 
+void input_drop_mark(Input *self)
+{
+    if(vector_is_empty(self->marks))
+    {
+        return;
+    }
+    Position *mark = vector_pop(self->marks);
+    free(mark);
+}
+
 bool input_has_more(Input *self)
 {
-    return self->position.index < self->source.length;
+    return index(self) < self->source.length;
 }
 
 size_t input_remaining(Input *self)
 {
-    if(self->position.index > self->source.length)
+    if(index(self) >= self->source.length)
     {
         return 0;
     }
-    return self->source.length - (self->position.index + 1);
+
+    return self->source.length - index(self);
 }
 
-uint8_t input_peek(Input *self)
+char input_peek(Input *self)
 {
     if(!input_has_more(self))
     {
         return 0;
     }
+
     return current(self);
 }
 
@@ -147,13 +186,14 @@ void input_skip_whitespace(Input *self)
     }
 }
 
-uint8_t input_consume_one(Input *self)
+char input_consume_one(Input *self)
 {
     if(!input_has_more(self))
     {
         return 0;
     }
-    uint8_t value = current(self);
+
+    char current = current(self);
     if(is_line_break(self))
     {
         incr_line(self);
@@ -162,14 +202,15 @@ uint8_t input_consume_one(Input *self)
     {
         incr(self);
     }
-    return value;
+
+    return current;
 }
 
-String *input_consume_many(Input *self, size_t count)
+size_t input_consume_many(Input *self, size_t count, char *result)
 {
     if(!input_has_more(self))
     {
-        return NULL;
+        return 0;
     }
 
     size_t length = count;
@@ -177,26 +218,32 @@ String *input_consume_many(Input *self, size_t count)
     {
         length = input_remaining(self);
     }
-    String *value = make_string_with_bytestring(cursor(self), length);
+
+    if(result != NULL)
+    {
+        memcpy(result, cursor(self), length);
+        result[length] = '\0';
+    }
     advance_by(self, length);
 
-    return value;
+    return length;
 }
 
-bool input_consume_if(Input *self, const String *value)
+bool input_consume_if(Input *self, const char *value)
 {
     if(!input_has_more(self))
     {
         return false;
     }
-    else if(string_length(value) > input_remaining(self))
+    size_t length = strlen(value);
+    if(length > input_remaining(self))
     {
         return false;
     }
 
-    if(strequ(value, cursor(self), string_length(value)))
+    if(memcmp(cursor(self), value, length) == 0)
     {
-        advance_by(self, string_length(value));
+        advance_by(self, length);
         return true;
     }
 
@@ -205,30 +252,24 @@ bool input_consume_if(Input *self, const String *value)
 
 void input_push_back(Input *self)
 {
-    if(0 == self->position.index)
+    if(0 == index(self))
     {
         return;
     }
-    else if(1 == self->position.index)
+
+    if(1 == self->position.offset)
     {
-        self->position.index = 0;
-        self->position.offset = 0;
-        return;
-    }
-    self->position.index--;
-    if(0 == self->position.offset)
-    {
-        self->position.line--;
-        size_t count = 1;
-        size_t index = self->position.index - 1;
-        while(index > 0 && 0x0A != source_get_value(&self->source, index--))
+        size_t i = index(self) - 1;
+        while(i > 0 && 0x0A != self->source.buffer[i])
         {
-            count++;
+            i--;
         }
-        self->position.offset = count;
+        self->position.offset = index(self) - i;
+        self->position.line--;
     }
     else
     {
         self->position.offset--;
     }
+    self->position.index--;
 }

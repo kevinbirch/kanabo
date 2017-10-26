@@ -27,10 +27,11 @@ int main(int argc, char **argv)
     set_log_level_from_env();
 
     SRunner *runner = srunner_create(master_suite());
-    srunner_add_suite(runner, loader_suite());
+    srunner_add_suite(runner, lexer_suite());
     srunner_add_suite(runner, jsonpath_suite());
     srunner_add_suite(runner, model_suite());
     srunner_add_suite(runner, nodelist_suite());
+    srunner_add_suite(runner, loader_suite());
     srunner_add_suite(runner, evaluator_suite());
 
     switch(argc)

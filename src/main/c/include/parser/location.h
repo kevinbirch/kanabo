@@ -1,4 +1,3 @@
-
 #pragma once
 
 
@@ -7,8 +6,11 @@
 
 struct location_s
 {
-    size_t  line;
-    size_t  offset;
+    union
+    {
+        struct postion_s;
+        Position position;
+    };
     size_t  extent;
 };
 
@@ -21,12 +23,4 @@ struct source_location_s
 };
 
 typedef struct source_location_s SourceLocation;
-
-
-#define location_from_input(INPUT) (SourceLocation){      \
-        .input=(INPUT),                                   \
-            .location.line=input_line((INPUT)),           \
-            .location.offset=input_offset((INPUT)),       \
-            .location.extent=0                            \
-            }
     
