@@ -60,7 +60,7 @@ make_maybe(size_t);
 static const char * const ERRORS[] =
 {
     [PREMATURE_END_OF_INPUT] = "premature end of input",
-    [UNSUPPORTED_CONTROL_CHARCTER] = "unsupported control character",
+    [UNSUPPORTED_CONTROL_CHARACTER] = "unsupported control character",
     [UNSUPPORTED_ESCAPE_SEQUENCE] = "unsupported escape sequence"
 };
 
@@ -197,7 +197,7 @@ static Maybe(Token) match_quoted_term(Input *input, char quote, enum token_kind 
         }
         if(iscntrl(input_peek(input)))
         {
-            return fail(Token, UNSUPPORTED_CONTROL_CHARCTER);
+            return fail(Token, UNSUPPORTED_CONTROL_CHARACTER);
         }
         if(input_peek(input) == '\\')
         {
@@ -316,7 +316,7 @@ static Maybe(Token) match_name(Input *input)
         }
         if(iscntrl(input_peek(input)))
         {
-            return fail(Token, UNSUPPORTED_CONTROL_CHARCTER);
+            return fail(Token, UNSUPPORTED_CONTROL_CHARACTER);
         }
     
         char c = input_consume_one(input);
