@@ -35,7 +35,8 @@ void dispose_input(Input *self);
 
 String *input_name(Input *self);
 size_t  input_length(Input *self);
-
+void    input_set_track_lines(Input *self, bool value);
+bool    input_is_tracking_lines(Input *self);
 
 // Input Postion API
 

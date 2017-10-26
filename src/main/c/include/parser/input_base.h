@@ -22,6 +22,7 @@ struct input_s
     String   *name;
     Position  position;
     Vector   *marks;
+    bool     lines;
     Source   source;
 };
 

@@ -37,24 +37,26 @@ void input_init(Input *self)
     self->position.index = 0;
     self->position.line = 0;
     self->position.offset = 0;
-}
-
-static inline bool is_line_break(Input *self)
-{
-    return 0x0A == current(self);
+    self->lines = false;
 }
 
 static inline void incr(Input *self)
 {
     self->position.index++;
-    self->position.offset++;
-}
+    if(!self->lines)
+    {
+        return;
+    }
 
-static inline void incr_line(Input *self)
-{
-    self->position.index++;
-    self->position.line++;
-    self->position.offset = 0;
+    if(0x0A == current(self))
+    {
+        self->position.line++;
+        self->position.offset = 0;
+    }
+    else
+    {
+        self->position.offset++;
+    }
 }
 
 static inline void advance_by(Input *self, size_t amount)
@@ -62,14 +64,7 @@ static inline void advance_by(Input *self, size_t amount)
     size_t count = 0;
     while(index(self) < self->source.length && count++ < amount)
     {
-        if(is_line_break(self))
-        {
-            incr_line(self);
-        }
-        else
-        {
-            incr(self);
-        }
+        incr(self);
     }
 }
 
@@ -88,6 +83,16 @@ String *input_name(Input *self)
 size_t input_length(Input *self)
 {
     return self->source.length;
+}
+
+void input_set_track_lines(Input *self, bool value)
+{
+    self->lines = value;
+}
+
+bool input_is_tracking_lines(Input *self)
+{
+    return self->lines;
 }
 
 Position input_position(const Input *self)
@@ -175,14 +180,7 @@ void input_skip_whitespace(Input *self)
 {
     while(input_has_more(self) && isspace(current(self)))
     {
-        if(is_line_break(self))
-        {
-            incr_line(self);
-        }
-        else
-        {
-            incr(self);
-        }
+        incr(self);
     }
 }
 
@@ -194,14 +192,7 @@ char input_consume_one(Input *self)
     }
 
     char current = current(self);
-    if(is_line_break(self))
-    {
-        incr_line(self);
-    }
-    else
-    {
-        incr(self);
-    }
+    incr(self);
 
     return current;
 }
@@ -257,8 +248,15 @@ void input_push_back(Input *self)
         return;
     }
 
-    if(1 == self->position.offset)
+    self->position.index--;
+    if(!self->lines)
     {
+        return;
+    }
+
+    if(0 == self->position.offset)
+    {
+        // NB - track back from the position preceeding the previous newline
         size_t i = index(self) - 1;
         while(i > 0 && 0x0A != self->source.buffer[i])
         {
@@ -271,5 +269,4 @@ void input_push_back(Input *self)
     {
         self->position.offset--;
     }
-    self->position.index--;
 }
