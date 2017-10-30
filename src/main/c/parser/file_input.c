@@ -2,7 +2,7 @@
 
 #include <sys/stat.h>
 
-#include "parser/input_base.h"
+#include "parser/input.h"
 
 
 static off_t file_size(FILE *file)
@@ -32,12 +32,18 @@ Input *make_input_from_file(const char *filename)
         goto cleanup;
     }
 
-    self = input_alloc((size_t)size, filename);
+    self = calloc(1, sizeof(Input) + (size_t)size);
     if(NULL == self)
     {
         goto cleanup;
     }
-    input_init(self);
+
+    if(!input_init(self, filename, (size_t)size))
+    {
+        dispose_input(self);
+        self = NULL;
+        goto cleanup;
+    }
 
     size_t count = fread(self->source.buffer, (size_t)size, 1, file);
     if(count != (size_t)size || ferror(file))

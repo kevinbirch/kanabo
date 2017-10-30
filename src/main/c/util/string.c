@@ -64,6 +64,10 @@ String *make_string_with_bytestring(const uint8_t *value, size_t length)
 
 void string_free(String *self)
 {
+    if(NULL == self)
+    {
+        return;
+    }
     free(self);
 }
 

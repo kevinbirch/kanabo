@@ -1,16 +1,21 @@
 #include <string.h>
 
-#include "parser/input_base.h"
+#include "parser/input.h"
 
 
 Input *make_input_from_buffer(const char *data, size_t length)
 {
-    Input *self = input_alloc(length, NULL);
+    Input *self = calloc(1, sizeof(Input) + length);
     if(NULL == self)
     {
         goto exit;
     }
-    input_init(self);
+    if(!input_init(self, NULL, length))
+    {
+        dispose_input(self);
+        self = NULL;
+        goto exit;
+    }
 
     memcpy(self->source.buffer, data, length);
 

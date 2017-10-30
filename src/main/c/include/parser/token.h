@@ -6,8 +6,9 @@
 #include "parser/location.h"
 
 
-enum token_kind
+enum token_kind_e
 {
+    START,
     END_OF_INPUT,
     DOLLAR,
     AT,
@@ -56,14 +57,14 @@ enum token_kind
     NAME
 };
 
+typedef enum token_kind_e TokenKind;
+
 struct token_s
 {
-    enum token_kind kind;
-    SourceLocation  lexeme;
+    TokenKind kind;
+    Location  location;
 };
 
 typedef struct token_s Token;
 
-make_maybe(Token);
-
-const char *token_name(enum token_kind kind);
+const char *token_name(TokenKind kind);

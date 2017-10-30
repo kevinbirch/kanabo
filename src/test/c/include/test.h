@@ -29,7 +29,6 @@
 #define ck_assert_uint_ge(X, Y) _ck_assert_uint(X, >=, Y)
 #endif
 
-
 #define assert_int_eq(X, Y)  ck_assert_int_eq(X, Y)
 #define assert_int_ne(X, Y)  ck_assert_int_ne(X, Y)
 #define assert_int_lt(X, Y)  ck_assert_int_lt(X, Y)

@@ -3,47 +3,15 @@
 #include <string.h>  // for memcmp, memcpy
 
 #include "parser/input.h"
-#include "parser/input_base.h"
-
 
 #define current(INPUT) (INPUT)->source.buffer[(INPUT)->position.index]
 #define cursor(INPUT) (INPUT)->source.buffer + (INPUT)->position.index
 #define index(INPUT) (INPUT)->position.index
 
-Input *input_alloc(size_t bufsize, const char *name)
-{
-    Input *self = calloc(1, sizeof(Input) + bufsize);
-    if(NULL == self)
-    {
-        return NULL;
-    }
-    self->marks = make_vector();
-    if(NULL == self->marks)
-    {
-        dispose_input(self);
-        self = NULL;
-    }
-    if(NULL != name)
-    {
-        self->name = S(name);
-    }
-    self->source.length = bufsize;
-
-    return self;
-}
-
-void input_init(Input *self)
-{
-    self->position.index = 0;
-    self->position.line = 0;
-    self->position.offset = 0;
-    self->lines = false;
-}
-
 static inline void incr(Input *self)
 {
     self->position.index++;
-    if(!self->lines)
+    if(!self->track_lines)
     {
         return;
     }
@@ -68,6 +36,37 @@ static inline void advance_by(Input *self, size_t amount)
     }
 }
 
+int input_init(Input *self, const char *name, size_t length)
+{
+    self->position.index = 0;
+    self->position.line = 0;
+    self->position.offset = 0;
+    self->track_lines = false;
+
+    if(NULL != self->marks)
+    {
+        vector_destroy(self->marks, free);
+    }
+    self->marks = make_vector();
+    if(NULL == self->marks)
+    {
+        return 0;
+    }
+    if(NULL != name)
+    {
+        self->name = S(name);
+    }
+    self->source.length = length;
+
+    return 1;
+}
+
+void input_release(Input *self)
+{
+    vector_destroy(self->marks, free);
+    string_free(self->name);
+}
+
 void dispose_input(Input *self)
 {
     string_free(self->name);
@@ -87,17 +86,22 @@ size_t input_length(Input *self)
 
 void input_set_track_lines(Input *self, bool value)
 {
-    self->lines = value;
+    self->track_lines = value;
 }
 
 bool input_is_tracking_lines(Input *self)
 {
-    return self->lines;
+    return self->track_lines;
 }
 
 Position input_position(const Input *self)
 {
     return self->position;
+}
+
+void input_goto(Input *self, Position position)
+{
+    self->position = position;
 }
 
 void input_advance_to_end(Input *self)
@@ -249,7 +253,7 @@ void input_push_back(Input *self)
     }
 
     self->position.index--;
-    if(!self->lines)
+    if(!self->track_lines)
     {
         return;
     }

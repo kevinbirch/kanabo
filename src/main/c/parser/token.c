@@ -50,7 +50,7 @@ static const char * const NAMES[] =
     [NAME] = "<name>",
 };
 
-const char *token_name(enum token_kind kind)
+const char *token_name(TokenKind kind)
 {
     return NAMES[kind];
 }

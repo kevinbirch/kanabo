@@ -1,61 +1,8 @@
 #include <ctype.h>
 
+#include "vector.h"
+
 #include "parser/lexer.h"
-
-#define const_token(KIND, EXTENT) (Token){.kind=(KIND), .lexeme.location.extent=(EXTENT)}
-#define dyn_token(KIND) (Token){.kind=(KIND)}
-
-static const Token PROTOTYPES[] =
-{
-    [END_OF_INPUT] = const_token(END_OF_INPUT, 0),
-    [DOLLAR] = const_token(DOLLAR, 1),
-    [AT] = const_token(AT, 1),
-    [DOT_DOT] = const_token(DOT_DOT, 2),
-    [DOT] = const_token(DOT, 1),
-    [EQUALS] = const_token(EQUALS, 1),
-    [COLON] = const_token(COLON, 1),
-    [COMMA] = const_token(COMMA, 1),
-    [EXCLAMATION] = const_token(EXCLAMATION, 1),
-    [AMPERSAND] = const_token(AMPERSAND, 1),
-    [ASTERISK] = const_token(ASTERISK, 1),
-    [OPEN_BRACKET] = const_token(OPEN_BRACKET, 1),
-    [CLOSE_BRACKET] = const_token(CLOSE_BRACKET, 1),
-    [OPEN_BRACE] = const_token(OPEN_BRACE, 1),
-    [CLOSE_BRACE] = const_token(CLOSE_BRACE, 1),
-    [OPEN_PARENTHSIS] = const_token(OPEN_PARENTHSIS, 1),
-    [CLOSE_PARENTHESIS] = const_token(CLOSE_PARENTHESIS, 1),
-    [OPEN_FILTER] = const_token(OPEN_FILTER, 2),
-    [GREATER_THAN] = const_token(GREATER_THAN, 1),
-    [GREATER_THAN_EQUAL] = const_token(GREATER_THAN_EQUAL, 2),
-    [LESS_THAN] = const_token(LESS_THAN, 1),
-    [LESS_THAN_EQUAL] = const_token(LESS_THAN_EQUAL, 2),
-    [NOT_EQUAL] = const_token(NOT_EQUAL, 2),
-    [PLUS] = const_token(PLUS, 1),
-    [MINUS] = const_token(MINUS, 1),
-    [SLASH] = const_token(SLASH, 1),
-    [PERCENT] = const_token(PERCENT, 1),
-    [OBJECT_SELECTOR] = const_token(OBJECT_SELECTOR, 8),
-    [ARRAY_SELECTOR] = const_token(ARRAY_SELECTOR, 7),
-    [STRING_SELECTOR] = const_token(STRING_SELECTOR, 8),
-    [NUMBER_SELECTOR] = const_token(NUMBER_SELECTOR, 8),
-    [INTEGER_SELECTOR] = const_token(INTEGER_SELECTOR, 9),
-    [DECIMAL_SELECTOR] = const_token(DECIMAL_SELECTOR, 9),
-    [TIMESTAMP_SELECTOR] = const_token(TIMESTAMP_SELECTOR, 11),
-    [BOOLEAN_SELECTOR] = const_token(BOOLEAN_SELECTOR, 9),
-    [NULL_SELECTOR] = const_token(NULL_SELECTOR, 6),
-    [NULL_LITERAL] = const_token(NULL_LITERAL, 4),
-    [BOOLEAN_OR] = const_token(BOOLEAN_OR, 2),
-    [BOOLEAN_AND] = const_token(BOOLEAN_AND, 3),
-    [BOOLEAN_LITERAL_TRUE] = const_token(BOOLEAN_LITERAL_TRUE, 4),
-    [BOOLEAN_LITERAL_FALSE] = const_token(BOOLEAN_LITERAL_FALSE, 5),
-    [STRING_LITERAL] = dyn_token(STRING_LITERAL),
-    [INTEGER_LITERAL] = dyn_token(INTEGER_LITERAL),
-    [REAL_LITERAL] = dyn_token(REAL_LITERAL),
-    [QUOTED_NAME] = dyn_token(QUOTED_NAME),
-    [NAME] = dyn_token(NAME),
-};
-
-make_maybe(size_t);
 
 static const char * const ERRORS[] =
 {
@@ -64,46 +11,57 @@ static const char * const ERRORS[] =
     [UNSUPPORTED_ESCAPE_SEQUENCE] = "unsupported escape sequence"
 };
 
-static Maybe(size_t) read_hex_sequence(Input *input, size_t count)
+static void add_error(Lexer *self, LexerErrorCode code)
 {
-    if(count > input_remaining(input))
-    {
-        return fail(size_t, PREMATURE_END_OF_INPUT);
-    }
-
-    for(size_t i = 0; i < count; i++)
-    {
-        if(!isxdigit(input_peek(input)))
-        {
-            return fail(size_t, UNSUPPORTED_ESCAPE_SEQUENCE);
-
-        }
-        input_consume_one(input);
-    }
-
-    return just(size_t, count);
+    LexerError *err = calloc(1, sizeof(LexerError));
+    err->code = code;
+    err->position = position(self);
+    vector_append(self->errors, err);
 }
 
-#define abort_if(OPTION) if(is_nothing((OPTION))) return (OPTION)
-
-typedef Maybe(size_t) (*EscapeSequenceReader)(Input *input);
-
-static Maybe(size_t) read_escape_sequence(Input *input)
+static void add_error_at(Lexer *self, Position position, LexerErrorCode code)
 {
-    size_t length = 0;
-    if(input_peek(input) == '\\')
+    LexerError *err = calloc(1, sizeof(LexerError));
+    err->code = code;
+    err->position = position;
+    vector_append(self->errors, err);
+}
+
+static void read_hex_sequence(Lexer *self, size_t count)
+{
+    for(size_t i = 0; i < count; i++)
     {
-        input_consume_one(input);
-        length++;
+        if(input_has_more(&self->input))
+        {
+            add_error(self, PREMATURE_END_OF_INPUT);
+            return;
+        }
+
+        if(!isxdigit(input_peek(&self->input)))
+        {
+            add_error(self, UNSUPPORTED_ESCAPE_SEQUENCE);
+        }
+        input_consume_one(&self->input);
     }
-    if(!input_has_more(input))
+}
+
+typedef bool (*EscapeSequenceReader)(Lexer *self);
+
+static bool read_escape_sequence(Lexer *self)
+{
+    if(input_peek(&self->input) == '\\')
     {
-        return fail(size_t, PREMATURE_END_OF_INPUT);
+        input_consume_one(&self->input);
     }
 
-    char c = input_consume_one(input);
-    length++;
-    switch(c)
+    if(!input_has_more(&self->input))
+    {
+        add_error(self, PREMATURE_END_OF_INPUT);
+        return false;
+    }
+
+    Position start = position(self);
+    switch(input_consume_one(&self->input))
     {
         case '"':
         case '\\':
@@ -123,128 +81,103 @@ static Maybe(size_t) read_escape_sequence(Input *input)
         case 'P':
             break;
         case 'x':
-        {
-            Maybe(size_t) seq = read_hex_sequence(input, 2);
-            length += maybe(seq, 0);
-            abort_if(seq);
+            read_hex_sequence(self, 2);
             break;
-        }
         case 'u':
-        {
-            Maybe(size_t) seq = read_hex_sequence(input, 4);
-            length += maybe(seq, 0);
-            abort_if(seq);
-            break;
-        }
+            read_hex_sequence(self, 4);
             break;
         case 'U':
-        {
-            Maybe(size_t) seq = read_hex_sequence(input, 8);
-            length += maybe(seq, 0);
-            abort_if(seq);
-            break;
-        }
+            read_hex_sequence(self, 8);
             break;
         default:
-            return fail(size_t, UNSUPPORTED_ESCAPE_SEQUENCE);
+            add_error_at(self, start, UNSUPPORTED_ESCAPE_SEQUENCE);
     }
 
-    return just(size_t, length);
+    return true;
 }
 
-static Maybe(size_t) read_name_escape_sequence(Input *input)
+static bool read_name_escape_sequence(Lexer *self)
 {
-    input_push_mark(input);
-    size_t length = 0;
-    if(input_peek(input) == '\\')
+    Position start = position(self);
+    if(input_peek(&self->input) == '\\')
     {
-        length++;
-        input_consume_one(input);
+        input_consume_one(&self->input);
     }
-    if(!input_has_more(input))
+    if(!input_has_more(&self->input))
     {
-        input_drop_mark(input);
-        return fail(size_t, PREMATURE_END_OF_INPUT);
+        add_error(self, PREMATURE_END_OF_INPUT);
+        return false;
     }
 
-    if(input_peek(input) == '\'')
+    if(input_peek(&self->input) == '\'')
     {
-        input_drop_mark(input);
-        length++;
-        input_consume_one(input);
-        return just(size_t, length);
+        input_consume_one(&self->input);
+        return true;
     }
 
-    input_pop_mark(input);
-    return read_escape_sequence(input);
+    input_goto(&self->input, start);
+    return read_escape_sequence(self);
 }
 
-static Maybe(Token) match_quoted_term(Input *input, char quote, enum token_kind kind, EscapeSequenceReader reader)
+static void match_quoted_term(Lexer *self, char quote, EscapeSequenceReader reader)
 {
-    if(input_peek(input) == quote)
+    if(input_peek(&self->input) == quote)
     {
-        input_consume_one(input);
+        input_consume_one(&self->input);
     }
-
-    Position start = input_position(input);
 
     bool found_close = false;
     while(!found_close)
     {
-        if(!input_has_more(input))
+        if(!input_has_more(&self->input))
         {
-            return fail(Token, PREMATURE_END_OF_INPUT);
+            add_error(self, PREMATURE_END_OF_INPUT);
+            break;
         }
-        if(iscntrl(input_peek(input)))
+        if(iscntrl(input_peek(&self->input)))
         {
-            return fail(Token, UNSUPPORTED_CONTROL_CHARACTER);
+            add_error(self, UNSUPPORTED_CONTROL_CHARACTER);
         }
-        if(input_peek(input) == '\\')
+        if(input_peek(&self->input) == '\\')
         {
-            Maybe(size_t) seq = reader(input);
-            if(is_nothing(seq))
+            if(reader(self))
             {
-                return fail(Token, from_nothing(seq));
+                continue;
             }
+
+            break;
         }
     
-        char c = input_consume_one(input);
+        char c = input_consume_one(&self->input);
         if(c == quote)
         {
             found_close = true;
         }
     }
-
-    Position end = input_position(input);    
-    Token name = PROTOTYPES[kind];
-    name.lexeme = (SourceLocation){.input=input, .location.position=start};
-    name.lexeme.location.extent = end.index - start.index - 1;
-    
-    return just(Token, name);
 }
 
-
-static Maybe(size_t) read_digit_sequence(Input *input)
+static bool read_digit_sequence(Lexer *self)
 {
-    Position start = input_position(input);
+    Position start = position(self);
 
     bool done = false;
     while(!done)
     {
-        if(!input_has_more(input))
+        if(!input_has_more(&self->input))
         {
-            if(input_index(input) == start.index)
+            if(input_index(&self->input) == start.index)
             {
-                return fail(size_t, PREMATURE_END_OF_INPUT);
+                add_error(self, PREMATURE_END_OF_INPUT);
+                break;
             }
 
             done = true;
-            continue;
+            break;
         }
 
-        if(isdigit(input_peek(input)))
+        if(isdigit(input_peek(&self->input)))
         {
-            input_consume_one(input);
+            input_consume_one(&self->input);
         }
         else
         {
@@ -252,293 +185,309 @@ static Maybe(size_t) read_digit_sequence(Input *input)
         }
     }
 
-    Position end = input_position(input);    
-    return just(size_t, end.index - start.index);
+    return done;
 }
 
-static Maybe(Token) match_number(Input *input)
+static void match_number(Lexer *self)
 {
-    Position start = input_position(input);
+    self->current.kind = INTEGER_LITERAL;
 
-    enum token_kind found = INTEGER_LITERAL;
-
-    char next = input_peek(input);
+    char next = input_peek(&self->input);
     if('0' <= next && next <= '9')
     {
-        Maybe(size_t) seq = read_digit_sequence(input);
-        if(is_nothing(seq))
+        if(!read_digit_sequence(self))
         {
-            return fail(Token, from_nothing(seq));
+            return;
         }
     }
 
-    if(input_peek(input) == '.')
+    if(input_peek(&self->input) == '.')
     {
-        found = REAL_LITERAL;
-        input_consume_one(input);
-        Maybe(size_t) seq = read_digit_sequence(input);
-        if(is_nothing(seq))
+        self->current.kind = REAL_LITERAL;
+        input_consume_one(&self->input);
+        if(!read_digit_sequence(self))
         {
-            return fail(Token, from_nothing(seq));
+            return;
         }
     }
 
-    if(input_peek(input) == 'e')
+    if(input_peek(&self->input) == 'e')
     {
-        input_consume_one(input);
-        Maybe(size_t) seq = read_digit_sequence(input);
-        if(is_nothing(seq))
+        input_consume_one(&self->input);
+        if(!read_digit_sequence(self))
         {
-            return fail(Token, from_nothing(seq));
+            return;
         }
     }
-
-    Position end = input_position(input);    
-    Token proto = PROTOTYPES[found];
-    proto.lexeme.input = input;
-    proto.lexeme.location.position = start;
-    proto.lexeme.location.extent = end.index - start.index;
-    
-    return just(Token, proto);
 }
 
-static Maybe(Token) match_name(Input *input)
+static void match_name(Lexer *self)
 {
-    Position start = input_position(input);
+    Position start = position(self);
 
     bool done = false;
     while(!done)
     {
-        if(!input_has_more(input))
+        if(!input_has_more(&self->input))
         {
-            if(input_index(input) == start.index)
+            if(input_index(&self->input) == start.index)
             {
-                return fail(Token, PREMATURE_END_OF_INPUT);
+                add_error(self, PREMATURE_END_OF_INPUT);
+                return;
             }
 
             done = true;
             continue;
         }
-        if(iscntrl(input_peek(input)))
+        if(iscntrl(input_peek(&self->input)))
         {
-            return fail(Token, UNSUPPORTED_CONTROL_CHARACTER);
+            add_error(self, UNSUPPORTED_CONTROL_CHARACTER);
         }
     
-        char c = input_consume_one(input);
+        char c = input_consume_one(&self->input);
         if(c == '.' || c == '[')
         {
-            input_push_back(input);
+            input_push_back(&self->input);
             done = true;
         }
     }
-
-    Position end = input_position(input);    
-    Token proto = PROTOTYPES[NAME];
-    proto.lexeme.input = input;
-    proto.lexeme.location.position = start;
-    proto.lexeme.location.extent = end.index - start.index;
-    
-    return just(Token, proto);
 }
 
-static Maybe(Token) match_symbol(Input *input)
+static void match_symbol(Lexer *self)
 {
-    Position start = input_position(input);
-    enum token_kind found = END_OF_INPUT;
-    if(input_consume_if(input, "object()"))
+    if(input_consume_if(&self->input, "object()"))
     {
-        found = OBJECT_SELECTOR;
+        self->current.kind = OBJECT_SELECTOR;
     }
-    else if(input_consume_if(input, "array()"))
+    else if(input_consume_if(&self->input, "array()"))
     {
-        found = ARRAY_SELECTOR;
+        self->current.kind = ARRAY_SELECTOR;
     }
-    else if(input_consume_if(input, "string()"))
+    else if(input_consume_if(&self->input, "string()"))
     {
-        found = STRING_SELECTOR;
+        self->current.kind = STRING_SELECTOR;
     }
-    else if(input_consume_if(input, "number()"))
+    else if(input_consume_if(&self->input, "number()"))
     {
-        found = NUMBER_SELECTOR;
+        self->current.kind = NUMBER_SELECTOR;
     }
-    else if(input_consume_if(input, "integer()"))
+    else if(input_consume_if(&self->input, "integer()"))
     {
-        found = INTEGER_SELECTOR;
+        self->current.kind = INTEGER_SELECTOR;
     }
-    else if(input_consume_if(input, "decimal()"))
+    else if(input_consume_if(&self->input, "decimal()"))
     {
-        found = DECIMAL_SELECTOR;
+        self->current.kind = DECIMAL_SELECTOR;
     }
-    else if(input_consume_if(input, "timestamp()"))
+    else if(input_consume_if(&self->input, "timestamp()"))
     {
-        found = TIMESTAMP_SELECTOR;
+        self->current.kind = TIMESTAMP_SELECTOR;
     }
-    else if(input_consume_if(input, "boolean()"))
+    else if(input_consume_if(&self->input, "boolean()"))
     {
-        found = BOOLEAN_SELECTOR;
+        self->current.kind = BOOLEAN_SELECTOR;
     }
-    else if(input_consume_if(input, "null"))
+    else if(input_consume_if(&self->input, "null"))
     {
-        found = NULL_LITERAL;
-        if(input_consume_if(input, "()"))
+        self->current.kind = NULL_LITERAL;
+        if(input_consume_if(&self->input, "()"))
         {
-            found = NULL_SELECTOR;
+            self->current.kind = NULL_SELECTOR;
         }
     }
-    else if(input_consume_if(input, "and"))
+    else if(input_consume_if(&self->input, "and"))
     {
-        found = BOOLEAN_SELECTOR;
+        self->current.kind = BOOLEAN_SELECTOR;
     }
-    else if(input_consume_if(input, "or"))
+    else if(input_consume_if(&self->input, "or"))
     {
-        found = BOOLEAN_SELECTOR;
+        self->current.kind = BOOLEAN_SELECTOR;
     }
-    else if(input_consume_if(input, "true"))
+    else if(input_consume_if(&self->input, "true"))
     {
-        found = BOOLEAN_SELECTOR;
+        self->current.kind = BOOLEAN_SELECTOR;
     }
-    else if(input_consume_if(input, "false"))
+    else if(input_consume_if(&self->input, "false"))
     {
-        found = BOOLEAN_SELECTOR;
+        self->current.kind = BOOLEAN_SELECTOR;
     }
     else
     {
-        return match_name(input);
+        self->current.kind = NAME;
+        match_name(self);
     }
-
-    Token proto = PROTOTYPES[found];
-    proto.lexeme.input = input;
-    proto.lexeme.location.position = start;
-    return just(Token, proto);
 }
 
-Maybe(Token) next(Input *input) 
+Lexer *make_lexer(const char *data, size_t length)
 {
-    input_skip_whitespace(input);
-
-    enum token_kind found = END_OF_INPUT;
-
-    Position start = input_position(input);
-    if(!input_has_more(input))
+    Lexer *self = calloc(1, sizeof(Lexer) + length);
+    if(NULL == self)
     {
+        goto exit;
+    }
+    self->errors = make_vector();
+    if(NULL == self->errors)
+    {
+        dispose_lexer(self);
+        self = NULL;
+        goto exit;
+    }
+    
+    if(!input_init(&self->input, NULL, length))
+    {
+        dispose_lexer(self);
+        self = NULL;
+        goto exit;
+    }
+
+    memcpy(self->input.source.buffer, data, length);
+
+  exit:
+    return self;
+}
+
+void dispose_lexer(Lexer *self)
+{
+    if(NULL == self)
+    {
+        return;
+    }
+
+    vector_destroy(self->errors, free);
+    input_release(&self->input);
+    free(self);
+}
+
+void next(Lexer *self)
+{
+    input_skip_whitespace(&self->input);
+
+    Position start = self->input.position;
+    if(!input_has_more(&self->input))
+    {
+        self->current.kind = END_OF_INPUT;
         goto finish;
     }
 
-    char c = input_consume_one(input);
-    switch(c)
+    switch(input_consume_one(&self->input))
     {
         case '$':
-            found = DOLLAR;
+            self->current.kind = DOLLAR;
             break;
         case '@':
-            found = AT;
+            self->current.kind = AT;
             break;
         case '.':
         {
-            found = DOT;
-            char next = input_peek(input);
+            self->current.kind = DOT;
+            char next = input_peek(&self->input);
             if(next == '.')
             {
-                found = DOT_DOT;
-                input_consume_one(input);
+                self->current.kind = DOT_DOT;
+                input_consume_one(&self->input);
             }
             else if('0' <= next && next <= '9')
             {
-                input_push_back(input);
-                return match_number(input);
+                input_push_back(&self->input);
+                match_number(self);
             }
             break;
         }
         case '=':
-            found = EQUALS;
+            self->current.kind = EQUALS;
             break;
         case ':':
-            found = COLON;
+            self->current.kind = COLON;
             break;
         case ',':
-            found = COMMA;
+            self->current.kind = COMMA;
             break;
         case '!':
         {
-            found = EXCLAMATION;
-            if(input_peek(input) == '=')
+            self->current.kind = EXCLAMATION;
+            if(input_peek(&self->input) == '=')
             {
-                found = NOT_EQUAL;
-                input_consume_one(input);
+                self->current.kind = NOT_EQUAL;
+                input_consume_one(&self->input);
             }
             break;
         }
         case '&':
-            found = AMPERSAND;
+            self->current.kind = AMPERSAND;
             break;
         case '*':
-            found = ASTERISK;
+            self->current.kind = ASTERISK;
             break;
         case '[':
-            found = OPEN_BRACKET;
+            self->current.kind = OPEN_BRACKET;
             break;
         case ']':
-            found = CLOSE_BRACKET;
+            self->current.kind = CLOSE_BRACKET;
             break;
         case '{':
-            found = OPEN_BRACE;
+            self->current.kind = OPEN_BRACE;
             break;
         case '}':
-            found = CLOSE_BRACE;
+            self->current.kind = CLOSE_BRACE;
             break;
         case '(':
-            found = OPEN_PARENTHSIS;
+            self->current.kind = OPEN_PARENTHSIS;
             break;
         case ')':
-            found = CLOSE_PARENTHESIS;
+            self->current.kind = CLOSE_PARENTHESIS;
             break;
         case '?':
         {
-            if(input_peek(input) == '(')
+            if(input_peek(&self->input) == '(')
             {
-                found = OPEN_FILTER;
-                input_consume_one(input);
+                self->current.kind = OPEN_FILTER;
+                input_consume_one(&self->input);
+                break;
             }
+            input_push_back(&self->input);
+            match_symbol(self);
             break;
         }
         case '<':
         {
-            found = LESS_THAN;
-            if(input_peek(input) == '=')
+            self->current.kind = LESS_THAN;
+            if(input_peek(&self->input) == '=')
             {
-                found = LESS_THAN_EQUAL;
-                input_consume_one(input);
+                self->current.kind = LESS_THAN_EQUAL;
+                input_consume_one(&self->input);
             }
             break;
         }
         case '>':
         {
-            found = GREATER_THAN;
-            if(input_peek(input) == '=')
+            self->current.kind = GREATER_THAN;
+            if(input_peek(&self->input) == '=')
             {
-                found = GREATER_THAN_EQUAL;
-                input_consume_one(input);
+                self->current.kind = GREATER_THAN_EQUAL;
+                input_consume_one(&self->input);
             }
             break;
         }
         case '+':
-            found = PLUS;
+            self->current.kind = PLUS;
             break;
         case '-':
-        {
-            found = MINUS;
+            self->current.kind = MINUS;
             break;
-        }
         case '/':
-            found = SLASH;
+            self->current.kind = SLASH;
             break;
         case '%':
-            found = PERCENT;
+            self->current.kind = PERCENT;
             break;
         case '"':
-            return match_quoted_term(input, '"', STRING_LITERAL, read_escape_sequence);
+            self->current.kind = STRING_LITERAL;
+            match_quoted_term(self, '"', read_escape_sequence);
+            break;
         case '\'':
-            return match_quoted_term(input, '\'', QUOTED_NAME, read_name_escape_sequence);
+            self->current.kind = QUOTED_NAME;
+            match_quoted_term(self, '\'', read_name_escape_sequence);
+            break;
         case '0':
         case '1':
         case '2':
@@ -549,23 +498,21 @@ Maybe(Token) next(Input *input)
         case '7':
         case '8':
         case '9':
-            input_push_back(input);
-            return match_number(input);
+            input_push_back(&self->input);
+            match_number(self);
+            break;
         default:
-        {
-            input_push_back(input);
-            return match_symbol(input);
-        }
+            input_push_back(&self->input);
+            match_symbol(self);
     }
 
   finish:
-    Token proto = PROTOTYPES[found];
-    proto.lexeme.input = input;
-    proto.lexeme.location.position = start;
-    return just(Token, proto);
+    Position end = position(self);    
+    self->current.location.position = start;
+    self->current.location.extent = end.index - start.index;
 }
 
-const char *lexer_strerror(LexerFailureCode code)
+const char *lexer_strerror(LexerErrorCode code)
 {
     return ERRORS[code];
 }
