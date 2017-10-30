@@ -135,7 +135,12 @@ slice
     ;
 
 join
-    = additive expr, ",", additive expr, { ",", additive expr }
+    = join expression, ",", join expression, { ",", join expression }
+    ;
+
+join expression
+    = signed integer
+    | relative path
     ;
 
 filter expression
