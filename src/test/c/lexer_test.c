@@ -1009,7 +1009,7 @@ START_TEST (expression_with_bare_exponent)
 }
 END_TEST
 
-START_TEST (type_selsector_interstitial_whitespace)
+START_TEST (type_selector_interstitial_whitespace)
 {
     char *expression = "$.foo.object ()";
     Token expectations[] = {
@@ -1469,7 +1469,7 @@ Suite *lexer_suite(void)
     tcase_add_test(subtleties_case, unquoted_name_escape_sequence);
     tcase_add_test(subtleties_case, unquoted_name_illegal_escape_sequence);
     tcase_add_test(subtleties_case, expression_with_bare_exponent);
-    tcase_add_test(subtleties_case, type_selsector_interstitial_whitespace);
+    tcase_add_test(subtleties_case, type_selector_interstitial_whitespace);
 
     TCase *errors_case = tcase_create("errors");
     tcase_add_test(errors_case, integer_eoi_exponent);
