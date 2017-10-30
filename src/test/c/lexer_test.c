@@ -654,18 +654,19 @@ END_TEST
 
 START_TEST (transfomer_step)
 {
-    char *expression = "$.foo={\"name\": name}";
+    char *expression = "$.foo.={\"name\": name}";
     Token expectations[] = {
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
         expected_token(NAME, 3, 2),
-        expected_token(EQUALS, 1, 5),
-        expected_token(OPEN_BRACE, 1, 6),
-        expected_token(STRING_LITERAL, 6, 7),
-        expected_token(COLON, 1, 13),
-        expected_token(NAME, 4, 15),
-        expected_token(CLOSE_BRACE, 1, 19),
-        expected_token(END_OF_INPUT, 0, 20),
+        expected_token(DOT, 1, 5),
+        expected_token(EQUALS, 1, 6),
+        expected_token(OPEN_BRACE, 1, 7),
+        expected_token(STRING_LITERAL, 6, 8),
+        expected_token(COLON, 1, 14),
+        expected_token(NAME, 4, 16),
+        expected_token(CLOSE_BRACE, 1, 20),
+        expected_token(END_OF_INPUT, 0, 21),
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
