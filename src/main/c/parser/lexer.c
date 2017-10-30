@@ -27,14 +27,14 @@ static void add_error_at(Lexer *self, Position position, LexerErrorCode code)
     vector_append(self->errors, err);
 }
 
-static void read_hex_sequence(Lexer *self, size_t count)
+static bool read_hex_sequence(Lexer *self, size_t count)
 {
     for(size_t i = 0; i < count; i++)
     {
-        if(input_has_more(&self->input))
+        if(!input_has_more(&self->input))
         {
             add_error(self, PREMATURE_END_OF_INPUT);
-            return;
+            return false;
         }
 
         if(!isxdigit(input_peek(&self->input)))
@@ -43,6 +43,8 @@ static void read_hex_sequence(Lexer *self, size_t count)
         }
         input_consume_one(&self->input);
     }
+
+    return true;
 }
 
 typedef bool (*EscapeSequenceReader)(Lexer *self);
@@ -81,14 +83,11 @@ static bool read_escape_sequence(Lexer *self)
         case 'P':
             break;
         case 'x':
-            read_hex_sequence(self, 2);
-            break;
+            return read_hex_sequence(self, 2);
         case 'u':
-            read_hex_sequence(self, 4);
-            break;
+            return read_hex_sequence(self, 4);
         case 'U':
-            read_hex_sequence(self, 8);
-            break;
+            return read_hex_sequence(self, 8);
         default:
             add_error_at(self, start, UNSUPPORTED_ESCAPE_SEQUENCE);
     }
@@ -245,7 +244,7 @@ static void match_name(Lexer *self)
         }
     
         char c = input_consume_one(&self->input);
-        if(c == '.' || c == '[')
+        if(c == '[' || c == '.' || c == '=' || c == ',' || c == '}' || c == ')' || isspace(c))
         {
             input_push_back(&self->input);
             done = true;
@@ -297,19 +296,19 @@ static void match_symbol(Lexer *self)
     }
     else if(input_consume_if(&self->input, "and"))
     {
-        self->current.kind = BOOLEAN_SELECTOR;
+        self->current.kind = BOOLEAN_AND;
     }
     else if(input_consume_if(&self->input, "or"))
     {
-        self->current.kind = BOOLEAN_SELECTOR;
+        self->current.kind = BOOLEAN_OR;
     }
     else if(input_consume_if(&self->input, "true"))
     {
-        self->current.kind = BOOLEAN_SELECTOR;
+        self->current.kind = BOOLEAN_LITERAL_TRUE;
     }
     else if(input_consume_if(&self->input, "false"))
     {
-        self->current.kind = BOOLEAN_SELECTOR;
+        self->current.kind = BOOLEAN_LITERAL_FALSE;
     }
     else
     {

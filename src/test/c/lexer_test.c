@@ -10,8 +10,8 @@
 #define expected_token(KIND, EXTENT, INDEX) (Token){.kind=(KIND), .location.extent=(EXTENT), .location.index=(INDEX), .location.line=0, .location.offset=0}
 
 #define assert_token(E, A) ck_assert_msg(E.kind == A.kind, "Assertion '"#E".kind == "#A".kind' failed: "#E".kind==%s, "#A".kind==%s", token_name(E.kind), token_name(A.kind)); \
-    assert_uint_eq(E.location.index, A.location.index);                 \
-    assert_uint_eq(E.location.extent, A.location.extent);               \
+    ck_assert_msg(E.location.index == A.location.index, "Assertion for expected %s '"#E".location.index == "#A"location.index failed: "#E".location.index==%zu, "#A"location.index==%zu", token_name(E.kind), E.location.index, A.location.index); \
+    ck_assert_msg(E.location.extent == A.location.extent, "Assertion for expected %s '"#E".location.extent == "#A"location.extent failed: "#E".location.extent==%zu, "#A"location.extent==%zu", token_name(E.kind), E.location.extent, A.location.extent); \
     assert_uint_eq(E.location.line, A.location.line);                   \
     assert_uint_eq(E.location.offset, A.location.offset)
 #define assert_expectations(L, E) assert_true(vector_is_empty(L->errors)); \
@@ -32,7 +32,7 @@
     {                                                                   \
         LexerError *err = vector_get(L->errors, i);                     \
         assert_not_null(err);                                           \
-        assert_uint_eq(E[i].code, err->code);                           \
+        ck_assert_msg(E[i].code == err->code, "Assertion '"#E"[i].code == err->code' failed: "#E"[i].code==\"%s\", err->code==\"%s\"", lexer_strerror(E[i].code), lexer_strerror(err->code)); \
         assert_uint_eq(E[i].position.index, err->position.index);       \
     }
 
@@ -597,6 +597,339 @@ START_TEST (real_expression_with_shorthand)
 }
 END_TEST
 
+START_TEST (root_step_predicated)
+{
+    char *expression = "$[1].foo";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(OPEN_BRACKET, 1, 1),
+        expected_token(INTEGER_LITERAL, 1, 2),
+        expected_token(CLOSE_BRACKET, 1, 3),
+        expected_token(DOT, 1, 4),
+        expected_token(NAME, 3, 5),
+        expected_token(END_OF_INPUT, 0, 8),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (relative_path_explicit)
+{
+    char *expression = "@foo.bar";
+    Token expectations[] = {
+        expected_token(AT, 1, 0),
+        expected_token(NAME, 3, 1),
+        expected_token(DOT, 1, 4),
+        expected_token(NAME, 3, 5),
+        expected_token(END_OF_INPUT, 0, 8),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (relative_path_explicit_predicated)
+{
+    char *expression = "@[1].foo";
+    Token expectations[] = {
+        expected_token(AT, 1, 0),
+        expected_token(OPEN_BRACKET, 1, 1),
+        expected_token(INTEGER_LITERAL, 1, 2),
+        expected_token(CLOSE_BRACKET, 1, 3),
+        expected_token(DOT, 1, 4),
+        expected_token(NAME, 3, 5),
+        expected_token(END_OF_INPUT, 0, 8),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (transfomer_step)
+{
+    char *expression = "$.foo={\"name\": name}";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(EQUALS, 1, 5),
+        expected_token(OPEN_BRACE, 1, 6),
+        expected_token(STRING_LITERAL, 6, 7),
+        expected_token(COLON, 1, 13),
+        expected_token(NAME, 4, 15),
+        expected_token(CLOSE_BRACE, 1, 19),
+        expected_token(END_OF_INPUT, 0, 20),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (tag_selector)
+{
+    char *expression = "$.foo.!bar";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(DOT, 1, 5),
+        expected_token(EXCLAMATION, 1, 6),
+        expected_token(NAME, 3, 7),
+        expected_token(END_OF_INPUT, 0, 10),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (anchor_selector)
+{
+    char *expression = "$.foo.&bar";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(DOT, 1, 5),
+        expected_token(AMPERSAND, 1, 6),
+        expected_token(NAME, 3, 7),
+        expected_token(END_OF_INPUT, 0, 10),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (join_predicate)
+{
+    char *expression = "$.foo[1, -1]";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(OPEN_BRACKET, 1, 5),
+        expected_token(INTEGER_LITERAL, 1, 6),
+        expected_token(COMMA, 1, 7),
+        expected_token(MINUS, 1, 9),
+        expected_token(INTEGER_LITERAL, 1, 10),
+        expected_token(CLOSE_BRACKET, 1, 11),
+        expected_token(END_OF_INPUT, 0, 12),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (filter_predicate)
+{
+    char *expression = "$.foo[?(value > 1)]";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(OPEN_BRACKET, 1, 5),
+        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(NAME, 5, 8),
+        expected_token(GREATER_THAN, 1, 14),
+        expected_token(INTEGER_LITERAL, 1, 16),
+        expected_token(CLOSE_PARENTHESIS, 1, 17),
+        expected_token(CLOSE_BRACKET, 1, 18),
+        expected_token(END_OF_INPUT, 0, 19),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (filter_predicate_equals_null)
+{
+    char *expression = "$.foo[?(name = null)]";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(OPEN_BRACKET, 1, 5),
+        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(NAME, 4, 8),
+        expected_token(EQUALS, 1, 13),
+        expected_token(NULL_LITERAL, 4, 15),
+        expected_token(CLOSE_PARENTHESIS, 1, 19),
+        expected_token(CLOSE_BRACKET, 1, 20),
+        expected_token(END_OF_INPUT, 0, 21),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (filter_predicate_path_gt_integer)
+{
+    char *expression = "$.foo[?(some.thing > 1)]";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(OPEN_BRACKET, 1, 5),
+        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(NAME, 4, 8),
+        expected_token(DOT, 1, 12),
+        expected_token(NAME, 5, 13),
+        expected_token(GREATER_THAN, 1, 19),
+        expected_token(INTEGER_LITERAL, 1, 21),
+        expected_token(CLOSE_PARENTHESIS, 1, 22),
+        expected_token(CLOSE_BRACKET, 1, 23),
+        expected_token(END_OF_INPUT, 0, 24),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (filter_predicate_path_expr_gte_path_expr)
+{
+    char *expression = "$.foo[?(this.thing >= that.thing)]";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(OPEN_BRACKET, 1, 5),
+        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(NAME, 4, 8),
+        expected_token(DOT, 1, 12),
+        expected_token(NAME, 5, 13),
+        expected_token(GREATER_THAN_EQUAL, 2, 19),
+        expected_token(NAME, 4, 22),
+        expected_token(DOT, 1, 26),
+        expected_token(NAME, 5, 27),
+        expected_token(CLOSE_PARENTHESIS, 1, 32),
+        expected_token(CLOSE_BRACKET, 1, 33),
+        expected_token(END_OF_INPUT, 0, 34),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (filter_predicate_path_lt_integer)
+{
+    char *expression = "$.foo[?(value < 1)]";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(OPEN_BRACKET, 1, 5),
+        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(NAME, 5, 8),
+        expected_token(LESS_THAN, 1, 14),
+        expected_token(INTEGER_LITERAL, 1, 16),
+        expected_token(CLOSE_PARENTHESIS, 1, 17),
+        expected_token(CLOSE_BRACKET, 1, 18),
+        expected_token(END_OF_INPUT, 0, 19),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (filter_predicate_path_eq_string)
+{
+    char *expression = "$.foo[?(this.thing = \"string\")]";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(OPEN_BRACKET, 1, 5),
+        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(NAME, 4, 8),
+        expected_token(DOT, 1, 12),
+        expected_token(NAME, 5, 13),
+        expected_token(EQUALS, 1, 19),
+        expected_token(STRING_LITERAL, 8, 21),
+        expected_token(CLOSE_PARENTHESIS, 1, 29),
+        expected_token(CLOSE_BRACKET, 1, 30),
+        expected_token(END_OF_INPUT, 0, 31),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (filter_predicate_path_ne_bool)
+{
+    char *expression = "$.foo[?(value != false)]";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(OPEN_BRACKET, 1, 5),
+        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(NAME, 5, 8),
+        expected_token(NOT_EQUAL, 2, 14),
+        expected_token(BOOLEAN_LITERAL_FALSE, 5, 17),
+        expected_token(CLOSE_PARENTHESIS, 1, 22),
+        expected_token(CLOSE_BRACKET, 1, 23),
+        expected_token(END_OF_INPUT, 0, 24),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (filter_predicate_multiple_bool_expr)
+{
+    char *expression = "$.foo[?(value > 1 and name != null)]";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(OPEN_BRACKET, 1, 5),
+        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(NAME, 5, 8),
+        expected_token(GREATER_THAN, 1, 14),
+        expected_token(INTEGER_LITERAL, 1, 16),
+        expected_token(BOOLEAN_AND, 3, 18),
+        expected_token(NAME, 4, 22),
+        expected_token(NOT_EQUAL, 2, 27),
+        expected_token(NULL_LITERAL, 4, 30),
+        expected_token(CLOSE_PARENTHESIS, 1, 34),
+        expected_token(CLOSE_BRACKET, 1, 35),
+        expected_token(END_OF_INPUT, 0, 36),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
 START_TEST (empty_input)
 {
     char *expression = "";
@@ -676,13 +1009,85 @@ START_TEST (expression_with_bare_exponent)
 }
 END_TEST
 
+START_TEST (type_selsector_interstitial_whitespace)
+{
+    char *expression = "$.foo.object ()";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(DOT, 1, 5),
+        expected_token(NAME, 6, 6),
+        expected_token(OPEN_PARENTHSIS, 1, 13),
+        expected_token(CLOSE_PARENTHESIS, 1, 14),
+        expected_token(END_OF_INPUT, 0, 15),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (integer_eoi_exponent)
+{
+    char *expression = "5e";
+    Token expectations[] = {
+        expected_token(INTEGER_LITERAL, 2, 0),
+        expected_token(END_OF_INPUT, 0, 2),
+    };
+    LexerError errors[] = {
+        (LexerError){PREMATURE_END_OF_INPUT, .position.index=2},
+    };    
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (real_eoi_fraction)
+{
+    char *expression = "5.";
+    Token expectations[] = {
+        expected_token(REAL_LITERAL, 2, 0),
+        expected_token(END_OF_INPUT, 0, 2),
+    };
+    LexerError errors[] = {
+        (LexerError){PREMATURE_END_OF_INPUT, .position.index=2},
+    };    
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (real_eoi_exponent)
+{
+    char *expression = "5.1e";
+    Token expectations[] = {
+        expected_token(REAL_LITERAL, 4, 0),
+        expected_token(END_OF_INPUT, 0, 4),
+    };
+    LexerError errors[] = {
+        (LexerError){PREMATURE_END_OF_INPUT, .position.index=4},
+    };    
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
 START_TEST (name_includes_newline)
 {
     char *expression = "$.foo\nbar";
     Token expectations[] = {
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
-        expected_token(NAME, 7, 2),
+        expected_token(NAME, 3, 2),
+        expected_token(NAME, 3, 6),
         expected_token(END_OF_INPUT, 0, 9),
     };
     LexerError errors[] = {
@@ -701,7 +1106,8 @@ START_TEST (name_includes_tab)
     Token expectations[] = {
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
-        expected_token(NAME, 7, 2),
+        expected_token(NAME, 3, 2),
+        expected_token(NAME, 3, 6),
         expected_token(END_OF_INPUT, 0, 9),
     };
     LexerError errors[] = {
@@ -752,6 +1158,260 @@ START_TEST (quoted_name_illegal_escape_sequence)
 }
 END_TEST
 
+START_TEST (quoted_name_illegal_hex_escape_sequence)
+{
+    char *expression = "$.'fo\\xobar'";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 10, 2),
+        expected_token(END_OF_INPUT, 0, 12),
+    };
+    LexerError errors[] = {
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=7},
+    };    
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_short_hex_escape_sequence)
+{
+    char *expression = "$.'foo\\xdmbar'";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 12, 2),
+        expected_token(END_OF_INPUT, 0, 14),
+    };
+    LexerError errors[] = {
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=9},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_eoi_hex_escape_sequence)
+{
+    char *expression = "$.'foo\\x";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 6, 2),
+        expected_token(END_OF_INPUT, 0, 8),
+    };
+    LexerError errors[] = {
+        (LexerError){PREMATURE_END_OF_INPUT, .position.index=8},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_illegal_utf16_escape_sequence)
+{
+    char *expression = "$.'foo\\umbar'";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 11, 2),
+        expected_token(END_OF_INPUT, 0, 13),
+    };
+    LexerError errors[] = {
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=8},
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=11},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_short_utf16_escape_sequence)
+{
+    char *expression = "$.'foo\\ueemm'";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 11, 2),
+        expected_token(END_OF_INPUT, 0, 13),
+    };
+    LexerError errors[] = {
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=10},
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=11},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_eoi_utf16_escape_sequence)
+{
+    char *expression = "$.'foo\\uee";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 8, 2),
+        expected_token(END_OF_INPUT, 0, 10),
+    };
+    LexerError errors[] = {
+        (LexerError){PREMATURE_END_OF_INPUT, .position.index=10},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_illegal_utf32_escape_sequence)
+{
+    char *expression = "$.'foo\\Udeadbxxf'";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 15, 2),
+        expected_token(END_OF_INPUT, 0, 17),
+    };
+    LexerError errors[] = {
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=13},
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=14},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_short_utf32_escape_sequence)
+{
+    char *expression = "$.'foo\\Udeadmmmm'";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 15, 2),
+        expected_token(END_OF_INPUT, 0, 17),
+    };
+    LexerError errors[] = {
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=12},
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=13},
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=14},
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=15},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_eoi_utf32_escape_sequence)
+{
+    char *expression = "$.'foo\\Udead";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 10, 2),
+        expected_token(END_OF_INPUT, 0, 12),
+    };
+    LexerError errors[] = {
+        (LexerError){PREMATURE_END_OF_INPUT, .position.index=12},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_multiple_illegal_escape_sequence)
+{
+    char *expression = "$.'fo\\zob\\mar'";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 12, 2),
+        expected_token(END_OF_INPUT, 0, 14),
+    };
+    LexerError errors[] = {
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=6},
+        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=10},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_unterminated_literal)
+{
+    char *expression = "$.'foobar";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 7, 2),
+        expected_token(END_OF_INPUT, 0, 9),
+    };
+    LexerError errors[] = {
+        (LexerError){PREMATURE_END_OF_INPUT, .position.index=9},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_eoi)
+{
+    char *expression = "$.'";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 1, 2),
+        expected_token(END_OF_INPUT, 0, 3),
+    };
+    LexerError errors[] = {
+        (LexerError){PREMATURE_END_OF_INPUT, .position.index=3},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (quoted_name_eoi_escape_sequence)
+{
+    char *expression = "$.'foobar\\";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(QUOTED_NAME, 8, 2),
+        expected_token(END_OF_INPUT, 0, 10),
+    };
+    LexerError errors[] = {
+        (LexerError){PREMATURE_END_OF_INPUT, .position.index=10},
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_errors(lexer, expectations, errors);
+    dispose_lexer(lexer);
+}
+END_TEST
+
 Suite *lexer_suite(void)
 {
     TCase *expected_case = tcase_create("expected");
@@ -785,20 +1445,52 @@ Suite *lexer_suite(void)
     tcase_add_test(expected_case, integer_expression);
     tcase_add_test(expected_case, real_expression);
     tcase_add_test(expected_case, real_expression_with_shorthand);
+    tcase_add_test(expected_case, root_step_predicated);
+    tcase_add_test(expected_case, relative_path_explicit);
+    tcase_add_test(expected_case, relative_path_explicit_predicated);
+    tcase_add_test(expected_case, transfomer_step);
+    tcase_add_test(expected_case, tag_selector);
+    tcase_add_test(expected_case, anchor_selector);
+    tcase_add_test(expected_case, join_predicate);
+    tcase_add_test(expected_case, filter_predicate);
+    tcase_add_test(expected_case, filter_predicate_equals_null);
+    tcase_add_test(expected_case, filter_predicate_path_gt_integer);
+    tcase_add_test(expected_case, filter_predicate_path_expr_gte_path_expr);
+    tcase_add_test(expected_case, filter_predicate_path_lt_integer);
+    tcase_add_test(expected_case, filter_predicate_path_eq_string);
+    tcase_add_test(expected_case, filter_predicate_path_ne_bool);
+    tcase_add_test(expected_case, filter_predicate_multiple_bool_expr);
 
     TCase *subtleties_case = tcase_create("subtleties");
     tcase_add_test(subtleties_case, empty_input);
+    tcase_add_test(subtleties_case, name_includes_tab);
+    tcase_add_test(subtleties_case, name_includes_ack);
     tcase_add_test(subtleties_case, unquoted_name_escape_dot_attempt);
     tcase_add_test(subtleties_case, unquoted_name_escape_sequence);
     tcase_add_test(subtleties_case, unquoted_name_illegal_escape_sequence);
     tcase_add_test(subtleties_case, expression_with_bare_exponent);
+    tcase_add_test(subtleties_case, type_selsector_interstitial_whitespace);
 
     TCase *errors_case = tcase_create("errors");
+    tcase_add_test(errors_case, integer_eoi_exponent);
+    tcase_add_test(errors_case, real_eoi_fraction);
+    tcase_add_test(errors_case, real_eoi_exponent);
     tcase_add_test(errors_case, name_includes_newline);
-    tcase_add_test(errors_case, name_includes_tab);
-    tcase_add_test(errors_case, name_includes_ack);
     tcase_add_test(errors_case, quoted_name_illegal_escape_sequence);
-
+    tcase_add_test(errors_case, quoted_name_multiple_illegal_escape_sequence);
+    tcase_add_test(errors_case, quoted_name_eoi);
+    tcase_add_test(errors_case, quoted_name_unterminated_literal);
+    tcase_add_test(errors_case, quoted_name_eoi_escape_sequence);
+    tcase_add_test(errors_case, quoted_name_illegal_hex_escape_sequence);
+    tcase_add_test(errors_case, quoted_name_short_hex_escape_sequence);
+    tcase_add_test(errors_case, quoted_name_eoi_hex_escape_sequence);
+    tcase_add_test(errors_case, quoted_name_illegal_utf16_escape_sequence);
+    tcase_add_test(errors_case, quoted_name_short_utf16_escape_sequence);
+    tcase_add_test(errors_case, quoted_name_eoi_utf16_escape_sequence);
+    tcase_add_test(errors_case, quoted_name_illegal_utf32_escape_sequence);
+    tcase_add_test(errors_case, quoted_name_short_utf32_escape_sequence);
+    tcase_add_test(errors_case, quoted_name_eoi_utf32_escape_sequence);
+    
     Suite *suite = suite_create("Lexer");
     suite_add_tcase(suite, expected_case);
     suite_add_tcase(suite, subtleties_case);
