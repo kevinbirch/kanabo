@@ -111,7 +111,7 @@ quoted name character
     ;
 
 name character
-    = ? any unicode character except . or [ or control characters ?
+    = ? any unicode character except '[', '.', '=', ',', '}', ')', whitespace or control characters ?
     ;
 
 predicate expression
