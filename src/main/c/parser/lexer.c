@@ -361,7 +361,7 @@ void next(Lexer *self)
 {
     input_skip_whitespace(&self->input);
 
-    Position start = self->input.position;
+    Position start = position(self);
     if(!input_has_more(&self->input))
     {
         self->current.kind = END_OF_INPUT;

@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "parser/input.h"
 #include "parser/token.h"
 
