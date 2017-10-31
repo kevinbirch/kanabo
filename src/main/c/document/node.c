@@ -37,7 +37,7 @@
 
 #include <string.h>
 
-#include "model.h"
+#include "document.h"
 #include "conditions.h"
 
 static bool node_comparitor(const void *one, const void *two);

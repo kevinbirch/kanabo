@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <yaml.h>
 
-#include "model.h"
+#include "document.h"
 
 enum loader_status_code
 {

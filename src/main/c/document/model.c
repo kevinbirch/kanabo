@@ -35,7 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include "model.h"
+#include "document.h"
 #include "conditions.h"
 
 node *model_document(const document_model *model, size_t index)

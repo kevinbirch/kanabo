@@ -44,7 +44,7 @@
 #include "loader.h"
 #include "loader/private.h"
 #include "test.h"
-#include "test_model.h"
+#include "test_document.h"
 
 static const unsigned char * const ALIAS_LOOP_YAML = (unsigned char *)
     "level1: &id001\n"

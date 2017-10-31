@@ -38,7 +38,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "model.h"
+#include "document.h"
 #include "conditions.h"
 
 static inline node *make_node(enum node_kind kind);

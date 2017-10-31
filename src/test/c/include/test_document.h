@@ -37,7 +37,7 @@
 
 #pragma once
 
-#include "model.h"
+#include "document.h"
 
 // model assertions
 #define assert_node_kind(NODE, EXPECTED)      assert_int_eq((EXPECTED), node_kind((NODE)))

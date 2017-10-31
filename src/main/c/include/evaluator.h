@@ -37,7 +37,7 @@
 
 #pragma once
 
-#include "model.h"
+#include "document.h"
 #include "jsonpath.h"
 #include "nodelist.h"
 

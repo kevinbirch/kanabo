@@ -35,7 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include "model.h"
+#include "document.h"
 #include "conditions.h"
 
 node *alias_target(const node *alias)

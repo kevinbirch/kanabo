@@ -40,7 +40,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "model.h"
+#include "document.h"
 #include "vector.h"
 
 typedef Vector nodelist;

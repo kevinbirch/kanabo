@@ -40,9 +40,9 @@
 
 #include <check.h>
 
-#include "model.h"
+#include "document.h"
 #include "test.h"
-#include "test_model.h"
+#include "test_document.h"
 
 void model_setup(void);
 void model_teardown(void);

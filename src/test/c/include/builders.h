@@ -37,7 +37,7 @@
 
 #pragma once
 
-#include "model.h"
+#include "document.h"
 
 node *sequence_builder(node *one, ...);
 #define sequence(one, ...) sequence_builder(one, NULL)

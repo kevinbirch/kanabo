@@ -39,7 +39,7 @@
 
 #include <stdbool.h>
 
-#include "model.h"
+#include "document.h"
 
 bool emit_node(node *value, void *context);
 bool emit_scalar(const node *each);

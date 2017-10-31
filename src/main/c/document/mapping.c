@@ -35,7 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include "model.h"
+#include "document.h"
 #include "conditions.h"
 
 static bool mapping_iterator_adpater(void *key, void *value, void *context);

@@ -35,7 +35,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include "model.h"
+#include "document.h"
 
 static inline void sequence_free(node *sequence);
 static inline void mapping_free(node *mapping);

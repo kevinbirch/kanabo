@@ -35,31 +35,55 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <string.h>
-
-#include "model.h"
+#include "document.h"
 #include "conditions.h"
 
-
-uint8_t *scalar_value(const node *scalar)
+struct context_adapter_s
 {
-    PRECOND_NONNULL_ELSE_NULL(scalar);
-    PRECOND_ELSE_NULL(SCALAR == node_kind(scalar));
+    sequence_iterator sequence;
+    void *context;
+};
 
-    return scalar->content.scalar.value;
+typedef struct context_adapter_s context_adapter;
+
+static bool sequence_iterator_adpater(void *each, void *context);
+
+
+node *sequence_get(const node *sequence, size_t index)
+{
+    PRECOND_NONNULL_ELSE_NULL(sequence);
+    PRECOND_ELSE_NULL(SEQUENCE == node_kind(sequence));
+    PRECOND_ELSE_NULL(index < node_size(sequence));
+
+    return vector_get(sequence->content.sequence, index);
 }
 
-enum scalar_kind scalar_kind(const node *scalar)
+static bool sequence_iterator_adpater(void *each, void *context)
 {
-    return scalar->content.scalar.kind;
+    context_adapter *adapter = (context_adapter *)context;
+    return adapter->sequence((node *)each, adapter->context);
 }
 
-bool scalar_boolean_is_true(const node *scalar)
+bool sequence_iterate(const node *sequence, sequence_iterator iterator, void *context)
 {
-    return 0 == memcmp("true", scalar_value(scalar), 4);
+    PRECOND_NONNULL_ELSE_FALSE(sequence, iterator);
+    PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence));
+
+    context_adapter adapter = {.sequence=iterator, .context=context };
+    return vector_iterate(sequence->content.sequence, sequence_iterator_adpater, &adapter);
 }
 
-bool scalar_boolean_is_false(const node *scalar)
+bool sequence_add(node *sequence, node *item)
 {
-    return 0 == memcmp("false", scalar_value(scalar), 5);
+    PRECOND_NONNULL_ELSE_FALSE(sequence, item);
+    PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence));
+
+    bool result = vector_add(sequence->content.sequence, item);
+    if(result)
+    {
+        sequence->content.size = vector_length(sequence->content.sequence);
+        item->parent = sequence;
+    }
+    return result;
 }
+

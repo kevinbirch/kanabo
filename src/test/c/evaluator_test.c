@@ -1,5 +1,5 @@
 #include "test.h"
-#include "test_model.h"
+#include "test_document.h"
 #include "test_nodelist.h"
 
 // check defines a fail helper that conflicts with the maybe constructor

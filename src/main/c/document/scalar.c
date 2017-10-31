@@ -35,24 +35,31 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include "model.h"
+#include <string.h>
+
+#include "document.h"
 #include "conditions.h"
 
 
-node *document_root(const node *document)
+uint8_t *scalar_value(const node *scalar)
 {
-    PRECOND_NONNULL_ELSE_NULL(document);
-    PRECOND_ELSE_NULL(DOCUMENT == node_kind(document));
+    PRECOND_NONNULL_ELSE_NULL(scalar);
+    PRECOND_ELSE_NULL(SCALAR == node_kind(scalar));
 
-    return document->content.target;
+    return scalar->content.scalar.value;
 }
 
-bool document_set_root(node *document, node *root)
+enum scalar_kind scalar_kind(const node *scalar)
 {
-    PRECOND_NONNULL_ELSE_FALSE(document, root);
-    PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
+    return scalar->content.scalar.kind;
+}
 
-    document->content.target = root;
-    root->parent = document;
-    return true;
+bool scalar_boolean_is_true(const node *scalar)
+{
+    return 0 == memcmp("true", scalar_value(scalar), 4);
+}
+
+bool scalar_boolean_is_false(const node *scalar)
+{
+    return 0 == memcmp("false", scalar_value(scalar), 5);
 }

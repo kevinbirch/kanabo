@@ -12,7 +12,7 @@
 
 #include "nodelist.h"
 #include "test.h"
-#include "test_model.h"
+#include "test_document.h"
 #include "test_nodelist.h"
 
 void nodelist_setup(void);
