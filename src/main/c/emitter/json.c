@@ -37,7 +37,7 @@
 
 #include <stdio.h>
 
-#include "emit/json.h"
+#include "emitter/json.h"
 #include "log.h"
 
 static bool emit_json_node(node *value, void *context);

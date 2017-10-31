@@ -38,7 +38,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#include "emit/shell.h"
+#include "emitter/shell.h"
 #include "log.h"
 
 static bool scalar_contains_space(const node *each);

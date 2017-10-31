@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <yaml.h>
 
-#include "emit/yaml.h"
+#include "emitter/yaml.h"
 #include "log.h"
 
 static bool emit_nodelist(const nodelist *list, yaml_emitter_t *emitter);

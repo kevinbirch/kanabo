@@ -49,7 +49,7 @@
 #include "loader.h"
 #include "jsonpath.h"
 #include "evaluator.h"
-#include "emit.h"
+#include "emitter.h"
 #include "log.h"
 #include "version.h"
 #include "linenoise.h"

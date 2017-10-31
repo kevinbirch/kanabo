@@ -35,52 +35,10 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <stdio.h>
+#include "emitter/bash.h"
+#include "emitter/zsh.h"
+#include "emitter/json.h"
+#include "emitter/yaml.h"
 
-#include "emit/zsh.h"
-#include "emit/shell.h"
-#include "log.h"
+typedef void (*emit_function)(const nodelist *list, const struct settings *settings);
 
-static bool emit_mapping_item(node *key, node *value, void *context);
-
-void emit_zsh(const nodelist *list, const struct settings *settings)
-{
-    log_debug("zsh", "emitting...");
-    emit_context context = 
-        {
-            .emit_mapping_item = emit_mapping_item,
-            .wrap_collections = false
-        };
-
-    if(!nodelist_iterate(list, emit_node, &context))
-    {
-        perror(settings->program_name);
-    }
-    fflush(stdout);
-}
-
-static bool emit_mapping_item(node *key, node *value, void * context __attribute__((unused)))
-{
-    if(SCALAR == node_kind(value))
-    {
-        log_trace("zsh", "emitting mapping item");
-        if(!emit_scalar(key))
-        {
-            log_error("zsh", "uh oh! couldn't emit mapping key");
-            return false;
-        }
-        EMIT(" ");
-        if(!emit_scalar(value))
-        {
-            log_error("zsh", "uh oh! couldn't emit mapping value");
-            return false;
-        }
-        EMIT(" ");
-    }
-    else
-    {
-        log_trace("zsh", "skipping mapping item");
-    }
-
-    return true;
-}
