@@ -418,8 +418,15 @@ void next(Lexer *self)
             self->current.kind = ASTERISK;
             break;
         case '[':
+        {
             self->current.kind = OPEN_BRACKET;
+            if(input_peek(&self->input) == '?')
+            {
+                self->current.kind = OPEN_FILTER;
+                input_consume_one(&self->input);
+            }
             break;
+        }
         case ']':
             self->current.kind = CLOSE_BRACKET;
             break;
@@ -430,23 +437,11 @@ void next(Lexer *self)
             self->current.kind = CLOSE_BRACE;
             break;
         case '(':
-            self->current.kind = OPEN_PARENTHSIS;
+            self->current.kind = OPEN_PARENTHESIS;
             break;
         case ')':
             self->current.kind = CLOSE_PARENTHESIS;
             break;
-        case '?':
-        {
-            if(input_peek(&self->input) == '(')
-            {
-                self->current.kind = OPEN_FILTER;
-                input_consume_one(&self->input);
-                break;
-            }
-            input_push_back(&self->input);
-            match_symbol(self);
-            break;
-        }
         case '<':
         {
             self->current.kind = LESS_THAN;

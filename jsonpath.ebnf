@@ -8,7 +8,7 @@ absolute path
     ;
 
 root step
-    = "$", [ predicate expression ]
+    = "$", [ predicate ]
     ;
 
 qualified step
@@ -29,12 +29,12 @@ relative path
     ;
 
 relative head step
-    = "@" , [ predicate expression ]
+    = "@" , [ predicate ]
     ;
 
 step
     = transformer
-    | ( selector, [ predicate expression ] )
+    | ( selector, [ predicate ] )
     ;
 
 transformer
@@ -114,12 +114,16 @@ name character
     = ? any unicode character except '[', '.', '=', ',', '}', ')', whitespace or control characters ?
     ;
 
-predicate expression
-    = "[", predicate, "]"
-    | filter expression
+predicate
+    = "[?", filter expression "]"
+    | "[", predicate expression "]"
     ;
 
-predicate
+filter expression
+    = or expr
+    ;
+
+predicate expression
     = wildcard
     | subscript
     | slice
@@ -141,10 +145,6 @@ join
 join expression
     = signed integer
     | relative path
-    ;
-
-filter expression
-    = "?(", or expr, ")"
     ;
 
 or expr

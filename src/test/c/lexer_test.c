@@ -737,13 +737,34 @@ END_TEST
 
 START_TEST (filter_predicate)
 {
+    char *expression = "$.foo[?value > 1]";
+    Token expectations[] = {
+        expected_token(DOLLAR, 1, 0),
+        expected_token(DOT, 1, 1),
+        expected_token(NAME, 3, 2),
+        expected_token(OPEN_FILTER, 2, 5),
+        expected_token(NAME, 5, 7),
+        expected_token(GREATER_THAN, 1, 13),
+        expected_token(INTEGER_LITERAL, 1, 15),
+        expected_token(CLOSE_BRACKET, 1, 16),
+        expected_token(END_OF_INPUT, 0, 17),
+    };
+    Lexer *lexer = make_lexer(expression, strlen(expression));
+    assert_not_null(lexer);
+    assert_expectations(lexer, expectations);
+    dispose_lexer(lexer);
+}
+END_TEST
+
+START_TEST (filter_predicate_parenthesized)
+{
     char *expression = "$.foo[?(value > 1)]";
     Token expectations[] = {
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
         expected_token(NAME, 3, 2),
-        expected_token(OPEN_BRACKET, 1, 5),
-        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(OPEN_FILTER, 2, 5),
+        expected_token(OPEN_PARENTHESIS, 1, 7),
         expected_token(NAME, 5, 8),
         expected_token(GREATER_THAN, 1, 14),
         expected_token(INTEGER_LITERAL, 1, 16),
@@ -765,8 +786,8 @@ START_TEST (filter_predicate_equals_null)
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
         expected_token(NAME, 3, 2),
-        expected_token(OPEN_BRACKET, 1, 5),
-        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(OPEN_FILTER, 2, 5),
+        expected_token(OPEN_PARENTHESIS, 1, 7),
         expected_token(NAME, 4, 8),
         expected_token(EQUALS, 1, 13),
         expected_token(NULL_LITERAL, 4, 15),
@@ -788,8 +809,8 @@ START_TEST (filter_predicate_path_gt_integer)
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
         expected_token(NAME, 3, 2),
-        expected_token(OPEN_BRACKET, 1, 5),
-        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(OPEN_FILTER, 2, 5),
+        expected_token(OPEN_PARENTHESIS, 1, 7),
         expected_token(NAME, 4, 8),
         expected_token(DOT, 1, 12),
         expected_token(NAME, 5, 13),
@@ -813,8 +834,8 @@ START_TEST (filter_predicate_path_expr_gte_path_expr)
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
         expected_token(NAME, 3, 2),
-        expected_token(OPEN_BRACKET, 1, 5),
-        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(OPEN_FILTER, 2, 5),
+        expected_token(OPEN_PARENTHESIS, 1, 7),
         expected_token(NAME, 4, 8),
         expected_token(DOT, 1, 12),
         expected_token(NAME, 5, 13),
@@ -840,8 +861,8 @@ START_TEST (filter_predicate_path_lt_integer)
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
         expected_token(NAME, 3, 2),
-        expected_token(OPEN_BRACKET, 1, 5),
-        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(OPEN_FILTER, 2, 5),
+        expected_token(OPEN_PARENTHESIS, 1, 7),
         expected_token(NAME, 5, 8),
         expected_token(LESS_THAN, 1, 14),
         expected_token(INTEGER_LITERAL, 1, 16),
@@ -863,8 +884,8 @@ START_TEST (filter_predicate_path_eq_string)
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
         expected_token(NAME, 3, 2),
-        expected_token(OPEN_BRACKET, 1, 5),
-        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(OPEN_FILTER, 2, 5),
+        expected_token(OPEN_PARENTHESIS, 1, 7),
         expected_token(NAME, 4, 8),
         expected_token(DOT, 1, 12),
         expected_token(NAME, 5, 13),
@@ -888,8 +909,8 @@ START_TEST (filter_predicate_path_ne_bool)
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
         expected_token(NAME, 3, 2),
-        expected_token(OPEN_BRACKET, 1, 5),
-        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(OPEN_FILTER, 2, 5),
+        expected_token(OPEN_PARENTHESIS, 1, 7),
         expected_token(NAME, 5, 8),
         expected_token(NOT_EQUAL, 2, 14),
         expected_token(BOOLEAN_LITERAL_FALSE, 5, 17),
@@ -911,8 +932,8 @@ START_TEST (filter_predicate_multiple_bool_expr)
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
         expected_token(NAME, 3, 2),
-        expected_token(OPEN_BRACKET, 1, 5),
-        expected_token(OPEN_FILTER, 2, 6),
+        expected_token(OPEN_FILTER, 2, 5),
+        expected_token(OPEN_PARENTHESIS, 1, 7),
         expected_token(NAME, 5, 8),
         expected_token(GREATER_THAN, 1, 14),
         expected_token(INTEGER_LITERAL, 1, 16),
@@ -1019,7 +1040,7 @@ START_TEST (type_selector_interstitial_whitespace)
         expected_token(NAME, 3, 2),
         expected_token(DOT, 1, 5),
         expected_token(NAME, 6, 6),
-        expected_token(OPEN_PARENTHSIS, 1, 13),
+        expected_token(OPEN_PARENTHESIS, 1, 13),
         expected_token(CLOSE_PARENTHESIS, 1, 14),
         expected_token(END_OF_INPUT, 0, 15),
     };
@@ -1454,6 +1475,7 @@ Suite *lexer_suite(void)
     tcase_add_test(expected_case, anchor_selector);
     tcase_add_test(expected_case, join_predicate);
     tcase_add_test(expected_case, filter_predicate);
+    tcase_add_test(expected_case, filter_predicate_parenthesized);
     tcase_add_test(expected_case, filter_predicate_equals_null);
     tcase_add_test(expected_case, filter_predicate_path_gt_integer);
     tcase_add_test(expected_case, filter_predicate_path_expr_gte_path_expr);
