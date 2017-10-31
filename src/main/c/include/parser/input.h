@@ -7,18 +7,9 @@
 
 #include "str.h"
 #include "vector.h"
-
+#include "parser/location.h"
 
 // Input Entities
-
-struct postion_s
-{
-    size_t index;
-    size_t line;
-    size_t offset;
-};
-
-typedef struct postion_s Position;
 
 struct source_s
 {
@@ -38,6 +29,14 @@ struct input_s
 };
 
 typedef struct input_s Input;
+
+struct source_location_s
+{
+    Input   *input;
+    Location location;
+};
+
+typedef struct source_location_s SourceLocation;
 
 // Input Constructors
 

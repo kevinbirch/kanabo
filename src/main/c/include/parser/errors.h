@@ -1,5 +1,7 @@
 #pragma once
 
+#include "parser/position.h"
+
 enum parser_error_e
 {
     PREMATURE_END_OF_INPUT,

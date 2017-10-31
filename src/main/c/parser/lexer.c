@@ -4,27 +4,19 @@
 
 #include "parser/lexer.h"
 
-static const char * const ERRORS[] =
+static inline void add_error_at(Lexer *self, Position position, ParserErrorCode code)
 {
-    [PREMATURE_END_OF_INPUT] = "premature end of input",
-    [UNSUPPORTED_CONTROL_CHARACTER] = "unsupported control character",
-    [UNSUPPORTED_ESCAPE_SEQUENCE] = "unsupported escape sequence"
-};
+    if(NULL == self->callback)
+    {
+        return;
+    }
 
-static void add_error(Lexer *self, LexerErrorCode code)
-{
-    LexerError *err = calloc(1, sizeof(LexerError));
-    err->code = code;
-    err->position = position(self);
-    vector_append(self->errors, err);
+    self->callback(position, code);
 }
 
-static void add_error_at(Lexer *self, Position position, LexerErrorCode code)
+static inline void add_error(Lexer *self, ParserErrorCode code)
 {
-    LexerError *err = calloc(1, sizeof(LexerError));
-    err->code = code;
-    err->position = position;
-    vector_append(self->errors, err);
+    add_error_at(self, position(self), code);
 }
 
 static bool read_hex_sequence(Lexer *self, size_t count)
@@ -324,25 +316,27 @@ Lexer *make_lexer(const char *data, size_t length)
     {
         goto exit;
     }
-    self->errors = make_vector();
-    if(NULL == self->errors)
+    
+    if(!lexer_init(self, data, length))
     {
         dispose_lexer(self);
         self = NULL;
-        goto exit;
     }
-    
+
+  exit:
+    return self;
+}
+
+int lexer_init(Lexer *self, const char *data, size_t length)
+{
     if(!input_init(&self->input, NULL, length))
     {
-        dispose_lexer(self);
-        self = NULL;
-        goto exit;
+        return 0;
     }
 
     memcpy(self->input.source.buffer, data, length);
 
-  exit:
-    return self;
+    return 1;
 }
 
 void dispose_lexer(Lexer *self)
@@ -352,7 +346,6 @@ void dispose_lexer(Lexer *self)
         return;
     }
 
-    vector_destroy(self->errors, free);
     input_release(&self->input);
     free(self);
 }
@@ -504,9 +497,4 @@ void next(Lexer *self)
     Position end = position(self);    
     self->current.location.position = start;
     self->current.location.extent = end.index - start.index;
-}
-
-const char *lexer_strerror(LexerErrorCode code)
-{
-    return ERRORS[code];
 }

@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include "vector.h"
+
 #include "test.h"
 
 // check defines a fail helper that conflicts with the maybe constructor
@@ -14,27 +16,50 @@
     ck_assert_msg(E.location.extent == A.location.extent, "Assertion for expected %s '"#E".location.extent == "#A"location.extent failed: "#E".location.extent==%zu, "#A"location.extent==%zu", token_name(E.kind), E.location.extent, A.location.extent); \
     assert_uint_eq(E.location.line, A.location.line);                   \
     assert_uint_eq(E.location.offset, A.location.offset)
-#define assert_expectations(L, E) assert_true(vector_is_empty(L->errors)); \
+#define assert_expectations(L, E)                                       \
     for(size_t i = 0; i < sizeof(E)/sizeof(Token); i++)                 \
     {                                                                   \
         next(L);                                                        \
         Token expected = E[i];                                          \
         assert_token(expected, L->current);                             \
-    }
-#define assert_errors(L, X, E) assert_false(!vector_is_empty(L->errors));\
+    }                                                                   \
+    assert_true(vector_is_empty(errors))
+#define assert_errors(L, X, E)                                          \
+    L->callback = record_error;                                         \
     for(size_t i = 0; i < sizeof(X)/sizeof(Token); i++)                 \
     {                                                                   \
         next(L);                                                        \
         assert_token(X[i], L->current);                                 \
     }                                                                   \
-    assert_uint_eq(sizeof(E)/sizeof(LexerError), vector_length(L->errors)); \
-    for(size_t i = 0; i < sizeof(E)/sizeof(LexerError); i++)            \
+    assert_false(vector_is_empty(errors));                              \
+    assert_uint_eq(sizeof(E)/sizeof(ParserError), vector_length(errors)); \
+    for(size_t i = 0; i < sizeof(E)/sizeof(ParserError); i++)           \
     {                                                                   \
-        LexerError *err = vector_get(L->errors, i);                     \
+        ParserError *err = vector_get(errors, i);                       \
         assert_not_null(err);                                           \
-        ck_assert_msg(E[i].code == err->code, "Assertion '"#E"[i].code == err->code' failed: "#E"[i].code==\"%s\", err->code==\"%s\"", lexer_strerror(E[i].code), lexer_strerror(err->code)); \
+        ck_assert_msg(E[i].code == err->code, "Assertion '"#E"[i].code == err->code' failed: "#E"[i].code==\"%s\", err->code==\"%s\"", parser_strerror(E[i].code), parser_strerror(err->code)); \
         assert_uint_eq(E[i].position.index, err->position.index);       \
     }
+
+static Vector *errors;
+
+static void setup(void)
+{
+    errors = make_vector();
+}
+
+static void teardown(void)
+{
+    vector_destroy(errors, free);
+}
+
+static void record_error(Position position, ParserErrorCode code)
+{
+    ParserError *err = calloc(1, sizeof(ParserError));
+    err->code = code;
+    err->position = position;
+    vector_append(errors, err);
+}
 
 START_TEST (basic)
 {
@@ -1058,12 +1083,12 @@ START_TEST (integer_eoi_exponent)
         expected_token(INTEGER_LITERAL, 2, 0),
         expected_token(END_OF_INPUT, 0, 2),
     };
-    LexerError errors[] = {
-        (LexerError){PREMATURE_END_OF_INPUT, .position.index=2},
+    ParserError expected_errors[] = {
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=2},
     };    
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1075,12 +1100,12 @@ START_TEST (real_eoi_fraction)
         expected_token(REAL_LITERAL, 2, 0),
         expected_token(END_OF_INPUT, 0, 2),
     };
-    LexerError errors[] = {
-        (LexerError){PREMATURE_END_OF_INPUT, .position.index=2},
+    ParserError expected_errors[] = {
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=2},
     };    
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1092,12 +1117,12 @@ START_TEST (real_eoi_exponent)
         expected_token(REAL_LITERAL, 4, 0),
         expected_token(END_OF_INPUT, 0, 4),
     };
-    LexerError errors[] = {
-        (LexerError){PREMATURE_END_OF_INPUT, .position.index=4},
+    ParserError expected_errors[] = {
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=4},
     };    
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1112,12 +1137,12 @@ START_TEST (name_includes_newline)
         expected_token(NAME, 3, 6),
         expected_token(END_OF_INPUT, 0, 9),
     };
-    LexerError errors[] = {
-        (LexerError){UNSUPPORTED_CONTROL_CHARACTER, .position.index=5},
+    ParserError expected_errors[] = {
+        (ParserError){UNSUPPORTED_CONTROL_CHARACTER, .position.index=5},
     };    
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1132,12 +1157,12 @@ START_TEST (name_includes_tab)
         expected_token(NAME, 3, 6),
         expected_token(END_OF_INPUT, 0, 9),
     };
-    LexerError errors[] = {
-        (LexerError){UNSUPPORTED_CONTROL_CHARACTER, .position.index=5},
+    ParserError expected_errors[] = {
+        (ParserError){UNSUPPORTED_CONTROL_CHARACTER, .position.index=5},
     };    
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1151,12 +1176,12 @@ START_TEST (name_includes_ack)
         expected_token(NAME, 7, 2),
         expected_token(END_OF_INPUT, 0, 9),
     };
-    LexerError errors[] = {
-        (LexerError){UNSUPPORTED_CONTROL_CHARACTER, .position.index=5},
+    ParserError expected_errors[] = {
+        (ParserError){UNSUPPORTED_CONTROL_CHARACTER, .position.index=5},
     };    
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1170,12 +1195,12 @@ START_TEST (quoted_name_illegal_escape_sequence)
         expected_token(QUOTED_NAME, 10, 2),
         expected_token(END_OF_INPUT, 0, 12),
     };
-    LexerError errors[] = {
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=7},
+    ParserError expected_errors[] = {
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=7},
     };    
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1189,12 +1214,12 @@ START_TEST (quoted_name_illegal_hex_escape_sequence)
         expected_token(QUOTED_NAME, 10, 2),
         expected_token(END_OF_INPUT, 0, 12),
     };
-    LexerError errors[] = {
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=7},
+    ParserError expected_errors[] = {
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=7},
     };    
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1208,12 +1233,12 @@ START_TEST (quoted_name_short_hex_escape_sequence)
         expected_token(QUOTED_NAME, 12, 2),
         expected_token(END_OF_INPUT, 0, 14),
     };
-    LexerError errors[] = {
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=9},
+    ParserError expected_errors[] = {
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=9},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1227,12 +1252,12 @@ START_TEST (quoted_name_eoi_hex_escape_sequence)
         expected_token(QUOTED_NAME, 6, 2),
         expected_token(END_OF_INPUT, 0, 8),
     };
-    LexerError errors[] = {
-        (LexerError){PREMATURE_END_OF_INPUT, .position.index=8},
+    ParserError expected_errors[] = {
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=8},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1246,13 +1271,13 @@ START_TEST (quoted_name_illegal_utf16_escape_sequence)
         expected_token(QUOTED_NAME, 11, 2),
         expected_token(END_OF_INPUT, 0, 13),
     };
-    LexerError errors[] = {
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=8},
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=11},
+    ParserError expected_errors[] = {
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=8},
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=11},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1266,13 +1291,13 @@ START_TEST (quoted_name_short_utf16_escape_sequence)
         expected_token(QUOTED_NAME, 11, 2),
         expected_token(END_OF_INPUT, 0, 13),
     };
-    LexerError errors[] = {
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=10},
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=11},
+    ParserError expected_errors[] = {
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=10},
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=11},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1286,12 +1311,12 @@ START_TEST (quoted_name_eoi_utf16_escape_sequence)
         expected_token(QUOTED_NAME, 8, 2),
         expected_token(END_OF_INPUT, 0, 10),
     };
-    LexerError errors[] = {
-        (LexerError){PREMATURE_END_OF_INPUT, .position.index=10},
+    ParserError expected_errors[] = {
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=10},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1305,13 +1330,13 @@ START_TEST (quoted_name_illegal_utf32_escape_sequence)
         expected_token(QUOTED_NAME, 15, 2),
         expected_token(END_OF_INPUT, 0, 17),
     };
-    LexerError errors[] = {
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=13},
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=14},
+    ParserError expected_errors[] = {
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=13},
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=14},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1325,15 +1350,15 @@ START_TEST (quoted_name_short_utf32_escape_sequence)
         expected_token(QUOTED_NAME, 15, 2),
         expected_token(END_OF_INPUT, 0, 17),
     };
-    LexerError errors[] = {
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=12},
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=13},
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=14},
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=15},
+    ParserError expected_errors[] = {
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=12},
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=13},
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=14},
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=15},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1347,12 +1372,12 @@ START_TEST (quoted_name_eoi_utf32_escape_sequence)
         expected_token(QUOTED_NAME, 10, 2),
         expected_token(END_OF_INPUT, 0, 12),
     };
-    LexerError errors[] = {
-        (LexerError){PREMATURE_END_OF_INPUT, .position.index=12},
+    ParserError expected_errors[] = {
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=12},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1366,13 +1391,13 @@ START_TEST (quoted_name_multiple_illegal_escape_sequence)
         expected_token(QUOTED_NAME, 12, 2),
         expected_token(END_OF_INPUT, 0, 14),
     };
-    LexerError errors[] = {
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=6},
-        (LexerError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=10},
+    ParserError expected_errors[] = {
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=6},
+        (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=10},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1386,12 +1411,12 @@ START_TEST (quoted_name_unterminated_literal)
         expected_token(QUOTED_NAME, 7, 2),
         expected_token(END_OF_INPUT, 0, 9),
     };
-    LexerError errors[] = {
-        (LexerError){PREMATURE_END_OF_INPUT, .position.index=9},
+    ParserError expected_errors[] = {
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=9},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1405,12 +1430,12 @@ START_TEST (quoted_name_eoi)
         expected_token(QUOTED_NAME, 1, 2),
         expected_token(END_OF_INPUT, 0, 3),
     };
-    LexerError errors[] = {
-        (LexerError){PREMATURE_END_OF_INPUT, .position.index=3},
+    ParserError expected_errors[] = {
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=3},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1424,12 +1449,12 @@ START_TEST (quoted_name_eoi_escape_sequence)
         expected_token(QUOTED_NAME, 8, 2),
         expected_token(END_OF_INPUT, 0, 10),
     };
-    LexerError errors[] = {
-        (LexerError){PREMATURE_END_OF_INPUT, .position.index=10},
+    ParserError expected_errors[] = {
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=10},
     };
     Lexer *lexer = make_lexer(expression, strlen(expression));
     assert_not_null(lexer);
-    assert_errors(lexer, expectations, errors);
+    assert_errors(lexer, expectations, expected_errors);
     dispose_lexer(lexer);
 }
 END_TEST
@@ -1437,6 +1462,7 @@ END_TEST
 Suite *lexer_suite(void)
 {
     TCase *expected_case = tcase_create("expected");
+    tcase_add_checked_fixture(expected_case, setup, teardown);
     tcase_add_test(expected_case, basic);
     tcase_add_test(expected_case, dotdot);
     tcase_add_test(expected_case, wildcard);
@@ -1485,6 +1511,7 @@ Suite *lexer_suite(void)
     tcase_add_test(expected_case, filter_predicate_multiple_bool_expr);
 
     TCase *subtleties_case = tcase_create("subtleties");
+    tcase_add_checked_fixture(subtleties_case, setup, teardown);
     tcase_add_test(subtleties_case, empty_input);
     tcase_add_test(subtleties_case, name_includes_tab);
     tcase_add_test(subtleties_case, name_includes_ack);
@@ -1495,6 +1522,7 @@ Suite *lexer_suite(void)
     tcase_add_test(subtleties_case, type_selector_interstitial_whitespace);
 
     TCase *errors_case = tcase_create("errors");
+    tcase_add_checked_fixture(errors_case, setup, teardown);
     tcase_add_test(errors_case, integer_eoi_exponent);
     tcase_add_test(errors_case, real_eoi_fraction);
     tcase_add_test(errors_case, real_eoi_exponent);

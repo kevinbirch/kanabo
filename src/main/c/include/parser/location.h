@@ -1,8 +1,6 @@
 #pragma once
 
-
-#include "parser/input.h"
-
+#include "parser/position.h"
 
 struct location_s
 {
@@ -15,12 +13,3 @@ struct location_s
 };
 
 typedef struct location_s Location;
-
-struct source_location_s
-{
-    Input   *input;
-    Location location;
-};
-
-typedef struct source_location_s SourceLocation;
-    
