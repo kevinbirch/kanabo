@@ -2,9 +2,9 @@
 
 #include "vector.h"
 
-#include "parser/lexer.h"
+#include "parser/scanner.h"
 
-static inline void add_error_at(Lexer *self, Position position, ParserErrorCode code)
+static inline void add_error_at(Scanner *self, Position position, ParserErrorCode code)
 {
     if(NULL == self->callback)
     {
@@ -14,12 +14,12 @@ static inline void add_error_at(Lexer *self, Position position, ParserErrorCode 
     self->callback(position, code);
 }
 
-static inline void add_error(Lexer *self, ParserErrorCode code)
+static inline void add_error(Scanner *self, ParserErrorCode code)
 {
     add_error_at(self, position(self), code);
 }
 
-static bool read_hex_sequence(Lexer *self, size_t count)
+static bool read_hex_sequence(Scanner *self, size_t count)
 {
     for(size_t i = 0; i < count; i++)
     {
@@ -39,9 +39,9 @@ static bool read_hex_sequence(Lexer *self, size_t count)
     return true;
 }
 
-typedef bool (*EscapeSequenceReader)(Lexer *self);
+typedef bool (*EscapeSequenceReader)(Scanner *self);
 
-static bool read_escape_sequence(Lexer *self)
+static bool read_escape_sequence(Scanner *self)
 {
     if(input_peek(&self->input) == '\\')
     {
@@ -87,7 +87,7 @@ static bool read_escape_sequence(Lexer *self)
     return true;
 }
 
-static bool read_name_escape_sequence(Lexer *self)
+static bool read_name_escape_sequence(Scanner *self)
 {
     Position start = position(self);
     if(input_peek(&self->input) == '\\')
@@ -110,7 +110,7 @@ static bool read_name_escape_sequence(Lexer *self)
     return read_escape_sequence(self);
 }
 
-static void match_quoted_term(Lexer *self, char quote, EscapeSequenceReader reader)
+static void match_quoted_term(Scanner *self, char quote, EscapeSequenceReader reader)
 {
     if(input_peek(&self->input) == quote)
     {
@@ -147,7 +147,7 @@ static void match_quoted_term(Lexer *self, char quote, EscapeSequenceReader read
     }
 }
 
-static bool read_digit_sequence(Lexer *self)
+static bool read_digit_sequence(Scanner *self)
 {
     Position start = position(self);
 
@@ -179,7 +179,7 @@ static bool read_digit_sequence(Lexer *self)
     return done;
 }
 
-static void match_number(Lexer *self)
+static void match_number(Scanner *self)
 {
     self->current.kind = INTEGER_LITERAL;
 
@@ -212,7 +212,7 @@ static void match_number(Lexer *self)
     }
 }
 
-static void match_name(Lexer *self)
+static void match_name(Scanner *self)
 {
     Position start = position(self);
 
@@ -244,7 +244,7 @@ static void match_name(Lexer *self)
     }
 }
 
-static void match_symbol(Lexer *self)
+static void match_symbol(Scanner *self)
 {
     if(input_consume_if(&self->input, "object()"))
     {
@@ -309,17 +309,17 @@ static void match_symbol(Lexer *self)
     }
 }
 
-Lexer *make_lexer(const char *data, size_t length)
+Scanner *make_scanner(const char *data, size_t length)
 {
-    Lexer *self = calloc(1, sizeof(Lexer) + length);
+    Scanner *self = calloc(1, sizeof(Scanner) + length);
     if(NULL == self)
     {
         goto exit;
     }
     
-    if(!lexer_init(self, data, length))
+    if(!scanner_init(self, data, length))
     {
-        dispose_lexer(self);
+        dispose_scanner(self);
         self = NULL;
     }
 
@@ -327,7 +327,7 @@ Lexer *make_lexer(const char *data, size_t length)
     return self;
 }
 
-int lexer_init(Lexer *self, const char *data, size_t length)
+int scanner_init(Scanner *self, const char *data, size_t length)
 {
     if(!input_init(&self->input, NULL, length))
     {
@@ -339,7 +339,7 @@ int lexer_init(Lexer *self, const char *data, size_t length)
     return 1;
 }
 
-void dispose_lexer(Lexer *self)
+void dispose_scanner(Scanner *self)
 {
     if(NULL == self)
     {
@@ -350,7 +350,7 @@ void dispose_lexer(Lexer *self)
     free(self);
 }
 
-void next(Lexer *self)
+void next(Scanner *self)
 {
     input_skip_whitespace(&self->input);
 

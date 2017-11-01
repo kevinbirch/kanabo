@@ -7,7 +7,7 @@
 // check defines a fail helper that conflicts with the maybe constructor
 #undef fail
 
-#include "parser/lexer.h"
+#include "parser/scanner.h"
 
 #define expected_token(KIND, EXTENT, INDEX) (Token){.kind=(KIND), .location.extent=(EXTENT), .location.index=(INDEX), .location.line=0, .location.offset=0}
 
@@ -72,10 +72,10 @@ START_TEST (basic)
         expected_token(NAME, 3, 6),
         expected_token(END_OF_INPUT, 0, 9),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -90,10 +90,10 @@ START_TEST (dotdot)
         expected_token(NAME, 3, 7),
         expected_token(END_OF_INPUT, 0, 10),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -108,10 +108,10 @@ START_TEST (wildcard)
         expected_token(ASTERISK, 1, 6),
         expected_token(END_OF_INPUT, 0, 7),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -124,10 +124,10 @@ START_TEST (recursive_wildcard)
         expected_token(ASTERISK, 1, 3),
         expected_token(END_OF_INPUT, 0, 4),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -142,10 +142,10 @@ START_TEST (object_selector)
         expected_token(OBJECT_SELECTOR, 8, 6),
         expected_token(END_OF_INPUT, 0, 14),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -160,10 +160,10 @@ START_TEST (array_selector)
         expected_token(ARRAY_SELECTOR, 7, 6),
         expected_token(END_OF_INPUT, 0, 13),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -178,10 +178,10 @@ START_TEST (string_selector)
         expected_token(STRING_SELECTOR, 8, 6),
         expected_token(END_OF_INPUT, 0, 14),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -196,10 +196,10 @@ START_TEST (number_selector)
         expected_token(NUMBER_SELECTOR, 8, 6),
         expected_token(END_OF_INPUT, 0, 14),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -214,10 +214,10 @@ START_TEST (integer_selector)
         expected_token(INTEGER_SELECTOR, 9, 6),
         expected_token(END_OF_INPUT, 0, 15),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -232,10 +232,10 @@ START_TEST (decimal_selector)
         expected_token(DECIMAL_SELECTOR, 9, 6),
         expected_token(END_OF_INPUT, 0, 15),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -250,10 +250,10 @@ START_TEST (timestamp_selector)
         expected_token(TIMESTAMP_SELECTOR, 11, 6),
         expected_token(END_OF_INPUT, 0, 17),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -268,10 +268,10 @@ START_TEST (boolean_selector)
         expected_token(BOOLEAN_SELECTOR, 9, 6),
         expected_token(END_OF_INPUT, 0, 15),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -286,10 +286,10 @@ START_TEST (null_selector)
         expected_token(NULL_SELECTOR, 6, 6),
         expected_token(END_OF_INPUT, 0, 12),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -307,10 +307,10 @@ START_TEST (wildcard_predicate)
         expected_token(NAME, 3, 9),
         expected_token(END_OF_INPUT, 0, 12),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -328,10 +328,10 @@ START_TEST (subscript_predicate)
         expected_token(NAME, 3, 9),
         expected_token(END_OF_INPUT, 0, 12),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -350,10 +350,10 @@ START_TEST (slice_predicate)
         expected_token(NAME, 3, 10),
         expected_token(END_OF_INPUT, 0, 13),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -373,10 +373,10 @@ START_TEST (slice_predicate_negative_from)
         expected_token(NAME, 3, 11),
         expected_token(END_OF_INPUT, 0, 14),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -397,10 +397,10 @@ START_TEST (slice_predicate_with_step)
         expected_token(NAME, 3, 12),
         expected_token(END_OF_INPUT, 0, 15),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -419,10 +419,10 @@ START_TEST (slice_predicate_copy)
         expected_token(NAME, 3, 10),
         expected_token(END_OF_INPUT, 0, 13),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -443,10 +443,10 @@ START_TEST (slice_predicate_negative_step)
         expected_token(NAME, 3, 12),
         expected_token(END_OF_INPUT, 0, 15),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -461,10 +461,10 @@ START_TEST (quoted_name)
         expected_token(NAME, 3, 8),
         expected_token(END_OF_INPUT, 0, 11),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -479,10 +479,10 @@ START_TEST (quoted_name_escaped_quote)
         expected_token(NAME, 3, 10),
         expected_token(END_OF_INPUT, 0, 13),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -497,10 +497,10 @@ START_TEST (quoted_name_escaped_newline)
         expected_token(NAME, 3, 10),
         expected_token(END_OF_INPUT, 0, 13),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -515,10 +515,10 @@ START_TEST (quoted_name_escaped_hex)
         expected_token(NAME, 3, 12),
         expected_token(END_OF_INPUT, 0, 15),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -533,10 +533,10 @@ START_TEST (quoted_name_escaped_utf16)
         expected_token(NAME, 3, 20),
         expected_token(END_OF_INPUT, 0, 23),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -551,10 +551,10 @@ START_TEST (quoted_name_escaped_utf32)
         expected_token(NAME, 3, 18),
         expected_token(END_OF_INPUT, 0, 21),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -567,10 +567,10 @@ START_TEST (quoted_name_escaped_buffet)
         expected_token(QUOTED_NAME, 42, 2),
         expected_token(END_OF_INPUT, 0, 44),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -583,10 +583,10 @@ START_TEST (integer_expression)
         expected_token(INTEGER_LITERAL, 1, 2),
         expected_token(END_OF_INPUT, 0, 3),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -599,10 +599,10 @@ START_TEST (real_expression)
         expected_token(REAL_LITERAL, 3, 2),
         expected_token(END_OF_INPUT, 0, 5),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -615,10 +615,10 @@ START_TEST (real_expression_with_shorthand)
         expected_token(REAL_LITERAL, 2, 2),
         expected_token(END_OF_INPUT, 0, 4),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -634,10 +634,10 @@ START_TEST (root_step_predicated)
         expected_token(NAME, 3, 5),
         expected_token(END_OF_INPUT, 0, 8),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -651,10 +651,10 @@ START_TEST (relative_path_explicit)
         expected_token(NAME, 3, 5),
         expected_token(END_OF_INPUT, 0, 8),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -670,10 +670,10 @@ START_TEST (relative_path_explicit_predicated)
         expected_token(NAME, 3, 5),
         expected_token(END_OF_INPUT, 0, 8),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -693,10 +693,10 @@ START_TEST (transfomer_step)
         expected_token(CLOSE_BRACE, 1, 20),
         expected_token(END_OF_INPUT, 0, 21),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -712,10 +712,10 @@ START_TEST (tag_selector)
         expected_token(NAME, 3, 7),
         expected_token(END_OF_INPUT, 0, 10),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -731,10 +731,10 @@ START_TEST (anchor_selector)
         expected_token(NAME, 3, 7),
         expected_token(END_OF_INPUT, 0, 10),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -753,10 +753,10 @@ START_TEST (join_predicate)
         expected_token(CLOSE_BRACKET, 1, 11),
         expected_token(END_OF_INPUT, 0, 12),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -774,10 +774,10 @@ START_TEST (filter_predicate)
         expected_token(CLOSE_BRACKET, 1, 16),
         expected_token(END_OF_INPUT, 0, 17),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -797,10 +797,10 @@ START_TEST (filter_predicate_parenthesized)
         expected_token(CLOSE_BRACKET, 1, 18),
         expected_token(END_OF_INPUT, 0, 19),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -820,10 +820,10 @@ START_TEST (filter_predicate_equals_null)
         expected_token(CLOSE_BRACKET, 1, 20),
         expected_token(END_OF_INPUT, 0, 21),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -845,10 +845,10 @@ START_TEST (filter_predicate_path_gt_integer)
         expected_token(CLOSE_BRACKET, 1, 23),
         expected_token(END_OF_INPUT, 0, 24),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -872,10 +872,10 @@ START_TEST (filter_predicate_path_expr_gte_path_expr)
         expected_token(CLOSE_BRACKET, 1, 33),
         expected_token(END_OF_INPUT, 0, 34),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -895,10 +895,10 @@ START_TEST (filter_predicate_path_lt_integer)
         expected_token(CLOSE_BRACKET, 1, 18),
         expected_token(END_OF_INPUT, 0, 19),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -920,10 +920,10 @@ START_TEST (filter_predicate_path_eq_string)
         expected_token(CLOSE_BRACKET, 1, 30),
         expected_token(END_OF_INPUT, 0, 31),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -943,10 +943,10 @@ START_TEST (filter_predicate_path_ne_bool)
         expected_token(CLOSE_BRACKET, 1, 23),
         expected_token(END_OF_INPUT, 0, 24),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -970,10 +970,10 @@ START_TEST (filter_predicate_multiple_bool_expr)
         expected_token(CLOSE_BRACKET, 1, 35),
         expected_token(END_OF_INPUT, 0, 36),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -983,10 +983,10 @@ START_TEST (empty_input)
     Token expectations[] = {
         expected_token(END_OF_INPUT, 0, 0),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1001,10 +1001,10 @@ START_TEST (unquoted_name_escape_dot_attempt)
         expected_token(NAME, 3, 7),
         expected_token(END_OF_INPUT, 0, 10),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1017,10 +1017,10 @@ START_TEST (unquoted_name_escape_sequence)
         expected_token(NAME, 8, 2),
         expected_token(END_OF_INPUT, 0, 10),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1033,10 +1033,10 @@ START_TEST (unquoted_name_illegal_escape_sequence)
         expected_token(NAME, 8, 2),
         expected_token(END_OF_INPUT, 0, 10),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1049,10 +1049,10 @@ START_TEST (expression_with_bare_exponent)
         expected_token(NAME, 3, 2),
         expected_token(END_OF_INPUT, 0, 5),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1069,10 +1069,10 @@ START_TEST (type_selector_interstitial_whitespace)
         expected_token(CLOSE_PARENTHESIS, 1, 14),
         expected_token(END_OF_INPUT, 0, 15),
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_expectations(lexer, expectations);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_expectations(scanner, expectations);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1086,10 +1086,10 @@ START_TEST (integer_eoi_exponent)
     ParserError expected_errors[] = {
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=2},
     };    
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1103,10 +1103,10 @@ START_TEST (real_eoi_fraction)
     ParserError expected_errors[] = {
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=2},
     };    
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1120,10 +1120,10 @@ START_TEST (real_eoi_exponent)
     ParserError expected_errors[] = {
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=4},
     };    
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1140,10 +1140,10 @@ START_TEST (name_includes_newline)
     ParserError expected_errors[] = {
         (ParserError){UNSUPPORTED_CONTROL_CHARACTER, .position.index=5},
     };    
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1160,10 +1160,10 @@ START_TEST (name_includes_tab)
     ParserError expected_errors[] = {
         (ParserError){UNSUPPORTED_CONTROL_CHARACTER, .position.index=5},
     };    
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1179,10 +1179,10 @@ START_TEST (name_includes_ack)
     ParserError expected_errors[] = {
         (ParserError){UNSUPPORTED_CONTROL_CHARACTER, .position.index=5},
     };    
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1198,10 +1198,10 @@ START_TEST (quoted_name_illegal_escape_sequence)
     ParserError expected_errors[] = {
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=7},
     };    
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1217,10 +1217,10 @@ START_TEST (quoted_name_illegal_hex_escape_sequence)
     ParserError expected_errors[] = {
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=7},
     };    
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1236,10 +1236,10 @@ START_TEST (quoted_name_short_hex_escape_sequence)
     ParserError expected_errors[] = {
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=9},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1255,10 +1255,10 @@ START_TEST (quoted_name_eoi_hex_escape_sequence)
     ParserError expected_errors[] = {
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=8},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1275,10 +1275,10 @@ START_TEST (quoted_name_illegal_utf16_escape_sequence)
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=8},
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=11},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1295,10 +1295,10 @@ START_TEST (quoted_name_short_utf16_escape_sequence)
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=10},
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=11},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1314,10 +1314,10 @@ START_TEST (quoted_name_eoi_utf16_escape_sequence)
     ParserError expected_errors[] = {
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=10},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1334,10 +1334,10 @@ START_TEST (quoted_name_illegal_utf32_escape_sequence)
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=13},
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=14},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1356,10 +1356,10 @@ START_TEST (quoted_name_short_utf32_escape_sequence)
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=14},
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=15},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1375,10 +1375,10 @@ START_TEST (quoted_name_eoi_utf32_escape_sequence)
     ParserError expected_errors[] = {
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=12},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1395,10 +1395,10 @@ START_TEST (quoted_name_multiple_illegal_escape_sequence)
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=6},
         (ParserError){UNSUPPORTED_ESCAPE_SEQUENCE, .position.index=10},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1414,10 +1414,10 @@ START_TEST (quoted_name_unterminated_literal)
     ParserError expected_errors[] = {
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=9},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1433,10 +1433,10 @@ START_TEST (quoted_name_eoi)
     ParserError expected_errors[] = {
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=3},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
@@ -1452,14 +1452,14 @@ START_TEST (quoted_name_eoi_escape_sequence)
     ParserError expected_errors[] = {
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=10},
     };
-    Lexer *lexer = make_lexer(expression, strlen(expression));
-    assert_not_null(lexer);
-    assert_errors(lexer, expectations, expected_errors);
-    dispose_lexer(lexer);
+    Scanner *scanner = make_scanner(expression, strlen(expression));
+    assert_not_null(scanner);
+    assert_errors(scanner, expectations, expected_errors);
+    dispose_scanner(scanner);
 }
 END_TEST
 
-Suite *lexer_suite(void)
+Suite *scanner_suite(void)
 {
     TCase *expected_case = tcase_create("expected");
     tcase_add_checked_fixture(expected_case, setup, teardown);
@@ -1542,7 +1542,7 @@ Suite *lexer_suite(void)
     tcase_add_test(errors_case, quoted_name_short_utf32_escape_sequence);
     tcase_add_test(errors_case, quoted_name_eoi_utf32_escape_sequence);
     
-    Suite *suite = suite_create("Lexer");
+    Suite *suite = suite_create("Scanner");
     suite_add_tcase(suite, expected_case);
     suite_add_tcase(suite, subtleties_case);
     suite_add_tcase(suite, errors_case);
