@@ -638,7 +638,7 @@ START_TEST (number_test)
 }
 END_TEST
 
-bool scalar_true(node *each, void *context __attribute__((unused)))
+bool scalar_true(node *each, void *context)
 {
 
     return SCALAR == node_kind(each) &&

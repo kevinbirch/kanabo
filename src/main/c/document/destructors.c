@@ -49,7 +49,7 @@ void node_free(node *value)
     free(value);
 }
 
-static bool sequence_freedom_iterator(void *each, void *context __attribute__((unused)))
+static bool sequence_freedom_iterator(void *each, void *context)
 {
     node_free((node *)each);
 
@@ -66,7 +66,7 @@ static inline void sequence_free(node *sequence)
     sequence->content.sequence = NULL;
 }
 
-static bool mapping_freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
+static bool mapping_freedom_iterator(void *key, void *value, void *context)
 {
     node_free((node *)key);
     node_free((node *)value);

@@ -892,7 +892,7 @@ START_TEST (zero_step_slice_predicate)
 }
 END_TEST
 
-static bool count(Step *each __attribute__((unused)), void *context)
+static bool count(Step *each, void *context)
 {
     unsigned long *counter = (unsigned long *)context;
     (*counter)++;
@@ -914,7 +914,7 @@ START_TEST (iteration)
 }
 END_TEST
 
-static bool fail_count(Step *each __attribute__((unused)), void *context)
+static bool fail_count(Step *each, void *context)
 {
     unsigned long *counter = (unsigned long *)context;
     if(0 == *counter)

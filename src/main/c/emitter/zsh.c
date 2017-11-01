@@ -59,7 +59,7 @@ void emit_zsh(const nodelist *list, const struct settings *settings)
     fflush(stdout);
 }
 
-static bool emit_mapping_item(node *key, node *value, void * context __attribute__((unused)))
+static bool emit_mapping_item(node *key, node *value, void * context)
 {
     if(SCALAR == node_kind(value))
     {

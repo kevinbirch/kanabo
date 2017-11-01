@@ -13,7 +13,7 @@
 void handle_segv(int signal);
 
 #ifdef CHECK_0_9_8
-int main(int argc, char **argv __attribute__((unused)))
+int main(int argc, char **argv)
 #else
 int main(int argc, char **argv)
 #endif

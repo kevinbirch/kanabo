@@ -120,7 +120,7 @@ bool emit_raw_scalar(const node *each)
     return fwrite(scalar_value(each), node_size(each), 1, stdout);
 }
 
-bool emit_sequence_item(node *each, void *context __attribute__((unused)))
+bool emit_sequence_item(node *each, void *context)
 {
     if(SCALAR == node_kind(each))
     {

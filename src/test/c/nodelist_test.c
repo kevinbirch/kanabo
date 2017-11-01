@@ -203,7 +203,7 @@ void nodelist_setup(void)
 
 static bool freedom_iterator(node *each, void *context);
 
-static bool freedom_iterator(node *each, void *context __attribute__((unused)))
+static bool freedom_iterator(node *each, void *context)
 {
     node_free(each);
     return true;
@@ -277,7 +277,7 @@ START_TEST (fail_iteration)
 }
 END_TEST
 
-bool fail_nodelist(node *each __attribute__((unused)), void *context)
+bool fail_nodelist(node *each, void *context)
 {
     size_t *count = (size_t *)context;
     if(0 < *count)
@@ -339,7 +339,7 @@ START_TEST (fail_map)
 }
 END_TEST
 
-bool fail_transform(node *each __attribute__((unused)), void *context, nodelist *target)
+bool fail_transform(node *each, void *context, nodelist *target)
 {
     size_t *count = (size_t *)context;
     if(0 < *count)

@@ -418,7 +418,7 @@ START_TEST (fail_sequence_iteration)
 }
 END_TEST
 
-bool fail_sequence(node *each __attribute((unused)), void *context)
+bool fail_sequence(node *each, void *context)
 {
     size_t *count = (size_t *)context;
     if(0 < *count)

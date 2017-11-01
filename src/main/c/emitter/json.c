@@ -74,7 +74,7 @@ void emit_json(const nodelist *list, const struct settings *settings)
     fflush(stdout);
 }
 
-static bool emit_json_node(node *each, void *context __attribute__((unused)))
+static bool emit_json_node(node *each, void *context)
 {
     bool result = true;
     size_t sequence_count = 0;
