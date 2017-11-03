@@ -50,7 +50,7 @@
         node    *_assert_node = (NODE);                                 \
         uint8_t *_assert_name = node_name(_assert_node);                \
         size_t   _assert_name_len = strlen((char *)_assert_name);       \
-        assert_int_eq(_expected_len, _assert_name_len);                 \
+        assert_uint_eq(_expected_len, _assert_name_len);                \
         char     _actual_tag[_assert_name_len + 1];                     \
         memcpy(&_actual_tag, _assert_name, _assert_name_len);           \
         _actual_tag[_assert_name_len] = '\0';                           \
