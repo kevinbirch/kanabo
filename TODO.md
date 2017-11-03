@@ -139,6 +139,9 @@ LICENSE file for more details.
   * http://effbot.org/zone/simple-top-down-parsing.htm
   * http://www.oilshell.org/blog/2017/03/31.html
 
+* mv spacecadet,linenose,yaml,check stuff to vendor
+* rename document objects?
+
 ### loader
 
 * simplify api with maybe result
@@ -199,6 +202,14 @@ LICENSE file for more details.
   * $(LIBOBJECTS) $(RTLLIBOBJECTS) $(OPTLIBOBJECTS) $(TESTOBJECTS) $(builddir)/init_qt_workdir: $(builddir)/compiler_flags
 * meson - http://mesonbuild.com/
 * https://bitbucket.org/scons/scons/wiki/SconsVsOtherBuildTools
+* add project level language var: `C`, `C++` or `Objective-C`
+  * eliminate language name directories under src
+  * project level source file extension var
+* build `src/vendor/*` as libs
+  * per-vendor optional `CFLAGS`, `LDFLAGS`, `CC`, language, file extension
+  * also `src/test-vendor`
+* support multiple artifacts, fallback to assuming 1 and find main func
+  * built in `main_ARTIFACT_TYPE ?= $(artifact)`, `ARTIFACTS ?= main_ARTIFACT`
 
 ### alternatives
 
