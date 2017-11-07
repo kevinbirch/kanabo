@@ -4,14 +4,16 @@
 
 #include "parser/scanner.h"
 
+#define position(SCANNER) (SCANNER)->input.position
+
 static inline void add_error_at(Scanner *self, Position position, ParserErrorCode code)
 {
-    if(NULL == self->callback)
+    if(NULL == self->handler.callback)
     {
         return;
     }
 
-    self->callback(position, code);
+    self->handler.callback(position, code, self->handler.parameter);
 }
 
 static inline void add_error(Scanner *self, ParserErrorCode code)
@@ -311,32 +313,11 @@ static void match_symbol(Scanner *self)
 
 Scanner *make_scanner(const char *data, size_t length)
 {
-    Scanner *self = calloc(1, sizeof(Scanner) + length);
-    if(NULL == self)
-    {
-        goto exit;
-    }
-    
-    if(!scanner_init(self, data, length))
-    {
-        dispose_scanner(self);
-        self = NULL;
-    }
-
-  exit:
-    return self;
-}
-
-int scanner_init(Scanner *self, const char *data, size_t length)
-{
-    if(!input_init(&self->input, NULL, length))
-    {
-        return 0;
-    }
-
+    Scanner *self = xcalloc(sizeof(Scanner) + length);
+    input_init(&self->input, NULL, length);
     memcpy(self->input.source.buffer, data, length);
 
-    return 1;
+    return self;
 }
 
 void dispose_scanner(Scanner *self)
@@ -350,7 +331,7 @@ void dispose_scanner(Scanner *self)
     free(self);
 }
 
-void next(Scanner *self)
+void scanner_next(Scanner *self)
 {
     input_skip_whitespace(&self->input);
 
@@ -497,4 +478,9 @@ void next(Scanner *self)
     Position end = position(self);    
     self->current.location.position = start;
     self->current.location.extent = end.index - start.index;
+}
+
+void scanner_reset(Scanner *self)
+{
+    input_reset(&self->input);
 }

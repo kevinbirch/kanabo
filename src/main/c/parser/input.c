@@ -36,41 +36,28 @@ static inline void advance_by(Input *self, size_t amount)
     }
 }
 
-int input_init(Input *self, const char *name, size_t length)
+void input_init(Input *self, const char *name, size_t length)
 {
     self->position.index = 0;
     self->position.line = 0;
     self->position.offset = 0;
     self->track_lines = false;
 
-    if(NULL != self->marks)
-    {
-        vector_destroy(self->marks, free);
-    }
-    self->marks = make_vector();
-    if(NULL == self->marks)
-    {
-        return 0;
-    }
     if(NULL != name)
     {
         self->name = S(name);
     }
     self->source.length = length;
-
-    return 1;
 }
 
 void input_release(Input *self)
 {
-    vector_destroy(self->marks, free);
     string_free(self->name);
 }
 
 void dispose_input(Input *self)
 {
     string_free(self->name);
-    vector_destroy(self->marks, free);
     free(self);
 }
 
@@ -114,45 +101,6 @@ void input_reset(Input *self)
     self->position.index = 0;
     self->position.line = 0;
     self->position.offset = 0;
-    vector_clear(self->marks);
-}
-
-void input_push_mark(Input *self)
-{
-    Position *mark = calloc(1, sizeof(Position));
-    *mark = self->position;
-    vector_push(self->marks, mark);
-}
-
-void input_reset_to_mark(Input *self)
-{
-    if(vector_is_empty(self->marks))
-    {
-        return;
-    }
-    Position *mark = vector_peek(self->marks);
-    self->position = *mark;
-}
-
-void input_pop_mark(Input *self)
-{
-    if(vector_is_empty(self->marks))
-    {
-        return;
-    }
-    Position *mark = vector_pop(self->marks);
-    self->position = *mark;
-    free(mark);
-}
-
-void input_drop_mark(Input *self)
-{
-    if(vector_is_empty(self->marks))
-    {
-        return;
-    }
-    Position *mark = vector_pop(self->marks);
-    free(mark);
 }
 
 bool input_has_more(Input *self)

@@ -32,18 +32,8 @@ Input *make_input_from_file(const char *filename)
         goto cleanup;
     }
 
-    self = calloc(1, sizeof(Input) + (size_t)size);
-    if(NULL == self)
-    {
-        goto cleanup;
-    }
-
-    if(!input_init(self, filename, (size_t)size))
-    {
-        dispose_input(self);
-        self = NULL;
-        goto cleanup;
-    }
+    self = xcalloc(sizeof(Input) + (size_t)size);
+    input_init(self, filename, (size_t)size);
 
     size_t count = fread(self->source.buffer, (size_t)size, 1, file);
     if(count != (size_t)size || ferror(file))

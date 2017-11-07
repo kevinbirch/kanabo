@@ -6,7 +6,6 @@
 #include <stdlib.h>
 
 #include "str.h"
-#include "vector.h"
 #include "parser/location.h"
 
 // Input Entities
@@ -23,7 +22,6 @@ struct input_s
 {
     String   *name;
     Position  position;
-    Vector   *marks;
     bool      track_lines;
     Source    source;
 };
@@ -43,7 +41,7 @@ typedef struct source_location_s SourceLocation;
 Input *make_input_from_file(const char *filename);
 Input *make_input_from_buffer(const char *data, size_t length);
 
-int input_init(Input *self, const char *filename, size_t length);
+void input_init(Input *self, const char *filename, size_t length);
 
 // Input Destructor
 
@@ -67,13 +65,6 @@ Position input_position(const Input *self);
 void input_goto(Input *self, Position position);
 void input_advance_to_end(Input *self);
 void input_reset(Input *self);
-
-// Input Mark API
-
-void input_push_mark(Input *self);
-void input_reset_to_mark(Input *self);
-void input_pop_mark(Input *self);
-void input_drop_mark(Input *self);
 
 // Input Query API
 

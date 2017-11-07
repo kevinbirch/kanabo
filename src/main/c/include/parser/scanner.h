@@ -16,8 +16,7 @@ struct scanner_s
 typedef struct scanner_s Scanner;
 
 Scanner *make_scanner(const char *data, size_t length);
-int    scanner_init(Scanner *self, const char *data, size_t length);
-void   dispose_scanner(Scanner *self);
+void     dispose_scanner(Scanner *self);
 
 void next(Scanner *scanner);
 #define position(SCANNER) (SCANNER)->input.position
