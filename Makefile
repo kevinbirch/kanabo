@@ -261,7 +261,7 @@ endef
 
 define build_message =
 
- Buidling $(owner):$(package):$(version))
+ Buidling $(owner):$(package):$(version)
 endef
 
 define announce_phase_message =
