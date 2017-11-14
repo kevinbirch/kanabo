@@ -100,27 +100,16 @@ LICENSE file for more details.
 
 * use maybe parser in grammar to handle builder errors
 * build the jsonpath inline with custom rule parsers
-* rename emit package to emitter
-* inline jsonpath/model package into jsonpath?
-* rename model package to document?
 * move nodelist creation to evaluate function evaluator/api.c
 * use type generic macro instead of vtable
 * use sentinels for vararg parsers instead of NULL, error on null args
-* create parser error classes with context for building message
 * try to reuse parsers instead of creating new every time
 * need a balance parser to control bracket balancing
-* feed quote char into quoted string parser
 * create simplifed static error message reprs for logging
-* need tests for all forbidden control chars
-* use balanced parser for quoted string
-* add character filter delegate to string parser
-* use push_back to reset input position to simplify parser message handling
 
 * free_x -> dispose_x
-* better source location handling ala dylan reader
 * use generic maybe everywhere instead of define maybe macro? the void can be freely cast to/from the actual type
 * concrete predicate subtypes
-* does position_from_input need to be in parser.h?
 * move all repr to dynamic calls
 * break down api module
 * replace memcmp with hash compare?
@@ -128,19 +117,33 @@ LICENSE file for more details.
 * interning for string module
   * diable macro
   * runtime enable disable
-* unexpected value special casing in parser? (parse.c#/parse)
-* input from file takes file pointer and name, not path, make client handle open probs
-* make fatal errors helper for wrapper parser
-  * fail wrapper only on fatal errors
-* capture extent for source locations
-* refactor parser_make to build subtypes (pass size?)
 
 * use pratt parser?
   * http://effbot.org/zone/simple-top-down-parsing.htm
   * http://www.oilshell.org/blog/2017/03/31.html
 
+* use model instead of ast 
+* integrate with existing model
+  * skip support for new features
+* full build, test
+* merge master
+* working cci build
+* merge pr
+* add new features
+  * update tests
+  * update model
+  * update parser
+  * update evaluator
+  # anchor selector
+  # tag selector
+  # join
+  # filter
+  # transformer
+
 * mv spacecadet,linenose,yaml,check stuff to vendor
 * rename document objects?
+* model dumper w/ secret command line option, nice tree-like layout
+  * `--output=ast`
 
 ### loader
 
@@ -210,6 +213,16 @@ LICENSE file for more details.
   * also `src/test-vendor`
 * support multiple artifacts, fallback to assuming 1 and find main func
   * built in `main_ARTIFACT_TYPE ?= $(artifact)`, `ARTIFACTS ?= main_ARTIFACT`
+* multi target projects
+  * assume 1
+  * list per module
+* multi module projects
+  * assume 1
+* per module lang
+* per lang compiler, linker 
+* vendor deps as modules
+* vendor dir 
+* customizable include dirs w default
 
 ### alternatives
 
