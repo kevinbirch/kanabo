@@ -4,11 +4,19 @@
 #include "parser/token.h"
 #include "parser/errors.h"
 
-typedef void (*ErrorHandler)(Position position, ParserErrorCode code);
+typedef void (*ErrorCallback)(Position position, ParserErrorCode code, void *parameter);
+
+struct error_handler_s
+{
+    ErrorCallback  callback;
+    void          *parameter;
+};
+
+typedef struct error_handler_s ErrorHandler;
 
 struct scanner_s
 {
-    ErrorHandler callback;
+    ErrorHandler handler;
     Token        current;
     Input        input;
 };

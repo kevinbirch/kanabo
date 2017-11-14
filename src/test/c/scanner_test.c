@@ -53,7 +53,7 @@ static void teardown(void)
     vector_destroy(errors, free);
 }
 
-static void record_error(Position position, ParserErrorCode code)
+static void record_error(Position position, ParserErrorCode code, void * parameter)
 {
     ParserError *err = calloc(1, sizeof(ParserError));
     err->code = code;
