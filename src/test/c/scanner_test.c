@@ -19,16 +19,16 @@
 #define assert_expectations(L, E)                                       \
     for(size_t i = 0; i < sizeof(E)/sizeof(Token); i++)                 \
     {                                                                   \
-        next(L);                                                        \
+        scanner_next(L);                                                \
         Token expected = E[i];                                          \
         assert_token(expected, L->current);                             \
     }                                                                   \
     assert_true(vector_is_empty(errors))
 #define assert_errors(L, X, E)                                          \
-    L->callback = record_error;                                         \
+    L->handler.callback = record_error;                                 \
     for(size_t i = 0; i < sizeof(X)/sizeof(Token); i++)                 \
     {                                                                   \
-        next(L);                                                        \
+        scanner_next(L);                                                \
         assert_token(X[i], L->current);                                 \
     }                                                                   \
     assert_false(vector_is_empty(errors));                              \
