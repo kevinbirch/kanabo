@@ -2,8 +2,9 @@
 
 #include <sys/stat.h>
 
-#include "parser/input.h"
+#include "conditions.h"
 
+#include "parser/input.h"
 
 static off_t file_size(FILE *file)
 {
@@ -18,6 +19,8 @@ static off_t file_size(FILE *file)
 
 Input *make_input_from_file(const char *filename)
 {
+    PRECOND_NONNULL_ELSE_NULL(filename);
+
     Input *self = NULL;
 
     FILE *file = fopen(filename, "r");

@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>  // for memcmp, memcpy
 
+#include "conditions.h"
+
 #include "parser/input.h"
 
 #define current(INPUT) (INPUT)->source.buffer[(INPUT)->position.index]
@@ -38,6 +40,8 @@ static inline void advance_by(Input *self, size_t amount)
 
 void input_init(Input *self, const char *name, size_t length)
 {
+    PRECOND_NONNULL_ELSE_VOID(self);
+
     self->position.index = 0;
     self->position.line = 0;
     self->position.offset = 0;
@@ -52,52 +56,75 @@ void input_init(Input *self, const char *name, size_t length)
 
 void input_release(Input *self)
 {
+    PRECOND_NONNULL_ELSE_VOID(self);
+
     string_free(self->name);
 }
 
 void dispose_input(Input *self)
 {
+    PRECOND_NONNULL_ELSE_VOID(self);
+
     string_free(self->name);
     free(self);
 }
 
 String *input_name(Input *self)
 {
+    PRECOND_NONNULL_ELSE_NULL(self);
+
     return self->name;
 }
 
 size_t input_length(Input *self)
 {
+    PRECOND_NONNULL_ELSE_ZERO(self);
+
     return self->source.length;
 }
 
 void input_set_track_lines(Input *self, bool value)
 {
+    PRECOND_NONNULL_ELSE_VOID(self);
+
     self->track_lines = value;
 }
 
 bool input_is_tracking_lines(Input *self)
 {
+    PRECOND_NONNULL_ELSE_FALSE(self);
     return self->track_lines;
 }
 
 Position input_position(const Input *self)
 {
+    if(NULL == self)
+    {
+        return (Position){};
+    }
+
     return self->position;
 }
 
 void input_goto(Input *self, Position position)
 {
+    PRECOND_NONNULL_ELSE_VOID(self);
+    PRECOND_ELSE_VOID(position.index < self->source.length);
+
     self->position = position;
 }
 
 void input_advance_to_end(Input *self)
 {
+    PRECOND_NONNULL_ELSE_VOID(self);
+
     advance_by(self, input_remaining(self));
 }
 
 void input_reset(Input *self)
 {
+    PRECOND_NONNULL_ELSE_VOID(self);
+
     self->position.index = 0;
     self->position.line = 0;
     self->position.offset = 0;
@@ -105,11 +132,15 @@ void input_reset(Input *self)
 
 bool input_has_more(Input *self)
 {
+    PRECOND_NONNULL_ELSE_FALSE(self);
+
     return index(self) < self->source.length;
 }
 
 size_t input_remaining(Input *self)
 {
+    PRECOND_NONNULL_ELSE_ZERO(self);
+
     if(index(self) >= self->source.length)
     {
         return 0;
@@ -120,16 +151,15 @@ size_t input_remaining(Input *self)
 
 char input_peek(Input *self)
 {
-    if(!input_has_more(self))
-    {
-        return 0;
-    }
+    PRECOND_NONNULL_ELSE_ZERO(self);
+    PRECOND_ELSE_ZERO(input_has_more(self));
 
     return current(self);
 }
 
 void input_skip_whitespace(Input *self)
 {
+    PRECOND_NONNULL_ELSE_VOID(self);
     while(input_has_more(self) && isspace(current(self)))
     {
         incr(self);
@@ -138,10 +168,8 @@ void input_skip_whitespace(Input *self)
 
 char input_consume_one(Input *self)
 {
-    if(!input_has_more(self))
-    {
-        return 0;
-    }
+    PRECOND_NONNULL_ELSE_ZERO(self);
+    PRECOND_ELSE_ZERO(input_has_more(self));
 
     char current = current(self);
     incr(self);
@@ -151,10 +179,8 @@ char input_consume_one(Input *self)
 
 size_t input_consume_many(Input *self, size_t count, char *result)
 {
-    if(!input_has_more(self))
-    {
-        return 0;
-    }
+    PRECOND_NONNULL_ELSE_ZERO(self);
+    PRECOND_ELSE_ZERO(input_has_more(self));
 
     size_t length = count;
     if(count > input_remaining(self))
@@ -174,15 +200,11 @@ size_t input_consume_many(Input *self, size_t count, char *result)
 
 bool input_consume_if(Input *self, const char *value)
 {
-    if(!input_has_more(self))
-    {
-        return false;
-    }
+    PRECOND_NONNULL_ELSE_FALSE(self);
+    PRECOND_ELSE_FALSE(input_has_more(self));
+
     size_t length = strlen(value);
-    if(length > input_remaining(self))
-    {
-        return false;
-    }
+    PRECOND_ELSE_FALSE(length <= input_remaining(self));
 
     if(memcmp(cursor(self), value, length) == 0)
     {
@@ -195,10 +217,8 @@ bool input_consume_if(Input *self, const char *value)
 
 void input_push_back(Input *self)
 {
-    if(0 == index(self))
-    {
-        return;
-    }
+    PRECOND_NONNULL_ELSE_VOID(self);
+    PRECOND_ELSE_VOID(0 != index(self));
 
     self->position.index--;
     if(!self->track_lines)
