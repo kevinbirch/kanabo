@@ -36,6 +36,7 @@ extern const void * SENTINEL;
 #define PRECOND_ELSE_NULL(...) ENSURE_THAT(NULL, EINVAL, __VA_ARGS__)
 #define PRECOND_ELSE_FALSE(...) ENSURE_THAT(false, EINVAL, __VA_ARGS__)
 #define PRECOND_ELSE_ZERO(...) ENSURE_THAT(0, EINVAL, __VA_ARGS__)
+#define PRECOND_ELSE_VOID(...) ENSURE_THAT(VOID_RETURN, EINVAL, __VA_ARGS__)
 
 // common invariants
 #define ENSURE_NONNULL_ELSE_NULL(ERRNO, ...) ENSURE_NONNULL(NULL, ERRNO, __VA_ARGS__)
@@ -46,7 +47,6 @@ extern const void * SENTINEL;
 
 #define ENSURE_ELSE_NULL(ERRNO, ...) ENSURE_THAT(NULL, ERRNO, __VA_ARGS__)
 #define ENSURE_ELSE_FALSE(ERRNO, ...) ENSURE_THAT(false, ERRNO, __VA_ARGS__)
-
 
 bool is_null(const void *first, ...);
 bool is_false(int first, ...);
