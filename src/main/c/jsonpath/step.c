@@ -1,4 +1,4 @@
-#include "jsonpath/model.h"
+#include "jsonpath.h"
 
 static const char * const STEP_KIND_NAMES[] =
 {

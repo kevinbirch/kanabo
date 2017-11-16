@@ -1,4 +1,4 @@
-#include "jsonpath/model.h"
+#include "jsonpath.h"
 #include "conditions.h"
 
 size_t subscript_predicate_index(const Predicate *value)

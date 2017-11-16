@@ -1,4 +1,4 @@
-#include "jsonpath/model.h"
+#include "jsonpath.h"
 
 static inline void step_destructor(void *each);
 
@@ -55,15 +55,8 @@ static inline void step_destructor(void *each)
     step_free((Step *)each);
 }
 
-void path_free(MaybeJsonPath result)
+void dispose_path(JsonPath path)
 {
-    switch(result.tag)
-    {
-        case NOTHING:
-            free(result.error.message);
-            break;
-        case JUST:
-            jsonpath_free(result.value);
-            break;
-    }
+    vector_destroy(path.steps, step_destructor);
+    free(path.steps);
 }

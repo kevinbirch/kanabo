@@ -1,4 +1,4 @@
-#include "jsonpath/model.h"
+#include "jsonpath.h"
 #include "conditions.h"
 
 uint8_t *name_test_step_name(const Step *value)

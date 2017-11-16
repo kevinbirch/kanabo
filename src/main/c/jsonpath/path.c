@@ -1,4 +1,4 @@
-#include "jsonpath/model.h"
+#include "jsonpath.h"
 #include "conditions.h"
 
 static const char * const PATH_KIND_NAMES[] =

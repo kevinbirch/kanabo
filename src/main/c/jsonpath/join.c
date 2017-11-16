@@ -1,4 +1,4 @@
-#include "jsonpath/model.h"
+#include "jsonpath.h"
 #include "conditions.h"
 
 JsonPath *join_predicate_left(const Predicate *value)

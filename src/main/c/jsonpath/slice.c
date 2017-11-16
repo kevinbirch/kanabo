@@ -1,4 +1,4 @@
-#include "jsonpath/model.h"
+#include "jsonpath.h"
 #include "conditions.h"
 
 static bool slice_predicate_has(const Predicate *value, enum slice_specifiers specifier);

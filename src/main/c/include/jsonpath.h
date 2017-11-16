@@ -4,15 +4,67 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "vector.h"
 #include "maybe.h"
-
-/* JSONPath Entity Types */
 
 enum path_kind
 {
     ABSOLUTE_PATH,
     RELATIVE_PATH
 };
+
+struct jsonpath_s
+{
+    enum path_kind kind;
+    size_t length;
+    Vector *steps;
+};
+
+typedef struct jsonpath_s JsonPath;
+
+enum predicate_kind
+{
+    WILDCARD,
+    SUBSCRIPT,
+    SLICE,
+    JOIN
+};
+
+enum slice_specifiers
+{
+    SLICE_FROM = 1,
+    SLICE_TO   = 2,
+    SLICE_STEP = 4
+};
+
+struct predicate_s
+{
+    enum predicate_kind kind;
+
+    union
+    {
+        struct
+        {
+            size_t index;
+        } subscript;
+
+        struct
+        {
+            uint8_t      specified;
+            int_fast32_t from;
+            int_fast32_t to;
+            int_fast32_t step;
+        } slice;
+
+        struct
+        {
+            JsonPath *left;
+            JsonPath *right;
+        } join;
+    };
+};
+
+typedef struct predicate_s Predicate;
 
 enum step_kind
 {
@@ -38,69 +90,34 @@ enum type_test_kind
     NULL_TEST,
 };
 
-enum predicate_kind
+struct step_s
 {
-    WILDCARD,
-    SUBSCRIPT,
-    SLICE,
-    JOIN
-};
+    enum step_kind kind;
 
- /* JSONPath Entities */
+    struct
+    {
+        enum test_kind kind;
+
+        union
+        {
+            struct
+            {
+                uint8_t *value;
+                size_t  length;
+            } name;
+
+            enum type_test_kind type;
+        };
+    } test;
+
+    Predicate *predicate;
+};
 
 typedef struct step_s Step;
-typedef struct predicate_s Predicate;
-
-typedef struct jsonpath_s JsonPath;
-
-enum jsonpath_parser_result_code_e
-{
-    PARSER_SUCCESS = 0,
-    ERR_PARSER_OUT_OF_MEMORY,        // unable to allocate memory
-    ERR_PARSER_EMPTY_INPUT,          // no input to parse
-    ERR_PARSER_END_OF_INPUT,         // premature end of input
-    ERR_PARSER_UNEXPECTED_VALUE,     // expected one value but found another
-    ERR_EXPECTED_NAME_CHAR,          // expected a name character
-    ERR_CONTROL_CODE,                // forbidden control code in string/name
-    ERR_ESCAPE_SEQUENCE,             // unuspported escape sequene
-    ERR_EMPTY_PREDICATE,             // a predicate is empty
-    ERR_UNBALANCED_PRED_DELIM,       // missing closing predicate delimiter `]'
-    ERR_UNSUPPORTED_PRED_TYPE,       // unsupported predicate found
-    ERR_EXTRA_JUNK_AFTER_PREDICATE,  // extra characters after valid predicate
-    ERR_EXPECTED_NODE_TYPE_TEST,     // expected a node type test
-    ERR_EXPECTED_INTEGER,            // expected an integer
-    ERR_INVALID_NUMBER,              // invalid number
-    ERR_STEP_CANNOT_BE_ZERO,         // slice step value must be non-zero
-    ERR_CODE_MAX = ERR_STEP_CANNOT_BE_ZERO
-};
-
-typedef enum jsonpath_parser_result_code_e ResultCode;
-
-struct maybe_jsonpath_s
-{
-    MaybeTag tag;
-
-    union
-    {
-        struct
-        {
-            uint_fast16_t  code;
-            size_t         position;
-            char          *message;
-        } error;
-        JsonPath *value;
-    };
-};
-
-typedef struct maybe_jsonpath_s MaybeJsonPath;
-
-/* Parser API */
-
-MaybeJsonPath read_path(const char *expression);
 
 /* Destructor */
 
-void path_free(MaybeJsonPath result);
+void dispose_path(JsonPath path);
 
 /* Path API */
 
