@@ -2,6 +2,7 @@
 
 static const char * const ERRORS[] =
 {
+    [INTERNAL_ERROR] = "internal error",
     [EMPTY_INPUT] = "no expression provided",
     [PREMATURE_END_OF_INPUT] = "premature end of input",
     [UNSUPPORTED_CONTROL_CHARACTER] = "unsupported control character",
