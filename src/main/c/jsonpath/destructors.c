@@ -8,8 +8,8 @@ static inline void jsonpath_free(JsonPath *path)
     {
         return;
     }
+
     vector_destroy(path->steps, step_destructor);
-    free(path->steps);
     free(path);
 }
 
@@ -47,6 +47,7 @@ static inline void step_free(Step *value)
     {
         predicate_free(value->predicate);
     }
+
     free(value);
 }
 
@@ -58,5 +59,4 @@ static inline void step_destructor(void *each)
 void dispose_path(JsonPath path)
 {
     vector_destroy(path.steps, step_destructor);
-    free(path.steps);
 }

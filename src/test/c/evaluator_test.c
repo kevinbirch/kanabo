@@ -8,7 +8,7 @@
 #include "evaluator.h"
 #include "evaluator/private.h"
 #undef component_name
-#include "jsonpath.h"
+#include "parser.h"
 #include "loader.h"
 
 void inventory_setup(void);
@@ -34,15 +34,15 @@ START_TEST (null_model)
 {
     char *expression = "foo";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(NULL, maybe.value);
+    evaluator_context *evaluator = make_evaluator(NULL, &from_just(maybe));
     assert_not_null(evaluator);
     assert_errno(EINVAL);
 
     assert_evaluator_failure(evaluator, ERR_MODEL_IS_NULL);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
     evaluator_free(evaluator);
 }
 END_TEST
@@ -64,17 +64,17 @@ START_TEST (null_document)
 {
     char *expression = "foo";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
     document_model *bad_model = make_model();
-    evaluator_context *evaluator = make_evaluator(bad_model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(bad_model, &from_just(maybe));
     assert_not_null(evaluator);
     assert_errno(EINVAL);
 
     assert_evaluator_failure(evaluator, ERR_NO_DOCUMENT_IN_MODEL);
     model_free(bad_model);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
     evaluator_free(evaluator);
 }
 END_TEST
@@ -83,7 +83,7 @@ START_TEST (null_document_root)
 {
     char *expression = "foo";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
     document_model *bad_model = make_model();
@@ -95,13 +95,13 @@ START_TEST (null_document_root)
     document->content.target = NULL;
     model_add(bad_model, document);
 
-    evaluator_context *evaluator = make_evaluator(bad_model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(bad_model, &from_just(maybe));
     assert_not_null(evaluator);
     assert_errno(EINVAL);
 
     assert_evaluator_failure(evaluator, ERR_NO_ROOT_IN_DOCUMENT);
     model_free(bad_model);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
     evaluator_free(evaluator);
 }
 END_TEST
@@ -110,7 +110,7 @@ START_TEST (relative_path)
 {
     char *expression = "foo";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
     document_model *bad_model = make_model();
@@ -119,13 +119,13 @@ START_TEST (relative_path)
     document_set_root(document, root);
     model_add(bad_model, document);
 
-    evaluator_context *evaluator = make_evaluator(bad_model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(bad_model, &from_just(maybe));
     assert_not_null(evaluator);
     assert_errno(EINVAL);
 
     assert_evaluator_failure(evaluator, ERR_PATH_IS_NOT_ABSOLUTE);
     model_free(bad_model);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
     evaluator_free(evaluator);
 }
 END_TEST
@@ -220,13 +220,13 @@ START_TEST (null_context_document)
 {
     char *expression = "foo";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
     document_model *bad_model = make_model();
     evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
     evaluator->model = bad_model;
-    evaluator->path = maybe.value;
+    evaluator->path = &from_just(maybe);
     evaluator->list = make_nodelist();
 
     reset_errno();
@@ -234,7 +234,7 @@ START_TEST (null_context_document)
     assert_errno(EINVAL);
 
     model_free(bad_model);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
     free(evaluator);
 }
 END_TEST
@@ -243,7 +243,7 @@ START_TEST (null_context_document_root)
 {
     char *expression = "foo";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
     node *document = (node *)calloc(1, sizeof(struct node));
@@ -258,7 +258,7 @@ START_TEST (null_context_document_root)
 
     evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
     evaluator->model = bad_model;
-    evaluator->path = maybe.value;
+    evaluator->path = &from_just(maybe);
     evaluator->list = make_nodelist();
 
     reset_errno();
@@ -267,7 +267,7 @@ START_TEST (null_context_document_root)
 
     model_free(bad_model);
     nodelist_free(evaluator->list);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
     free(evaluator);
 }
 END_TEST
@@ -276,7 +276,7 @@ START_TEST (relative_context_path)
 {
     char *expression = "foo";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
     document_model *bad_model = make_model();
@@ -287,7 +287,7 @@ START_TEST (relative_context_path)
 
     evaluator_context *evaluator = (evaluator_context *)calloc(1, sizeof(evaluator_context));
     evaluator->model = bad_model;
-    evaluator->path = maybe.value;
+    evaluator->path = &from_just(maybe);
     evaluator->list = make_nodelist();
 
     reset_errno();
@@ -296,7 +296,7 @@ START_TEST (relative_context_path)
 
     model_free(bad_model);
     nodelist_free(evaluator->list);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
     free(evaluator);
 }
 END_TEST
@@ -369,17 +369,17 @@ START_TEST (dollar_only)
 {
     char *expression = "$";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
     
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
     assert_node_kind(nodelist_get(list, 0), MAPPING);
@@ -394,17 +394,17 @@ START_TEST (single_name_step)
 {
     char *expression = "$.store";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
     node *store = nodelist_get(list, 0);
@@ -423,17 +423,17 @@ START_TEST (simple_recursive_step)
 {
     char *expression = "$..author";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 5);
 
@@ -450,17 +450,17 @@ START_TEST (compound_recursive_step)
 {
     char *expression = "$.store..price";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 6);
 
@@ -479,17 +479,17 @@ START_TEST (long_path)
 {
     char *expression = "$.store.bicycle.color";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
     node *color = nodelist_get(list, 0);
@@ -506,17 +506,17 @@ START_TEST (wildcard)
 {
     char *expression = "$.store.*";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 6);
 
@@ -534,17 +534,17 @@ START_TEST (recursive_wildcard)
 {
     char *expression = "$..*";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 34);
 
@@ -558,17 +558,17 @@ START_TEST (object_test)
 {
     char *expression = "$.store.object()";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
 
@@ -587,17 +587,17 @@ START_TEST (array_test)
 {
     char *expression = "$.store.book.array()";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
 
@@ -614,17 +614,17 @@ START_TEST (number_test)
 {
     char *expression = "$.store.book[*].price.number()";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 5);
 
@@ -649,17 +649,17 @@ START_TEST (wildcard_predicate)
 {
     char *expression = "$.store.book[*].author";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 5);
 
@@ -676,17 +676,17 @@ START_TEST (wildcard_predicate_on_mapping)
 {
     char *expression = "$.store.bicycle[*].color";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
 
@@ -702,17 +702,17 @@ START_TEST (wildcard_predicate_on_scalar)
 {
     char *expression = "$.store.bicycle.color[*]";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
 
@@ -728,17 +728,17 @@ START_TEST (subscript_predicate)
 {
     char *expression = "$.store.book[2]";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
 
@@ -760,17 +760,17 @@ START_TEST (recursive_subscript_predicate)
 {
     char *expression = "$..book[2]";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
 
@@ -792,17 +792,17 @@ START_TEST (slice_predicate)
 {
     char *expression = "$.store.book[:2]";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 2);
 
@@ -836,17 +836,17 @@ START_TEST (recursive_slice_predicate)
 {
     char *expression = "$..book[:2]";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 2);
 
@@ -880,17 +880,17 @@ START_TEST (slice_predicate_with_step)
 {
     char *expression = "$.store.book[:2:2]";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
 
@@ -913,17 +913,17 @@ START_TEST (slice_predicate_negative_from)
 {
     char *expression = "$.store.book[-1:]";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
 
@@ -946,17 +946,17 @@ START_TEST (recursive_slice_predicate_negative_from)
 {
     char *expression = "$..book[-1:]";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
 
@@ -979,17 +979,17 @@ START_TEST (slice_predicate_copy)
 {
     char *expression = "$.store.book[::]";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 5);
 
@@ -1014,17 +1014,17 @@ START_TEST (slice_predicate_reverse)
 {
     char *expression = "$.store.book[::-1]";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 5);
 
@@ -1052,17 +1052,17 @@ START_TEST (name_alias)
 {
     char *expression = "$.payment.billing-address.name";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
     reset_errno();
@@ -1077,17 +1077,17 @@ START_TEST (type_alias)
 {
     char *expression = "$.shipments[0].*.number()";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 1);
     reset_errno();
@@ -1102,17 +1102,17 @@ START_TEST (greedy_wildcard_alias)
 {
     char *expression = "$.shipments[0].items.*";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 2);
 
@@ -1135,17 +1135,17 @@ START_TEST (recursive_alias)
 {
     char *expression = "$.shipments..isbn";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 2);
 
@@ -1160,17 +1160,17 @@ START_TEST (wildcard_predicate_alias)
 {
     char *expression = "$.shipments[0].items[*].price";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 2);
 
@@ -1185,17 +1185,17 @@ START_TEST (recursive_wildcard_alias)
 {
     char *expression = "$.shipments[0].items..*";
 
-    MaybeJsonPath maybe = read_path(expression);
+    Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    evaluator_context *evaluator = make_evaluator(model, maybe.value);
+    evaluator_context *evaluator = make_evaluator(model, &from_just(maybe));
     assert_not_null(evaluator);
 
     nodelist *list = evaluate(evaluator);
     assert_int_eq(EVALUATOR_SUCCESS, evaluator_status(evaluator));
     assert_not_null(list);
     evaluator_free(evaluator);
-    path_free(maybe);
+    dispose_path(from_just(maybe));
 
     assert_nodelist_length(list, 15);
 

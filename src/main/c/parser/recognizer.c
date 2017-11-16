@@ -6,6 +6,30 @@
 #define position(PARSER) (PARSER)->scanner->current.location.position
 #define lexeme(PARSER) scanner_extract_lexeme((PARSER)->scanner, (PARSER)->scanner->current.location)
 
+static void expect(Parser *parser, TokenKind kind)
+{
+    bool squaked = false;
+
+    while(kind != current(parser))
+    {
+        if(END_OF_INPUT == current(parser))
+        {
+            add_error(parser, position(parser), PREMATURE_END_OF_INPUT);
+            break;
+        }
+        if(!squaked)
+        {
+            squaked = true;
+            add_error(parser, position(parser), UNEXPECTED_INPUT);
+        }
+        next(parser);
+    }
+
+    next(parser);
+}
+
+#include <stdio.h>
+
 static void parse_predicate_expression(Step *step, Parser *parser)
 {
     next(parser);
@@ -24,7 +48,11 @@ static void parse_predicate_expression(Step *step, Parser *parser)
             // parse_slice_predicate(parent, parser);
             break;
         case AT:
+        case DOLLAR:
+        case DOT:
+        case DOT_DOT:
         case NAME:
+            printf("found join\n");
             // parse_join_predicate(parent, parser);
             break;
         case END_OF_INPUT:
@@ -36,7 +64,7 @@ static void parse_predicate_expression(Step *step, Parser *parser)
             break;
     }
 
-    // expect(CLOSE_BRACKET);
+    expect(parser, CLOSE_BRACKET);
 
     step->predicate = predicate;
 }
@@ -54,38 +82,8 @@ static void parse_predicate(Step *step, Parser *parser)
     }
 }
 
-static void parse_qualified_head_step(JsonPath *path, Parser *parser)
+static void parse_step(Parser *parser, Step *step)
 {
-    Step *step = xcalloc(sizeof(Step));
-    step->kind = ROOT;
-    step->test.kind = NAME_TEST;
-
-    path->length++;
-    vector_add(path->steps, step);
-
-    parse_predicate(step, parser);
-}
-
-static void parse_relative_step(JsonPath *path, Parser *parser)
-{
-    enum step_kind kind = SINGLE;
-    if(DOT == current(parser))
-    {
-        next(parser);
-    }
-    else if(DOT_DOT == current(parser))
-    {
-        next(parser);
-        kind = RECURSIVE;
-    }
-
-    Step *step = xcalloc(sizeof(Step));
-    step->kind = kind;
-    step->test.kind = NAME_TEST;
-
-    path->length++;
-    vector_add(path->steps, step);
-    
     switch(current(parser))
     {
         case QUOTED_NAME:
@@ -148,6 +146,9 @@ static void parse_relative_step(JsonPath *path, Parser *parser)
             step->test.kind = TYPE_TEST;
             step->test.type = NULL_TEST;
             break;
+        case END_OF_INPUT:
+            add_error(parser, position(parser), EXPECTED_STEP_PRODUCTION);
+            return;
         default:
             add_error(parser, position(parser), EXPECTED_STEP_PRODUCTION);
             // xxx - enter recovery mode
@@ -157,32 +158,69 @@ static void parse_relative_step(JsonPath *path, Parser *parser)
     parse_predicate(step, parser);
 }
 
-static bool parse_head_step(JsonPath *path, Parser *parser)
+static inline Step *make_step(enum step_kind kind, JsonPath *path)
 {
-    bool result = false;
+    Step *step = xcalloc(sizeof(Step));
+    step->kind = kind;
+    step->test.kind = NAME_TEST;
 
+    path->length++;
+    vector_add(path->steps, step);
+
+    return step;
+}
+
+static void parse_recursive_step(Parser *parser, JsonPath *path)
+{
+    if(DOT_DOT == current(parser))
+    {
+        next(parser);
+    }
+
+    parse_step(parser, make_step(RECURSIVE, path));
+}
+
+static void parse_relative_step(Parser *parser, JsonPath *path)
+{
+    if(DOT == current(parser))
+    {
+        next(parser);
+    }
+    
+    parse_step(parser, make_step(SINGLE, path));
+}
+
+static void parse_qualified_head_step(Parser *parser, JsonPath *path)
+{
+    Step *step = xcalloc(sizeof(Step));
+    step->kind = ROOT;
+    step->test.kind = NAME_TEST;
+
+    path->length++;
+    vector_add(path->steps, step);
+
+    parse_predicate(step, parser);
+}
+
+static void parse_head_step(Parser *parser, JsonPath *path)
+{
     switch(current(parser))
     {
         case DOLLAR:
             path->kind = ABSOLUTE_PATH;
-            parse_qualified_head_step(path, parser);
-            result = true;
+            parse_qualified_head_step(parser, path);
             break;
         case AT:
             path->kind = RELATIVE_PATH;
-            parse_qualified_head_step(path, parser);
-            result = true;
+            parse_qualified_head_step(parser, path);
             break;
         case END_OF_INPUT:
             break;
         default:
             path->kind = RELATIVE_PATH;
-            parse_relative_step(path, parser);
-            result = true;
+            parse_relative_step(parser, path);
             break;
     }
-
-    return result;
 }
 
 JsonPath recognize(Parser *parser)
@@ -191,10 +229,7 @@ JsonPath recognize(Parser *parser)
     path.steps = make_vector_with_capacity(1);
 
     next(parser);
-    if(!parse_head_step(&path, parser))
-    {
-        goto end;
-    }
+    parse_head_step(parser, &path);
 
     bool done = false;
     while(!done)
@@ -202,10 +237,10 @@ JsonPath recognize(Parser *parser)
         switch(current(parser))
         {
             case DOT:
-                // parse_relative_step(path, parser);
+                parse_relative_step(parser, &path);
                 break;
             case DOT_DOT:
-                // parse_recursive_step(path, parser);
+                parse_recursive_step(parser, &path);
                 break;
             case END_OF_INPUT:
                 done = true;
@@ -218,6 +253,5 @@ JsonPath recognize(Parser *parser)
         next(parser);
     }
 
-  end:
     return path;
 }
