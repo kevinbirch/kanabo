@@ -140,6 +140,9 @@ LICENSE file for more details.
   # filter
   # transformer
 
+* update spacecadet
+  * move changes back
+  * add maybe, xcalloc, others?
 * mv spacecadet,linenose,yaml,check stuff to vendor
 * rename document objects?
 * model dumper w/ secret command line option, nice tree-like layout
@@ -148,6 +151,7 @@ LICENSE file for more details.
   * scanner can provide a lexeme _slice_ of the input
   * unqoted memcpy that to String
   * quoted will iterate into MutableString, copy to char *
+* print stack trace on xcalloc failure
 
 ### loader
 
