@@ -79,3 +79,5 @@ char    input_consume_one(Input *self);
 size_t  input_consume_many(Input *self, size_t count, char *result);
 bool    input_consume_if(Input *self, const char *value);
 void    input_push_back(Input *self);
+
+char   *input_extract(Input *self, Location location);

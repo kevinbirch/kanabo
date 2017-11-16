@@ -1,8 +1,8 @@
 #pragma once
 
+#include "parser.h"
 #include "parser/input.h"
 #include "parser/token.h"
-#include "parser/errors.h"
 
 typedef void (*ErrorCallback)(Position position, ParserErrorCode code, void *parameter);
 
@@ -28,3 +28,5 @@ void     dispose_scanner(Scanner *self);
 
 void scanner_next(Scanner *self);
 void scanner_reset(Scanner *self);
+
+char *scanner_extract_lexeme(Scanner *self, Location location);
