@@ -1,5 +1,6 @@
 #include <ctype.h>
 
+#include "conditions.h"
 #include "vector.h"
 
 #include "parser/scanner.h"
@@ -313,6 +314,9 @@ static void match_symbol(Scanner *self)
 
 Scanner *make_scanner(const char *data, size_t length)
 {
+    PRECOND_NONNULL_ELSE_NULL(data);
+    PRECOND_ELSE_NULL(0 != length);
+
     Scanner *self = xcalloc(sizeof(Scanner) + length);
     input_init(&self->input, NULL, length);
     memcpy(self->input.source.buffer, data, length);
@@ -322,10 +326,7 @@ Scanner *make_scanner(const char *data, size_t length)
 
 void dispose_scanner(Scanner *self)
 {
-    if(NULL == self)
-    {
-        return;
-    }
+    PRECOND_NONNULL_ELSE_VOID(self);
 
     input_release(&self->input);
     free(self);
@@ -333,6 +334,13 @@ void dispose_scanner(Scanner *self)
 
 void scanner_next(Scanner *self)
 {
+    PRECOND_NONNULL_ELSE_VOID(self);
+
+    if(END_OF_INPUT == self->current.kind)
+    {
+        return;
+    }
+
     input_skip_whitespace(&self->input);
 
     Position start = position(self);
@@ -482,5 +490,14 @@ void scanner_next(Scanner *self)
 
 void scanner_reset(Scanner *self)
 {
+    PRECOND_NONNULL_ELSE_VOID(self);
+
     input_reset(&self->input);
+}
+
+char *scanner_extract_lexeme(Scanner *self, Location location)
+{
+    PRECOND_NONNULL_ELSE_NULL(self);
+
+    return input_extract(&self->input, location);
 }

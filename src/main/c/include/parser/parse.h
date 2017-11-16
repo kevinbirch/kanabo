@@ -2,7 +2,8 @@
 
 #include "vector.h"
 
-#include "parser/errors.h"
+#include "jsonpath.h"
+#include "parser.h"
 #include "parser/scanner.h"
 
 struct parser_s
@@ -14,3 +15,5 @@ struct parser_s
 typedef struct parser_s Parser;
 
 void add_error(Parser *self, Position position, ParserErrorCode code);
+JsonPath recognize(Parser *parser);
+char *unescape(const char *lexeme);

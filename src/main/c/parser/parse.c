@@ -1,6 +1,4 @@
-#include "parser.h"
 #include "parser/parse.h"
-#include "parser/recognizer.h"
 
 void add_error(Parser *self, Position position, ParserErrorCode code)
 {
@@ -8,14 +6,7 @@ void add_error(Parser *self, Position position, ParserErrorCode code)
     err->code = code;
     err->position = position;
 
-    if(NULL == self->errors)
-    {
-        self->errors = make_vector_of(1, err);
-    }
-    else
-    {
-        vector_append(self->errors, err);
-    }
+    vector_append(self->errors, err);
 }
 
 static void error_handler(Position position, ParserErrorCode code, void *parameter)
@@ -24,21 +15,30 @@ static void error_handler(Position position, ParserErrorCode code, void *paramet
     add_error(self, position, code);
 }
 
-// xxx MaybeJsonPath, MaybeAst point to vector of errors
-void parse(const char *expression)
+Maybe(JsonPath) parse(const char *expression)
 {
+    Parser parser = {.errors = make_vector_with_capacity(1)};
+    if(NULL == expression || 0 == strlen(expression))
+    {
+        add_error(&parser, (Position){}, EMPTY_INPUT);
+        return fail(JsonPath, parser.errors);
+    }
+
     Scanner *scanner = make_scanner(expression, strlen(expression));
-
-    // xxx - move error handling declarations to parser/error.h?
-    // do we need a parser struct at all?
-    Parser parser = {.scanner = scanner};
-
     scanner->handler.callback = error_handler;
     scanner->handler.parameter = &parser;
 
-    /* AstNode *root =  */recognize(&parser);
+    parser.scanner = scanner;
 
-    // xxx print out errors
+    JsonPath path = recognize(&parser);
 
     dispose_scanner(scanner);
+    if(vector_is_empty(parser.errors))
+    {
+        vector_free(parser.errors);
+        return just(JsonPath, path);
+    }
+
+    dispose_path(path);
+    return fail(JsonPath, parser.errors);
 }
