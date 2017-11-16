@@ -23,16 +23,27 @@ typedef enum maybe_tag_e MaybeTag;
         MaybeTag tag;                           \
         union                                   \
         {                                       \
-            uint_fast16_t  code;                \
+            uint32_t error;                     \
             TYPE value;                         \
         };                                      \
+    } Maybe(TYPE)
+
+#define make_maybe_error(TYPE, ETYPE)             \
+    typedef struct                                \
+    {                                             \
+        MaybeTag tag;                             \
+        union                                     \
+        {                                         \
+            ETYPE error;                          \
+            TYPE  value;                          \
+        };                                        \
     } Maybe(TYPE)
 
 // Mabye Constructors
 
 #define just(a, x) (Maybe(a)){.tag=JUST,    .value=(x)}
-#define nothing(a) (Maybe(a)){.tag=NOTHING, .code=0}
-#define fail(a, v) (Maybe(a)){.tag=NOTHING, .code=(v)}
+#define nothing(a) (Maybe(a)){.tag=NOTHING, .error=0}
+#define fail(a, v) (Maybe(a)){.tag=NOTHING, .error=(v)}
 
 // Maybe functions
 
@@ -40,7 +51,7 @@ typedef enum maybe_tag_e MaybeTag;
 #define is_nothing(x) NOTHING == (x).tag
 
 #define from_just(x) (x).value
-#define from_nothing(x) (x).code
+#define from_nothing(x) (x).error
 #define maybe(x, fallback) is_just(x) ? from_just(x) : fallback
 
 // Maybe Monand functions
