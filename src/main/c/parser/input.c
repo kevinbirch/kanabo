@@ -247,8 +247,7 @@ char *input_extract(Input *self, Location location)
 {
     PRECOND_NONNULL_ELSE_NULL(self);
     PRECOND_ELSE_NULL(location.index < self->source.length);
-    PRECOND_ELSE_NULL(location.extent < self->source.length);
-    PRECOND_ELSE_NULL(location.index + location.extent < self->source.length);
+    PRECOND_ELSE_NULL(location.index + location.extent <= self->source.length);
 
     char *value = xcalloc(location.extent + 1);
     memcpy(value, self->source.buffer + location.index, location.extent);

@@ -181,8 +181,6 @@ START_TEST (stray_root_predicate_closure)
 }
 END_TEST
 
-// need tests for all forbidden control chars
-
 START_TEST (empty_root_predicate)
 {
     char *expression = "$[].bar";
@@ -193,14 +191,25 @@ START_TEST (empty_root_predicate)
 }
 END_TEST
 
-/*
-
 START_TEST (premature_unclosed_quoted_step)
 {
     char *expression = "$.foo.'";
     Maybe(JsonPath) maybe = parse(expression);
-
-    assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 7);
+    for(size_t i = 0; i < vector_length(from_nothing(maybe)); i++)
+    {
+        ParserError *err = (ParserError *)vector_get(from_nothing(maybe), i);
+        if(err->code != INTERNAL_ERROR)
+        {
+            log_error(tcase_name(), "at: %zu - %s\n", err->position.index, parser_strerror(err->code));
+        }
+        else
+        {
+            ParserInternalError *ierr = (ParserInternalError *)err;
+            log_error(tcase_name(), "at: %zu - %s:%d error: %s\n", ierr->position.index, ierr->filename, ierr->line, ierr->message);
+        }
+    }
+    
+    assert_parser_failure(expression, maybe, PREMATURE_END_OF_INPUT, 7);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -210,10 +219,12 @@ START_TEST (unclosed_quoted_step)
     char *expression = "$.foo.'bar";
     Maybe(JsonPath) maybe = parse(expression);
 
-    assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 10);
+    assert_parser_failure(expression, maybe, PREMATURE_END_OF_INPUT, 10);
     dispose_maybe(maybe);
 }
 END_TEST
+
+/*
 
 START_TEST (unclosed_escaped_quoted_step)
 {
@@ -1036,6 +1047,8 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input_case, unclosed_empty_root_predicate);
     tcase_add_test(bad_input_case, stray_root_predicate_closure);
     tcase_add_test(bad_input_case, empty_root_predicate);
+    tcase_add_test(bad_input_case, premature_unclosed_quoted_step);
+    tcase_add_test(bad_input_case, unclosed_quoted_step);
     /*
     tcase_add_test(bad_input_case, quoted_empty_step);
     tcase_add_test(bad_input_case, bogus_type_test_name);

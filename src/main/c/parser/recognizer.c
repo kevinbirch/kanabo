@@ -6,100 +6,102 @@
 #define position(PARSER) (PARSER)->scanner->current.location.position
 #define lexeme(PARSER) scanner_extract_lexeme((PARSER)->scanner, (PARSER)->scanner->current.location)
 
-static void expect(Parser *parser, TokenKind kind)
+static void expect(Parser *self, TokenKind kind)
 {
     bool squaked = false;
 
-    while(kind != current(parser))
+    while(kind != current(self))
     {
-        if(END_OF_INPUT == current(parser))
+        if(END_OF_INPUT == current(self))
         {
-            add_error(parser, position(parser), PREMATURE_END_OF_INPUT);
+            add_error(self, position(self), PREMATURE_END_OF_INPUT);
             break;
         }
         if(!squaked)
         {
             squaked = true;
-            add_error(parser, position(parser), UNEXPECTED_INPUT);
+            add_error(self, position(self), UNEXPECTED_INPUT);
         }
-        next(parser);
+        next(self);
     }
 
-    next(parser);
+    next(self);
 }
 
-#include <stdio.h>
-
-static void parse_predicate_expression(Step *step, Parser *parser)
+static void parse_predicate_expression(Parser *self, Step *step)
 {
-    next(parser);
+    next(self);
 
     Predicate *predicate = xcalloc(sizeof(Predicate));
 
-    switch(current(parser))
+    switch(current(self))
     {
         case ASTERISK:
             predicate->kind = WILDCARD;
             break;
         case INTEGER_LITERAL:
-            // parse_indexed_predicate(parent, parser);
+            // parse_indexed_predicate(parent, self);
             break;
         case COLON:
-            // parse_slice_predicate(parent, parser);
+            // parse_slice_predicate(parent, self);
             break;
         case AT:
         case DOLLAR:
         case DOT:
         case DOT_DOT:
         case NAME:
-            printf("found join\n");
-            // parse_join_predicate(parent, parser);
+            // parse_join_predicate(parent, self);
             break;
         case END_OF_INPUT:
-            add_error(parser, position(parser), EXPECTED_PREDICATE_EXPRESSION_PRODUCTION);
+            add_error(self, position(self), EXPECTED_PREDICATE_EXPRESSION_PRODUCTION);
             return;
         default:
-            add_error(parser, position(parser), EXPECTED_PREDICATE_EXPRESSION_PRODUCTION);
+            add_error(self, position(self), EXPECTED_PREDICATE_EXPRESSION_PRODUCTION);
             // N.B. - keep going until the predicate closing `]`
             break;
     }
 
-    expect(parser, CLOSE_BRACKET);
+    expect(self, CLOSE_BRACKET);
 
     step->predicate = predicate;
 }
 
-static void parse_predicate(Step *step, Parser *parser)
+static void parse_predicate(Parser *self, Step *step)
 {
-    next(parser);
-    if(current(parser) == OPEN_BRACKET)
+    if(current(self) == OPEN_BRACKET)
     {
-        parse_predicate_expression(step, parser);
+        parse_predicate_expression(self, step);
     }
-    else if(current(parser) == OPEN_FILTER)
+    else if(current(self) == OPEN_FILTER)
     {
-        // parse_filter_expression(parent, parser)
+        // parse_filter_expression(parent, self)
     }
 }
 
-static void parse_step(Parser *parser, Step *step)
+static void parse_step(Parser *self, Step *step)
 {
-    switch(current(parser))
+    switch(current(self))
     {
         case QUOTED_NAME:
-            char *raw = lexeme(parser);
+            char *raw = lexeme(self);
+            if(NULL == raw)
+            {
+                add_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", token(self).location.index, token(self).location.extent);
+                break;
+            }
+            // xxx - strip the lexeme
             char *cooked = unescape(raw);
             free(raw);
             step->test.name.value = (uint8_t *)cooked;            
             step->test.name.length = strlen(cooked);
             break;
         case NAME:
-            step->test.name.length = token(parser).location.extent;
-            step->test.name.value = (uint8_t *)lexeme(parser);
+            step->test.name.length = token(self).location.extent;
+            step->test.name.value = (uint8_t *)lexeme(self);
             break;
         /*
         case EQUALS:
-            // parse transformer
+            // transformer
             break;
         case EXCLAMATION:
             // tag selector
@@ -147,15 +149,16 @@ static void parse_step(Parser *parser, Step *step)
             step->test.type = NULL_TEST;
             break;
         case END_OF_INPUT:
-            add_error(parser, position(parser), EXPECTED_STEP_PRODUCTION);
+            add_error(self, position(self), EXPECTED_STEP_PRODUCTION);
             return;
         default:
-            add_error(parser, position(parser), EXPECTED_STEP_PRODUCTION);
+            add_error(self, position(self), EXPECTED_STEP_PRODUCTION);
             // xxx - enter recovery mode
             break;
     }
 
-    parse_predicate(step, parser);
+    next(self);
+    parse_predicate(self, step);
 }
 
 static inline Step *make_step(enum step_kind kind, JsonPath *path)
@@ -170,27 +173,27 @@ static inline Step *make_step(enum step_kind kind, JsonPath *path)
     return step;
 }
 
-static void parse_recursive_step(Parser *parser, JsonPath *path)
+static void parse_recursive_step(Parser *self, JsonPath *path)
 {
-    if(DOT_DOT == current(parser))
+    if(DOT_DOT == current(self))
     {
-        next(parser);
+        next(self);
     }
 
-    parse_step(parser, make_step(RECURSIVE, path));
+    parse_step(self, make_step(RECURSIVE, path));
 }
 
-static void parse_relative_step(Parser *parser, JsonPath *path)
+static void parse_relative_step(Parser *self, JsonPath *path)
 {
-    if(DOT == current(parser))
+    if(DOT == current(self))
     {
-        next(parser);
+        next(self);
     }
     
-    parse_step(parser, make_step(SINGLE, path));
+    parse_step(self, make_step(SINGLE, path));
 }
 
-static void parse_qualified_head_step(Parser *parser, JsonPath *path)
+static void parse_qualified_head_step(Parser *self, JsonPath *path)
 {
     Step *step = xcalloc(sizeof(Step));
     step->kind = ROOT;
@@ -199,58 +202,58 @@ static void parse_qualified_head_step(Parser *parser, JsonPath *path)
     path->length++;
     vector_add(path->steps, step);
 
-    parse_predicate(step, parser);
+    next(self);
+    parse_predicate(self, step);
 }
 
-static void parse_head_step(Parser *parser, JsonPath *path)
+static void parse_head_step(Parser *self, JsonPath *path)
 {
-    switch(current(parser))
+    switch(current(self))
     {
         case DOLLAR:
             path->kind = ABSOLUTE_PATH;
-            parse_qualified_head_step(parser, path);
+            parse_qualified_head_step(self, path);
             break;
         case AT:
             path->kind = RELATIVE_PATH;
-            parse_qualified_head_step(parser, path);
+            parse_qualified_head_step(self, path);
             break;
         case END_OF_INPUT:
             break;
         default:
             path->kind = RELATIVE_PATH;
-            parse_relative_step(parser, path);
+            parse_relative_step(self, path);
             break;
     }
 }
 
-JsonPath recognize(Parser *parser)
+JsonPath recognize(Parser *self)
 {
     JsonPath path;
     path.steps = make_vector_with_capacity(1);
 
-    next(parser);
-    parse_head_step(parser, &path);
+    next(self);
+    parse_head_step(self, &path);
 
     bool done = false;
     while(!done)
     {
-        switch(current(parser))
+        switch(current(self))
         {
             case DOT:
-                parse_relative_step(parser, &path);
+                parse_relative_step(self, &path);
                 break;
             case DOT_DOT:
-                parse_recursive_step(parser, &path);
+                parse_recursive_step(self, &path);
                 break;
             case END_OF_INPUT:
                 done = true;
                 break;
             default:
-                add_error(parser, position(parser), EXPECTED_QUALIFIED_STEP_PRODUCTION);
+                add_error(self, position(self), EXPECTED_QUALIFIED_STEP_PRODUCTION);
                 done = true;
                 break;
         }
-        next(parser);
     }
 
     return path;
