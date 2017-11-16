@@ -149,9 +149,17 @@ static int expression_mode(const struct settings *settings)
 
 static inline bool error_printer(void *each, void *context)
 {
-    ParserError *error = (ParserError *)each;
-    const char *message = parser_strerror(error->code);
-    fprintf(stderr, "expression:%zu error: %s\n", error->position.index + 1, message);
+    ParserError *err = (ParserError *)each;
+    if(INTERNAL_ERROR == err->code)
+    {
+        ParserInternalError *ierr = (ParserInternalError *)err;
+        fprintf(stderr, "%s:%d internal error: %s", ierr->filename, ierr->line, ierr->message);
+    }
+    else
+    {
+        const char *message = parser_strerror(err->code);
+        fprintf(stderr, "expression:%zu error: %s\n", err->position.index + 1, message);
+    }
 
     return true;
 }
