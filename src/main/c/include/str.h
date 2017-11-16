@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <string.h>
@@ -6,12 +5,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 // String Entities
 
 typedef struct string_s String;
 typedef struct mutable_string_s MutableString;
-
 
 // String Constructors
 
@@ -22,23 +19,19 @@ String *make_string_with_bytestring(const uint8_t *value, size_t length);
 
 String *string_clone(const String *self);
 
-
 // String Destructor
 
 void    string_free(String *self);
 
-
 // String Data API
 
 uint8_t string_get(const String *self, size_t index);
-
 
 // String Equality API
 
 bool string_equals(const String *self, const String *other);
 bool string_equals_c_string(const String *self, const char *other);
 bool string_equals_bytestring(const String *self, const uint8_t *other, size_t length);
-
 
 // String Iteration API
 
@@ -54,11 +47,9 @@ bool string_endswith_c_string(const String *self, const char *value);
 
 bool string_contains(const String *self, uint8_t value);
 
-
 // String Attribute API
 
 size_t string_length(const String *self);
-
 
 // String Coercion API
 
@@ -73,11 +64,9 @@ MutableString *make_mstring_with_string(const String *value);
 
 MutableString *mstring_clone(const MutableString *self);
 
-
 // Mutable String Destructor
 
 void mstring_free(MutableString *self);
-
 
 // Mutable String Attribute API
 
@@ -85,11 +74,9 @@ size_t mstring_length(const MutableString *self);
 size_t mstring_get_capacity(const MutableString *self);
 bool   mstring_has_capacity(const MutableString *self, size_t length);
 
-
 // Mutable String Data API
 
 uint8_t  mstring_get(const MutableString *self, size_t index);
-
 
 // Mutable String Equality API
 
@@ -97,7 +84,6 @@ bool mstring_equals(const MutableString *self, const MutableString *other);
 bool mstring_equals_string(const MutableString *self, const String *other);
 bool mstring_equals_c_string(const MutableString *self, const char *other);
 bool mstring_equals_bytestring(const MutableString *self, const uint8_t *other, size_t length);
-
 
 // Mutable String Iteration API
 
@@ -111,17 +97,17 @@ bool mstring_endswith_c_string(const MutableString *self, const char *value);
 
 bool mstring_contains(const MutableString *self, uint8_t value);
 
-
 // Mutable String Coercion API
 
 String     *mstring_as_string(const MutableString *self);
 String     *mstring_as_string_no_copy(MutableString *self);
 const char *mstring_as_c_str(const MutableString *self);
-
+char       *mstring_copy(const MutableString *self);
 
 // Mutable String Update API
 
-bool mstring_append_char(MutableString **self, const uint8_t value);
+bool mstring_append_byte(MutableString **self, const uint8_t value);
+bool mstring_append_char(MutableString **self, const char value);
 bool mstring_append_c_str(MutableString **self, const char *value);
 bool mstring_append_string(MutableString **self, const String *value);
 bool mstring_append_mstring(MutableString **self, const MutableString *value);
@@ -132,8 +118,10 @@ bool mstring_append_stream(MutableString **self, const uint8_t *value, size_t le
                                              const char *: mstring_append_c_str, \
                                              char [sizeof(VALUE)]: mstring_append_c_str, \
                                              const char [sizeof(VALUE)]: mstring_append_c_str, \
-                                             uint8_t: mstring_append_char, \
-                                             const uint8_t: mstring_append_char, \
+                                             uint8_t: mstring_append_byte, \
+                                             const uint8_t: mstring_append_byte, \
+                                             char: mstring_append_char, \
+                                             const char: mstring_append_char, \
                                              String *: mstring_append_string, \
                                              const String *: mstring_append_string, \
                                              MutableString *: mstring_append_mstring, \
@@ -142,7 +130,6 @@ bool mstring_append_stream(MutableString **self, const uint8_t *value, size_t le
 
 void mstring_set(MutableString *self, size_t position, uint8_t value);
 void mstring_set_range(MutableString *self, size_t position, size_t length, const uint8_t *value);
-
 
 // Generic API
 
