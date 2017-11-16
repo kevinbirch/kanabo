@@ -144,6 +144,10 @@ LICENSE file for more details.
 * rename document objects?
 * model dumper w/ secret command line option, nice tree-like layout
   * `--output=ast`
+* name selector value should use str
+  * scanner can provide a lexeme _slice_ of the input
+  * unqoted memcpy that to String
+  * quoted will iterate into MutableString, copy to char *
 
 ### loader
 
