@@ -9,7 +9,6 @@
 #include "evaluator/private.h"
 #undef component_name
 #include "jsonpath.h"
-#include "jsonpath/model.h"
 #include "loader.h"
 
 void inventory_setup(void);

@@ -393,6 +393,20 @@ const char *mstring_as_c_str(const MutableString *self)
     return (const char *)self->base.value;
 }
 
+char *mstring_copy(const MutableString *self)
+{
+    char *result = calloc(1, self->base.length + 1);
+    if(NULL == result)
+    {
+        return NULL;
+    }
+
+    memcpy(result, self->base.value, self->base.length);
+    result[self->base.length] = '\0';
+
+    return result;
+}
+
 static inline size_t calculate_new_capacity(size_t capacity)
 {
     return (capacity * 3) / 2 + 1;
@@ -416,7 +430,17 @@ static inline void append(MutableString *self, const void *data, size_t length)
     self->base.value[self->base.length] = '\0';
 }
 
-bool mstring_append_char(MutableString **self, const uint8_t value)
+bool mstring_append_byte(MutableString **self, const uint8_t value)
+{
+    if(!ensure_capacity(self, 1))
+    {
+        return false;
+    }
+    append(*self, &value, 1);
+    return true;
+}
+
+bool mstring_append_char(MutableString **self, const char value)
 {
     if(!ensure_capacity(self, 1))
     {

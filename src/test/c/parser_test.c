@@ -3,7 +3,7 @@
 // check defines a fail helper that conflicts with the maybe constructor
 #undef fail
 
-#include "jsonpath/model.h"
+#include "jsonpath.h"
 
 #define assert_path_length(PATH, EXPECTED) assert_uint_eq((EXPECTED), path_length((PATH)))
 #define assert_path_kind(PATH, EXPECTED) assert_int_eq((EXPECTED), path_kind((PATH)))
