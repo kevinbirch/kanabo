@@ -10,7 +10,7 @@ static const char * const ERRORS[] =
     [UNSUPPORTED_ESCAPE_SEQUENCE] = "unsupported escape sequence",
     [UNEXPECTED_INPUT] = "unexpected input",
     [EXPECTED_QUALIFIED_STEP_PRODUCTION] = "expected qualified step definition",
-    [EXPECTED_PREDICATE_EXPRESSION_PRODUCTION] = "expected predicate definition",
+    [EXPECTED_PREDICATE_PRODUCTION] = "expected predicate definition",
     [EXPECTED_STEP_PRODUCTION] = "expected step selector or transformer definition",
 };
 

@@ -30,49 +30,57 @@ static void expect(Parser *self, TokenKind kind)
 
 static void parse_predicate_expression(Parser *self, Step *step)
 {
+    // N.B. - eat the opening bracket
     next(self);
 
     Predicate *predicate = xcalloc(sizeof(Predicate));
+    step->predicate = predicate;
 
     switch(current(self))
     {
         case ASTERISK:
             predicate->kind = WILDCARD;
+            next(self);
             break;
         case INTEGER_LITERAL:
-            // parse_indexed_predicate(parent, self);
+            // xxx - parse_indexed_predicate(parent, self);
             break;
         case COLON:
-            // parse_slice_predicate(parent, self);
+            // xxx - parse_slice_predicate(parent, self);
             break;
         case AT:
         case DOLLAR:
         case DOT:
         case DOT_DOT:
         case NAME:
-            // parse_join_predicate(parent, self);
+            // xxx - parse_join_predicate(parent, self);
+            add_error(self, position(self), EXPECTED_PREDICATE_PRODUCTION);
+            next(self);
             break;
+        case CLOSE_BRACKET:
+            add_error(self, position(self), EXPECTED_PREDICATE_PRODUCTION);
+            next(self);
+            return;
         case END_OF_INPUT:
-            add_error(self, position(self), EXPECTED_PREDICATE_EXPRESSION_PRODUCTION);
+            add_error(self, position(self), EXPECTED_PREDICATE_PRODUCTION);
             return;
         default:
-            add_error(self, position(self), EXPECTED_PREDICATE_EXPRESSION_PRODUCTION);
+            add_error(self, position(self), EXPECTED_PREDICATE_PRODUCTION);
+            next(self);
             // N.B. - keep going until the predicate closing `]`
             break;
     }
 
     expect(self, CLOSE_BRACKET);
-
-    step->predicate = predicate;
 }
 
 static void parse_predicate(Parser *self, Step *step)
 {
-    if(current(self) == OPEN_BRACKET)
+    if(OPEN_BRACKET == current(self))
     {
         parse_predicate_expression(self, step);
     }
-    else if(current(self) == OPEN_FILTER)
+    else if(OPEN_FILTER == current(self))
     {
         // parse_filter_expression(parent, self)
     }
@@ -93,7 +101,8 @@ static void parse_quoted_name(Parser *self, Step *step)
         goto cleanup;
     }
 
-    char *cooked = unescape(raw + 1);  // N.B. - trim leading quote
+    // N.B. - trim leading quote
+    char *cooked = unescape(raw + 1);
     if(NULL == cooked)
     {
         add_error(self, position(self), UNSUPPORTED_ESCAPE_SEQUENCE);
@@ -112,6 +121,33 @@ static void parse_quoted_name(Parser *self, Step *step)
     free(raw);
 }
 
+static void recover(Parser *self, Step *step)
+{
+    bool done = false;
+
+    next(self);
+
+    while(!done)
+    {
+        switch(current(self))
+        {
+            case OPEN_BRACKET:
+            case OPEN_FILTER:
+                done = true;
+                parse_predicate(self, step);
+                break;
+            case DOT:
+            case DOT_DOT:
+            case END_OF_INPUT:
+                done = true;
+                break;
+            default:
+                next(self);
+                break;
+        }
+    }
+}
+
 static void parse_step(Parser *self, Step *step)
 {
     switch(current(self))
@@ -125,13 +161,13 @@ static void parse_step(Parser *self, Step *step)
             break;
         /*
         case EQUALS:
-            // transformer
+            // xxx - transformer
             break;
         case EXCLAMATION:
-            // tag selector
+            // xxx - tag selector
             break;
         case AMPERSAND:
-            // anchor selector
+            // xxx - anchor selector
             break;
         */
         case OBJECT_SELECTOR:
@@ -152,14 +188,17 @@ static void parse_step(Parser *self, Step *step)
             break;
         /*
         case INTEGER_SELECTOR:
+            // xxx - type selector
             step->test.kind = TYPE_TEST;
             step->test.type = INTEGER_TEST;
             break;
         case DECIMAL_SELECTOR:
+            // xxx - type selector
             step->test.kind = TYPE_TEST;
             step->test.type = DECIMAL_TEST;
             break;
         case TIMESTAMP_SELECTOR:
+            // xxx - type selector
             step->test.kind = TYPE_TEST;
             step->test.type = TIMESTAMP_TEST;
             break;
@@ -177,8 +216,8 @@ static void parse_step(Parser *self, Step *step)
             return;
         default:
             add_error(self, position(self), EXPECTED_STEP_PRODUCTION);
-            // xxx - enter recovery mode
-            break;
+            recover(self, step);
+            return;
     }
 
     next(self);

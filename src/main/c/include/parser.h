@@ -16,7 +16,7 @@ enum parser_error_e
     UNEXPECTED_INPUT,
     EXPECTED_QUALIFIED_STEP_PRODUCTION,
     EXPECTED_STEP_PRODUCTION,
-    EXPECTED_PREDICATE_EXPRESSION_PRODUCTION,
+    EXPECTED_PREDICATE_PRODUCTION,
     UNBALANCED_PRED_DELIM,       // missing closing predicate delimiter `]'
     EXPECTED_INTEGER,            // expected an integer
     INVALID_NUMBER,              // invalid number

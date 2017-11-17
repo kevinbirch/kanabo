@@ -152,6 +152,8 @@ LICENSE file for more details.
   * unqoted memcpy that to String
   * quoted will iterate into MutableString, copy to char *
 * print stack trace on xcalloc failure
+* unicode escape quoted name tests
+  * cribbed from https://github.com/benkasminbullock/unicode-c/blob/master/unicode.c
 
 ### loader
 

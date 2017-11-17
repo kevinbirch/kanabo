@@ -104,7 +104,14 @@
     assert_slice_to(step_predicate(path_get((PATH), (PATH_INDEX))), (TO_VALUE)); \
     assert_slice_step(step_predicate(path_get(((PATH)), (PATH_INDEX))), (STEP_VALUE))
 
-static void dispose_maybe(Maybe(JsonPath) maybe)
+#define print_errors(MAYBE)                                             \
+    for(size_t i = 0; i < vector_length(from_nothing(MAYBE)); i++)      \
+    {                                                                   \
+        ParserError *err = (ParserError *)vector_get(from_nothing(MAYBE), i); \
+        log_error(tcase_name(), "at %zu error: %s", err->position.index, parser_strerror(err->code)); \
+    }
+
+static inline void dispose_maybe(Maybe(JsonPath) maybe)
 {
     if(is_nothing(maybe))
     {
@@ -186,7 +193,7 @@ START_TEST (unclosed_empty_root_predicate)
     char *expression = "$[";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_PREDICATE_EXPRESSION_PRODUCTION, .position.index=2},
+        (ParserError){EXPECTED_PREDICATE_PRODUCTION, .position.index=2},
     };
 
     assert_parser_failure(expression, maybe, errors);
@@ -212,9 +219,48 @@ START_TEST (empty_root_predicate)
     char *expression = "$[].bar";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_PREDICATE_EXPRESSION_PRODUCTION, .position.index=2},
+        (ParserError){EXPECTED_PREDICATE_PRODUCTION, .position.index=2},
     };
     
+    assert_parser_failure(expression, maybe, errors);
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (tripple_troubble)
+{
+    char *expression = "$...foo";
+    Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=3},
+    };
+
+    assert_parser_failure(expression, maybe, errors);
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (tripple_troubble_redux)
+{
+    char *expression = "$.foo...bar";
+    Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=7},
+    };
+
+    assert_parser_failure(expression, maybe, errors);
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (tripple_troubble_trilux)
+{
+    char *expression = "$.foo...bar.baz";
+    Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=7},
+    };
+
     assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
@@ -228,7 +274,7 @@ START_TEST (premature_unclosed_quoted_step)
         (ParserError){UNCLOSED_QUOTATION, .position.index=7},
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=7},
     };
-    
+
     assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
@@ -248,24 +294,16 @@ START_TEST (unclosed_quoted_step)
 }
 END_TEST
 
-/*
-
 START_TEST (unclosed_escaped_quoted_step)
 {
     char *expression = "$.foo.'bar\\'";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){UNCLOSED_QUOTATION, .position.index=7},
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=12},
+    };
 
-    assert_parser_failure(expression, maybe, ERR_PARSER_END_OF_INPUT, 11);
-    dispose_maybe(maybe);
-}
-END_TEST
-
-START_TEST (quoted_empty_step)
-{
-    char *expression = "$.foo.''.bar";
-    Maybe(JsonPath) maybe = parse(expression);
-
-    assert_parser_failure(expression, maybe, ERR_EXPECTED_NAME_CHAR, 7);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -274,8 +312,11 @@ START_TEST (empty_predicate)
 {
     char *expression = "$.foo[].bar";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_PREDICATE_PRODUCTION, .position.index=6},
+    };
 
-    assert_parser_failure(expression, maybe, ERR_EMPTY_PREDICATE, 6);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -284,8 +325,11 @@ START_TEST (extra_junk_in_predicate)
 {
     char *expression = "$.foo[ * quux].bar";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){UNEXPECTED_INPUT, .position.index=9},
+    };
 
-    assert_parser_failure(expression, maybe, ERR_EXTRA_JUNK_AFTER_PREDICATE, 9);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -294,18 +338,25 @@ START_TEST (whitespace_predicate)
 {
     char *expression = "$.foo[ \t ].bar";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_PREDICATE_PRODUCTION, .position.index=9},
+    };
 
-    assert_parser_failure(expression, maybe, ERR_EMPTY_PREDICATE, 9);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
 
 START_TEST (bogus_predicate)
 {
-    char *expression = "$.foo[asdf].bar";
+    char *expression = "$.foo[!!].bar";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_PREDICATE_PRODUCTION, .position.index=6},
+        (ParserError){UNEXPECTED_INPUT, .position.index=7},
+    };
 
-    assert_parser_failure(expression, maybe, ERR_UNSUPPORTED_PRED_TYPE, 6);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -314,8 +365,11 @@ START_TEST (bogus_type_test_name)
 {
     char *expression = "$.foo.monkey()";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=12},
+    };
 
-    assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -324,8 +378,11 @@ START_TEST (bogus_type_test_name_oblong)
 {
     char *expression = "$.foo.oblong()";
     Maybe(JsonPath) maybe = parse(expression);
-    
-    assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=12},
+    };
+
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -334,8 +391,11 @@ START_TEST (bogus_type_test_name_alloy)
 {
     char *expression = "$.foo.alloy()";
     Maybe(JsonPath) maybe = parse(expression);
-    
-    assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=11},
+    };
+
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -344,8 +404,11 @@ START_TEST (bogus_type_test_name_strong)
 {
     char *expression = "$.foo.strong()";
     Maybe(JsonPath) maybe = parse(expression);
-    
-    assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=12},
+    };
+
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -354,8 +417,11 @@ START_TEST (bogus_type_test_name_numbered)
 {
     char *expression = "$.foo.numbered()";
     Maybe(JsonPath) maybe = parse(expression);
-    
-    assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=14},
+    };
+
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -364,8 +430,11 @@ START_TEST (bogus_type_test_name_booger)
 {
     char *expression = "$.foo.booger()";
     Maybe(JsonPath) maybe = parse(expression);
-    
-    assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=12},
+    };
+
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -374,8 +443,11 @@ START_TEST (bogus_type_test_name_narl)
 {
     char *expression = "$.foo.narl()";
     Maybe(JsonPath) maybe = parse(expression);
-    
-    assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=10},
+    };
+
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -384,11 +456,16 @@ START_TEST (empty_type_test_name)
 {
     char *expression = "$.foo.()";
     Maybe(JsonPath) maybe = parse(expression);
-    
-    assert_parser_failure(expression, maybe, ERR_EXPECTED_NODE_TYPE_TEST, 6);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=6},
+    };
+
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
+
+/*
 
 START_TEST (dollar_only)
 {
@@ -473,6 +550,16 @@ START_TEST (relative_multi_step)
     assert_no_predicate(maybe.value, 1);
     assert_no_predicate(maybe.value, 2);
 
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (quoted_empty_step)
+{
+    char *expression = "$.foo.''.bar";
+    Maybe(JsonPath) maybe = parse(expression);
+
+    // xxx - assert success
     dispose_maybe(maybe);
 }
 END_TEST
@@ -1071,10 +1158,12 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input_case, unclosed_empty_root_predicate);
     tcase_add_test(bad_input_case, stray_root_predicate_closure);
     tcase_add_test(bad_input_case, empty_root_predicate);
+    tcase_add_test(bad_input_case, tripple_troubble);
+    tcase_add_test(bad_input_case, tripple_troubble_redux);
+    tcase_add_test(bad_input_case, tripple_troubble_trilux);
     tcase_add_test(bad_input_case, premature_unclosed_quoted_step);
     tcase_add_test(bad_input_case, unclosed_quoted_step);
-    /*
-    tcase_add_test(bad_input_case, quoted_empty_step);
+    tcase_add_test(bad_input_case, unclosed_escaped_quoted_step);
     tcase_add_test(bad_input_case, bogus_type_test_name);
     tcase_add_test(bad_input_case, bogus_type_test_name_oblong);
     tcase_add_test(bad_input_case, bogus_type_test_name_alloy);
@@ -1087,7 +1176,6 @@ Suite *jsonpath_suite(void)
     tcase_add_test(bad_input_case, whitespace_predicate);
     tcase_add_test(bad_input_case, extra_junk_in_predicate);
     tcase_add_test(bad_input_case, bogus_predicate);
-    */
 
     TCase *basic_case = tcase_create("basic");
     /*
@@ -1095,6 +1183,7 @@ Suite *jsonpath_suite(void)
     tcase_add_test(basic_case, absolute_single_step);
     tcase_add_test(basic_case, absolute_recursive_step);
     tcase_add_test(basic_case, absolute_multi_step);
+    tcase_add_test(basic_case, quoted_empty_step);
     tcase_add_test(basic_case, quoted_multi_step);
     tcase_add_test(basic_case, relative_path_begins_with_dot);
     tcase_add_test(basic_case, relative_multi_step);

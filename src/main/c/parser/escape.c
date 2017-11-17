@@ -8,7 +8,7 @@
 #define SURROGATE_START    0xD800
 #define SURROGATE_END      0xDFFF
 #define NONCHARACTER_START 0xFFFE
-#define NONCHARACTER_END   0xFFFF 
+#define NONCHARACTER_END   0xFFFF
 
 static inline int8_t ucs4_to_utf8(uint32_t ucs4, uint8_t utf8[4])
 {

@@ -242,7 +242,7 @@ static void match_name(Scanner *self)
         }
     
         char c = input_consume_one(&self->input);
-        if(c == '[' || c == '.' || c == '=' || c == ',' || c == '}' || c == ')' || isspace(c))
+        if(c == '[' || c == ']' || c == '.' || c == '=' || c == ',' || c == '}' || c == '(' || c == ')' || isspace(c))
         {
             input_push_back(&self->input);
             done = true;
