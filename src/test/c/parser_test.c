@@ -22,16 +22,21 @@
         assert_path_length((MAYBE).value, (EXPECTED_LENGTH));           \
     } while(0)
 
-#define assert_parser_failure(EXPRESSION, MAYBE, EXPECTED_RESULT, EXPECTED_POSITION) \
+#define assert_parser_failure(X, M, E)                                  \
     do                                                                  \
     {                                                                   \
-        assert_true(is_nothing(MAYBE));                                 \
-        assert_false(vector_is_empty(from_nothing(MAYBE)));             \
-        assert_uint_eq(vector_length(from_nothing(MAYBE)), 1);          \
-        ParserError *err = (ParserError *)vector_first(from_nothing(MAYBE)); \
-        log_debug("parser test", "for expression: '%s', received expected failure message: '%s'", (EXPRESSION), parser_strerror(err->code)); \
-        assert_uint_eq(err->position.index, (EXPECTED_POSITION));       \
-        assert_uint_eq(err->code, (EXPECTED_RESULT));                   \
+        assert_true(is_nothing(M));                                     \
+        Vector *nothing = from_nothing(M);                              \
+        assert_false(vector_is_empty(nothing));                         \
+        size_t count = sizeof(E)/sizeof(ParserError);                   \
+        assert_uint_eq(vector_length(nothing), count);                  \
+        for(size_t i = 0; i < count; i++)                               \
+        {                                                               \
+            ParserError *err = vector_get(nothing, i);                  \
+            assert_not_null(err);                                       \
+            ck_assert_msg(E[i].code == err->code, "Assertion '"#E"[%zu].code == err->code' failed: "#E"[%zu].code==\"%s\", err->code==\"%s\"", i, i, parser_strerror(E[i].code), parser_strerror(err->code)); \
+            assert_uint_eq(E[i].position.index, err->position.index);   \
+        }                                                               \
     } while(0)
 
 #define assert_step_kind(STEP, EXPECTED_KIND) assert_int_eq((EXPECTED_KIND), step_kind((STEP)))
@@ -115,8 +120,11 @@ START_TEST (null_expression)
 {
     char *expression = NULL;
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EMPTY_INPUT, .position.index=0},
+    };
 
-    assert_parser_failure(expression, maybe, EMPTY_INPUT, 0);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -125,8 +133,11 @@ START_TEST (zero_length)
 {
     char *expression = "";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EMPTY_INPUT, .position.index=0},
+    };
 
-    assert_parser_failure(expression, maybe, EMPTY_INPUT, 0);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -135,8 +146,11 @@ START_TEST (missing_step_test)
 {
     char *expression = "$.";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=2},
+    };
 
-    assert_parser_failure(expression, maybe, EXPECTED_STEP_PRODUCTION, 2);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -145,8 +159,11 @@ START_TEST (missing_recursive_step_test)
 {
     char *expression = "$..";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=3},
+    };
     
-    assert_parser_failure(expression, maybe, EXPECTED_STEP_PRODUCTION, 3);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -155,8 +172,11 @@ START_TEST (missing_dot)
 {
     char *expression = "$x";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=1},
+    };
 
-    assert_parser_failure(expression, maybe, EXPECTED_QUALIFIED_STEP_PRODUCTION, 1);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -165,8 +185,11 @@ START_TEST (unclosed_empty_root_predicate)
 {
     char *expression = "$[";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_PREDICATE_EXPRESSION_PRODUCTION, .position.index=2},
+    };
 
-    assert_parser_failure(expression, maybe, EXPECTED_PREDICATE_EXPRESSION_PRODUCTION, 2);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -175,8 +198,11 @@ START_TEST (stray_root_predicate_closure)
 {
     char *expression = "$]";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=1},
+    };
 
-    assert_parser_failure(expression, maybe, EXPECTED_QUALIFIED_STEP_PRODUCTION, 1);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -185,8 +211,11 @@ START_TEST (empty_root_predicate)
 {
     char *expression = "$[].bar";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){EXPECTED_PREDICATE_EXPRESSION_PRODUCTION, .position.index=2},
+    };
     
-    assert_parser_failure(expression, maybe, EXPECTED_PREDICATE_EXPRESSION_PRODUCTION, 2);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -195,21 +224,12 @@ START_TEST (premature_unclosed_quoted_step)
 {
     char *expression = "$.foo.'";
     Maybe(JsonPath) maybe = parse(expression);
-    for(size_t i = 0; i < vector_length(from_nothing(maybe)); i++)
-    {
-        ParserError *err = (ParserError *)vector_get(from_nothing(maybe), i);
-        if(err->code != INTERNAL_ERROR)
-        {
-            log_error(tcase_name(), "at: %zu - %s\n", err->position.index, parser_strerror(err->code));
-        }
-        else
-        {
-            ParserInternalError *ierr = (ParserInternalError *)err;
-            log_error(tcase_name(), "at: %zu - %s:%d error: %s\n", ierr->position.index, ierr->filename, ierr->line, ierr->message);
-        }
-    }
+    ParserError errors[] = {
+        (ParserError){UNCLOSED_QUOTATION, .position.index=7},
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=7},
+    };
     
-    assert_parser_failure(expression, maybe, PREMATURE_END_OF_INPUT, 7);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST
@@ -218,8 +238,12 @@ START_TEST (unclosed_quoted_step)
 {
     char *expression = "$.foo.'bar";
     Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){UNCLOSED_QUOTATION, .position.index=7},
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=10},
+    };
 
-    assert_parser_failure(expression, maybe, PREMATURE_END_OF_INPUT, 10);
+    assert_parser_failure(expression, maybe, errors);
     dispose_maybe(maybe);
 }
 END_TEST

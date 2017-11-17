@@ -32,12 +32,13 @@
         assert_token(X[i], L->current);                                 \
     }                                                                   \
     assert_false(vector_is_empty(errors));                              \
-    assert_uint_eq(sizeof(E)/sizeof(ParserError), vector_length(errors)); \
-    for(size_t i = 0; i < sizeof(E)/sizeof(ParserError); i++)           \
+    size_t count = sizeof(E)/sizeof(ParserError);                       \
+    assert_uint_eq(count, vector_length(errors));                       \
+    for(size_t i = 0; i < count; i++)                                   \
     {                                                                   \
         ParserError *err = vector_get(errors, i);                       \
         assert_not_null(err);                                           \
-        ck_assert_msg(E[i].code == err->code, "Assertion '"#E"[i].code == err->code' failed: "#E"[i].code==\"%s\", err->code==\"%s\"", parser_strerror(E[i].code), parser_strerror(err->code)); \
+        ck_assert_msg(E[i].code == err->code, "Assertion '"#E"[%zu].code == err->code' failed: "#E"[%zu].code==\"%s\", err->code==\"%s\"", i, i, parser_strerror(E[i].code), parser_strerror(err->code)); \
         assert_uint_eq(E[i].position.index, err->position.index);       \
     }
 

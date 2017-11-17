@@ -78,22 +78,46 @@ static void parse_predicate(Parser *self, Step *step)
     }
 }
 
+static void parse_quoted_name(Parser *self, Step *step)
+{
+    Location loc = self->scanner->current.location;
+    char *raw = lexeme(self);
+    if(NULL == raw)
+    {
+        add_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", loc.index, loc.extent);
+        return;
+    }
+    if(strlen(raw) < 2)
+    {
+        // N.B. - short read on token
+        goto cleanup;
+    }
+
+    char *cooked = unescape(raw + 1);  // N.B. - trim leading quote
+    if(NULL == cooked)
+    {
+        add_error(self, position(self), UNSUPPORTED_ESCAPE_SEQUENCE);
+        goto cleanup;
+    }
+
+    size_t length = strlen(cooked);
+    if('\'' == cooked[length-1])
+    {
+        length--;
+    }
+    step->test.name.value = (uint8_t *)cooked;
+    step->test.name.length = length;
+
+  cleanup:
+    free(raw);
+}
+
 static void parse_step(Parser *self, Step *step)
 {
     switch(current(self))
     {
         case QUOTED_NAME:
-            char *raw = lexeme(self);
-            if(NULL == raw)
-            {
-                add_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", token(self).location.index, token(self).location.extent);
-                break;
-            }
-            // xxx - strip the lexeme
-            char *cooked = unescape(raw);
-            free(raw);
-            step->test.name.value = (uint8_t *)cooked;            
-            step->test.name.length = strlen(cooked);
+            parse_quoted_name(self, step);
             break;
         case NAME:
             step->test.name.length = token(self).location.extent;

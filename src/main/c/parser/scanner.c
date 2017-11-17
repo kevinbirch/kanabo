@@ -115,6 +115,8 @@ static bool read_name_escape_sequence(Scanner *self)
 
 static void match_quoted_term(Scanner *self, char quote, EscapeSequenceReader reader)
 {
+    Position start = position(self);
+
     if(input_peek(&self->input) == quote)
     {
         input_consume_one(&self->input);
@@ -125,6 +127,7 @@ static void match_quoted_term(Scanner *self, char quote, EscapeSequenceReader re
     {
         if(!input_has_more(&self->input))
         {
+            add_error_at(self, start, UNCLOSED_QUOTATION);
             add_error(self, PREMATURE_END_OF_INPUT);
             break;
         }
@@ -458,6 +461,7 @@ void scanner_next(Scanner *self)
             break;
         case '"':
             self->current.kind = STRING_LITERAL;
+            input_push_back(&self->input);
             match_quoted_term(self, '"', read_escape_sequence);
             break;
         case '\'':
