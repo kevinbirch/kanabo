@@ -14,16 +14,6 @@ static const char * const TEST_KIND_NAMES[] =
     "type test"
 };
 
-enum step_kind step_kind(const Step *value)
-{
-    return value->kind;
-}
-
-enum test_kind step_test_kind(const Step *value)
-{
-    return value->test.kind;
-}
-
 const char *step_kind_name(enum step_kind value)
 {
     return STEP_KIND_NAMES[value];

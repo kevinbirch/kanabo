@@ -52,12 +52,16 @@ static int64_t normalize_from(Predicate *predicate, node *value);
 static int64_t normalize_to(Predicate *predicate, node *value);
 static int64_t normalize_extent(bool specified_p, int64_t actual, int64_t fallback, int64_t length);
 
-#define current_step(CONTEXT) path_get((CONTEXT)->path, (CONTEXT)->current_step)
 #ifdef USE_LOGGING
 #define guard(EXPR) EXPR ? true : (evaluator_error("uh oh! out of memory, aborting. (line: " STRFY(__LINE__) ")"), context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false)
 #else
 #define guard(EXPR) EXPR ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false)
 #endif
+
+static inline Step *current_step(evaluator_context *context)
+{
+    return (Step *)vector_get(context->path->steps, context->current_step);
+}
 
 nodelist *evaluate(evaluator_context *context)
 {
@@ -67,7 +71,7 @@ nodelist *evaluate(evaluator_context *context)
     PRECOND_NONNULL_ELSE_NULL(context->path);
     PRECOND_NONNULL_ELSE_NULL(model_document(context->model, 0));
     PRECOND_NONNULL_ELSE_NULL(model_document_root(context->model, 0));
-    PRECOND_ELSE_NULL(ABSOLUTE_PATH == path_kind(context->path));
+    PRECOND_ELSE_NULL(ABSOLUTE_PATH == context->path->kind);
     PRECOND_ELSE_NULL(0 != path_length(context->path));
 
     nodelist_add(context->list, model_document(context->model, 0));
@@ -97,7 +101,7 @@ static bool evaluate_step(Step* each, void *argument)
     evaluator_trace("step: %zu", context->current_step);
 
     bool result = false;
-    switch(step_kind(each))
+    switch(each->kind)
     {
         case ROOT:
             result = evaluate_root_step(context);
@@ -109,7 +113,7 @@ static bool evaluate_step(Step* each, void *argument)
             result = evaluate_recursive_step(context);
             break;
     }
-    if(result && step_has_predicate(current_step(context)))
+    if(result && NULL != current_step(context)->predicate)
     {
         result = evaluate_predicate(context);
     }
@@ -139,21 +143,21 @@ static bool evaluate_root_step(evaluator_context *context)
 static bool evaluate_recursive_step(evaluator_context *context)
 {
     evaluate_nodelist("recursive step",
-                      test_kind_name(step_test_kind(current_step(context))),
+                      test_kind_name(current_step(context)->test.kind),
                       apply_recursive_node_test);
 }
 
 static bool evaluate_single_step(evaluator_context *context)
 {
     evaluate_nodelist("step",
-                      test_kind_name(step_test_kind(current_step(context))),
+                      test_kind_name(current_step(context)->test.kind),
                       apply_node_test);
 }
 
 static bool evaluate_predicate(evaluator_context *context)
 {
     evaluate_nodelist("predicate",
-                      predicate_kind_name(predicate_kind(step_predicate(current_step(context)))),
+                      predicate_kind_name(current_step(context)->predicate->kind),
                       apply_predicate);
 }
 
@@ -212,10 +216,10 @@ static bool apply_node_test(node *each, void *argument, nodelist *target)
 {
     bool result = false;
     evaluator_context *context = (evaluator_context *)argument;
-    switch(step_test_kind(current_step(context)))
+    switch(current_step(context)->test.kind)
     {
         case WILDCARD_TEST:
-            if(RECURSIVE == step_kind(current_step(context)))
+            if(RECURSIVE == current_step(context)->kind)
             {
                 result = apply_recursive_wildcard_test(each, argument, target);
             }
@@ -304,7 +308,7 @@ static bool apply_type_test(node *each, void *argument, nodelist *target)
         value = alias_target(value);
     }
     evaluator_context *context = (evaluator_context *)argument;
-    switch(type_test_step_kind(current_step(context)))
+    switch(current_step(context)->test.type)
     {
         case OBJECT_TEST:
             evaluator_trace("type test: testing for an object");
@@ -374,7 +378,7 @@ static bool apply_predicate(node *each, void *argument, nodelist *target)
 {
     evaluator_context *context = (evaluator_context *)argument;
     bool result = false;
-    switch(predicate_kind(step_predicate(current_step(context))))
+    switch(current_step(context)->predicate->kind)
     {
         case WILDCARD:
             evaluator_trace("evaluating wildcard predicate");
@@ -432,7 +436,7 @@ static bool apply_subscript_predicate(node *value, evaluator_context *context, n
         evaluator_trace("subscript predicate: node is not a sequence type, cannot use an index on it (kind: %d), dropping (%p)", node_kind(value), value);
         return true;
     }
-    Predicate *subscript = step_predicate(current_step(context));
+    Predicate *subscript = current_step(context)->predicate;
     int64_t index = subscript_predicate_index(subscript);
     uint64_t abs = (uint64_t)index;
     if(abs > node_size(value))
@@ -453,7 +457,7 @@ static bool apply_slice_predicate(node *value, evaluator_context *context, nodel
         return true;
     }
 
-    Predicate *slice = step_predicate(current_step(context));
+    Predicate *slice = current_step(context)->predicate;
     int64_t from = 0, to = 0, increment = 0;
     normalize_interval(value, slice, &from, &to, &increment);
     evaluator_trace("slice predicate: using normalized interval [%d:%d:%d]", from, to, increment);

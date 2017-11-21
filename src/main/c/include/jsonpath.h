@@ -120,19 +120,15 @@ void dispose_path(JsonPath path);
 
 /* Path API */
 
-enum path_kind      path_kind(const JsonPath *path);
 const char *        path_kind_name(enum path_kind value);
 #define path_length(PATH) vector_length((PATH)->steps)
-Step *              path_get(const JsonPath *path, size_t index);
 
 typedef bool (*path_iterator)(Step *each, void *parser);
 bool path_iterate(const JsonPath *path, path_iterator iterator, void *context);
 
 /* Step API */
 
-enum step_kind      step_kind(const Step *value);
 const char *        step_kind_name(enum step_kind value);
-enum test_kind      step_test_kind(const Step *value);
 const char *        test_kind_name(enum test_kind value);
 
 /* Type Test API */
@@ -147,10 +143,6 @@ size_t              name_test_step_length(const Step *value);
 
 /* Predicate API */
 
-bool                step_has_predicate(const Step *value);
-Predicate *         step_predicate(const Step *value);
-
-enum predicate_kind predicate_kind(const Predicate *value);
 const char *        predicate_kind_name(enum predicate_kind value);
 
 /* Subscript Predicate API */

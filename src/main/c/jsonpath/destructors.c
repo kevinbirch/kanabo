@@ -19,7 +19,7 @@ static void predicate_free(Predicate *value)
     {
         return;
     }
-    if(JOIN == predicate_kind(value))
+    if(JOIN == value->kind)
     {
         jsonpath_free(value->join.left);
         jsonpath_free(value->join.right);

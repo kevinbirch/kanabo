@@ -122,10 +122,6 @@ LICENSE file for more details.
   * http://effbot.org/zone/simple-top-down-parsing.htm
   * http://www.oilshell.org/blog/2017/03/31.html
 
-* integrate with existing model
-  * skip support for new features
-* simplify jsonpath header, remove redundant functions
-* full build, test
 * merge master
 * working cci build
 * merge pr
@@ -134,9 +130,9 @@ LICENSE file for more details.
   * update model
   * update parser
   * update evaluator
+  # join
   # anchor selector
   # tag selector
-  # join
   # filter
   # transformer
 
