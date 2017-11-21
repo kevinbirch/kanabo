@@ -4,21 +4,21 @@
 static bool slice_predicate_has(const Predicate *value, enum slice_specifiers specifier);
 
 
-int_fast32_t slice_predicate_to(const Predicate *value)
+int64_t slice_predicate_to(const Predicate *value)
 {
     PRECOND_NONNULL_ELSE_ZERO(value);
     PRECOND_ELSE_ZERO(SLICE == value->kind);
     return value->slice.to;
 }
 
-int_fast32_t slice_predicate_from(const Predicate *value)
+int64_t slice_predicate_from(const Predicate *value)
 {
     PRECOND_NONNULL_ELSE_ZERO(value);
     PRECOND_ELSE_ZERO(SLICE == value->kind);
     return value->slice.from;
 }
 
-int_fast32_t slice_predicate_step(const Predicate *value)
+int64_t slice_predicate_step(const Predicate *value)
 {
     PRECOND_NONNULL_ELSE_ZERO(value);
     PRECOND_ELSE_ZERO(SLICE == value->kind);

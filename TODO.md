@@ -122,9 +122,9 @@ LICENSE file for more details.
   * http://effbot.org/zone/simple-top-down-parsing.htm
   * http://www.oilshell.org/blog/2017/03/31.html
 
-* use model instead of ast 
 * integrate with existing model
   * skip support for new features
+* simplify jsonpath header, remove redundant functions
 * full build, test
 * merge master
 * working cci build
@@ -154,6 +154,10 @@ LICENSE file for more details.
 * print stack trace on xcalloc failure
 * unicode escape quoted name tests
   * cribbed from https://github.com/benkasminbullock/unicode-c/blob/master/unicode.c
+* utf-8 specific unicode escape sequence errors?
+* integer conversion specific errors
+  * https://stackoverflow.com/questions/22865622/atoi-vs-atol-vs-strtol-vs-strtoul-vs-sscanf
+  * https://stackoverflow.com/questions/14176123/correct-usage-of-strtol/14176593#14176593
 
 ### loader
 

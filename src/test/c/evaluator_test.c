@@ -136,7 +136,6 @@ START_TEST (empty_path)
     JsonPath *path = (JsonPath *)calloc(1, sizeof(JsonPath));
     assert_not_null(path);
     path->kind = ABSOLUTE_PATH;
-    path->length = 0;
     path->steps = NULL;
 
     document_model *bad_model = make_model();
@@ -306,7 +305,6 @@ START_TEST (empty_context_path)
     JsonPath *path = (JsonPath *)calloc(1, sizeof(JsonPath));
     assert_not_null(path);
     path->kind = ABSOLUTE_PATH;
-    path->length = 0;
     path->steps = NULL;
 
     document_model *bad_model = make_model();

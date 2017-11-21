@@ -981,13 +981,8 @@ END_TEST
 START_TEST (empty_input)
 {
     char *expression = "";
-    Token expectations[] = {
-        expected_token(END_OF_INPUT, 0, 0),
-    };
     Scanner *scanner = make_scanner(expression, strlen(expression));
-    assert_not_null(scanner);
-    assert_expectations(scanner, expectations);
-    dispose_scanner(scanner);
+    assert_null(scanner);
 }
 END_TEST
 
@@ -1413,6 +1408,7 @@ START_TEST (quoted_name_unterminated_literal)
         expected_token(END_OF_INPUT, 0, 9),
     };
     ParserError expected_errors[] = {
+        (ParserError){UNCLOSED_QUOTATION, .position.index=2},
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=9},
     };
     Scanner *scanner = make_scanner(expression, strlen(expression));
@@ -1432,6 +1428,7 @@ START_TEST (quoted_name_eoi)
         expected_token(END_OF_INPUT, 0, 3),
     };
     ParserError expected_errors[] = {
+        (ParserError){UNCLOSED_QUOTATION, .position.index=2},
         (ParserError){PREMATURE_END_OF_INPUT, .position.index=3},
     };
     Scanner *scanner = make_scanner(expression, strlen(expression));

@@ -11,13 +11,25 @@ typedef struct context_adapter_s context_adapter;
 
 static bool sequence_iterator_adpater(void *each, void *context);
 
-node *sequence_get(const node *sequence, size_t index)
+node *sequence_get(const node *sequence, int64_t index)
 {
     PRECOND_NONNULL_ELSE_NULL(sequence);
     PRECOND_ELSE_NULL(SEQUENCE == node_kind(sequence));
-    PRECOND_ELSE_NULL(index < node_size(sequence));
 
-    return vector_get(sequence->content.sequence, index);
+    uint64_t abs = (uint64_t)index;
+    PRECOND_ELSE_NULL(abs < node_size(sequence));
+
+    size_t i;
+    if(0 > index)
+    {
+        i = node_size(sequence) - abs;
+    }
+    else
+    {
+        i = (size_t)index;
+    }
+
+    return vector_get(sequence->content.sequence, i);
 }
 
 static bool sequence_iterator_adpater(void *each, void *context)

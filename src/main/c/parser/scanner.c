@@ -122,8 +122,7 @@ static void match_quoted_term(Scanner *self, char quote, EscapeSequenceReader re
         input_consume_one(&self->input);
     }
 
-    bool found_close = false;
-    while(!found_close)
+    while(true)
     {
         if(!input_has_more(&self->input))
         {
@@ -148,7 +147,7 @@ static void match_quoted_term(Scanner *self, char quote, EscapeSequenceReader re
         char c = input_consume_one(&self->input);
         if(c == quote)
         {
-            found_close = true;
+            break;
         }
     }
 }
@@ -157,18 +156,16 @@ static bool read_digit_sequence(Scanner *self)
 {
     Position start = position(self);
 
-    bool done = false;
-    while(!done)
+    while(true)
     {
         if(!input_has_more(&self->input))
         {
             if(input_index(&self->input) == start.index)
             {
                 add_error(self, PREMATURE_END_OF_INPUT);
-                break;
+                return false;
             }
 
-            done = true;
             break;
         }
 
@@ -178,11 +175,11 @@ static bool read_digit_sequence(Scanner *self)
         }
         else
         {
-            done = true;
+            break;
         }
     }
 
-    return done;
+    return true;
 }
 
 static void match_number(Scanner *self)
@@ -466,6 +463,7 @@ void scanner_next(Scanner *self)
             break;
         case '\'':
             self->current.kind = QUOTED_NAME;
+            input_push_back(&self->input);
             match_quoted_term(self, '\'', read_name_escape_sequence);
             break;
         case '0':

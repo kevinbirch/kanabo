@@ -1,40 +1,3 @@
-/*
- * 金棒 (kanabō)
- * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- *
- * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
- * made stronger.
- *
- * For more information, consult the README file in the project root.
- *
- * Distributed under an [MIT-style][license] license.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal with
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * - Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimers.
- * - Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimers in the documentation and/or
- *   other materials provided with the distribution.
- * - Neither the names of the copyright holders, nor the names of the authors, nor
- *   the names of other contributors may be used to endorse or promote products
- *   derived from this Software without specific prior written permission.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE CONTRIBUTORS
- * OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
- *
- * [license]: http://www.opensource.org/licenses/ncsa
- */
-
 #ifdef __linux__
 #define _POSIX_C_SOURCE 200809L
 #define _GNU_SOURCE
@@ -84,10 +47,10 @@ static bool apply_join_predicate(node *value, evaluator_context *context, nodeli
 
 static bool add_to_nodelist_sequence_iterator(node *each, void *context);
 static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *context);
-static void normalize_interval(node *value, Predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *step);
-static int_fast32_t normalize_from(Predicate *predicate, node *value);
-static int_fast32_t normalize_to(Predicate *predicate, node *value);
-static int_fast32_t normalize_extent(bool specified_p, int_fast32_t actual, int_fast32_t fallback, int_fast32_t length);
+static void normalize_interval(node *value, Predicate *slice, int64_t *from, int64_t *to, int64_t *step);
+static int64_t normalize_from(Predicate *predicate, node *value);
+static int64_t normalize_to(Predicate *predicate, node *value);
+static int64_t normalize_extent(bool specified_p, int64_t actual, int64_t fallback, int64_t length);
 
 #define current_step(CONTEXT) path_get((CONTEXT)->path, (CONTEXT)->current_step)
 #ifdef USE_LOGGING
@@ -470,12 +433,13 @@ static bool apply_subscript_predicate(node *value, evaluator_context *context, n
         return true;
     }
     Predicate *subscript = step_predicate(current_step(context));
-    size_t index = subscript_predicate_index(subscript);
-    if(index > node_size(value))
+    int64_t index = subscript_predicate_index(subscript);
+    uint64_t abs = (uint64_t)index;
+    if(abs > node_size(value))
     {
         evaluator_trace("subscript predicate: index %zu not valid for sequence (length: %zd), dropping (%p)", index, node_size(value), value);
         return true;
-    }    
+    }
     node *selected = sequence_get(value, index);
     evaluator_trace("subscript predicate: adding index %zu (%p) from sequence (%p) of %zd items", index, selected, value, node_size(value));
     return nodelist_add(target, selected) ? true : (context->code = ERR_EVALUATOR_OUT_OF_MEMORY, false);
@@ -490,13 +454,13 @@ static bool apply_slice_predicate(node *value, evaluator_context *context, nodel
     }
 
     Predicate *slice = step_predicate(current_step(context));
-    int_fast32_t from = 0, to = 0, increment = 0;
+    int64_t from = 0, to = 0, increment = 0;
     normalize_interval(value, slice, &from, &to, &increment);
     evaluator_trace("slice predicate: using normalized interval [%d:%d:%d]", from, to, increment);
 
-    for(int_fast32_t i = from; 0 > increment ? i >= to : i < to; i += increment)
+    for(int64_t i = from; 0 > increment ? i >= to : i < to; i += increment)
     {
-        node *selected = sequence_get(value, (size_t)i);
+        node *selected = sequence_get(value, i);
         if(NULL == selected || !nodelist_add(target, selected))
         {
             evaluator_error("slice predicate: uh oh! out of memory, aborting. index: %d, selected: %p", i, selected);
@@ -565,7 +529,7 @@ static bool add_values_to_nodelist_map_iterator(node *key, node *value, void *co
     return result;
 }
 
-static void normalize_interval(node *value, Predicate *slice, int_fast32_t *from, int_fast32_t *to, int_fast32_t *increment)
+static void normalize_interval(node *value, Predicate *slice, int64_t *from, int64_t *to, int64_t *increment)
 {
     char *from_fmt = NULL, *to_fmt = NULL, *increment_fmt = NULL;
     int from_result __attribute__((unused)) = 0;
@@ -582,28 +546,28 @@ static void normalize_interval(node *value, Predicate *slice, int_fast32_t *from
     *to   = 0 > *increment ? normalize_from(slice, value) : normalize_to(slice, value);
 }
 
-static int_fast32_t normalize_from(Predicate *slice, node *value)
+static int64_t normalize_from(Predicate *slice, node *value)
 {
     evaluator_trace("slice predicate: normalizing from, specified: %s, value: %d", slice_predicate_has_from(slice) ? "yes" : "no", slice_predicate_from(slice));
-    int_fast32_t length = (int_fast32_t)node_size(value);
+    int64_t length = (int64_t)node_size(value);
     return normalize_extent(slice_predicate_has_from(slice), slice_predicate_from(slice), 0, length);
 }
 
-static int_fast32_t normalize_to(Predicate *slice, node *value)
+static int64_t normalize_to(Predicate *slice, node *value)
 {
     evaluator_trace("slice predicate: normalizing to, specified: %s, value: %d", slice_predicate_has_to(slice) ? "yes" : "no", slice_predicate_to(slice));
-    int_fast32_t length = (int_fast32_t)node_size(value);
+    int64_t length = (int64_t)node_size(value);
     return normalize_extent(slice_predicate_has_to(slice), slice_predicate_to(slice), length, length);
 }
 
-static int_fast32_t normalize_extent(bool specified_p, int_fast32_t given, int_fast32_t fallback, int_fast32_t limit)
+static int64_t normalize_extent(bool specified_p, int64_t given, int64_t fallback, int64_t limit)
 {
     if(!specified_p)
     {
         evaluator_trace("slice predicate: (normalizer) no value specified, defaulting to %d", fallback);
         return fallback;
     }
-    int_fast32_t result = 0 > given ? given + limit: given;
+    int64_t result = 0 > given ? given + limit: given;
     if(0 > result)
     {
         evaluator_trace("slice predicate: (normalizer) negative value, clamping to zero");

@@ -16,7 +16,6 @@ enum path_kind
 struct jsonpath_s
 {
     enum path_kind kind;
-    size_t length;
     Vector *steps;
 };
 
@@ -45,15 +44,15 @@ struct predicate_s
     {
         struct
         {
-            size_t index;
+            int64_t index;
         } subscript;
 
         struct
         {
-            uint8_t      specified;
-            int_fast32_t from;
-            int_fast32_t to;
-            int_fast32_t step;
+            uint8_t specified;
+            int64_t from;
+            int64_t to;
+            int64_t step;
         } slice;
 
         struct
@@ -123,7 +122,7 @@ void dispose_path(JsonPath path);
 
 enum path_kind      path_kind(const JsonPath *path);
 const char *        path_kind_name(enum path_kind value);
-size_t              path_length(const JsonPath *path);
+#define path_length(PATH) vector_length((PATH)->steps)
 Step *              path_get(const JsonPath *path, size_t index);
 
 typedef bool (*path_iterator)(Step *each, void *parser);
@@ -156,13 +155,13 @@ const char *        predicate_kind_name(enum predicate_kind value);
 
 /* Subscript Predicate API */
 
-size_t              subscript_predicate_index(const Predicate *value);
+int64_t             subscript_predicate_index(const Predicate *value);
 
 /* Slice Predicate API */
 
-int_fast32_t        slice_predicate_to(const Predicate *value);
-int_fast32_t        slice_predicate_from(const Predicate *value);
-int_fast32_t        slice_predicate_step(const Predicate *value);
+int64_t             slice_predicate_to(const Predicate *value);
+int64_t             slice_predicate_from(const Predicate *value);
+int64_t             slice_predicate_step(const Predicate *value);
 bool                slice_predicate_has_to(const Predicate *value);
 bool                slice_predicate_has_from(const Predicate *value);
 bool                slice_predicate_has_step(const Predicate *value);
