@@ -1,17 +1,6 @@
 -*- gfm -*-
 
-# Informational files for [金棒][home] (kanabō)
-
-Copyright (c) 2012 [Kevin Birch](mailto:kmb@pobox.com).  All rights reserved.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of an [MIT-style License][license] as described in
-the LICENSE file.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-LICENSE file for more details.
+#  金棒 (kanabō)
 
 ## TODO
 
@@ -40,120 +29,63 @@ LICENSE file for more details.
 * message formatting
   * http://www.tin.org/bin/man.cgi?section=3&topic=snprintf
   * http://stackoverflow.com/questions/69738/c-how-to-get-fprintf-results-as-a-stdstring-w-o-sprintf/69911#69911
-* use strlcpy over memcpy for c-strings?
-  * http://www.openbsd.org/cgi-bin/cvsweb/src/lib/libc/string/strlcpy.c?rev=1.11;content-type=text%2Fplain
 * invert order of static functions?
   * http://www.reddit.com/r/C_Programming/comments/1u1ofw/is_this_code_clike/cednu4t
-* interesting competitor: http://jmespath.org/
 * various getopt alternatvies: https://news.ycombinator.com/item?id=10687375
-* fix license to point to bsd 3 clause
-* X_free to dispose_X
+* change license to bsd 3 clause
+* x_free to dispose_x
 * break down large modules into smaller function level units
 * tools comparison: https://news.ycombinator.com/item?id=11649142
 * use statement expressions
-* cleanup attribute
+
+* update spacecadet
+  * move changes back
+  * add maybe, xcalloc, others?
+  * print stack trace on xcalloc failure
+  * mv spacecadet,linenose,yaml,check stuff to vendor
 
 ### evaluator
 
-* test factory functions
-* negative subscript values
-* implement union predicates
-* implement filter predicates
-* support integer and timestamp scalar types
 * refactor iteration methods to use filter, tranform, fold
-* typeof operator in macros?
-  * http://gcc.gnu.org/onlinedocs/gcc/Typeof.html
-
-### parser
-
-* test factory functions
-* implement lexer
-  * https://github.com/dylan-lang/opendylan/blob/master/sources/dfmc/reader/lexer-transitions.dylan
-* implement combinators
-* add full tracing
-* bug: `$...store` should not be accepted
-* bug: '.' should be allowed in a quoted name
-* bug: `$` should support predicates
-* bug: relational expression should superceed equality expression in filter predicate
-* implement escaping
-* bug: negative subscripts should return ERR\_EXPECTED\_INTEGER instead of ERR\_UNSUPPORTED\_PRED\_TYPE
-* use precondition helpers
-* ensure memory is freed on secondary failure modes in parser functions
-* refactor direct status code setters into function calls
-* add exit state function with output
-* negative subscript values
-* union support
-* filter predicate support
-* YAML anchor/alias syntax support
-* support integer and timestamp scalar types
-* use a more flexibile subscripting syntax
-  * ala: http://docs.python.org/2/reference/expressions.html#slicings
-  * a predicate is a wildcard, selection or filter
-  * a selection is a comma separated list of slice and/or additive expr
-  * all literals are copied to the result, all relative paths are evaluated
-  * this means you must write @[n] to access unioned subscripts?
-  * special case for true subscript predicatess?
-  * really this is a generalization of union? they can be additive expr and/or slice
-  * can the union item ever be a or expr?
-* string functions
-* other built-in functions
-
-* use maybe parser in grammar to handle builder errors
-* build the jsonpath inline with custom rule parsers
-* move nodelist creation to evaluate function evaluator/api.c
-* use type generic macro instead of vtable
-* use sentinels for vararg parsers instead of NULL, error on null args
 * try to reuse parsers instead of creating new every time
-* need a balance parser to control bracket balancing
-* create simplifed static error message reprs for logging
-
-* free_x -> dispose_x
-* use generic maybe everywhere instead of define maybe macro? the void can be freely cast to/from the actual type
 * concrete predicate subtypes
-* move all repr to dynamic calls
-* break down api module
 * replace memcmp with hash compare?
 * store hashcode with entry in bucket chain?
 * interning for string module
   * diable macro
   * runtime enable disable
+* use str in name test jsonpath model object
 
-* use pratt parser?
-  * http://effbot.org/zone/simple-top-down-parsing.htm
-  * http://www.oilshell.org/blog/2017/03/31.html
+### parser
 
+* tests
+  * over/under flow integer literal
+  * unicode escape quoted name
 * merge master
 * working cci build
 * merge pr
-* add new features
+* add full tracing
+* model dumper w/ secret command line option, nice tree-like layout
+  * `--output=ast`
+
+### new features
+
+* process
   * update tests
   * update model
   * update parser
   * update evaluator
-  # join
-  # anchor selector
-  # tag selector
-  # filter
-  # transformer
 
-* update spacecadet
-  * move changes back
-  * add maybe, xcalloc, others?
-* mv spacecadet,linenose,yaml,check stuff to vendor
-* rename document objects?
-* model dumper w/ secret command line option, nice tree-like layout
-  * `--output=ast`
-* name selector value should use str
-  * scanner can provide a lexeme _slice_ of the input
-  * unqoted memcpy that to String
-  * quoted will iterate into MutableString, copy to char *
-* print stack trace on xcalloc failure
-* unicode escape quoted name tests
-  * cribbed from https://github.com/benkasminbullock/unicode-c/blob/master/unicode.c
-* utf-8 specific unicode escape sequence errors?
-* integer conversion specific errors
-  * https://stackoverflow.com/questions/22865622/atoi-vs-atol-vs-strtol-vs-strtoul-vs-sscanf
-  * https://stackoverflow.com/questions/14176123/correct-usage-of-strtol/14176593#14176593
+1. join
+1. anchor selector
+1. tag selector
+1. new scalar types (timestamp, etc)
+1. filter
+   * pratt parser for expressions
+   * http://effbot.org/zone/simple-top-down-parsing.htm
+   * http://www.oilshell.org/blog/2017/03/31.html
+1. transformer
+   * transfomer built-in functions
 
 ### loader
 
@@ -185,7 +117,6 @@ LICENSE file for more details.
   * ronn? http://rtomayko.github.io/ronn/ronn-format.7.html
 * install file
 * readme file
-* double check ebnf
 * static site
   * http://tinytree.info
   * sphynx?
@@ -234,10 +165,7 @@ LICENSE file for more details.
 * vendor dir 
 * customizable include dirs w default
 
-### alternatives
+### competition
 
 * http://jmespath.org/
 * jq
-
-[home]: https://github.com/kevinbirch/kanabo "project home"
-[license]: http://www.opensource.org/licenses/ncsa
