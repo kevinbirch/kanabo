@@ -51,7 +51,7 @@ static inline int8_t ucs4_to_utf8(uint32_t ucs4, uint8_t utf8[4])
     return -1;
 }
 
-static inline bool unescape_unicode(uint32_t ucs4, MutableString **string)
+static inline bool unescape_unicode(Parser *self, uint32_t ucs4, MutableString **string)
 {
     uint8_t utf8[4];
 
@@ -59,6 +59,7 @@ static inline bool unescape_unicode(uint32_t ucs4, MutableString **string)
 
     if(!(length > 0))
     {
+        add_error(self, position(self), UNSUPPORTED_UNICODE_SEQUENCE);
         return false;
     }
 
@@ -67,7 +68,7 @@ static inline bool unescape_unicode(uint32_t ucs4, MutableString **string)
     return true;
 }
 
-char *unescape(const char *lexeme)
+char *unescape(Parser *self, const char *lexeme)
 {
     char *result = NULL;
 
@@ -129,6 +130,7 @@ char *unescape(const char *lexeme)
                 mstring_append(&cooked, "\xe2\x80\xa9");
                 break;
             case 'x':
+                i++;
                 uint8_t c;
                 sscanf(lexeme + i, "%2"SCNx8, &c);
                 mstring_append(&cooked, c);
@@ -136,9 +138,10 @@ char *unescape(const char *lexeme)
                 break;
             case 'u':
             {
+                i++;
                 uint32_t ucs4;
                 sscanf(lexeme + i, "%4"SCNx32, &ucs4);
-                if(!unescape_unicode(ucs4, &cooked))
+                if(!unescape_unicode(self, ucs4, &cooked))
                 {
                     goto cleanup;
                 }
@@ -147,9 +150,10 @@ char *unescape(const char *lexeme)
             }
             case 'U':
             {
+                i++;
                 uint32_t ucs4;
                 sscanf(lexeme + i, "%8"SCNx32, &ucs4);
-                if(!unescape_unicode(ucs4, &cooked))
+                if(!unescape_unicode(self, ucs4, &cooked))
                 {
                     goto cleanup;
                 }
@@ -157,6 +161,7 @@ char *unescape(const char *lexeme)
                 break;
             }
             default:
+                add_error(self, position(self), UNSUPPORTED_ESCAPE_SEQUENCE);
                 goto cleanup;
                 break;
         }

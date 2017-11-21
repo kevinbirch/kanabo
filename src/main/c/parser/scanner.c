@@ -64,6 +64,7 @@ static bool read_escape_sequence(Scanner *self)
         case '\\':
         case '/':
         case ' ':
+        case '_':
         case '0':
         case 'a':
         case 'b':

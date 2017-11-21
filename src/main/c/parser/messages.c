@@ -9,6 +9,7 @@ static const char * const ERRORS[] =
     [UNBALANCED_PRED_DELIM] = "unclosed predicate",
     [UNSUPPORTED_CONTROL_CHARACTER] = "unsupported control character",
     [UNSUPPORTED_ESCAPE_SEQUENCE] = "unsupported escape sequence",
+    [UNSUPPORTED_UNICODE_SEQUENCE] = "unsupported unicode sequence",
     [UNEXPECTED_INPUT] = "unexpected input",
     [EXPECTED_QUALIFIED_STEP_PRODUCTION] = "expected qualified step definition",
     [EXPECTED_PREDICATE_PRODUCTION] = "expected predicate definition",

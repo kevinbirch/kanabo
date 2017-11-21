@@ -647,6 +647,102 @@ START_TEST (wildcard_with_subscript_predicate)
 }
 END_TEST
 
+START_TEST (escape_artistry)
+{
+    char *expression = "$.'foo\\_\\L\\N\\Pzap'";
+    Maybe(JsonPath) maybe = parse(expression);
+
+    assert_parser_success(maybe, ABSOLUTE_PATH, 2);
+    assert_root_step(from_just(maybe));
+    assert_single_name_step(from_just(maybe), 1, "foo\xC2\xA0\xE2\x80\xA8\xC2\x85\xE2\x80\xA9zap");
+    assert_no_predicate(from_just(maybe), 1);
+
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (hex_escape)
+{
+    char *expression = "$.'foo \\xc2 bar'";
+    Maybe(JsonPath) maybe = parse(expression);
+
+    assert_parser_success(maybe, ABSOLUTE_PATH, 2);
+    assert_root_step(from_just(maybe));
+    assert_single_name_step(from_just(maybe), 1, "foo \xC2 bar");
+    assert_no_predicate(from_just(maybe), 1);
+
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (ucs2_escape)
+{
+    char *expression = "$.'foo \\u2603 bar'";
+    Maybe(JsonPath) maybe = parse(expression);
+
+    assert_parser_success(maybe, ABSOLUTE_PATH, 2);
+    assert_root_step(from_just(maybe));
+    assert_single_name_step(from_just(maybe), 1, "foo \xe2\x98\x83 bar");
+    assert_no_predicate(from_just(maybe), 1);
+
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (ucs4_escape)
+{
+    char *expression = "$.'foo \\U0001f4a9 bar'";
+    Maybe(JsonPath) maybe = parse(expression);
+
+    assert_parser_success(maybe, ABSOLUTE_PATH, 2);
+    assert_root_step(from_just(maybe));
+    assert_single_name_step(from_just(maybe), 1, "foo \xf0\x9f\x92\xa9 bar");
+    assert_no_predicate(from_just(maybe), 1);
+
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (ucs2_surrogate)
+{
+    char *expression = "$.'foo \\ud800 bar'";
+    Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){UNSUPPORTED_UNICODE_SEQUENCE, .position.index=2},
+    };
+    print_errors(maybe);
+
+    assert_parser_failure(maybe, errors);
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (ucs2_non_character)
+{
+    char *expression = "$.'foo \\ufffe bar'";
+    Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){UNSUPPORTED_UNICODE_SEQUENCE, .position.index=2},
+    };
+
+    assert_parser_failure(maybe, errors);
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (ucs4_overflow)
+{
+    char *expression = "$.'foo \\U00110000 bar'";
+    Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){UNSUPPORTED_UNICODE_SEQUENCE, .position.index=2},
+    };
+
+    assert_parser_failure(maybe, errors);
+    dispose_maybe(maybe);
+}
+END_TEST
+
 START_TEST (whitespace)
 {
     char *expression = "  $ \r\n. foo \n.. \t'happy fun ball' . \t string()";
@@ -1190,6 +1286,13 @@ Suite *jsonpath_suite(void)
     tcase_add_test(basic_case, wildcard);
     tcase_add_test(basic_case, recursive_wildcard);
     tcase_add_test(basic_case, wildcard_with_subscript_predicate);
+    tcase_add_test(basic_case, escape_artistry);
+    tcase_add_test(basic_case, hex_escape);
+    tcase_add_test(basic_case, ucs2_escape);
+    tcase_add_test(basic_case, ucs4_escape);
+    tcase_add_test(basic_case, ucs2_surrogate);
+    tcase_add_test(basic_case, ucs2_non_character);
+    tcase_add_test(basic_case, ucs4_overflow);
 
     TCase *node_type_case = tcase_create("node type test");
     tcase_add_test(node_type_case, type_test_missing_closing_paren);

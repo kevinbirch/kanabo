@@ -58,8 +58,6 @@
 
 ### parser
 
-* tests
-  * unicode escape quoted name
 * merge master
 * working cci build
 * merge pr

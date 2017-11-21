@@ -14,7 +14,9 @@ struct parser_s
 
 typedef struct parser_s Parser;
 
+#define position(PARSER) (PARSER)->scanner->current.location.position
+
 void add_error(Parser *self, Position position, ParserErrorCode code);
 void add_internal_error(Parser *self, const char *restrict filename, int line, const char * restrict fmt, ...);
-char *unescape(const char *lexeme);
+char *unescape(Parser *parser, const char *lexeme);
 JsonPath recognize(Parser *parser);

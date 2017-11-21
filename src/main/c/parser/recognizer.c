@@ -7,7 +7,6 @@
 #define current(PARSER) (PARSER)->scanner->current.kind
 #define token(PARSER) (PARSER)->scanner->current
 #define next(PARSER) scanner_next((PARSER)->scanner)
-#define position(PARSER) (PARSER)->scanner->current.location.position
 #define lexeme(PARSER) scanner_extract_lexeme((PARSER)->scanner, (PARSER)->scanner->current.location)
 
 static inline void expect(Parser *self, TokenKind kind)
@@ -224,16 +223,16 @@ static void parse_quoted_name(Parser *self, Step *step)
     }
 
     // N.B. - trim leading quote
-    char *cooked = unescape(raw + 1);
+    char *cooked = unescape(self, raw + 1);
     if(NULL == cooked)
     {
-        add_error(self, position(self), UNSUPPORTED_ESCAPE_SEQUENCE);
         goto cleanup;
     }
 
     size_t length = strlen(cooked);
     if('\'' == cooked[length-1])
     {
+        cooked[length-1] = '\0';
         length--;
     }
     step->test.name.value = (uint8_t *)cooked;

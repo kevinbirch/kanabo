@@ -561,12 +561,12 @@ END_TEST
 
 START_TEST (quoted_name_escaped_buffet)
 {
-    char *expression = "$.'foo \\\"\\\\\\/\\ \\0\\a\\b\\e\\f\\n\\r\\t\\v\\L\\N\\P bar'";
+    char *expression = "$.'foo \\\"\\\\\\/\\ \\_\\0\\a\\b\\e\\f\\n\\r\\t\\v\\L\\N\\P bar'";
     Token expectations[] = {
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
-        expected_token(QUOTED_NAME, 42, 2),
-        expected_token(END_OF_INPUT, 0, 44),
+        expected_token(QUOTED_NAME, 44, 2),
+        expected_token(END_OF_INPUT, 0, 46),
     };
     Scanner *scanner = make_scanner(expression, strlen(expression));
     assert_not_null(scanner);
