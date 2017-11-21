@@ -331,12 +331,12 @@ END_TEST
 
 void inventory_setup(void)
 {
-    model = load_file("inventory.json");
+    model = load_file("test-resources/inventory.json");
 }
 
 void invoice_setup(void)
 {
-    model = load_file("invoice.yaml");
+    model = load_file("test-resources/invoice.yaml");
 }
 
 document_model *load_file(char *name)
