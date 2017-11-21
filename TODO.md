@@ -59,7 +59,6 @@
 ### parser
 
 * tests
-  * over/under flow integer literal
   * unicode escape quoted name
 * merge master
 * working cci build

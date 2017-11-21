@@ -81,7 +81,7 @@
 
 #define assert_wildcard_predicate(PATH, PATH_INDEX) assert_predicate((PATH), (PATH_INDEX), (WILDCARD))
 
-#define assert_subscript_index(PREDICATE, VALUE) assert_uint_eq((VALUE), (PREDICATE)->subscript.index)
+#define assert_subscript_index(PREDICATE, VALUE) assert_int_eq((VALUE), (PREDICATE)->subscript.index)
 #define assert_subscript_predicate(PATH, PATH_INDEX, INDEX_VALUE)       \
     assert_predicate((PATH), (PATH_INDEX), SUBSCRIPT);                  \
     assert_subscript_index(path_get((PATH), (PATH_INDEX))->predicate, (INDEX_VALUE));
@@ -1029,6 +1029,32 @@ START_TEST (zero_step_slice_predicate)
 }
 END_TEST
 
+START_TEST (integer_overlflow)
+{
+    char *expression = "$.foo[9223372036854775808]";
+    Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){INTEGER_TOO_BIG, .position.index=6},
+    };
+
+    assert_parser_failure(maybe, errors);
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (integer_underflow)
+{
+    char *expression = "$.foo[-9223372036854775809]";
+    Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){INTEGER_TOO_SMALL, .position.index=6},
+    };
+
+    assert_parser_failure(maybe, errors);
+    dispose_maybe(maybe);
+}
+END_TEST
+    
 static bool count(Step *each, void *context)
 {
     unsigned long *counter = (unsigned long *)context;
@@ -1191,6 +1217,8 @@ Suite *jsonpath_suite(void)
     tcase_add_test(predicate_case, slice_predicate_with_whitespace);
     tcase_add_test(predicate_case, negative_step_slice_predicate);
     tcase_add_test(predicate_case, zero_step_slice_predicate);
+    tcase_add_test(predicate_case, integer_overlflow);
+    tcase_add_test(predicate_case, integer_underflow);
 
     TCase *api_case = tcase_create("api");
     tcase_add_test(api_case, bad_path_input);

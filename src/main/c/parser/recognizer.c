@@ -10,7 +10,7 @@
 #define position(PARSER) (PARSER)->scanner->current.location.position
 #define lexeme(PARSER) scanner_extract_lexeme((PARSER)->scanner, (PARSER)->scanner->current.location)
 
-static void expect(Parser *self, TokenKind kind)
+static inline void expect(Parser *self, TokenKind kind)
 {
     bool squaked = false;
 
@@ -30,34 +30,10 @@ static void expect(Parser *self, TokenKind kind)
     }
 }
 
-static int64_t parse_integer(Parser *self)
+static inline int64_t parse_index(Parser *self)
 {
-    char *raw = lexeme(self);
-    if(NULL == raw)
-    {
-        Location loc = self->scanner->current.location;
-        add_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", loc.index, loc.extent);
-        return 0;
-    }
+    Position start = position(self);
 
-    int64_t value;
-    errno = 0;
-    value = strtoll(raw, NULL, 10);
-    if(ERANGE == errno && LLONG_MAX == value)
-    {
-        add_error(self, position(self), INTEGER_TOO_BIG);
-    }
-    else if(ERANGE == errno && LLONG_MIN == value)
-    {
-        add_error(self, position(self), INTEGER_TOO_SMALL);
-    }
-
-    free(raw);
-    return value;
-}
-
-static int64_t parse_index(Parser *self)
-{
     bool negate = false;
     if(MINUS == current(self))
     {
@@ -66,19 +42,43 @@ static int64_t parse_index(Parser *self)
 
         if(INTEGER_LITERAL != current(self))
         {
-            add_error(self, position(self), EXPECTED_INTEGER);
+            add_error(self, start, EXPECTED_INTEGER);
             return 0;
         }
     }
     
-    int64_t index = parse_integer(self);
-    next(self);
+    char *raw = lexeme(self);
+    if(NULL == raw)
+    {
+        Location loc = self->scanner->current.location;
+        add_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", loc.index, loc.extent);
+        return 0;
+    }
 
     if(negate)
     {
-        index = -index;
+        size_t length = strlen(raw);
+        char *negative = xcalloc(length + 2);
+        negative[0] = '-';
+        memcpy(negative + 1, raw, length);
+        negative[length + 1] = '\0';
+        free(raw);
+        raw = negative;
     }
 
+    errno = 0;
+    int64_t index = strtoll(raw, NULL, 10);
+    if(ERANGE == errno && LLONG_MAX == index)
+    {
+        add_error(self, start, INTEGER_TOO_BIG);
+    }
+    else if(ERANGE == errno && LLONG_MIN == index)
+    {
+        add_error(self, start, INTEGER_TOO_SMALL);
+    }
+    next(self);
+
+    free(raw);
     return index;
 }
 
