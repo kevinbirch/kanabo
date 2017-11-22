@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-exec 3< <(kanabo -f $1 -q '$.store.book.*')
+exec 3< <(kanabo -q '$.store.book.*' $1)
 while read -r -u 3 line
 do
   declare -A book="$line"

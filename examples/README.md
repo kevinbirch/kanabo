@@ -1,19 +1,4 @@
--*- gfm -*-
-
-# Informational files for [金棒][home] (kanabō)
-
-Copyright (c) 2012 [Kevin Birch](mailto:kmb@pobox.com).  All rights reserved.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of an [MIT-style License][license] as described in
-the LICENSE file.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-LICENSE file for more details.
-
-## EXAMPLES
+# Examples
 
 The examples below use the following JSON document as their input data:
 
@@ -78,12 +63,12 @@ The book "吾輩は猫である" costs $13.29
 
 This can be best accompilshed as a one-shot query using the `--query` argument with the JSONPath `$.store.book.*`.  The wildcard is greedy, so it will expand the sequence value of the `book` key into a list of book mappings.  Using the Bash or Zsh output formats will write each result item of the JSONPath query on a separate line for easy parsing by the shell.
 
-### Bash
+## Bash
 
 To produce the above output using the Bash shell and the Bash output format (which is the default), use this script:
 
 ```bash
-exec 3< <(kanabo -f $1 -q '$.store.book.*')
+exec 3< <(kanabo -q '$.store.book.*' $1)
 while read -r -u 3 line
 do
   declare -A book="$line"
@@ -96,16 +81,16 @@ The first line opens a new file descriptor (number 3) for reading, and connects 
 An example of the Bash output format would be:
 
 ```bash
-$ kanabo -q '$.store.book[1]' -o bash < path/to/input.json
+$ kanabo -q '$.store.book[1]' -o bash path/to/input.json
 ([category]=fiction [author]='Evelyn Waugh' [title]='Sword of Honour' [price]=12.99 )
 ```
 
-### Zsh
+## Zsh
 
 To produce the above output using the Zsh shell and the Zsh output format, use this script:
 
 ```sh
-exec 3< <(kanabo -o zsh -f $1 -q '$.store.book.*')
+exec 3< <(kanabo -o zsh -q '$.store.book.*' $1)
 typeset -A book
 while read -r -u 3 line
 do
@@ -119,7 +104,7 @@ The first line opens a new file descriptor (number 3) for reading, and connects 
 An example of the Zsh output format would be:
 
 ```sh
-$ kanabo -q '$.store.book[1]' -o zsh < path/to/input.json
+$ kanabo -q '$.store.book[1]' -o zsh path/to/input.json
 category fiction author 'Evelyn Waugh' title 'Sword of Honour' price 12.99
 ```
 

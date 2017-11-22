@@ -17,11 +17,15 @@
   * http://www.reddit.com/r/programming/comments/1u660a/the_lost_art_of_c_structure_packing/
   * http://linux.die.net/man/1/pahole
   * https://github.com/arvidn/struct_layout
+* https://code.google.com/p/american-fuzzy-lop/
 * cmbc - http://www.cprover.org/cbmc/
 * https://gitorious.org/linted/linted/source/8a9b2c7744af0e2d42419d0fea45c7b37b76930b:
 * performance co-pilot? http://oss.sgi.com/projects/pcp/
 * add completions for currently loaded model to linenoise
-* bug: `--help` option prints error message before help text
+* add safe arithmetic functions
+  * http://lists.nongnu.org/archive/html/qemu-devel/2013-01/msg05387.html
+  * https://sourceware.org/ml/libc-alpha/2013-12/msg00098.html
+* libbacktrace instead of execinfo?
 * build: libtool integration?
 * build: shtool integration?
 * make 0.5 release
@@ -33,10 +37,14 @@
   * http://www.reddit.com/r/C_Programming/comments/1u1ofw/is_this_code_clike/cednu4t
 * various getopt alternatvies: https://news.ycombinator.com/item?id=10687375
 * change license to bsd 3 clause
-* x_free to dispose_x
 * break down large modules into smaller function level units
 * tools comparison: https://news.ycombinator.com/item?id=11649142
-* use statement expressions
+* streaming mode
+  * https://github.com/fizx/sit
+  * http://stackoverflow.com/questions/13083491/looking-for-big-sample-dummy-json-data-file
+  * https://github.com/udp/json-parser
+  * https://github.com/zeMirco/sf-city-lots-json
+  * https://github.com/seductiveapps/largeJSON
 
 * update spacecadet
   * move changes back
@@ -55,8 +63,19 @@
   * diable macro
   * runtime enable disable
 * use str in name test jsonpath model object
+* computed goto dispatch table?
+  * http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables
 
 ### parser
+
+* fix maybe usage
+* must_make_regex (uses statement expr)
+* check for usage of `%zd`
+* x_free to dispose_x
+* eliminate file headers
+* eliminate double spacing
+* xcalloc everywhere
+* \_POSIX_C_SOURCE usage?
 
 * merge master
 * working cci build
@@ -86,6 +105,7 @@
 
 ### loader
 
+* can we mmap the input file and build a no-copy tree that points to strings by byte ranges?
 * simplify api with maybe result
 * break code into smaller files
 * regex's can use '{}' repetition counts
@@ -101,9 +121,11 @@
   * https://github.com/bvdberg/ctest
 * eliminate check's end_test macro by creating hidden trampoline function that delegates to user's test function
 * fuzz testing: https://en.wikipedia.org/wiki/API_Sanity_Checker
-* find undefined behavior code: http://css.csail.mit.edu/stack/
+* find undefined behavior code
+  * http://css.csail.mit.edu/stack/
   * clang ubsan
 * http://rr-project.org/
+* https://github.com/nivox/quickcheck4c ?
 
 ### documentation
 
@@ -125,6 +147,7 @@
 
 ### build
 
+* pkg-config - http://www.freedesktop.org/wiki/Software/pkg-config/
 * http://code.google.com/p/qi-make/
 * http://google-engtools.blogspot.fr/2011/08/build-in-cloud-how-build-system-works.html
 * http://facebook.github.io/buck/
@@ -166,3 +189,4 @@
 
 * http://jmespath.org/
 * jq
+* interesting features? http://trentm.com/json/

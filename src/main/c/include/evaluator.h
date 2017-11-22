@@ -1,5 +1,7 @@
 #pragma once
 
+#include "maybe.h"
+
 #include "document.h"
 #include "jsonpath.h"
 #include "nodelist.h"
@@ -20,14 +22,20 @@ enum evaluator_status_code
 
 typedef enum evaluator_status_code evaluator_status_code;
 
-typedef struct evaluator_context evaluator_context;
+struct maybe_nodelist_s
+{
+    enum maybe_tag tag;
+    union
+    {
+        nodelist *just;
+        struct
+        {
+            evaluator_status_code code;
+            const char *message;
+        } nothing;
+    };
+};
 
-evaluator_context *make_evaluator(const document_model *model, const JsonPath *path);
-evaluator_status_code evaluator_status(const evaluator_context *context);
+typedef struct maybe_nodelist_s MaybeNodelist;
 
-void evaluator_free(evaluator_context *context);
-
-nodelist *evaluate(evaluator_context *context);
-
-const char *evaluator_status_message(const evaluator_context *context);
-
+MaybeNodelist evaluate(const DocumentModel *model, const JsonPath *path);

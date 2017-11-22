@@ -1,15 +1,16 @@
 #pragma once
 
-#include <stdio.h>
 #include <yaml.h>
 
 #include "document.h"
+#include "maybe.h"
 
 enum loader_status_code
 {
     LOADER_SUCCESS = 0,
     ERR_INPUT_IS_NULL,         // the input argument given was NULL
     ERR_INPUT_SIZE_IS_ZERO,    // input length was 0
+    ERR_NO_DOCUMENTS_FOUND,    // no documents in input stream
     ERR_LOADER_OUT_OF_MEMORY,  // unable to allocate memory
     ERR_READER_FAILED,         // unable to read from the input
     ERR_SCANNER_FAILED,        // unable to lexically analyze the input
@@ -21,6 +22,8 @@ enum loader_status_code
     ERR_OTHER
 };
 
+typedef enum loader_status_code loader_status_code;
+
 enum loader_duplicate_key_strategy
 {
     DUPE_CLOBBER,
@@ -28,20 +31,24 @@ enum loader_duplicate_key_strategy
     DUPE_FAIL
 };
 
-typedef enum loader_status_code loader_status_code;
+const char *duplicate_strategy_name(enum loader_duplicate_key_strategy value);
+int32_t     parse_duplicate_strategy(const char *value);
 
-typedef struct loader_context loader_context;
+struct maybe_document_s
+{
+    enum maybe_tag tag;
+    union
+    {
+        DocumentModel *just;
+        struct
+        {
+            loader_status_code code;
+            char *message;
+        } nothing;
+    };
+};
 
-loader_context *make_string_loader(const unsigned char *input, size_t size);
-loader_context *make_file_loader(FILE *input);
-loader_status_code loader_status(const loader_context *context);
+typedef struct maybe_document_s MaybeDocument;
 
-void loader_set_dupe_strategy(loader_context *context, enum loader_duplicate_key_strategy value);
-
-void loader_free(loader_context *context);
-
-document_model *load(loader_context *context);
-
-char *loader_status_message(const loader_context *context);
-
-
+MaybeDocument load_string(const unsigned char *input, size_t size, enum loader_duplicate_key_strategy value);
+MaybeDocument load_file(FILE *input, enum loader_duplicate_key_strategy value);

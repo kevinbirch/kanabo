@@ -23,6 +23,7 @@ artifact ?= program
 build ?= debug
 INCLUDES ?=
 CFLAGS ?=
+LIBS ?=
 DEPENDENCIES ?=
 TEST_DEPENDENCIES ?=
 
@@ -30,11 +31,11 @@ TEST_DEPENDENCIES ?=
 GENERATE_SOURCES_HOOKS ?=
 PROCESS_SOURCES_HOOKS ?=
 GENERATE_RESOURCES_HOOKS ?=
-PROCESS_SOURCES_HOOKS ?=
+PROCESS_RESOURCES_HOOKS ?=
 GENERATE_TEST_SOURCES_HOOKS ?=
 PROCESS_TEST_SOURCES_HOOKS ?=
 GENERATE_TEST_RESOURCES_HOOKS ?=
-PROCESS_TEST_SOURCES_HOOKS ?=
+PROCESS_TEST_RESOURCES_HOOKS ?=
 
 ## Defaults for project source directories
 SOURCE_DIR ?= src
@@ -290,6 +291,51 @@ help:
 	@$(info $(help))
 	@:
 
+env:
+	@echo "--- environment settings for build ---"; \
+	echo -n "system: "; uname -a; \
+	echo "identifier: $(owner):$(package):$(version)"; \
+	echo "artifact: $(artifact)"; \
+	echo "build type: $(build)"; \
+	echo "dependencies: $(DEPENDENCIES)"; \
+	echo "test dependencies: $(TEST_DEPENDENCIES)"; \
+	echo "compiler:"; \
+	$(CC) --version; \
+	echo "compiler command:"; \
+	echo "$(CC) $(CFLAGS) $(CDEFS) -c <in> -o <out>"; \
+	echo "* hooks:"; \
+	echo "generate sources: $(GENERATE_SOURCES_HOOKS)"; \
+	echo "process sources: $(PROCESS_SOURCES_HOOKS)"; \
+	echo "generate resources: $(GENERATE_RESOURCES_HOOKS)"; \
+	echo "process resources: $(PROCESS_RESOURCES_HOOKS)"; \
+	echo "generate test sources: $(GENERATE_TEST_SOURCES_HOOKS)"; \
+	echo "process test sources: $(PROCESS_TEST_SOURCES_HOOKS)"; \
+	echo "generate test resources: $(GENERATE_TEST_RESOURCES_HOOKS)"; \
+	echo "process test resources: $(PROCESS_TEST_RESOURCES_HOOKS)"; \
+	echo "* directories:"; \
+	echo "sources: $(SOURCE_DIR)"; \
+	echo "include: $(INCLUDE_DIR)"; \
+	echo "resources: $(RESOURCE_DIR)"; \
+	echo "test sources: $(TEST_SOURCE_DIR)"; \
+	echo "test include: $(TEST_INCLUDE_DIR)"; \
+	echo "test resources: $(TEST_RESOURCE_DIR)"; \
+	echo "target: $(TARGET_DIR)"; \
+	echo "objects: $(OBJECT_DIR)"; \
+	echo "test objects: $(TEST_OBJECT_DIR)"; \
+	echo "generated sources: $(GENERATED_SOURCE_DIR)"; \
+	echo "generated headers: $(GENERATED_HEADERS_DIR)"; \
+	echo "generated depend: $(GENERATED_DEPEND_DIR)"; \
+	echo "generated test sources: $(GENERATED_TEST_SOURCE_DIR)"; \
+	echo "generated test depend: $(GENERATED_TEST_DEPEND_DIR)"; \
+	echo "* artifacts:"; \
+	echo "program: $(PROGRAM_NAME)"; \
+	echo "program target: $(PROGRAM_TARGET)"; \
+	echo "library: $(LIBRARY_NAME)"; \
+	echo "library target: $(LIBRARY_TARGET)"; \
+	echo "test program: $(TEST_PROGRAM)"; \
+	echo "test program target: $(TEST_PROGRAM_TARGET)"; \
+
+
 ## Suport Emacs flymake syntax checker
 check-syntax: create-build-directories $(GENERATE_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS)
 	$(CC) $(TEST_CFLAGS) -fsyntax-only $(TEST_INCLUDES) $(INCLUDES) $(CHK_SOURCES)
@@ -535,7 +581,7 @@ announce-package-phase:
 
 prepare-package: test announce-package-phase
 
-package: prepare-package
+package: prepare-package target
 
 announce-install-phase:
 	@$(info $(call announce_phase_message,Install))

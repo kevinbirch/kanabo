@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -36,41 +36,51 @@
  */
 
 
-#pragma once
+#include "model.h"
+#include "model/private.h"
+#include "conditions.h"
 
-#include "loader.h"
-#include "str.h"
 
-
-enum emit_mode
+static void alias_free(Node *value __attribute__((unused)))
 {
-    BASH,
-    ZSH,
-    JSON,
-    YAML
+    // this space intentionally left blank
+}
+
+static bool alias_equals(const Node *one, const Node *two)
+{
+    return node_equals(alias_target((const Alias *)one),
+                       alias_target((const Alias *)two));
+}
+
+static size_t alias_size(const Node *self __attribute__((unused)))
+{
+    return 0;
+}
+
+static const struct vtable_s alias_vtable = 
+{
+    alias_free,
+    alias_size,
+    alias_equals
 };
 
-enum command
+Alias *make_alias_node(Node *target)
 {
-    SHOW_VERSION,
-    SHOW_WARRANTY,
-    SHOW_HELP,
-    INTERACTIVE_MODE,
-    EXPRESSION_MODE
-};
+    Alias *self = calloc(1, sizeof(Alias));
+    if(NULL != self)
+    {
+        node_init(self, ALIAS);
+        self->target = target;
+        self->base.vtable = &alias_vtable;
+    }
 
-typedef enum loader_duplicate_key_strategy dup_strategy;
+    return self;
+}
 
-struct options
+Node *alias_target(const Alias *self)
 {
-    const char     *input_file_name;
-    const char     *expression;
-    enum command    mode;
-    enum emit_mode  emit_mode;
-    dup_strategy    duplicate_strategy;
-};
+    PRECOND_NONNULL_ELSE_NULL(self);
 
-enum command process_options(const int argc, char * const *argv, struct options *options);
+    return self->target;
+}
 
-int32_t parse_emit_mode(const char *valie);
-const char * emit_mode_name(enum emit_mode value);

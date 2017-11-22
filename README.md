@@ -11,6 +11,14 @@ or interactively to walk a tree from within your script.
 
 This is a work in progress.
 
+[![Circle CI](https://circleci.com/gh/kevinbirch/kanabo.svg?style=svg)](https://circleci.com/gh/kevinbirch/kanabo)
+
+## Donations
+
+If you are interested in helping this project, then why not send in a donation?
+
+Send [DogeCoin](http://dogecoin.com) donations to [DCebBka8DZxtsvn8Dxhh171HTJ6rhbXXvp](dogecoin:DCebBka8DZxtsvn8Dxhh171HTJ6rhbXXvp?amount=500&message=kanabo&label=kanabo)
+
 ## License
 
 Copyright (c) 2012 [Kevin Birch](mailto:kmb@pobox.com).  All rights reserved.

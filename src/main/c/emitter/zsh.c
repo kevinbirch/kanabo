@@ -41,36 +41,32 @@
 #include "emitter/shell.h"
 #include "log.h"
 
-static bool emit_mapping_item(node *key, node *value, void *context);
+static bool emit_mapping_item(Node *key, Node *value, void *context);
 
-void emit_zsh(const nodelist *list, const struct settings *settings)
+bool emit_zsh(const nodelist *list)
 {
     log_debug("zsh", "emitting...");
-    emit_context context = 
+    emit_context context =
         {
             .emit_mapping_item = emit_mapping_item,
             .wrap_collections = false
         };
 
-    if(!nodelist_iterate(list, emit_node, &context))
-    {
-        perror(settings->program_name);
-    }
-    fflush(stdout);
+    return nodelist_iterate(list, emit_node, &context);
 }
 
-static bool emit_mapping_item(node *key, node *value, void * context)
+static bool emit_mapping_item(Node *key, Node *value, void * context)
 {
-    if(SCALAR == node_kind(value))
+    if(is_scalar(value))
     {
         log_trace("zsh", "emitting mapping item");
-        if(!emit_scalar(key))
+        if(!emit_scalar(scalar(key)))
         {
             log_error("zsh", "uh oh! couldn't emit mapping key");
             return false;
         }
         EMIT(" ");
-        if(!emit_scalar(value))
+        if(!emit_scalar(scalar(value)))
         {
             log_error("zsh", "uh oh! couldn't emit mapping value");
             return false;

@@ -2,7 +2,7 @@
   "store":
   {
     "book":
-    [ 
+    [
       {
         "category": "reference",
         "author": "Nigel Rees",
@@ -22,7 +22,7 @@
         "isbn": "0-553-21311-3",
         "price": 8.99
       },
-      { 
+      {
         "category": "fiction",
         "author": "J. R. R. Tolkien",
         "title": "The Lord of the Rings",

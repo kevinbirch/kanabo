@@ -10,47 +10,40 @@ kanabo - query JSON/YAML files from shell scripts with JSONPath
 
 ## SYNOPSIS
 
-`kanabo` [`--output` \<format\>]  [`--file` \<file\>] `--query` \<expression\>  
-`kanabo` [`--output` \<format\>] `--interactive` `--file` \<file\>
+`kanabo` \[`-o` \<format\>\] \[`-d` \<strategy\>\] `-q` \<jsonpath\> \[\<file\> | '-'\]  
+`kanabo` \[`-o` \<format\>\] \[`-d` \<strategy\>\] \[\<file\>\]
 
 ## DESCRIPTION
 
-Kanabo is a utility to bludgeon JSON and YAML files from shell scripts: the 
-strong made stronger.  Using [JSONPath][jsonpath], JSON or YAML files can be 
+Kanabo is a utility to bludgeon JSON and YAML files from shell scripts: the
+strong made stronger.  Using [JSONPath][jsonpath], JSON or YAML files can be
 queried and examined just as XPath is used for XML files.
 
 A single JSONPath expression can be evaluated against a document or a series of
 expressions can be evaluated interactively.  For the former, a single JSONPath
 \<expression\> is evaluated and the result is printed to *stdout*.  In the later,
 newline separated expressions are read from *stdin* and the result of each is
-printed to *stdout*.
+printed to *stdout*.  In the first form `-' can be used as an alias for *stdin*.
 
-If no \<file\> is specified in when evaluating a single \<expression\>, then the 
-\<file\> is read from *stdin*.  However, the \<file\> is required to be specified in
-second form, as *stdin* will be monitored for expressions to evaluate.
+If no \<file\> is specified in when evaluating a single \<expression\>, then the
+\<file\> is read from *stdin*.  Since *stdin* cannot be used to read in the second
+form, the \<file\> should be specified on the command line or using the `:load'
+command.
 
 ## OPTIONS
-
-These options control the document data source and the output format:
-
-  * `-f`, `--file` \<file\>
-    Specify a file to read the JSON/YAML data from instead of *stdin*.  This
-    option is required when using the `--interactive` option.
 
   * `-o`, `--output` \<format\>
     Specify the output format for values returned by queries.  The supported
     values of \<format\> are: **bash** (Bash shell), **zsh** (Z shell), **json**
     or **yaml**.  The default value is **bash**.
 
-These options control expression evaluation.  Only one option is allowed:
-
   * `-q`, `--query` \<expression\>
-    Evaluate a single JSONPath \<expression\> and print the result to *stdout*.
+    Evaluate a single JSONPath \<expression\>, print the result to *stdout* and exit.
 
-  * `-i`, `--interactive`
-    Evaluate expressions interactively.  Newline separated query expressions will
-    be read from *stdin* and the result of each printed to *stdout*.  When using
-    this option, the `--file` option is also required.
+  * `-d`, `--duplicate` \<stratety\>
+    Specify how to handle duplicate mapping keys.  The supported values of \<strategy\>
+    are: **clobber** (replace duplicates), **warn** (replace duplicates and print a
+    warning message) or **fail** (quit the program).  The default value is **clobber**.
 
 Miscellaneous options:
 

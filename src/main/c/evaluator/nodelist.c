@@ -60,14 +60,14 @@ bool nodelist_set(nodelist *list, void *value, size_t index)
 {
     errno = 0;
     vector_set(list, value, index);
-    
+
     return 0 == errno;
 }
 
 static bool nodelist_iterator_adpater(void *each, void *context)
 {
     context_adapter *adapter = (context_adapter *)context;
-    return adapter->iterator.foreach((node *)each, adapter->context);
+    return adapter->iterator.foreach((Node *)each, adapter->context);
 }
 
 bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *context)
@@ -79,7 +79,7 @@ bool nodelist_iterate(const nodelist *list, nodelist_iterator iterator, void *co
 static bool nodelist_map_adpater(void *each, void *context, Vector *target)
 {
     context_adapter *adapter = (context_adapter *)context;
-    return adapter->iterator.map((node *)each, adapter->context, target);
+    return adapter->iterator.map((Node *)each, adapter->context, target);
 }
 
 nodelist *nodelist_map(const nodelist *list, nodelist_map_function function, void *context)

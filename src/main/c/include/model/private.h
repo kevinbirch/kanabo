@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -35,20 +35,25 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+
 #pragma once
 
-static const char * const HELP =
-    "usage: kanabo [--output <format>] [--file <file>] --query <jsonpath>\n"
-    "       kanabo [--output <format>] --interactive --file <file>\n"
-    "\n"
-    "OPTIONS:\n"
-    "-q, --query <jsonpath>      Specify a single JSONPath query to execute against the input document.\n"
-    "-i, --interactive           Specify a series of JSONPath queries interactively.\n"
-    "-f, --file <input-file>     Specify a file to read the JSON/YAML data from instead of *stdin*. This is requred for interactive mode.\n"
-    "-o, --output <format>       Specify the output format for queries (`bash', `zsh', `json' and `yaml' are supported).\n"
-    "-d, --duplicate <strategy>  Specify how to handle duplicate mapping keys (`clobber', `warn' and `fail' are supported).\n"
-    "\n"
-    "STANDALONE OPTIONS:\n"
-    "-v, --version               Print the version information and exit.\n"
-    "-w, --no-warranty           Print the no-warranty information and exit.\n"
-    "-h, --help                  Print the usage summary and exit.\n";
+
+struct context_adapter_s
+{
+    union
+    {
+        mapping_iterator map;
+        sequence_iterator seq;
+    } iterator;
+    void *context;
+};
+
+typedef struct context_adapter_s context_adapter;
+
+
+void node_init_(Node *value, NodeKind kind);
+#define node_init(object, kind) node_init_(node((object)), (kind))
+
+bool node_comparitor(const void *one, const void *two);
+

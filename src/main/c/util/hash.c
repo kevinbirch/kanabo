@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2013 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to

@@ -104,5 +104,3 @@ int vlogger(enum log_level level, const char *component, const char *format, va_
 #define vlogger(...)
 
 #endif /* USE_LOGGING */
-
-

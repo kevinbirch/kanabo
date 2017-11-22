@@ -45,28 +45,32 @@
 
 struct loader_context
 {
-    yaml_parser_t     *parser;
+    yaml_parser_t      parser;
     loader_status_code code;
     enum loader_duplicate_key_strategy strategy;
-    
-    document_model    *model;
 
-    node              *target;
-    struct 
+    DocumentModel     *model;
+
+    Node              *target;
+    struct
     {
         uint8_t *value;
         size_t   length;
     } key_holder;
 
-    Hashtable *anchors;
-    
-    regex_t           *decimal_regex;
-    regex_t           *integer_regex;
-    regex_t           *timestamp_regex;
+    Hashtable        *anchors;
+
+    regex_t           decimal_regex;
+    regex_t           integer_regex;
+    regex_t           timestamp_regex;
 };
 
-document_model *build_model(loader_context *context);
+typedef struct loader_context loader_context;
+
+void build_model(struct loader_context *context);
 loader_status_code interpret_yaml_error(yaml_parser_t *parser);
+char *loader_simple_status_message(loader_status_code code);
+char *loader_status_message(const loader_context *context);
 
 #define component_name "loader"
 
@@ -76,4 +80,3 @@ loader_status_code interpret_yaml_error(yaml_parser_t *parser);
 #define loader_trace(FORMAT, ...) log_trace(component_name, FORMAT, ##__VA_ARGS__)
 
 #define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component_name, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
-

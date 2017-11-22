@@ -1,35 +1,4 @@
-/*
- * Copyright (c) 2013 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- *
- * Distributed under an [MIT-style][license] license.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal with
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * - Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimers.
- * - Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimers in the documentation and/or
- *   other materials provided with the distribution.
- * - Neither the names of the copyright holders, nor the names of the authors, nor
- *   the names of other contributors may be used to endorse or promote products
- *   derived from this Software without specific prior written permission.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE CONTRIBUTORS
- * OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
- *
- * [license]: http://www.opensource.org/licenses/ncsa
- */
-
-#include <math.h>
+#include <tgmath.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -165,11 +134,15 @@ Hashtable *make_hashtable_with_capacity_factor_function(compare_function compari
 
 static inline size_t normalize_capacity(size_t hint)
 {
+    if(DEFAULT_CAPACITY > hint)
+    {
+        return DEFAULT_CAPACITY;
+    }
     size_t capacity = hint;
     if(0 != (capacity & (capacity - 1)))
     {
         // ensure that capacity is a power of 2
-        capacity = 1ULL << (size_t)(log2(capacity - 1) + 1);
+        capacity = 1ULL << (size_t)(log2((float)(capacity - 1)) + 1);
     }
     return capacity;
 }
@@ -205,7 +178,7 @@ static void init(Hashtable *hashtable,
                  hash_function function)
 {
     hashtable->occupied = 0ul;
-    hashtable->capacity = (size_t)lroundf(capacity * load_factor);
+    hashtable->capacity = (size_t)lround((float)capacity * load_factor);
     hashtable->load_factor = load_factor;
     hashtable->mutable = true;
     hashtable->length = capacity << 1;
@@ -700,18 +673,18 @@ static void *chained_remove(Hashtable *hashtable, size_t index, void *key)
                 chain->entries[chain->length - 1] = NULL;
                 chain->entries[chain->length - 2] = NULL;
             }
-            if(NULL == chain->entries[2])
-            {
-                // N.B. - chains with only one entry can be collapsed into a bucket
-                hashtable->entries[index] = chain->entries[0];
-                hashtable->entries[index + 1] = chain->entries[1];
-                free(chain);
-            }
-            else if(NULL == chain->entries[0])
+            if(NULL == chain->entries[0])
             {
                 // N.B. - empty chains can be removed and the bucket can be freed
                 hashtable->entries[index] = NULL;
                 hashtable->entries[index + 1] = NULL;
+                free(chain);
+            }
+            else if(NULL == chain->entries[2])
+            {
+                // N.B. - chains with only one entry can be collapsed into a bucket
+                hashtable->entries[index] = chain->entries[0];
+                hashtable->entries[index + 1] = chain->entries[1];
                 free(chain);
             }
             hashtable->occupied--;
@@ -779,7 +752,7 @@ bool hashtable_iterate_values(const Hashtable *hashtable, hashtable_item_iterato
 static inline size_t hash_index(const Hashtable *hashtable, const void * key)
 {
     hashcode h = hashtable->hash(key);
-    return (h & (hashtable->length >> 1) - 1) << 1;
+    return (h & ((hashtable->length >> 1) - 1)) << 1;
 }
 
 static void rehash(Hashtable *hashtable)
@@ -816,13 +789,13 @@ static void rehash(Hashtable *hashtable)
 
 void hashtable_summary(const Hashtable *hashtable, FILE *stream)
 {
-    fprintf(stream, "hashtable summary:\n");
+    fputs("hashtable summary:\n", stream);
     fprintf(stream, "mutable: %s\n", hashtable_is_mutable(hashtable) ? "yes" : "no");
     fprintf(stream, "occupied: %zu of %zu\n", hashtable->occupied, hashtable->capacity);
     fprintf(stream, "capacity: %zu (%zu * %g)\n", hashtable->capacity, hashtable->length >> 1, hashtable->load_factor);
     fprintf(stream, "table length: %zu\n", hashtable->length);
     fprintf(stream, "load factor: %g\n", hashtable->load_factor);
-    fprintf(stream, "bucket report:\n");
+    fputs("bucket report:\n", stream);
     size_t count = 0ul, min = 0ul, max = 0ul, total = 0ul;
     float avg = 0.0f;
     for(size_t i = 0; i < hashtable->length; i += 2)
@@ -831,7 +804,7 @@ void hashtable_summary(const Hashtable *hashtable, FILE *stream)
         {
             count++;
             Chain *chain = (Chain *)hashtable->entries[i + 1];
-            fprintf(stream, "[%zu]: chain (length: %zd, hash: 0x%zx)\n", i, chain->length, hashtable->hash(chain->entries[0]));
+            fprintf(stream, "[%zu]: chain (length: %zu, hash: 0x%zx)\n", i, chain->length, hashtable->hash(chain->entries[0]));
             for(size_t j = 0; j < chain->length && NULL != chain->entries[j]; j += 2)
             {
                 fprintf(stream, "  [%zu]: chained key: \"%s\"\n", j, chain->entries[j]);
@@ -845,12 +818,12 @@ void hashtable_summary(const Hashtable *hashtable, FILE *stream)
                 min = chain->length;
             }
             total += chain->length;
-            avg = total / count;
+            avg = (float)total / (float)count;
         }
         else if(NULL != hashtable->entries[i])
         {
             fprintf(stream, "[%zu]: key: \"%s\" hash: 0x%zx\n", i, hashtable->entries[i], hashtable->hash(hashtable->entries[i]));
         }
     }
-    fprintf(stream, "chains: %zu (length min: %zd, max: %zd, avg: %g)\n", count, min, max, avg);
+    fprintf(stream, "chains: %zu (length min: %zu, max: %zu, avg: %g)\n", count, min, max, avg);
 }

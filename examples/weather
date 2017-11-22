@@ -77,11 +77,11 @@ set -m
 trap 'echo Unable to fetch weather; exit 1' CHLD
 
 # start kanabo as a named coprocess, in interactive mode loading the input from curl
-coproc kanabo { kanabo -f <($fetch_cmd "$url") -i ; }
+coproc kanabo { kanabo <($fetch_cmd "$url") ; }
 
 function extract
 {
-    echo ${1} >&${kanabo[1]}
+    echo "${1}" >&${kanabo[1]}
     read -ru ${kanabo[0]} line
     # throw away the 'EOD' marker
     read -ru ${kanabo[0]}
@@ -120,38 +120,38 @@ temperature=$(printf '%.0f' ${main[temp]})
 ###[ Set the scale ]###########################################################
 
 case $units in
-	metric)
-		scale="°C"
-		;;
-	imperial)
-		scale="°F"
-		;;
+    metric)
+        scale="°C"
+        ;;
+    imperial)
+        scale="°F"
+        ;;
 esac
 
 ###[ Set icons ]###############################################################
 
 if [ $symbols = true ]
 then
-	case ${weather[main]} in
-		Clear)
+    case ${weather[main]} in
+        Clear)
             now=$(date +%s)
             if [ $now -ge ${sys[sunset]} ] || [ $now -le ${sys[sunrise]} ]
-			then
-				icon="$moon "
-			else
-				icon="$sun "
-			fi
-			;;
-		Clouds)
-			icon="$clouds"
-			;;
-		Rain)
-			icon="$rain"
-			;;
+            then
+                icon="$moon "
+            else
+                icon="$sun "
+            fi
+            ;;
+        Clouds)
+            icon="$clouds"
+            ;;
+        Rain)
+            icon="$rain"
+            ;;
         Fog)
             icon="$fog "
             ;;
-	esac
+    esac
 fi
 
 ###[ Display current Weather ]#################################################

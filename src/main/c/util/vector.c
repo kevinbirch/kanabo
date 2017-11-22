@@ -79,6 +79,7 @@ Vector *make_vector_with_capacity(size_t capacity)
 
     result->length = 0;
     result->capacity = capacity;
+
     return result;
 }
 
@@ -274,13 +275,15 @@ bool vector_add(Vector *vector, void *value)
     {
         return false;
     }
-    vector->items[vector->length++] = value;
+    vector->items[vector->length++] = (void *)value;
+
     return true;
 }
 
 static bool add_to_vector_iterator(void *each, void *context)
 {
     Vector *vector = (Vector *)context;
+
     return vector_add(vector, each);
 }
 
@@ -383,6 +386,7 @@ void *vector_remove(Vector *vector, size_t index)
         vector->items[vector->length - 1] = NULL;
     }
     vector->length--;
+
     return previous;
 }
 
@@ -401,6 +405,7 @@ bool vector_remove_item(Vector *vector, vector_comparitor comparitor, void *item
             return NULL != vector_remove(vector, i);
         }
     }
+
     return false;
 }
 
@@ -446,6 +451,7 @@ void *vector_find(const Vector *vector, vector_iterator iterator, void *context)
             return vector->items[i];
         }
     }
+
     return NULL;
 }
 
@@ -464,6 +470,7 @@ bool vector_contains(const Vector *vector, vector_comparitor comparitor, void *i
             return true;
         }
     }
+
     return false;
 }
 
@@ -482,6 +489,7 @@ bool vector_any(const Vector *vector, vector_iterator iterator, void *context)
             return true;
         }
     }
+
     return false;
 }
 
@@ -500,6 +508,7 @@ bool vector_all(const Vector *vector, vector_iterator iterator, void *context)
             return false;
         }
     }
+
     return true;
 }
 
@@ -518,6 +527,7 @@ bool vector_none(const Vector *vector, vector_iterator iterator, void *context)
             return false;
         }
     }
+
     return true;
 }
 
@@ -537,6 +547,7 @@ size_t vector_count(const Vector *vector, vector_iterator iterator, void *contex
             count++;
         }
     }
+
     return count;
 }
 
@@ -567,6 +578,7 @@ bool vector_equals(const Vector *one, const Vector *two, vector_comparitor compa
             return false;
         }
     }
+
     return true;
 }
 
@@ -585,12 +597,13 @@ bool vector_iterate(const Vector *vector, vector_iterator iterator, void *contex
             return false;
         }
     }
+
     return true;
 }
 
-Vector *vector_map(const Vector *vector, vector_mapper function, void *context)
+Vector *vector_map(const Vector *vector, vector_mapper fn, void *context)
 {
-    if(NULL == vector || NULL == function)
+    if(NULL == vector || NULL == fn)
     {
         errno = EINVAL;
         return false;
@@ -606,19 +619,20 @@ Vector *vector_map(const Vector *vector, vector_mapper function, void *context)
     {
         return NULL;
     }
-    Vector *result = vector_map_into(vector, function, context, target);
+    Vector *result = vector_map_into(vector, fn, context, target);
     if(NULL == result)
     {
         vector_free(target);
         target = NULL;
         return NULL;
     }
+
     return target;
 }
 
-Vector *vector_map_into(const Vector *vector, vector_mapper function, void *context, Vector *target)
+Vector *vector_map_into(const Vector *vector, vector_mapper fn, void *context, Vector *target)
 {
-    if(NULL == vector || NULL == function || NULL == target)
+    if(NULL == vector || NULL == fn || NULL == target)
     {
         errno = EINVAL;
         return false;
@@ -626,7 +640,7 @@ Vector *vector_map_into(const Vector *vector, vector_mapper function, void *cont
 
     for(size_t i = 0; i < vector->length; i++)
     {
-        if(!function(vector->items[i], context, target))
+        if(!fn(vector->items[i], context, target))
         {
             return NULL;
         }
@@ -635,9 +649,9 @@ Vector *vector_map_into(const Vector *vector, vector_mapper function, void *cont
     return target;
 }
 
-void *vector_reduce(const Vector *vector, vector_reducer function, void *context)
+void *vector_reduce(const Vector *vector, vector_reducer fn, void *context)
 {
-    if(NULL == vector || NULL == function || 0 == vector->length)
+    if(NULL == vector || NULL == fn || 0 == vector->length)
     {
         errno = EINVAL;
         return NULL;
@@ -648,18 +662,18 @@ void *vector_reduce(const Vector *vector, vector_reducer function, void *context
         return vector->items[0];
     }
 
-    void *result = function(vector->items[0], vector->items[1], context);
+    void *result = fn(vector->items[0], vector->items[1], context);
     for(size_t i = 2; i < vector->length; i++)
     {
-        result = function(result, vector->items[i], context);
+        result = fn(result, vector->items[i], context);
     }
 
     return result;
 }
 
-Vector *vector_filter(const Vector *vector, vector_iterator function, void *context)
+Vector *vector_filter(const Vector *vector, vector_iterator fn, void *context)
 {
-    if(NULL == vector || NULL == function)
+    if(NULL == vector || NULL == fn)
     {
         errno = EINVAL;
         return NULL;
@@ -675,9 +689,10 @@ Vector *vector_filter(const Vector *vector, vector_iterator function, void *cont
     {
         return NULL;
     }
+
     for(size_t i = 0; i < vector->length; i++)
     {
-        if(function(vector->items[i], context))
+        if(fn(vector->items[i], context))
         {
             result->items[result->length++] = vector->items[i];
         }
@@ -686,9 +701,9 @@ Vector *vector_filter(const Vector *vector, vector_iterator function, void *cont
     return result;
 }
 
-Vector *vector_filter_not(const Vector *vector, vector_iterator function, void *context)
+Vector *vector_filter_not(const Vector *vector, vector_iterator fn, void *context)
 {
-    if(NULL == vector || NULL == function)
+    if(NULL == vector || NULL == fn)
     {
         errno = EINVAL;
         return NULL;
@@ -706,7 +721,7 @@ Vector *vector_filter_not(const Vector *vector, vector_iterator function, void *
     }
     for(size_t i = 0; i < vector->length; i++)
     {
-        if(!function(vector->items[i], context))
+        if(!fn(vector->items[i], context))
         {
             result->items[result->length++] = vector->items[i];
         }

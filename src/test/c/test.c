@@ -1,4 +1,6 @@
+#ifdef __linux__
 #define _POSIX_C_SOURCE 200809L
+#endif
 
 #include <execinfo.h>
 #include <signal.h>
@@ -10,7 +12,21 @@
 #include "test.h"
 #include "log.h"
 
-void handle_segv(int signal);
+static void handle_signal(int sigval)
+{
+    void *stack[20];
+    int depth;
+
+    if(SIGSEGV == sigval || SIGABRT == sigval)
+    {
+        depth = backtrace(stack, 20);
+        fputs("Backtrace follows (most recent first):\n", stderr);
+        backtrace_symbols_fd(stack, depth, fileno(stderr));
+        signal(sigval, SIG_DFL);
+    }
+
+    raise(sigval);
+}
 
 #ifdef CHECK_0_9_8
 int main(int argc, char **argv)
@@ -18,9 +34,14 @@ int main(int argc, char **argv)
 int main(int argc, char **argv)
 #endif
 {
-    if(SIG_ERR == signal(SIGSEGV, handle_segv))
+    if(SIG_ERR == signal(SIGSEGV, handle_signal))
     {
-        perror(NULL);
+        perror(argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    if(SIG_ERR == signal(SIGABRT, handle_signal))
+    {
+        perror(argv[0]);
         exit(EXIT_FAILURE);
     }
     enable_logging();
@@ -51,22 +72,6 @@ int main(int argc, char **argv)
 
     int failures = srunner_ntests_failed(runner);
     srunner_free(runner);
-    
-    return 0 == failures ? EXIT_SUCCESS : EXIT_FAILURE;
-}
 
-void handle_segv(int sigval)
-{
-    void *stack[20];
-    int depth;
-    
-    if(SIGSEGV == sigval)
-    {
-        depth = backtrace(stack, 20);
-        fprintf(stderr, "Backtrace follows (most recent first):\n");
-        backtrace_symbols_fd(stack, depth, fileno(stderr));
-        signal(SIGSEGV, SIG_DFL);
-    }
-    
-    raise(sigval);
+    return 0 == failures ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -41,37 +41,34 @@
 #include "emitter/shell.h"
 #include "log.h"
 
-static bool emit_mapping_item(node *key, node *value, void *context);
+static bool emit_mapping_item(Node *key, Node *value, void *context);
 
-void emit_bash(const nodelist *list, const struct settings *settings)
+bool emit_bash(const nodelist *list)
 {
-    log_debug("bash", "emitting...");
-    emit_context context = 
-        {
+    log_debug("bash", "emitting %zd items...", nodelist_length(list));
+    emit_context context = {
             .emit_mapping_item = emit_mapping_item,
             .wrap_collections = true
-        };
-    
-    if(!nodelist_iterate(list, emit_node, &context))
-    {
-        perror(settings->program_name);
-    }
-    fflush(stdout);
+    };
+
+    return nodelist_iterate(list, emit_node, &context);
 }
 
-static bool emit_mapping_item(node *key, node *value, void *context)
+static bool emit_mapping_item(Node *key, Node *value, void *context)
 {
-    if(SCALAR == node_kind(value))
+    if(is_scalar(value))
     {
         log_trace("bash", "emitting mapping item");
         EMIT("[");
-        if(!emit_raw_scalar(key))
+        log_trace("bash", "emitting mapping item key");
+        if(!emit_raw_scalar(scalar(key)))
         {
             log_error("bash", "uh oh! couldn't emit mapping key");
             return false;
         }
         EMIT("]=");
-        if(!emit_scalar(value))
+        log_trace("bash", "emitting mapping item value");
+        if(!emit_scalar(scalar(value)))
         {
             log_error("bash", "uh oh! couldn't emit mapping value");
             return false;

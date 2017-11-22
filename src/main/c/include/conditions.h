@@ -8,19 +8,17 @@
 
 extern const void * SENTINEL;
 
-#define VOID_RETURN
-
-#define STRINGIFY(x) #x
+#define VOID_RETURN 
 
 #define ENSURE_NONNULL(ERR_RESULT, ERRNO, ...)                          \
-    if(is_null(__VA_ARGS__, SENTINEL))                                  \
+    if(precond_is_null(__VA_ARGS__, SENTINEL))                          \
     {                                                                   \
         errno = 0 == errno ? (ERRNO) : errno;                           \
         return ERR_RESULT;                                              \
     }
 
 #define ENSURE_THAT(ERR_RESULT, ERRNO, ...)                             \
-    if(is_false(__VA_ARGS__, -1))                                       \
+    if(precond_is_false(__VA_ARGS__, -1))                               \
     {                                                                   \
         errno = 0 == errno ? (ERRNO) : errno;                           \
         return ERR_RESULT;                                              \
@@ -50,5 +48,3 @@ extern const void * SENTINEL;
 
 bool is_null(const void *first, ...);
 bool is_false(int first, ...);
-
-

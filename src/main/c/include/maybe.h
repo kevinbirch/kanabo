@@ -28,6 +28,17 @@ typedef enum maybe_tag_e MaybeTag;
         };                                      \
     } Maybe(TYPE)
 
+#define make_maybep(TYPE)                       \
+    typedef struct                              \
+    {                                           \
+        MaybeTag tag;                           \
+        union                                   \
+        {                                       \
+            uint32_t error;                     \
+            TYPE    *value;                     \
+        };                                      \
+    } Maybe(TYPE)
+
 #define make_maybe_error(TYPE, ETYPE)             \
     typedef struct                                \
     {                                             \
@@ -39,10 +50,21 @@ typedef enum maybe_tag_e MaybeTag;
         };                                        \
     } Maybe(TYPE)
 
+#define make_maybep_error(TYPE, ETYPE)             \
+    typedef struct                                 \
+    {                                              \
+        MaybeTag tag;                              \
+        union                                      \
+        {                                          \
+            ETYPE  error;                          \
+            TYPE  *value;                          \
+        };                                         \
+    } Maybe(TYPE)
+
 // Mabye Constructors
 
-#define just(a, x) (Maybe(a)){.tag=JUST,    .value=(x)}
-#define nothing(a) (Maybe(a)){.tag=NOTHING, .error=0}
+#define just(a, x) (Maybe(a)){.tag=JUST, .value=(x)}
+#define nothing(a) (Maybe(a)){.tag=NOTHING}
 #define fail(a, v) (Maybe(a)){.tag=NOTHING, .error=(v)}
 
 // Maybe functions

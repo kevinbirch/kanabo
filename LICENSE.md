@@ -1,7 +1,3 @@
--*- markdown -*-
-
-# Informational files for [金棒][home] (kanabō)
-
 ## License
 
 Copyright (c) 2012 [Kevin Birch](mailto:kmb@pobox.com).  All rights reserved.

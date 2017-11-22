@@ -121,12 +121,9 @@ void dispose_path(JsonPath path);
 /* Path API */
 
 const char *        path_kind_name(enum path_kind value);
-#define path_length(PATH) vector_length((PATH)->steps)
 
 typedef bool (*path_iterator)(Step *each, void *parser);
 bool path_iterate(const JsonPath *path, path_iterator iterator, void *context);
-
-/* Step API */
 
 const char *        step_kind_name(enum step_kind value);
 const char *        test_kind_name(enum test_kind value);

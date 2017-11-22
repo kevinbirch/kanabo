@@ -18,10 +18,10 @@
 void nodelist_setup(void);
 void nodelist_teardown(void);
 
-bool  fail_nodelist(node *each, void *context);
-bool  check_nodelist(node *each, void *context);
-bool  transform(node *each, void *context, nodelist *target);
-bool  fail_transform(node *each, void *context, nodelist *target);
+bool  fail_nodelist(Node *each, void *context);
+bool  check_nodelist(Node *each, void *context);
+bool  transform(Node *each, void *context, nodelist *target);
+bool  fail_transform(Node *each, void *context, nodelist *target);
 
 #define make_scalar_string(VALUE) make_scalar_node((uint8_t *)(VALUE), strlen((VALUE)), SCALAR_STRING)
 #define make_scalar_integer(VALUE) make_scalar_node((uint8_t *)(VALUE), strlen((VALUE)), SCALAR_INTEGER)
@@ -86,15 +86,15 @@ START_TEST (bad_set)
     assert_noerr();
 
     reset_errno();
-    node *scalar = make_scalar_string("foo");
-    assert_not_null(scalar);
+    Scalar *s = make_scalar_string("foo");
+    assert_not_null(s);
     assert_noerr();
 
     reset_errno();
-    assert_false(nodelist_set(empty_list, scalar, 0));
+    assert_false(nodelist_set(empty_list, s, 0));
     assert_errno(EINVAL);
 
-    node_free(scalar);
+    node_free(node(s));
     nodelist_free(empty_list);
 }
 END_TEST
@@ -181,12 +181,12 @@ void nodelist_setup(void)
     list = make_nodelist();
 
     reset_errno();
-    node *foo = make_scalar_string("foo");
+    Scalar *foo = make_scalar_string("foo");
     assert_noerr();
     assert_not_null(foo);
 
     reset_errno();
-    node *bar = make_scalar_string("bar");
+    Scalar *bar = make_scalar_string("bar");
     assert_noerr();
     assert_not_null(bar);
 
@@ -201,9 +201,9 @@ void nodelist_setup(void)
     assert_nodelist_length(list, 2);
 }
 
-static bool freedom_iterator(node *each, void *context);
+static bool freedom_iterator(Node *each, void *context);
 
-static bool freedom_iterator(node *each, void *context)
+static bool freedom_iterator(Node *each, void *context)
 {
     node_free(each);
     return true;
@@ -218,7 +218,7 @@ void nodelist_teardown(void)
 START_TEST (add)
 {
     reset_errno();
-    node *baz = make_scalar_string("baz");
+    Scalar *baz = make_scalar_string("baz");
     assert_not_null(baz);
     assert_noerr();
 
@@ -226,7 +226,7 @@ START_TEST (add)
     nodelist_add(list, baz);
     assert_noerr();
     assert_nodelist_length(list, 3);
-    assert_node_equals(baz, nodelist_get(list, 2));
+    assert_node_equals(node(baz), nodelist_get(list, 2));
 
     // N.B. not freeing baz here as it is added to `list` and will be freed by teardown
 }
@@ -235,7 +235,7 @@ END_TEST
 START_TEST (set)
 {
     reset_errno();
-    node *baz = make_scalar_string("baz");
+    Scalar *baz = make_scalar_string("baz");
     assert_not_null(baz);
     assert_noerr();
 
@@ -243,7 +243,7 @@ START_TEST (set)
     assert_true(nodelist_set(list, baz, 0));
     assert_noerr();
     assert_nodelist_length(list, 2);
-    assert_node_equals(baz, nodelist_get(list, 0));
+    assert_node_equals(node(baz), nodelist_get(list, 0));
 
     // N.B. not freeing baz here as it is added to `list` and will be freed by teardown
 }
@@ -259,7 +259,7 @@ START_TEST (iteration)
 }
 END_TEST
 
-bool check_nodelist(node *each, void *context)
+bool check_nodelist(Node *each, void *context)
 {
     assert_not_null(each);
     size_t *count = (size_t *)context;
@@ -277,7 +277,7 @@ START_TEST (fail_iteration)
 }
 END_TEST
 
-bool fail_nodelist(node *each, void *context)
+bool fail_nodelist(Node *each, void *context)
 {
     size_t *count = (size_t *)context;
     if(0 < *count)
@@ -302,12 +302,12 @@ START_TEST (map)
     assert_uint_eq(2, count);
     assert_nodelist_length(result, 2);
 
-    node *zero = nodelist_get(result, 0);
+    Node *zero = nodelist_get(result, 0);
     assert_not_null(zero);
     assert_scalar_kind(zero, SCALAR_INTEGER);
     assert_scalar_value(zero, "1");
 
-    node *one = nodelist_get(result, 1);
+    Node *one = nodelist_get(result, 1);
     assert_not_null(one);
     assert_scalar_kind(one, SCALAR_INTEGER);
     assert_scalar_value(one, "2");
@@ -316,11 +316,12 @@ START_TEST (map)
 }
 END_TEST
 
-bool transform(node *each, void *context, nodelist *target)
+bool transform(Node *each, void *context, nodelist *target)
 {
     assert_not_null(each);
     size_t *count = (size_t *)context;
     (*count)++;
+    // xxx - is this pointer leaking?
     char *value;
     int result = asprintf(&value, "%zd", *count);
     assert_int_ne(-1, result);
@@ -339,7 +340,7 @@ START_TEST (fail_map)
 }
 END_TEST
 
-bool fail_transform(node *each, void *context, nodelist *target)
+bool fail_transform(Node *each, void *context, nodelist *target)
 {
     size_t *count = (size_t *)context;
     if(0 < *count)
