@@ -220,30 +220,41 @@ static void match_name(Scanner *self)
 {
     Position start = position(self);
 
-    bool done = false;
-    while(!done)
+    while(true)
     {
         if(!input_has_more(&self->input))
         {
             if(input_index(&self->input) == start.index)
             {
                 add_error(self, PREMATURE_END_OF_INPUT);
-                return;
             }
 
-            done = true;
-            continue;
+            break;
         }
         if(iscntrl(input_peek(&self->input)))
         {
             add_error(self, UNSUPPORTED_CONTROL_CHARACTER);
+            break;
         }
-    
-        char c = input_consume_one(&self->input);
-        if(c == '[' || c == ']' || c == '.' || c == '=' || c == ',' || c == '}' || c == '(' || c == ')' || isspace(c))
+
+        char c = input_peek(&self->input);
+        if(isspace(c))
         {
-            input_push_back(&self->input);
-            done = true;
+            break;
+        }
+        switch(c)
+        {
+            case '[':
+            case ']':
+            case '.':
+            case '=':
+            case ',':
+            case '}':
+            case '(':
+            case ')':
+                break;
+            default:
+                input_consume_one(&self->input);
         }
     }
 }

@@ -244,24 +244,20 @@ static void parse_quoted_name(Parser *self, Step *step)
 
 static void recover(Parser *self, Step *step)
 {
-    bool done = false;
-
     next(self);
 
-    while(!done)
+    while(true)
     {
         switch(current(self))
         {
             case OPEN_BRACKET:
             case OPEN_FILTER:
-                done = true;
                 parse_predicate(self, step);
-                break;
+                return;
             case DOT:
             case DOT_DOT:
             case END_OF_INPUT:
-                done = true;
-                break;
+                return;
             default:
                 next(self);
                 break;

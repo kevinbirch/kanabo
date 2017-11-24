@@ -72,6 +72,10 @@
 * must_make_regex (uses statement expr)
 * check for usage of `%zd`
 * x_free to dispose_x
+* panic on illegal downcast
+* evaluator
+  * comp units for various eval branches
+  * private headers for each
 * eliminate file headers
 * eliminate double spacing
 * xcalloc everywhere
@@ -130,6 +134,7 @@
 ### documentation
 
 * man page
+  * mandoc - https://manpages.bsd.lv/mdoc.html
   * more jsonpath details
   * interactive mode
   * pandoc?
