@@ -1,39 +1,39 @@
 #include "document.h"
 #include "conditions.h"
 
-node *model_document(const document_model *model, size_t index)
+static bool freedom_iterator(void *each, void *context __attribute__((unused)))
 {
-    PRECOND_NONNULL_ELSE_NULL(model);
-    PRECOND_ELSE_NULL(index < model_document_count(model));
+    node_free(each);
 
-    return vector_get(model->documents, index);
+    return true;
 }
 
-node *model_document_root(const document_model *model, size_t index)
+void model_free(DocumentModel *self)
 {
-    node *document = model_document(model, index);
-    node *result = NULL;
-    
-    if(NULL != document)
+    if(NULL == self)
     {
-        result = document_root(document);
+        return;
+    }
+    vector_iterate(self, freedom_iterator, NULL);
+    vector_free(self);
+}
+
+Node *model_document_root(const DocumentModel *self, size_t index)
+{
+    Document *doc = model_document(self, index);
+    Node *result = NULL;
+
+    if(NULL != doc)
+    {
+        result = document_root(doc);
     }
 
     return result;
 }
 
-size_t model_document_count(const document_model *model)
+bool model_add(DocumentModel *self, Document *doc)
 {
-    PRECOND_NONNULL_ELSE_ZERO(model);
+    PRECOND_NONNULL_ELSE_FALSE(self, doc);
 
-    return vector_length(model->documents);
+    return vector_add(self, doc);
 }
-
-bool model_add(document_model *model, node *document)
-{
-    PRECOND_NONNULL_ELSE_FALSE(model, document);
-    PRECOND_ELSE_FALSE(DOCUMENT == node_kind(document));
-
-    return vector_add(model->documents, document);
-}
-

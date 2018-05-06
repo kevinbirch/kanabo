@@ -3,61 +3,98 @@
 
 struct context_adapter_s
 {
-    sequence_iterator sequence;
+    sequence_iterator iterator;
     void *context;
 };
 
 typedef struct context_adapter_s context_adapter;
 
-static bool sequence_iterator_adpater(void *each, void *context);
-
-node *sequence_get(const node *sequence, int64_t index)
+static bool sequence_equals(const Node *one, const Node *two)
 {
-    PRECOND_NONNULL_ELSE_NULL(sequence);
-    PRECOND_ELSE_NULL(SEQUENCE == node_kind(sequence));
+    return vector_equals(((Sequence *)one)->values,
+                         ((Sequence *)two)->values,
+                         node_comparitor);
+}
 
-    uint64_t abs = (uint64_t)index;
-    PRECOND_ELSE_NULL(abs < node_size(sequence));
+static size_t sequence_size(const Node *self)
+{
+    return vector_length(((Sequence *)self)->values);
+}
 
-    size_t i;
-    if(0 > index)
+static bool sequence_freedom_iterator(void *each, void *context __attribute__((unused)))
+{
+    node_free(each);
+
+    return true;
+}
+
+static void sequence_free(Node *value)
+{
+    Sequence *self = (Sequence *)value;
+    if(NULL == self->values)
     {
-        i = node_size(sequence) - abs;
+        return;
     }
-    else
-    {
-        i = (size_t)index;
-    }
+    vector_iterate(self->values, sequence_freedom_iterator, NULL);
+    vector_free(self->values);
+    self->values = NULL;
+}
 
-    return vector_get(sequence->content.sequence, i);
+static const struct vtable_s sequence_vtable = 
+{
+    sequence_free,
+    sequence_size,
+    sequence_equals
+};
+
+Sequence *make_sequence_node(void)
+{
+    Sequence *self = xcalloc(sizeof(Sequence));
+    node_init(&self->base, SEQUENCE);
+    self->values = make_vector();
+    if(NULL == self->values)
+    {
+        free(self);
+        self = NULL;
+        return NULL;
+    }
+    self->base.vtable = &sequence_vtable;
+
+    return self;
+}
+
+Node *sequence_get(const Sequence *self, size_t index)
+{
+    PRECOND_NONNULL_ELSE_NULL(self);
+    PRECOND_ELSE_NULL(index < vector_length(self->values));
+
+    return vector_get(self->values, index);
 }
 
 static bool sequence_iterator_adpater(void *each, void *context)
 {
     context_adapter *adapter = (context_adapter *)context;
-    return adapter->sequence((node *)each, adapter->context);
+    return adapter->iterator(node(each), adapter->context);
 }
 
-bool sequence_iterate(const node *sequence, sequence_iterator iterator, void *context)
+bool sequence_iterate(const Sequence *self, sequence_iterator iterator, void *context)
 {
-    PRECOND_NONNULL_ELSE_FALSE(sequence, iterator);
-    PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence));
+    PRECOND_NONNULL_ELSE_FALSE(self, iterator);
 
-    context_adapter adapter = {.sequence=iterator, .context=context };
-    return vector_iterate(sequence->content.sequence, sequence_iterator_adpater, &adapter);
+    context_adapter adapter = {.iterator=iterator, .context=context};
+    return vector_iterate(self->values, sequence_iterator_adpater, &adapter);
 }
 
-bool sequence_add(node *sequence, node *item)
+bool sequence_add(Sequence *self, Node *item)
 {
-    PRECOND_NONNULL_ELSE_FALSE(sequence, item);
-    PRECOND_ELSE_FALSE(SEQUENCE == node_kind(sequence));
+    PRECOND_NONNULL_ELSE_FALSE(self, item);
 
-    bool result = vector_add(sequence->content.sequence, item);
+    bool result = vector_add(self->values, item);
     if(result)
     {
-        sequence->content.size = vector_length(sequence->content.sequence);
-        item->parent = sequence;
+        item->parent = node(self);
     }
+
     return result;
 }
 

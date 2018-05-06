@@ -1,114 +1,111 @@
+#include <errno.h>
 #include <string.h>
 
 #include "document.h"
 #include "conditions.h"
+#include "log.h"
 
-static bool node_comparitor(const void *one, const void *two);
-static bool tag_equals(const uint8_t *one, const uint8_t *two);
-
-static bool scalar_equals(const node *one, const node *two);
-static bool sequence_equals(const node *one, const node *two);
-static bool mapping_equals(const node *one, const node *two);
-
-
-enum node_kind node_kind(const node *value)
+static const char * const NODE_KINDS [] =
 {
-    return value->tag.kind;
+    "document",
+    "scalar",
+    "sequence",
+    "mapping",
+    "alias"
+};
+
+const char *node_kind_name_(const Node *self)
+{
+    return NODE_KINDS[node_kind(self)];
 }
 
-uint8_t *node_name(const node *value)
+Node *narrow(Node *instance, NodeKind kind)
 {
-    PRECOND_NONNULL_ELSE_NULL(value);
-
-    return value->tag.name;
-}
-
-size_t node_size(const node *value)
-{
-    PRECOND_NONNULL_ELSE_ZERO(value);
-
-    return value->content.size;
-}
-
-node *node_parent(const node *value)
-{
-    PRECOND_NONNULL_ELSE_NULL(value);
-    return value->parent;
-}
-
-void node_set_tag(node *target, const uint8_t *value, size_t length)
-{
-    PRECOND_NONNULL_ELSE_VOID(target, value);
-    target->tag.name = (uint8_t *)calloc(1, length + 1);
-    if(NULL != target->tag.name)
+    if(kind != node_kind(instance))
     {
-        memcpy(target->tag.name, value, length);
-        target->tag.name[length] = '\0';
+        log_warn("model", "invalid cast from `%s` to `%s`",
+                 node_kind_name(instance), NODE_KINDS[kind]);
+    }
+    return instance;
+}
+
+void node_init(Node *self, NodeKind kind)
+{
+    if(NULL != self)
+    {
+        self->tag.kind = kind;
+        self->tag.name = NULL;
+        self->anchor = NULL;
     }
 }
 
-void node_set_anchor(node *target, const uint8_t *value, size_t length)
+static void basic_node_free(Node *value)
 {
-    PRECOND_NONNULL_ELSE_VOID(target, value);
-    target->anchor = (uint8_t *)calloc(1, length + 1);
-    if(NULL != target->anchor)
+    free(value->tag.name);
+    free(value->anchor);
+    free(value);
+}
+
+void node_free_(Node *value)
+{
+    if(NULL == value)
     {
-        memcpy(target->anchor, value, length);
-        target->anchor[length] = '\0';
+        return;
+    }
+    value->vtable->free(value);
+    basic_node_free(value);
+}
+
+size_t node_size_(const Node *self)
+{
+    PRECOND_NONNULL_ELSE_ZERO(self);
+
+    return self->vtable->size(self);
+}
+
+NodeKind node_kind_(const Node *self)
+{
+    return self->tag.kind;
+}
+
+uint8_t *node_name_(const Node *self)
+{
+    PRECOND_NONNULL_ELSE_NULL(self);
+
+    return self->tag.name;
+}
+
+Node *node_parent_(const Node *self)
+{
+    PRECOND_NONNULL_ELSE_NULL(self);
+    return self->parent;
+}
+
+void node_set_tag_(Node *self, const uint8_t *value, size_t length)
+{
+    PRECOND_NONNULL_ELSE_VOID(self, value);
+    self->tag.name = (uint8_t *)calloc(1, length + 1);
+    if(NULL != self->tag.name)
+    {
+        memcpy(self->tag.name, value, length);
+        self->tag.name[length] = '\0';
     }
 }
 
-bool node_equals(const node *one, const node *two)
+void node_set_anchor_(Node *self, const uint8_t *value, size_t length)
 {
-    if(one == two)
+    PRECOND_NONNULL_ELSE_VOID(self, value);
+    self->anchor = (uint8_t *)calloc(1, length + 1);
+    if(NULL != self->anchor)
     {
-        return true;
+        memcpy(self->anchor, value, length);
+        self->anchor[length] = '\0';
     }
-    
-    if((NULL == one && NULL != two) || (NULL != one && NULL == two))
-    {
-        return false;
-    }
-
-    bool result = node_kind(one) == node_kind(two) &&
-        tag_equals(node_name(one), node_name(two)) &&
-        node_size(one) == node_size(two);
-
-    if(!result)
-    {
-        return result;
-    }
-    switch(node_kind(one))
-    {
-        case DOCUMENT:
-            result &= node_equals(document_root(one), document_root(two));
-            break;
-        case SCALAR:
-            result &= scalar_equals(one, two);
-            break;
-        case SEQUENCE:
-            result &= sequence_equals(one, two);
-            break;
-        case MAPPING:
-            result &= mapping_equals(one, two);
-            break;
-        case ALIAS:
-            result &= node_equals(alias_target(one), alias_target(two));
-            break;
-    }
-    return result;
 }
 
-static bool scalar_equals(const node *one, const node *two)
+bool node_comparitor(const void *one, const void *two)
 {
-    size_t n1 = node_size(one);
-    size_t n2 = node_size(two);
-
-    if(n1 != n2)
-    {
-        return false;
-    }
-    return memcmp(scalar_value(one), scalar_value(two), n1) == 0;
+    return node_equals(one, two);
 }
 
 static bool tag_equals(const uint8_t *one, const uint8_t *two)
@@ -126,17 +123,26 @@ static bool tag_equals(const uint8_t *one, const uint8_t *two)
     return memcmp(one, two, n1 > n2 ? n2 : n1) == 0;
 }
 
-static bool node_comparitor(const void *one, const void *two)
+bool node_equals_(const Node *one, const Node *two)
 {
-    return node_equals((node *)one, (node *)two);
-}
+    if(one == two)
+    {
+        return true;
+    }
 
-static bool sequence_equals(const node *one, const node *two)
-{
-    return vector_equals(one->content.sequence, two->content.sequence, node_comparitor);
-}
+    if((NULL == one && NULL != two) || (NULL != one && NULL == two))
+    {
+        return false;
+    }
 
-static bool mapping_equals(const node *one, const node *two)
-{
-    return hashtable_equals(one->content.mapping, two->content.mapping, node_comparitor);
+    if(!(node_kind(one) == node_kind(two) &&
+       tag_equals(node_name(one), node_name(two))))
+    {
+        return false;
+    }
+    if(node_size(one) != node_size(two))
+    {
+        return false;
+    }
+    return one->vtable->equals(one, two);
 }

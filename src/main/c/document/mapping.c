@@ -1,73 +1,135 @@
 #include "document.h"
 #include "conditions.h"
 
-static bool mapping_iterator_adpater(void *key, void *value, void *context);
-
 struct context_adapter_s
 {
-    mapping_iterator mapping;
+    mapping_iterator iterator;
     void *context;
 };
 
 typedef struct context_adapter_s context_adapter;
 
-node *mapping_get(const node *mapping, uint8_t *scalar, size_t length)
+static bool mapping_equals(const Node *one, const Node *two)
 {
-    PRECOND_NONNULL_ELSE_NULL(mapping, scalar);
-    PRECOND_ELSE_NULL(MAPPING == node_kind(mapping));
+    return hashtable_equals(((const Mapping *)one)->values,
+                            ((const Mapping *)two)->values,
+                            node_comparitor);
+}
+
+static size_t mapping_size(const Node *self)
+{
+    return hashtable_size(((const Mapping *)self)->values);
+}
+
+static bool mapping_freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
+{
+    node_free(key);
+    node_free(value);
+
+    return true;
+}
+
+static void mapping_free(Node *value)
+{
+    Mapping *map = (Mapping *)value;
+    if(NULL == map->values)
+    {
+        return;
+    }
+
+    hashtable_iterate(map->values, mapping_freedom_iterator, NULL);
+    hashtable_free(map->values);
+    map->values = NULL;
+}
+
+static hashcode scalar_hash(const void *key)
+{
+    const Scalar *value = (const Scalar *)key;
+    return shift_add_xor_string_buffer_hash(scalar_value(value), node_size(key));
+}
+
+static bool scalar_comparitor(const void *one, const void *two)
+{
+    return node_equals(const_node(one), const_node(two));
+}
+
+static const struct vtable_s mapping_vtable = 
+{
+    mapping_free,
+    mapping_size,
+    mapping_equals
+};
+
+Mapping *make_mapping_node(void)
+{
+    Mapping *self = calloc(1, sizeof(Mapping));
+    if(NULL != self)
+    {
+        node_init(self, MAPPING);
+        self->values = make_hashtable_with_function(scalar_comparitor, scalar_hash);
+        if(NULL == self->values)
+        {
+            free(self);
+            self = NULL;
+            return NULL;
+        }
+        self->base.vtable = &mapping_vtable;
+    }
+
+    return self;
+}
+
+Node *mapping_get(const Mapping *self, uint8_t *value, size_t length)
+{
+    PRECOND_NONNULL_ELSE_NULL(self, value);
     PRECOND_ELSE_NULL(0 < length);
 
-    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
-    node *result = hashtable_get(mapping->content.mapping, key);
+    Scalar *key = make_scalar_node(value, length, SCALAR_STRING);
+    Node *result = hashtable_get(self->values, key);
     node_free(key);
-    
+
     return result;
 }
 
-bool mapping_contains(const node *mapping, uint8_t *scalar, size_t length)
+bool mapping_contains(const Mapping *self, uint8_t *value, size_t length)
 {
-    PRECOND_NONNULL_ELSE_FALSE(mapping, scalar);
-    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping), 0 < length);
+    PRECOND_NONNULL_ELSE_FALSE(self, value);
+    PRECOND_ELSE_FALSE(0 < length);
 
-    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
-    bool result = hashtable_contains(mapping->content.mapping, key);
+    Scalar *key = make_scalar_node(value, length, SCALAR_STRING);
+    bool result = hashtable_contains(self->values, key);
     node_free(key);
-    
+
     return result;
 }
 
 static bool mapping_iterator_adpater(void *key, void *value, void *context)
 {
     context_adapter *adapter = (context_adapter *)context;
-    return adapter->mapping((node *)key, (node *)value, adapter->context);
+    return adapter->iterator(node(key), node(value), adapter->context);
 }
 
-bool mapping_iterate(const node *mapping, mapping_iterator iterator, void *context)
+bool mapping_iterate(const Mapping *self, mapping_iterator iterator, void *context)
 {
-    PRECOND_NONNULL_ELSE_FALSE(mapping, iterator);
-    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping));
+    PRECOND_NONNULL_ELSE_FALSE(self, iterator);
 
-    context_adapter adapter = {.mapping=iterator, .context=context};
-    return hashtable_iterate(mapping->content.mapping, mapping_iterator_adpater, &adapter);
+    context_adapter adapter = {.iterator=iterator, .context=context};
+    return hashtable_iterate(self->values, mapping_iterator_adpater, &adapter);
 }
 
-bool mapping_put(node *mapping, uint8_t *scalar, size_t length, node *value)
+bool mapping_put(Mapping *self, uint8_t *scalar, size_t length, Node *value)
 {
-    PRECOND_NONNULL_ELSE_FALSE(mapping, scalar, value);
-    PRECOND_ELSE_FALSE(MAPPING == node_kind(mapping));
+    PRECOND_NONNULL_ELSE_FALSE(self, scalar, value);
 
-    node *key = make_scalar_node(scalar, length, SCALAR_STRING);
-    if(NULL == key)
-    {
-        return false;
-    }
+    Scalar *key = make_scalar_node(scalar, length, SCALAR_STRING);
+
     errno = 0;
-    hashtable_put(mapping->content.mapping, key, value);
+    hashtable_put(self->values, key, value);
     if(0 == errno)
     {
-        mapping->content.size = hashtable_size(mapping->content.mapping);
-        value->parent = mapping;
+        value->parent = node(self);
     }
+
     return 0 == errno;
 }
 
