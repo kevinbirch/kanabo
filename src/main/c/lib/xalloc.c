@@ -3,52 +3,27 @@
 
 static OOMErrorHandler custom_handler = NULL;
 
-static const char * const PANIC_MESSAGE = "panic - out of memory!";
-static const char * const ALLOCATING_MESSAGE = " allocating ";
-static const char * const BYTES_MESSAGE = " bytes\n";
+static const char * const PANIC_MESSAGE = "panic - ";
+static const char * const NOMEM_MESSAGE = "out of memory! attempted allocation: ";
 
-#define xs(V) s(V)
-#define s(V) #V
-static const size_t SIZE_STR_MAX = sizeof(xs(SIZE_MAX));
+static inline void signal_panic(const char * restrict message, const char * restrict file, int line) __attribute__((noreturn));
 
-static inline void default_oom_handler(size_t size, const char * restrict file, const char * restrict line) __attribute__((noreturn));
-
-static inline void default_oom_handler(size_t size, const char * restrict file, const char * restrict line)
+static inline void signal_panic(const char * restrict message, const char * restrict file, int line)
 {
-    if(NULL != file && NULL != line)
+    if(NULL != file)
     {
+        char buf[21];  // len(decimal 64-bit int) + 1
+        int len = snprintf(buf, 21, "%d", line);
         fwrite(file, strlen(file), 1, stderr);
         fwrite(":", 1, 1, stderr);
-        fwrite(line, strlen(line), 1, stderr);
+        fwrite(buf, (size_t)len, 1, stderr);
         fwrite(": ", 2, 1, stderr);
     }
     fwrite(PANIC_MESSAGE, strlen(PANIC_MESSAGE), 1, stderr);
-    char buf[SIZE_STR_MAX + 1];
-    int len = snprintf(buf, SIZE_STR_MAX + 1, "%zu", size);
-    if(len > 0)
-    {
-        fwrite(ALLOCATING_MESSAGE, strlen(ALLOCATING_MESSAGE), 1, stderr);
-        fwrite(buf, (size_t)len, 1, stderr);
-        fwrite(BYTES_MESSAGE, strlen(BYTES_MESSAGE), 1, stderr);
-    }
-    else
-    {
-        fwrite("\n", 1, 1, stderr);
-    }
+    fwrite(message, strlen(message), 1, stderr);
+    fwrite("\n", 1, 1, stderr);
 
     exit(EXIT_FAILURE);
-}
-
-static inline void handle_oom_error(size_t size, const char * restrict file, const char * restrict line)
-{
-    if(NULL != custom_handler)
-    {
-        custom_handler(size, file, line);
-    }
-    else
-    {
-        default_oom_handler(size, file, line);
-    }
 }
 
 void set_oom_handler(OOMErrorHandler handler)
@@ -59,10 +34,23 @@ void set_oom_handler(OOMErrorHandler handler)
 void *xcalloc_at(size_t size, const char * restrict file, int line)
 {
     void *obj = calloc(1, size);
-    if(NULL == obj)
+    if(NULL != obj)
     {
-        handle_oom_error(size, file, xs(line));
+        return obj;
     }
 
-    return obj;
+    char buf[58];   // len(NOMEM_MESSAGE) + len(decimal 64-bit int) + 1
+    snprintf(buf, 58, "%s%zu", NOMEM_MESSAGE, size);
+    if(NULL != custom_handler)
+    {
+        custom_handler(size, file, line);
+        return NULL;
+    }
+
+    signal_panic(buf, file, line);
+}
+
+void panic_at(const char * restrict message, const char * restrict file, int line)
+{
+    signal_panic(message, file, line);
 }
