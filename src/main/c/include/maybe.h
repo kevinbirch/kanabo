@@ -28,15 +28,15 @@ typedef enum maybe_tag_e MaybeTag;
         };                                      \
     } Maybe(TYPE)
 
-#define make_maybep(TYPE)                       \
-    typedef struct                              \
-    {                                           \
-        MaybeTag tag;                           \
-        union                                   \
-        {                                       \
-            uint32_t error;                     \
-            TYPE    *value;                     \
-        };                                      \
+#define make_maybep(TYPE)                        \
+    typedef struct                               \
+    {                                            \
+        MaybeTag tag;                            \
+        union                                    \
+        {                                        \
+            uint32_t  error;                     \
+            TYPE     *value;                     \
+        };                                       \
     } Maybe(TYPE)
 
 #define make_maybe_error(TYPE, ETYPE)             \
