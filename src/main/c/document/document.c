@@ -28,12 +28,8 @@ static const struct vtable_s document_vtable =
 
 Document *make_document_node(void)
 {
-    Document *self = calloc(1, sizeof(Document));
-    if(NULL != self)
-    {
-        node_init(self, DOCUMENT);
-        self->base.vtable = &document_vtable;
-    }
+    Document *self = xcalloc(sizeof(Document));
+    node_init(node(self), DOCUMENT, &document_vtable);
 
     return self;
 }

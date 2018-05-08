@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "document.h"
@@ -16,34 +17,37 @@ static const char * const NODE_KINDS [] =
 
 const char *node_kind_name_(const Node *self)
 {
-    return NODE_KINDS[node_kind(self)];
+    return NODE_KINDS[self->tag.kind];
 }
 
-Node *narrow(Node *instance, NodeKind kind)
-{
-    if(kind != node_kind(instance))
-    {
-        log_warn("model", "invalid cast from `%s` to `%s`",
-                 node_kind_name(instance), NODE_KINDS[kind]);
+#define assert_kind(EXPECTED, ACTUAL, FILE, LINE) if((ACTUAL) != (EXPECTED)) \
+    {                                                                   \
+        printf("invalid cast from `%s` to `%s` at %s:%d\n",             \
+               NODE_KINDS[(ACTUAL)], NODE_KINDS[(EXPECTED)], file, line); \
+        exit(EXIT_FAILURE);                                             \
     }
+
+Node *node_narrow(Node *instance, NodeKind kind, const char * restrict file, int line)
+{
+    assert_kind(kind, instance->tag.kind, file, line);
     return instance;
 }
 
-void node_init(Node *self, NodeKind kind)
+const Node *const_node_narrow(const Node *instance, NodeKind kind, const char * restrict file, int line)
+{
+    assert_kind(kind, instance->tag.kind, file, line);
+    return instance;
+}
+
+void node_init(Node *self, NodeKind kind, const struct vtable_s *vtable)
 {
     if(NULL != self)
     {
         self->tag.kind = kind;
         self->tag.name = NULL;
+        self->vtable = vtable;
         self->anchor = NULL;
     }
-}
-
-static void basic_node_free(Node *value)
-{
-    free(value->tag.name);
-    free(value->anchor);
-    free(value);
 }
 
 void node_free_(Node *value)
@@ -53,7 +57,9 @@ void node_free_(Node *value)
         return;
     }
     value->vtable->free(value);
-    basic_node_free(value);
+    free(value->tag.name);
+    free(value->anchor);
+    free(value);
 }
 
 size_t node_size_(const Node *self)
@@ -84,28 +90,17 @@ Node *node_parent_(const Node *self)
 void node_set_tag_(Node *self, const uint8_t *value, size_t length)
 {
     PRECOND_NONNULL_ELSE_VOID(self, value);
-    self->tag.name = (uint8_t *)calloc(1, length + 1);
-    if(NULL != self->tag.name)
-    {
-        memcpy(self->tag.name, value, length);
-        self->tag.name[length] = '\0';
-    }
+    self->tag.name = xcalloc(length + 1);
+    memcpy(self->tag.name, value, length);
+    self->tag.name[length] = '\0';
 }
 
 void node_set_anchor_(Node *self, const uint8_t *value, size_t length)
 {
     PRECOND_NONNULL_ELSE_VOID(self, value);
-    self->anchor = (uint8_t *)calloc(1, length + 1);
-    if(NULL != self->anchor)
-    {
-        memcpy(self->anchor, value, length);
-        self->anchor[length] = '\0';
-    }
-}
-
-bool node_comparitor(const void *one, const void *two)
-{
-    return node_equals(one, two);
+    self->anchor = xcalloc(length + 1);
+    memcpy(self->anchor, value, length);
+    self->anchor[length] = '\0';
 }
 
 static bool tag_equals(const uint8_t *one, const uint8_t *two)
@@ -135,14 +130,19 @@ bool node_equals_(const Node *one, const Node *two)
         return false;
     }
 
-    if(!(node_kind(one) == node_kind(two) &&
-       tag_equals(node_name(one), node_name(two))))
+    if(!(one->tag.kind == two->tag.kind &&
+       tag_equals(one->tag.name, two->tag.name)))
     {
         return false;
     }
-    if(node_size(one) != node_size(two))
+    if(one->vtable->size(one) != two->vtable->size(two))
     {
         return false;
     }
     return one->vtable->equals(one, two);
 }
+
+bool node_comparitor(const void *one, const void *two)
+ {
+     return node_equals(one, two);
+ }

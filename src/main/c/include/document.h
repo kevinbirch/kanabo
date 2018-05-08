@@ -18,6 +18,40 @@ enum node_kind
 
 typedef enum node_kind NodeKind;
 
+typedef struct node_s Node;
+
+struct vtable_s
+{
+    void (*free)(Node *);
+    size_t (*size)(const Node *);
+    bool (*equals)(const Node *, const Node *);
+};
+
+struct node_s
+{
+    struct
+    {
+        NodeKind  kind;
+        uint8_t  *name;
+    } tag;
+
+    const struct vtable_s *vtable;
+    struct node_s         *parent;
+    uint8_t               *anchor;
+};
+
+struct document_s
+{
+    union
+    {
+        Node base;
+        struct node_s;
+    };
+    Node *root;
+};
+
+typedef struct document_s Document;
+
 enum scalar_kind
 {
     SCALAR_STRING,
@@ -30,49 +64,27 @@ enum scalar_kind
 
 typedef enum scalar_kind ScalarKind;
 
-struct node_s
-{
-    struct
-    {
-        NodeKind  kind;
-        uint8_t  *name;
-    } tag;
-
-    const struct vtable_s *vtable;
-    struct node_s *parent;
-    uint8_t *anchor;
-};
-
-typedef struct node_s Node;
-
-struct vtable_s
-{
-    void (*free)(Node *);
-    size_t (*size)(const Node *);
-    bool (*equals)(const Node *, const Node *);
-};
-
-struct document_s
-{
-    struct node_s base;
-    struct node_s *root;
-};
-
-typedef struct document_s Document;
-
 struct scalar_s
 {
-    struct node_s    base;
-    ScalarKind kind;
-    uint8_t         *value;
-    size_t           length;
+    union
+    {
+        Node base;
+        struct node_s;
+    };
+    ScalarKind    kind;
+    uint8_t      *value;
+    size_t        length;
 };
 
 typedef struct scalar_s Scalar;
 
 struct sequence_s
 {
-    struct node_s base;
+    union
+    {
+        Node base;
+        struct node_s;
+    };
     Vector       *values;
 };
 
@@ -80,7 +92,11 @@ typedef struct sequence_s Sequence;
 
 struct mapping_s
 {
-    struct node_s base;
+    union
+    {
+        Node base;
+        struct node_s;
+    };
     Hashtable    *values;
 };
 
@@ -88,17 +104,24 @@ typedef struct mapping_s Mapping;
 
 struct alias_s
 {
-    struct node_s  base;
+    union
+    {
+        Node base;
+        struct node_s;
+    };
     struct node_s *target;
 };
 
 typedef struct alias_s Alias;
 
-typedef Vector  DocumentModel;
+// xxx - create file object
 
-Node *narrow(Node *instance, NodeKind kind);
-#define CHECKED_CAST(OBJ, KIND, TYPE) ((TYPE *)narrow((OBJ), (KIND)))
-#define CONST_CHECKED_CAST(OBJ, KIND, TYPE) ((const TYPE *)narrow((OBJ), (KIND)))
+typedef Vector DocumentModel;
+
+Node *node_narrow(Node *instance, NodeKind kind, const char * restrict file, int line);
+const Node *const_node_narrow(const Node *instance, NodeKind kind, const char * restrict file, int line);
+#define CHECKED_CAST(OBJ, KIND, TYPE) (TYPE *)node_narrow((OBJ), (KIND), __FILE__, __LINE__)
+#define CONST_CHECKED_CAST(OBJ, KIND, TYPE) (const TYPE *)const_node_narrow((OBJ), (KIND), __FILE__, __LINE__)
 
 /*
  * Constructors
@@ -133,6 +156,8 @@ bool    model_add(DocumentModel *model, Document *doc);
  * Node API
  */
 
+void node_init(Node *self, NodeKind kind, const struct vtable_s *vtable);
+
 const char *node_kind_name_(const Node *value);
 #define     node_kind_name(object) node_kind_name_(node((object)))
 
@@ -147,6 +172,7 @@ size_t      node_size_(const Node *value);
 
 bool        node_equals_(const Node *one, const Node *two);
 #define     node_equals(one, two) node_equals_(const_node((one)), const_node((two)))
+bool        node_comparitor(const void *one, const void *two);
 
 void        node_set_tag_(Node *target, const uint8_t *value, size_t length);
 #define     node_set_tag(object, value, length) node_set_tag_(node((object)), (value), (length))
@@ -194,7 +220,7 @@ bool        scalar_boolean_is_false(const Scalar *scalar);
  * Sequence API
  */
 
-node *sequence_get(const Sequence *seq, int64_t index);
+Node *sequence_get(const Sequence *seq, size_t index);
 bool  sequence_add(Sequence *seq, Node *item);
 
 typedef bool (*sequence_iterator)(Node *each, void *context);

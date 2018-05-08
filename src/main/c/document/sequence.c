@@ -11,14 +11,14 @@ typedef struct context_adapter_s context_adapter;
 
 static bool sequence_equals(const Node *one, const Node *two)
 {
-    return vector_equals(((Sequence *)one)->values,
-                         ((Sequence *)two)->values,
+    return vector_equals(const_sequence(one)->values,
+                         const_sequence(two)->values,
                          node_comparitor);
 }
 
 static size_t sequence_size(const Node *self)
 {
-    return vector_length(((Sequence *)self)->values);
+    return vector_length(const_sequence(self)->values);
 }
 
 static bool sequence_freedom_iterator(void *each, void *context __attribute__((unused)))
@@ -50,15 +50,12 @@ static const struct vtable_s sequence_vtable =
 Sequence *make_sequence_node(void)
 {
     Sequence *self = xcalloc(sizeof(Sequence));
-    node_init(&self->base, SEQUENCE);
+    node_init(&self->base, SEQUENCE, &sequence_vtable);
     self->values = make_vector();
     if(NULL == self->values)
     {
-        free(self);
-        self = NULL;
-        return NULL;
+        panic("unable to allocate sequence vector delegate");
     }
-    self->base.vtable = &sequence_vtable;
 
     return self;
 }

@@ -33,12 +33,12 @@ static bool scalar_equals(const Node *one, const Node *two)
 
 static size_t scalar_size(const Node *self)
 {
-    return ((Scalar *)self)->length;
+    return const_scalar(self)->length;
 }
 
 static void scalar_free(Node *value)
 {
-    Scalar *self = (Scalar *)value;
+    Scalar *self = scalar(value);
     free(self->value);
     self->value = NULL;
 }
@@ -58,24 +58,15 @@ Scalar *make_scalar_node(const uint8_t *value, size_t length, ScalarKind kind)
         return NULL;
     }
 
-    Scalar *result = calloc(1, sizeof(Scalar));
-    if(NULL != result)
-    {
-        node_init((Node *)result, SCALAR);
-        result->length = length;
-        result->kind = kind;
-        result->value = (uint8_t *)calloc(1, length);
-        if(NULL == result->value)
-        {
-            free(result);
-            result = NULL;
-            return NULL;
-        }
-        memcpy(result->value, value, length);
-        result->base.vtable = &scalar_vtable;
-    }
+    Scalar *self = xcalloc(sizeof(Scalar));
+    node_init(node(self), SCALAR, &scalar_vtable);
 
-    return result;
+    self->length = length;
+    self->kind = kind;
+    self->value = xcalloc(length);
+    memcpy(self->value, value, length);
+
+    return self;
 }
 
 uint8_t *scalar_value(const Scalar *self)
@@ -96,7 +87,7 @@ bool scalar_boolean_is_true(const Scalar *self)
     {
         return false;
     }
-    return 0 == memcmp("true", scalar_value(self), 4);
+    return 0 == memcmp("true", self->value, 4);
 }
 
 bool scalar_boolean_is_false(const Scalar *self)
@@ -105,5 +96,5 @@ bool scalar_boolean_is_false(const Scalar *self)
     {
         return false;
     }
-    return 0 == memcmp("false", scalar_value(self), 5);
+    return 0 == memcmp("false", self->value, 5);
 }

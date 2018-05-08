@@ -62,18 +62,12 @@ static const struct vtable_s mapping_vtable =
 
 Mapping *make_mapping_node(void)
 {
-    Mapping *self = calloc(1, sizeof(Mapping));
-    if(NULL != self)
+    Mapping *self = xcalloc(sizeof(Mapping));
+    node_init(node(self), MAPPING, &mapping_vtable);
+    self->values = make_hashtable_with_function(scalar_comparitor, scalar_hash);
+    if(NULL == self->values)
     {
-        node_init(self, MAPPING);
-        self->values = make_hashtable_with_function(scalar_comparitor, scalar_hash);
-        if(NULL == self->values)
-        {
-            free(self);
-            self = NULL;
-            return NULL;
-        }
-        self->base.vtable = &mapping_vtable;
+        panic("unable to allocate mapping hashtable delegate");
     }
 
     return self;

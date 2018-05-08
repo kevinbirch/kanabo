@@ -1,9 +1,6 @@
 #include "document.h"
 #include "conditions.h"
 
-extern void node_init(Node *value, NodeKind kind);
-extern bool node_comparitor(const void *one, const void *two);
-
 static void alias_free(Node *value)
 {
     // this space intentionally left blank
@@ -11,8 +8,8 @@ static void alias_free(Node *value)
 
 static bool alias_equals(const Node *one, const Node *two)
 {
-    return node_equals(alias_target((const Alias *)one),
-                       alias_target((const Alias *)two));
+    return node_equals(const_alias(one)->target,
+                       const_alias(two)->target);
 }
 
 static size_t alias_size(const Node *self)
@@ -29,13 +26,9 @@ static const struct vtable_s alias_vtable =
 
 Alias *make_alias_node(Node *target)
 {
-    Alias *self = calloc(1, sizeof(Alias));
-    if(NULL != self)
-    {
-        node_init(node(self), ALIAS);
-        self->target = target;
-        self->base.vtable = &alias_vtable;
-    }
+    Alias *self = xcalloc(sizeof(Alias));
+    node_init(node(self), ALIAS, &alias_vtable);
+    self->target = target;
 
     return self;
 }
