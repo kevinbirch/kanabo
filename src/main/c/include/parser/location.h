@@ -1,6 +1,6 @@
 #pragma once
 
-#include "parser/position.h"
+#include "position.h"
 
 struct location_s
 {

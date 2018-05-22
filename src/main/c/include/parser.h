@@ -3,7 +3,7 @@
 #include "maybe.h"
 
 #include "jsonpath.h"
-#include "parser/position.h"
+#include "position.h"
 
 enum parser_error_e
 {
