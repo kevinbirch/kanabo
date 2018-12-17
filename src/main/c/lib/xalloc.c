@@ -31,7 +31,7 @@ void set_oom_handler(OOMErrorHandler handler)
     custom_handler = handler;
 }
 
-void *xcalloc_at(size_t size, const char * restrict file, int line)
+void *_xcalloc_at(size_t size, const char * restrict file, int line)
 {
     void *obj = calloc(1, size);
     if(NULL != obj)
@@ -50,7 +50,7 @@ void *xcalloc_at(size_t size, const char * restrict file, int line)
     signal_panic(buf, file, line);
 }
 
-void panic_at(const char * restrict message, const char * restrict file, int line)
+void _panic_at(const char * restrict message, const char * restrict file, int line)
 {
     signal_panic(message, file, line);
 }

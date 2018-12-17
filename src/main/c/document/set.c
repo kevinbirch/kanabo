@@ -3,12 +3,12 @@
 
 static bool freedom_iterator(void *each, void *context __attribute__((unused)))
 {
-    node_free(each);
+    dispose_node(each);
 
     return true;
 }
 
-void model_free(DocumentModel *self)
+void dispose_document_set(DocumentSet *self)
 {
     if(NULL == self)
     {
@@ -18,9 +18,9 @@ void model_free(DocumentModel *self)
     vector_free(self);
 }
 
-Node *model_document_root(const DocumentModel *self, size_t index)
+Node *document_set_get_root(const DocumentSet *self, size_t index)
 {
-    Document *doc = model_document(self, index);
+    Document *doc = document_set_get(self, index);
     Node *result = NULL;
 
     if(NULL != doc)
@@ -31,7 +31,7 @@ Node *model_document_root(const DocumentModel *self, size_t index)
     return result;
 }
 
-bool model_add(DocumentModel *self, Document *doc)
+bool document_set_add(DocumentSet *self, Document *doc)
 {
     PRECOND_NONNULL_ELSE_FALSE(self, doc);
 

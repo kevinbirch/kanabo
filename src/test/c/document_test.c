@@ -90,7 +90,7 @@ END_TEST
 void model_setup(void)
 {
     reset_errno();
-    model = make_model();
+    model = make_document_set();
     assert_not_null(model);
     assert_noerr();
 

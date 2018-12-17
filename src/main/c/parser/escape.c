@@ -3,7 +3,8 @@
 
 #include "str.h"
 
-#include "parser/parse.h"
+#include "parser/escape.h"
+#include "parser/context.h"
 
 #define SURROGATE_START    0xD800
 #define SURROGATE_END      0xDFFF

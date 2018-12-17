@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 #include "evaluator/predicate.h"
 
 static bool apply_predicate(Node *value, void *argument, Nodelist *target);
@@ -61,7 +63,7 @@ static bool apply_wildcard_predicate(Node *value, Evaluator *evaluator, Nodelist
     switch(node_kind(value))
     {
         case SCALAR:
-            trace_string("wildcard predicate: adding scalar '%s' (%p)", scalar_value(scalar((Node *)value)), node_size(value), value);
+            trace_string("wildcard predicate: adding scalar '%s' (%p)", scalar_value(scalar(value)), node_size(value), value);
             nodelist_add(target, value);
             return true;
             break;
@@ -72,7 +74,7 @@ static bool apply_wildcard_predicate(Node *value, Evaluator *evaluator, Nodelist
             break;
         case SEQUENCE:
             evaluator_trace("wildcard predicate: adding %zu sequence (%p) items", node_size(value), value);
-            result = sequence_iterate(sequence((Node *)value), add_to_nodelist_sequence_iterator, target);
+            result = sequence_iterate(sequence(value), add_to_nodelist_sequence_iterator, target);
             break;
         case DOCUMENT:
             evaluator_error("wildcard predicate: uh-oh! found a document node (%p), aborting...", value);
@@ -80,9 +82,10 @@ static bool apply_wildcard_predicate(Node *value, Evaluator *evaluator, Nodelist
             break;
         case ALIAS:
             evaluator_trace("wildcard predicate: resolving alias (%p)", value);
-            result = apply_wildcard_predicate(alias_target(alias((Node *)value)), evaluator, target);
+            result = apply_wildcard_predicate(alias_target(alias(value)), evaluator, target);
             break;
     }
+
     return result;
 }
 
@@ -90,28 +93,123 @@ static bool apply_subscript_predicate(const Sequence *value, Evaluator *evaluato
 {
     Predicate *subscript = current_step(evaluator)->predicate;
     int64_t index = subscript_predicate_index(subscript);
+    // xxx - must support negative indices here
     uint64_t abs = (uint64_t)index;
     if(abs > node_size(value))
     {
         evaluator_trace("subscript predicate: index %zu not valid for sequence (length: %zd), dropping (%p)", index, node_size(value), value);
         return true;
     }
-    Node *selected = sequence_get(value, index);
+    Node *selected = sequence_get(value, abs);
     evaluator_trace("subscript predicate: adding index %zu (%p) from sequence (%p) of %zd items", index, selected, value, node_size(value));
     nodelist_add(target, selected);
     return true;
 }
 
-static bool apply_slice_predicate(const Sequence *value, Evaluator *evaluator, Nodelist *target)
-{
-    Predicate *slice = current_step(evaluator)->predicate;
-    int64_t from = 0, to = 0, increment = 0;
-    normalize_interval(value, slice, &from, &to, &increment);
-    evaluator_trace("slice predicate: using normalized interval [%d:%d:%d]", from, to, increment);
+typedef int64_t (*get_extent)(const Predicate *);
 
-    for(int64_t i = from; 0 > increment ? i >= to : i < to; i += increment)
+static inline uint64_t normalize_extent(const Sequence *seq, const Predicate *pred, get_extent get)
+{
+    int64_t length = (int64_t)node_size(seq);
+    int64_t given = get(pred);
+    if(0 > given)
     {
-        Node *selected = sequence_get(value, i);
+        if(given > (0 - length))
+        {
+            return 0;
+        }
+
+        return (uint64_t)(length + given);
+    }
+
+    return (uint64_t)given;
+
+}
+
+static inline uint64_t normalize_from(const Sequence *seq, const Predicate *slice)
+{
+    if(!slice_predicate_has_from(slice))
+    {
+        return 0;
+    }
+
+    uint64_t from = normalize_extent(seq, slice, slice_predicate_from);
+
+    uint64_t length = node_size(seq);
+    if(from >= length)
+    {
+        return length - 1;
+    }
+
+    return from;
+}
+
+static inline uint64_t normalize_to(const Sequence *seq, const Predicate *slice)
+{
+    uint64_t length = node_size(seq);
+    if(!slice_predicate_has_to(slice))
+    {
+        return length;
+    }
+
+    uint64_t to = normalize_extent(seq, slice, slice_predicate_to);
+
+    if(to > length)
+    {
+        return length;
+    }
+
+    return to;
+}
+
+static bool apply_slice_predicate(const Sequence *seq, Evaluator *evaluator, Nodelist *target)
+{
+    uint64_t from, to;
+
+    Predicate *slice = current_step(evaluator)->predicate;
+    int64_t step = slice_predicate_has_step(slice) ? slice_predicate_step(slice) : 1;
+    if(0 == step)
+    {
+        evaluator_error("slice predicate: zero step, aborting...");
+        return false;
+    }
+    
+    from = normalize_from(seq, slice);
+    to = normalize_to(seq, slice);
+
+    evaluator_trace("slice predicate: normalized interval [%d:%d:%d]", from, to, step);
+
+
+    if(step > 0)
+    {
+        if(to > from)
+        {
+            return false;
+        }
+
+        uint64_t stride = (uint64_t)imaxabs(step);
+        for(size_t i = from; i >= to; i -= stride)
+        {
+            Node *selected = sequence_get(seq, i);
+            if(NULL == selected)
+            {
+                break;
+            }
+            evaluator_trace("slice predicate: adding index: %d (%p)", i, selected);
+            nodelist_add(target, selected);
+        }
+
+        return true;
+    }
+
+    if(from > to)
+    {
+        return false;
+    }
+
+    for(size_t i = from; i < to; i += (uint64_t)step)
+    {
+        Node *selected = sequence_get(seq, i);
         if(NULL == selected)
         {
             break;
@@ -119,6 +217,7 @@ static bool apply_slice_predicate(const Sequence *value, Evaluator *evaluator, N
         evaluator_trace("slice predicate: adding index: %d (%p)", i, selected);
         nodelist_add(target, selected);
     }
+
     return true;
 }
 
@@ -130,90 +229,4 @@ static bool apply_join_predicate(Node *value, Evaluator *evaluator, Nodelist *ta
     evaluator_error("join predicate: uh-oh! not implemented yet, aborting...");
     evaluator->code = ERR_UNSUPPORTED_PATH;
     return false;
-}
-
-static int normalize_extent(bool specified_p, int64_t given, int64_t fallback, int64_t limit)
-{
-    if(!specified_p)
-    {
-        evaluator_trace("slice predicate: (normalizer) no value specified, defaulting to %zd", fallback);
-        return fallback;
-    }
-    int64_t result = 0 > given ? given + limit: given;
-    if(0 > result)
-    {
-        evaluator_trace("slice predicate: (normalizer) negative value, clamping to zero");
-        return 0;
-    }
-    if(limit < result)
-    {
-        evaluator_trace("slice predicate: (normalizer) value over limit, clamping to %zd", limit);
-        return limit;
-    }
-    evaluator_trace("slice predicate: (normalizer) constrained to %zd", result);
-    return result;
-}
-
-static int64_t normalize_from(const predicate *slice, const Sequence *value)
-{
-    evaluator_trace("slice predicate: normalizing from, specified: %s, value: %d", slice_predicate_has_from(slice) ? "yes" : "no", slice_predicate_from(slice));
-    int64_t length = (int64_t)node_size(value);
-    return normalize_extent(slice_predicate_has_from(slice), slice_predicate_from(slice), 0, length);
-}
-
-static int64_t normalize_to(const predicate *slice, const Sequence *value)
-{
-    evaluator_trace("slice predicate: normalizing to, specified: %s, value: %d", slice_predicate_has_to(slice) ? "yes" : "no", slice_predicate_to(slice));
-    int64_t length = (int64_t)node_size(value);
-    return normalize_extent(slice_predicate_has_to(slice), slice_predicate_to(slice), length, length);
-}
-
-#ifdef USE_LOGGING
-static inline void trace_interval(const Sequence *value, predicate *slice)
-{
-    static const char * fmt = "slice predicate: evaluating interval [%s:%s:%s] on sequence (%p) of %zd items";
-    static const char * extent_fmt = "%" PRIdFAST32;
-    size_t len = (unsigned)lrint(floor(log10((float)ULLONG_MAX))) + 1;
-    char from_repr[len + 1];
-    if(slice_predicate_has_from(slice))
-    {
-        snprintf(from_repr, len, extent_fmt, slice_predicate_from(slice));
-    }
-    else
-    {
-        from_repr[0] = '_';
-        from_repr[1] = '\0';
-    }
-    char to_repr[len + 1];
-    if(slice_predicate_has_to(slice))
-    {
-        snprintf(to_repr, len, extent_fmt, slice_predicate_to(slice));
-    }
-    else
-    {
-        to_repr[0] = '_';
-        to_repr[1] = '\0';
-    }
-    char step_repr[len + 1];
-    if(slice_predicate_has_step(slice))
-    {
-        snprintf(step_repr, len, extent_fmt, slice_predicate_step(slice));
-    }
-    else
-    {
-        step_repr[0] = '_';
-        step_repr[1] = '\0';
-    }
-    evaluator_trace(fmt, from_repr, to_repr, step_repr, value, node_size(value));
-}
-#else
-#define trace_interval(...)
-#endif
-
-static void normalize_interval(const Sequence *value, predicate *slice, int64_t *from_val, int64_t *to_val, int64_t *step_val)
-{
-    trace_interval(value, slice);
-    *step_val = slice_predicate_has_step(slice) ? slice_predicate_step(slice) : 1;
-    *from_val = 0 > *step_val ? normalize_to(slice, value) - 1 : normalize_from(slice, value);
-    *to_val   = 0 > *step_val ? normalize_from(slice, value) : normalize_to(slice, value);
 }

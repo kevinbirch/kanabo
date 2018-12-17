@@ -2,7 +2,9 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#include "parser/parse.h"
+#include "parser/context.h"
+#include "parser/recognize.h"
+#include "parser/escape.h"
 
 #define current(PARSER) (PARSER)->scanner->current.kind
 #define token(PARSER) (PARSER)->scanner->current
@@ -32,6 +34,7 @@ static inline void expect(Parser *self, TokenKind kind)
 static inline int64_t parse_index(Parser *self)
 {
     Position start = position(self);
+    int64_t index = -1;
 
     bool negate = false;
     if(MINUS == current(self))
@@ -42,16 +45,18 @@ static inline int64_t parse_index(Parser *self)
         if(INTEGER_LITERAL != current(self))
         {
             add_error(self, start, EXPECTED_INTEGER);
-            return 0;
+            goto end;
         }
     }
     
     char *raw = lexeme(self);
+    next(self);
+
     if(NULL == raw)
     {
         Location loc = self->scanner->current.location;
         add_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", loc.index, loc.extent);
-        return 0;
+        goto end;
     }
 
     if(negate)
@@ -66,7 +71,7 @@ static inline int64_t parse_index(Parser *self)
     }
 
     errno = 0;
-    int64_t index = strtoll(raw, NULL, 10);
+    index = strtoll(raw, NULL, 10);
     if(ERANGE == errno && LLONG_MAX == index)
     {
         add_error(self, start, INTEGER_TOO_BIG);
@@ -75,9 +80,9 @@ static inline int64_t parse_index(Parser *self)
     {
         add_error(self, start, INTEGER_TOO_SMALL);
     }
-    next(self);
 
     free(raw);
+  end:
     return index;
 }
 

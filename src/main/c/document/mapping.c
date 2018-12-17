@@ -23,8 +23,8 @@ static size_t mapping_size(const Node *self)
 
 static bool mapping_freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
 {
-    node_free(key);
-    node_free(value);
+    dispose_node(key);
+    dispose_node(value);
 
     return true;
 }
@@ -80,19 +80,19 @@ Node *mapping_get(const Mapping *self, uint8_t *value, size_t length)
 
     Scalar *key = make_scalar_node(value, length, SCALAR_STRING);
     Node *result = hashtable_get(self->values, key);
-    node_free(key);
+    dispose_node(key);
 
     return result;
 }
 
-bool mapping_contains(const Mapping *self, uint8_t *value, size_t length)
+bool mapping_contains(const Mapping *self, const uint8_t *value, size_t length)
 {
     PRECOND_NONNULL_ELSE_FALSE(self, value);
     PRECOND_ELSE_FALSE(0 < length);
 
     Scalar *key = make_scalar_node(value, length, SCALAR_STRING);
     bool result = hashtable_contains(self->values, key);
-    node_free(key);
+    dispose_node(key);
 
     return result;
 }
@@ -111,7 +111,7 @@ bool mapping_iterate(const Mapping *self, mapping_iterator iterator, void *conte
     return hashtable_iterate(self->values, mapping_iterator_adpater, &adapter);
 }
 
-bool mapping_put(Mapping *self, uint8_t *scalar, size_t length, Node *value)
+bool mapping_put(Mapping *self, const uint8_t *scalar, size_t length, Node *value)
 {
     PRECOND_NONNULL_ELSE_FALSE(self, scalar, value);
 

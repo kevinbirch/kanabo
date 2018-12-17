@@ -23,7 +23,7 @@ static size_t sequence_size(const Node *self)
 
 static bool sequence_freedom_iterator(void *each, void *context __attribute__((unused)))
 {
-    node_free(each);
+    dispose_node(each);
 
     return true;
 }

@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 
 #include "str.h"
@@ -84,6 +83,11 @@ String *string_clone(const String *self)
 size_t string_length(const String *self)
 {
     return self->length;
+}
+
+const uint8_t * string_data(const String *self)
+{
+    return self->value;
 }
 
 uint8_t string_get(const String *self, size_t index)
@@ -275,6 +279,11 @@ void mstring_free(MutableString *self)
 size_t mstring_length(const MutableString *self)
 {
     return self->base.length;
+}
+
+const uint8_t * mstring_data(const MutableString *self)
+{
+    return self->base.value;
 }
 
 uint8_t mstring_get(const MutableString *self, size_t index)

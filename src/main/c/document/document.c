@@ -10,7 +10,7 @@ static bool document_equals(const Node *one, const Node *two)
 static void document_free(Node *value)
 {
     Document *doc = (Document *)value;
-    node_free(doc->root);
+    dispose_node(doc->root);
     doc->root = NULL;
 }
 

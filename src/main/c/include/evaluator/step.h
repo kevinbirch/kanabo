@@ -1,5 +1,5 @@
 #pragma once
 
-#include "evaluator/evaluate.h"
+#include "evaluator/context.h"
 
-EvaluatorErrorCode evaluate_steps(const DocumentModel *model, const JsonPath *path, Nodelist **list);
+Maybe(Nodelist) evaluate_steps(const DocumentSet *, const JsonPath *);

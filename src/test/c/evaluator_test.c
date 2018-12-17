@@ -73,7 +73,7 @@ END_TEST
 
 START_TEST (null_path)
 {
-    DocumentModel *bad_model = make_model();
+    DocumentModel *bad_model = make_document_set();
 
     reset_errno();
     MaybeNodelist maybe = evaluate(bad_model, NULL);
@@ -91,7 +91,7 @@ START_TEST (null_document)
     Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    DocumentModel *bad_model = make_model();
+    DocumentModel *bad_model = make_document_set();
 
     reset_errno();
     MaybeNodelist maybe = evaluate(bad_model, path);
@@ -110,7 +110,7 @@ START_TEST (null_document_root)
     Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    DocumentModel *bad_model = make_model();
+    DocumentModel *bad_model = make_document_set();
     Document *doc = make_document_node();
     assert_not_null(doc);
     model_add(bad_model, doc);
@@ -132,7 +132,7 @@ START_TEST (relative_path)
     Maybe(JsonPath) maybe = parse(expression);
     assert_int_eq(JUST, maybe.tag);
 
-    DocumentModel *bad_model = make_model();
+    DocumentModel *bad_model = make_document_set();
     Mapping *root = make_mapping_node();
     Document *doc = make_document_node();
     document_set_root(doc, node(root));
@@ -156,7 +156,7 @@ START_TEST (empty_path)
     path->kind = ABSOLUTE_PATH;
     path->steps = NULL;
 
-    DocumentModel *bad_model = make_model();
+    DocumentModel *bad_model = make_document_set();
     Mapping *root = make_mapping_node();
     Document *doc = make_document_node();
     document_set_root(doc, node(root));

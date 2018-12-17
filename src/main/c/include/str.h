@@ -50,6 +50,7 @@ bool string_contains(const String *self, uint8_t value);
 // String Attribute API
 
 size_t string_length(const String *self);
+const uint8_t *string_data(const String *self);
 
 // String Coercion API
 
@@ -71,6 +72,7 @@ void mstring_free(MutableString *self);
 // Mutable String Attribute API
 
 size_t mstring_length(const MutableString *self);
+const uint8_t * mstring_data(const MutableString *self);
 size_t mstring_get_capacity(const MutableString *self);
 bool   mstring_has_capacity(const MutableString *self, size_t length);
 
@@ -266,4 +268,11 @@ ing) \
                               const String *: string_dispose,         \
                               MutableString *: mstring_dispose,       \
                               const MutableString *: mstring_dispose  \
+                              )(SELF)
+
+#define strdta(SELF) _Generic((SELF),                              \
+                              String *: string_data,               \
+                              const String *: string_data,         \
+                              MutableString *: mstring_data,       \
+                              const MutableString *: mstring_data  \
                               )(SELF)

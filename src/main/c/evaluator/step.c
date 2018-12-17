@@ -9,14 +9,13 @@ static bool evaluate_root_step(Evaluator *context);
 static bool evaluate_single_step(Evaluator *context);
 static bool evaluate_recursive_step(Evaluator *context);
 
-EvaluatorErrorCode evaluate_steps(const DocumentModel *model, const JsonPath *path, Nodelist **results)
+Maybe(Nodelist) evaluate_steps(const DocumentSet *model, const JsonPath *path)
 {
     evaluator_debug("beginning evaluation of %d steps", vector_length(path->steps));
 
     Evaluator evaluator;
     memset(&evaluator, 0, sizeof(Evaluator));
 
-    *results = NULL;
     evaluator.results = make_nodelist();
     if(NULL == evaluator.results)
     {
@@ -26,18 +25,17 @@ EvaluatorErrorCode evaluate_steps(const DocumentModel *model, const JsonPath *pa
     evaluator.model = model;
     evaluator.path = path;
 
-    nodelist_add(evaluator.results, model_document(model, 0));
+    nodelist_add(evaluator.results, document_set_get(model, 0));
 
     if(!path_iterate(path, evaluate_step, &evaluator))
     {
         evaluator_debug("aborted, step: %d, code: %d (%s)", evaluator.current_step, evaluator.code, evaluator_strerror(evaluator.code));
-        return evaluator.code;
+        return fail(Nodelist, evaluator.code);
     }
 
     evaluator_debug("done, found %d matching nodes", nodelist_length(evaluator.results));
 
-    *results = evaluator.results;
-    return 0;
+    return just(Nodelist, evaluator.results);
 }
 
 static bool evaluate_step(Step* each, void *argument)

@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "parser/parse.h"
+#include "parser/context.h"
+#include "parser/recognize.h"
 
 static const char * const FALLBACK_MSG = "message formatting failed";
 
@@ -55,6 +56,11 @@ static void error_handler(Position position, ParserErrorCode code, void *paramet
 Maybe(JsonPath) parse(const char *expression)
 {
     Parser parser = {.errors = make_vector_with_capacity(1)};
+    if(NULL == parser.errors)
+    {
+        panic("parser: initialize: allocate error list");
+    }
+
     if(NULL == expression || 0 == strlen(expression))
     {
         add_error(&parser, (Position){}, EMPTY_INPUT);

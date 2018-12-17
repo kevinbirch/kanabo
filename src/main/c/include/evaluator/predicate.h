@@ -1,5 +1,5 @@
 #pragma once
 
-#include "evaluator/evaluate.h"
+#include "evaluator/context.h"
 
 bool evaluate_predicate(Evaluator *evaluator);

@@ -3,16 +3,16 @@
 #include "evaluator.h"
 #include "evaluator/debug.h"
 
-struct evaluator_s
+struct evaluator_context_s
 {
-    const DocumentModel *model;
-    const JsonPath      *path;
-    size_t               current_step;
-    Nodelist            *results;
-    EvaluatorErrorCode   code;
+    const DocumentSet  *model;
+    const JsonPath     *path;
+    size_t              current_step;
+    Nodelist           *results;
+    EvaluatorErrorCode  code;
 };
 
-typedef struct evaluator_s Evaluator;
+typedef struct evaluator_context_s Evaluator;
 
 #define evaluate_nodelist(NAME, TEST, FUNCTION)                         \
     evaluator_trace("evaluating %s across %zu nodes", (NAME), nodelist_length(evaluator->results)); \

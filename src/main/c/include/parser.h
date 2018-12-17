@@ -30,7 +30,7 @@ typedef enum parser_error_e ParserErrorCode;
 struct parser_error_s
 {
     ParserErrorCode code;
-    Position position;
+    Position        position;
 };
 
 typedef struct parser_error_s ParserError;
@@ -43,8 +43,8 @@ struct internal_error_s
         struct parser_error_s;
     };
     const char *filename;
-    int line;
-    char message[];
+    int         line;
+    char        message[];
 };
 
 typedef struct internal_error_s ParserInternalError;

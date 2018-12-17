@@ -113,7 +113,7 @@ static bool add_values_to_nodelist_map_iterator(Node *key, Node *value, void *co
             break;
         case DOCUMENT:
             evaluator_error("wildcard test: uh-oh! found a document node (%p), aborting...", value);
-            iterator_context->context->code = ERR_UNEXPECTED_DOCUMENT_NODE;
+            iterator_context->evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             result = false;
             break;
         case ALIAS:

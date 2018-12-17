@@ -1,26 +1,21 @@
 #include <errno.h>
 #include <string.h>
 
-#include "evaluator/step.h"
 #include "conditions.h"
+#include "evaluator/debug.h"
+#include "evaluator/step.h"
 
-Maybe(Nodelist) evaluate(const DocumentModel *model, const JsonPath *path)
+Maybe(Nodelist) evaluate(const DocumentSet *documents, const JsonPath *path)
 {
-    PRECOND_NONNULL_ELSE_FAIL(Nodelist, ERR_MODEL_IS_NULL, model);
+    PRECOND_NONNULL_ELSE_FAIL(Nodelist, ERR_MODEL_IS_NULL, documents);
     PRECOND_NONNULL_ELSE_FAIL(Nodelist, ERR_PATH_IS_NULL, path);
-    PRECOND_NONNULL_ELSE_FAIL(Nodelist, ERR_NO_DOCUMENT_IN_MODEL, model_document(model, 0));
-    PRECOND_NONNULL_ELSE_FAIL(Nodelist, ERR_NO_ROOT_IN_DOCUMENT, model_document_root(model, 0));
-    if(0 == vector_length(path->steps))
-    {
-        return fail(Nodelist, ERR_PATH_IS_EMPTY);
-    }
+    PRECOND_ELSE_FAIL(Nodelist, ERR_NO_DOCUMENT_IN_MODEL, 0 != document_set_size(documents));
+    PRECOND_NONNULL_ELSE_FAIL(Nodelist, ERR_NO_ROOT_IN_DOCUMENT, document_set_get_root(documents, 0));
+    PRECOND_ELSE_FAIL(Nodelist, ERR_PATH_IS_EMPTY, 0 != vector_length(path->steps));
 
-    Nodelist *results;
-    EvaluatorErrorCode code = evaluate_steps(model, path, &results);
-    if(NULL == results)
-    {
-        return fail(Nodelist, code);
-    }
+    evaluator_debug("starting...");
+    Maybe(Nodelist) results = evaluate_steps(documents, path);
+    evaluator_debug("done.");
 
-    return just(Nodelist, results);
+    return results;
 }

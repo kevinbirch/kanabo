@@ -7,6 +7,8 @@
 #include "hashtable.h"
 #include "vector.h"
 
+typedef Vector DocumentSet;
+
 enum node_kind
 {
     DOCUMENT,
@@ -47,7 +49,8 @@ struct document_s
         Node base;
         struct node_s;
     };
-    Node *root;
+    Node      *root;
+    Hashtable *anchors;
 };
 
 typedef struct document_s Document;
@@ -114,49 +117,47 @@ struct alias_s
 
 typedef struct alias_s Alias;
 
-// xxx - create file object
-
-typedef Vector DocumentModel;
-
-Node *node_narrow(Node *instance, NodeKind kind, const char * restrict file, int line);
-const Node *const_node_narrow(const Node *instance, NodeKind kind, const char * restrict file, int line);
-#define CHECKED_CAST(OBJ, KIND, TYPE) (TYPE *)node_narrow((OBJ), (KIND), __FILE__, __LINE__)
-#define CONST_CHECKED_CAST(OBJ, KIND, TYPE) (const TYPE *)const_node_narrow((OBJ), (KIND), __FILE__, __LINE__)
-
 /*
  * Constructors
  */
 
+#define   make_document_set() make_vector_with_capacity(1)
 Document *make_document_node(void);
 Sequence *make_sequence_node(void);
 Mapping  *make_mapping_node(void);
 Scalar   *make_scalar_node(const uint8_t *value, size_t length, ScalarKind kind);
 Alias    *make_alias_node(Node *target);
-#define   make_model() make_vector_with_capacity(1)
 
 /*
  * Destructors
  */
 
-void node_free_(Node *value);
-#define node_free(object) node_free_(node((object)))
-void model_free(DocumentModel *value);
+void dispose_document_set(DocumentSet *value);
+void _dispose_node(Node *value);
+#define dispose_node(object) _dispose_node(node((object)))
 
 /*
- * Model API
+ * Document Set API
  */
 
-#define model_size vector_length
-#define model_document vector_get
-Node   *model_document_root(const DocumentModel *model, size_t index);
-
-bool    model_add(DocumentModel *model, Document *doc);
+#define document_set_size vector_length
+#define document_set_get vector_get
+Node   *document_set_get_root(const DocumentSet *model, size_t index);
+bool    document_set_add(DocumentSet *model, Document *doc);
 
 /*
  * Node API
  */
 
 void node_init(Node *self, NodeKind kind, const struct vtable_s *vtable);
+
+Node *node_narrow(Node *instance, NodeKind kind, const char * restrict file, int line);
+const Node *const_node_narrow(const Node *instance, NodeKind kind, const char * restrict file, int line);
+#define CHECKED_CAST(OBJ, KIND, TYPE) (TYPE *)node_narrow((OBJ), (KIND), __FILE__, __LINE__)
+#define CONST_CHECKED_CAST(OBJ, KIND, TYPE) (const TYPE *)const_node_narrow((OBJ), (KIND), __FILE__, __LINE__)
+
+#define node(obj) ((Node *)(obj))
+#define const_node(obj) ((const Node *)(obj))
 
 const char *node_kind_name_(const Node *value);
 #define     node_kind_name(object) node_kind_name_(node((object)))
@@ -178,9 +179,6 @@ void        node_set_tag_(Node *target, const uint8_t *value, size_t length);
 #define     node_set_tag(object, value, length) node_set_tag_(node((object)), (value), (length))
 void        node_set_anchor_(Node *target, const uint8_t *value, size_t length);
 #define     node_set_anchor(object, value, length) node_set_anchor_(node((object)), (value), (length))
-
-#define node(obj) ((Node *)(obj))
-#define const_node(obj) ((const Node *)(obj))
 
 /*
  * Document API
@@ -235,8 +233,8 @@ bool sequence_iterate(const Sequence *seq, sequence_iterator iterator, void *con
  */
 
 Node *mapping_get(const Mapping *map, uint8_t *key, size_t length);
-bool  mapping_contains(const Mapping *map, uint8_t *scalar, size_t length);
-bool  mapping_put(Mapping *map, uint8_t *key, size_t length, Node *value);
+bool  mapping_contains(const Mapping *map, const uint8_t *scalar, size_t length);
+bool  mapping_put(Mapping *map, const uint8_t *key, size_t length, Node *value);
 
 typedef bool (*mapping_iterator)(Node *key, Node *value, void *context);
 bool mapping_iterate(const Mapping *map, mapping_iterator iterator, void *context);

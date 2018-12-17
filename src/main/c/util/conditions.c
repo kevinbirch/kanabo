@@ -2,7 +2,7 @@
 
 const void * SENTINEL = (void *)"SENTINEL";
 
-bool precond_is_null(const void *first, ...)
+bool cond_is_null(const void *first, ...)
 {
     va_list args;
     bool result = false;
@@ -21,7 +21,7 @@ bool precond_is_null(const void *first, ...)
     return result;
 }
 
-bool precond_is_false(int first, ...)
+bool cond_is_false(int first, ...)
 {
     va_list args;
     bool result = false;

@@ -45,6 +45,11 @@
   * https://github.com/udp/json-parser
   * https://github.com/zeMirco/sf-city-lots-json
   * https://github.com/seductiveapps/largeJSON
+* normalize all panic messages: `<module>: <operation>: <failure>`
+* rework log.h to assume `component_name` is defined before import
+  * eliminate all uses of `trace_string`
+* `dispose_node` should be type generic macro
+* mapping key should be `String *`
 
 * update spacecadet
   * move changes back
@@ -65,6 +70,7 @@
 * use str in name test jsonpath model object
 * computed goto dispatch table?
   * http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables
+  
 
 ### parser
 
@@ -76,10 +82,18 @@
 * evaluator
   * comp units for various eval branches
   * private headers for each
+  * add json path to diagnostic
+  * rename codes
 * eliminate file headers
 * eliminate double spacing
 * xcalloc everywhere
 * \_POSIX_C_SOURCE usage?
+* parse integers w/o strtoll
+  * don't copy lexeme, don't paste minus and integer lexemes together
+  * https://github.com/gcc-mirror/gcc/blob/master/libiberty/strtoll.c
+  * https://sourceware.org/git/?p=glibc.git;a=blob;f=stdlib/strtol_l.c;h=28ea4bced19cae66440901257d3681985fec220b;hb=HEAD
+* eliminate possible error in lexeme extraction
+  * then we don't need the internal error?
 
 * merge master
 * working cci build
@@ -106,6 +120,9 @@
    * http://www.oilshell.org/blog/2017/03/31.html
 1. transformer
    * transfomer built-in functions
+1. %var command to save variables
+1. pretty output in tty mode, simple output in pipe mode
+1. response ouput: `+OK <line count>` `-ERR <code> <location> "explanation"`
 
 ### loader
 
@@ -124,12 +141,17 @@
 * can ctest's style of test macros be used in check?
   * https://github.com/bvdberg/ctest
 * eliminate check's end_test macro by creating hidden trampoline function that delegates to user's test function
+  = https://mort.coffee/home/obscure-c-features/
+  = `defer`-ish helper https://gist.github.com/izabera/e160fdaffe84aede805f054a56466aa3
 * fuzz testing: https://en.wikipedia.org/wiki/API_Sanity_Checker
 * find undefined behavior code
   * http://css.csail.mit.edu/stack/
   * clang ubsan
 * http://rr-project.org/
-* https://github.com/nivox/quickcheck4c ?
+* https://github.com/nivox/quickcheck4c
+* https://github.com/silentbicycle/theft
+* run diff-based tests from shell script
+  * https://github.com/tavianator/bfs/blob/master/tests.sh
 
 ### documentation
 
@@ -189,9 +211,21 @@
 * vendor deps as modules
 * vendor dir 
 * customizable include dirs w default
+* make secondary expansion?
+  * https://www.gnu.org/software/make/manual/html_node/Secondary-Expansion.html
+* try fbinfer: http://fbinfer.com/
+* try qsym: https://github.com/sslab-gatech/qsym
+* enable warning for redundant warning flags
+* build security
+  * https://blog.erratasec.com/2018/12/notes-on-build-hardening.html
+    If you are building code using gcc on Linux, here are the options/flags you should use:
+    `-Wall -Wformat -Wformat-security -Werror=format-security -fstack-protector -pie -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
+    If you are more paranoid, these options would be:
+    `-Wall -Wformat -Wformat-security -Wstack-protector -Werror -pedantic -fstack-protector-all --param ssp-buffer-size=1 -pie -fPIE -D_FORTIFY_SOURCE=2 -O1 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
 
 ### competition
 
 * http://jmespath.org/
 * jq
 * interesting features? http://trentm.com/json/
+* https://github.com/antonmedv/fx

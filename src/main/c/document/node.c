@@ -50,7 +50,7 @@ void node_init(Node *self, NodeKind kind, const struct vtable_s *vtable)
     }
 }
 
-void node_free_(Node *value)
+void _dispose_node(Node *value)
 {
     if(NULL == value)
     {
