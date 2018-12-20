@@ -4,7 +4,7 @@
 
 #include "conditions.h"
 
-#include "parser/input.h"
+#include "input.h"
 
 #define current(INPUT) (INPUT)->source.buffer[(INPUT)->position.index]
 #define cursor(INPUT) (INPUT)->source.buffer + (INPUT)->position.index
@@ -106,6 +106,16 @@ Position input_position(const Input *self)
     return self->position;
 }
 
+SourcePosition input_source_position(const Input *self)
+{
+    if(NULL == self)
+    {
+        return (SourcePosition){.name=NULL};
+    }
+
+    return (SourcePosition){self->name, self->position};
+}
+
 void input_goto(Input *self, Position position)
 {
     PRECOND_NONNULL_ELSE_VOID(self);
@@ -191,7 +201,6 @@ size_t input_consume_many(Input *self, size_t count, char *result)
     if(result != NULL)
     {
         memcpy(result, cursor(self), length);
-        result[length] = '\0';
     }
     advance_by(self, length);
 

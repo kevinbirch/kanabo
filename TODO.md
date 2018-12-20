@@ -49,7 +49,14 @@
 * rework log.h to assume `component_name` is defined before import
   * eliminate all uses of `trace_string`
 * `dispose_node` should be type generic macro
-* mapping key should be `String *`
+* mapping key should be `Scalar *`
+* fix scalar to use string as value
+* normalize `mapping_get` to use string
+* preserve input file names to use with warning lines (`loader/yaml.c:add_to_mapping`)
+  * print dupe key name when scalar no
+* fix incorrect non-static uses of inline specifier
+* alphabetize includes
+* kill all file headers
 
 * update spacecadet
   * move changes back
@@ -217,11 +224,15 @@
 * try qsym: https://github.com/sslab-gatech/qsym
 * enable warning for redundant warning flags
 * build security
+  * flags all builds: `-Werror=format-security -fstack-protector`
+  * flags for debug: `-D_FORTIFY_SOURCE=1 -O1`
+  * flags for release: `-D_FORTIFY_SOURCE=2 -pie -fPIE -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
   * https://blog.erratasec.com/2018/12/notes-on-build-hardening.html
     If you are building code using gcc on Linux, here are the options/flags you should use:
     `-Wall -Wformat -Wformat-security -Werror=format-security -fstack-protector -pie -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
     If you are more paranoid, these options would be:
     `-Wall -Wformat -Wformat-security -Wstack-protector -Werror -pedantic -fstack-protector-all --param ssp-buffer-size=1 -pie -fPIE -D_FORTIFY_SOURCE=2 -O1 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
+  * https://blog.quarkslab.com/clang-hardening-cheat-sheet.html
 
 ### competition
 

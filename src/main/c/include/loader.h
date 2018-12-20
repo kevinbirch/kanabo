@@ -3,10 +3,11 @@
 #include <stdio.h>
 
 #include "maybe.h"
-#include "vector.h"
-#include "position.h"
-#include "options.h"
 #include "document.h"
+#include "input.h"
+#include "options.h"
+#include "position.h"
+#include "vector.h"
 
 enum loader_error_code_e
 {
@@ -35,6 +36,6 @@ typedef struct loader_error_s LoaderError;
 
 make_maybep_error(DocumentSet, Vector *);
 
-Maybe(DocumentSet) load(FILE *, DuplicateKeyStrategy);
+Maybe(DocumentSet) load(Input *, DuplicateKeyStrategy);
 
 const char *loader_strerror(LoaderErrorCode);

@@ -13,6 +13,15 @@ struct context_adapter
     path_iterator iterator;
 };
 
+JsonPath *make_jsonpath(PathKind kind)
+{
+    JsonPath *path = xcalloc(sizeof(JsonPath));
+    path->steps = make_vector_with_capacity(1);
+    path->kind = kind;
+    
+    return path;
+}
+
 static bool iterator_adapter(void *each, void *context)
 {
     struct context_adapter *adapter = (struct context_adapter *)context;

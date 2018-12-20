@@ -61,7 +61,6 @@ static const char * const INTERACTIVE_HELP =
     use_stdin((NAME)) ? "stdin" : (NAME)
 
 static const char *program_name = NULL;
-static bool is_interactive = false;
 
 #define kanabo_debug(FORMAT, ...) log_debug(program_name, (FORMAT), ##__VA_ARGS__)
 #define kanabo_trace(FORMAT, ...) log_trace(program_name, (FORMAT), ##__VA_ARGS__)
@@ -71,28 +70,9 @@ __attribute__((__format__ (__printf__, 1, 2)))
 static void error(const char *format, ...)
 {
     va_list rest;
-    if(is_interactive)
-    {
-        fputs(program_name, stderr);
-        fputs(": ", stderr);
-    }
     va_start(rest, format);
     vfprintf(stderr, format, rest);
     va_end(rest);
-    fputc('\n', stderr);
-}
-
-static nodelist *evaluate_expression(const JsonPath *path, const DocumentModel *model)
-{
-    kanabo_trace("evaluating expression");
-    MaybeNodelist maybe = evaluate(model, path);
-    if(NOTHING == maybe.tag)
-    {
-        char *expression = (char *)path_expression(path);
-        error("while evaluating the expression '%s': %s", expression, maybe.nothing.message);
-        return NULL;
-    }
-    return maybe.just;
 }
 
 static emit_function get_emitter(enum emit_mode emit_mode)
@@ -127,7 +107,7 @@ static inline bool error_printer(void *each, void *context)
     if(INTERNAL_ERROR == err->code)
     {
         ParserInternalError *ierr = (ParserInternalError *)err;
-        fprintf(stderr, "%s:%d internal error: %s", ierr->filename, ierr->line, ierr->message);
+        fprintf(stderr, "%s:%d internal error: %s\n", ierr->filename, ierr->line, ierr->message);
     }
     else
     {
@@ -138,23 +118,20 @@ static inline bool error_printer(void *each, void *context)
     return true;
 }
 
-static int apply_expression(const char *expression, DocumentModel *model, enum emit_mode emit_mode)
+static int apply_expression(const char *expression, DocumentSet *documents, enum emit_mode emit_mode)
 {
     int result = EXIT_SUCCESS;
 
     kanabo_debug("applying expression: \"%s\"", expression);
-    Maybe(JsonPath) maybe = parse(expression);
-    if(is_nothing(maybe))
+    Maybe(JsonPath) path = parse(expression);
+    if(is_nothing(path))
     {
-        if(isatty(fileno(stdin)))
-        {
-            vector_iterate(from_nothing(maybe), error_printer, NULL);
-        }
+        vector_iterate(from_nothing(path), error_printer, NULL);
         result = EXIT_FAILURE;
         goto end;
     }
 
-    nodelist *list = evaluate_expression(&from_just(maybe), model);
+    Nodelist *list = maybe(evaluate(documents, from_just(path)), NULL);
     if(NULL == list)
     {
         result = EXIT_FAILURE;
@@ -165,55 +142,45 @@ static int apply_expression(const char *expression, DocumentModel *model, enum e
     if(!emitter(list))
     {
         error("unable to emit results");
+        result = EXIT_FAILURE;
     }
 
-    path_free(path);
+  cleanup:
     nodelist_free(list);
-    dispose_path(from_just(maybe));
+    dispose_path(from_just(path));
 
   end:
     return result;
 }
 
-static FILE *open_input(const char *input_file_name)
+static Maybe(DocumentSet) load_input(const char *file_name, DuplicateKeyStrategy strategy)
 {
-    if(use_stdin(input_file_name))
+    const char *input_name = get_input_name(file_name);
+    
+    // xxx - do we really want to use input for libyaml loading?
+    // - what does a standard error message print function look like?
+    // - does using input help make a std err msg print function?
+    // - how to handle stdin? buffer-less input impl?
+    if(use_stdin(file_name))
     {
-        kanabo_debug("reading from stdin");
-        return stdin;
+        
     }
-    else
+    Maybe(Input) input =  ? make_input_from_stdin() : make_input_from_file(file_name);
+    if(is_nothing(input))
     {
-        kanabo_debug("reading from file: '%s'", input_file_name);
-        errno = 0;
-        return fopen(input_file_name, "r");
-    }
-}
-
-static void close_input(FILE *input)
-{
-    if(stdin == input)
-    {
-        return;
+        char errstr = input.error.err == 0 ? "" : strerror(input.error.err);
+        error("error: %s: %s\n", input_strerror(input.error.code), errstr);
+        return nothing(DocumentSet);
     }
 
-    kanabo_trace("closing input file");
-    errno = 0;
-    fclose(input);
-}
+    Maybe(DocumentSet) documents = load(from_just(input), strategy);
+    dispose_input(from_just(input));
 
-static DocumentModel *load_document(const char *input_file_name, dup_strategy strategy)
-{
-    FILE *input = open_input(input_file_name);
-    if(NULL == input)
+    if(is_nothing(documents))
     {
-        const char *name = get_input_name(input_file_name);
-        error("while reading '%s': %s", name, strerror(errno));
-        return NULL;
+        
     }
 
-    MaybeDocument maybe = load_file(input, strategy);
-    close_input(input);
     if(NOTHING == maybe.tag)
     {
         const char *name = get_input_name(input_file_name);
@@ -270,7 +237,7 @@ static void duplicate_command(const char *argument, struct options *options)
     options->duplicate_strategy = (enum loader_duplicate_key_strategy)strategy;
 }
 
-static DocumentModel *load_command(const char *argument, struct options *options)
+static DocumentSet *load_command(const char *argument, struct options *options)
 {
     kanabo_debug("processing load command...");
     if(!argument)
@@ -281,7 +248,7 @@ static DocumentModel *load_command(const char *argument, struct options *options
     }
 
     kanabo_debug("found command argument, loading '%s'...", argument);
-    return load_document(argument, options->duplicate_strategy);
+    return load_input(argument, options->duplicate_strategy);
 }
 
 static const char *get_argument(const char *command)
@@ -313,7 +280,7 @@ static const char *get_argument(const char *command)
     return arg;
 }
 
-static void dispatch_interactive_command(const char *command, struct options *options, DocumentModel **model)
+static void dispatch_interactive_command(const char *command, struct options *options, DocumentSet **documents)
 {
     if(0 == memcmp("?", command, 1) || 0 == memcmp(":help", command, 5))
     {
@@ -329,7 +296,7 @@ static void dispatch_interactive_command(const char *command, struct options *op
     }
     else if(0 == memcmp(":load", command, 5))
     {
-        DocumentModel *new_model = load_command(get_argument(command), options);
+        DocumentSet *new_model = load_command(get_argument(command), options);
         if(new_model)
         {
             model_free(*model);
@@ -354,10 +321,10 @@ static void tty_interctive_mode(struct options *options)
     fwrite(BANNER, strlen(BANNER), 1, stdout);
     char *prompt = (char *)DEFAULT_PROMPT;
 
-    DocumentModel *model = NULL;
+    DocumentSet *documents = NULL;
     if(options->input_file_name)
     {
-        model = load_document(options->input_file_name, options->duplicate_strategy);
+        documents = load_input(options->input_file_name, options->duplicate_strategy);
     }
 
     char *input;
@@ -375,10 +342,11 @@ static void tty_interctive_mode(struct options *options)
         }
 
         linenoiseHistoryAdd(input);
-        dispatch_interactive_command(input, options, &model);
+        dispatch_interactive_command(input, options, documents);
         free(input);
     }
-    model_free(model);
+    
+    dispose_document_set(documents);
 }
 
 static void pipe_interactive_mode(struct options *options)
@@ -387,10 +355,10 @@ static void pipe_interactive_mode(struct options *options)
     size_t len = 0;
     ssize_t read;
 
-    DocumentModel *model = NULL;
+    DocumentSet *documents = NULL;
     if(options->input_file_name)
     {
-        model = load_document(options->input_file_name, options->duplicate_strategy);
+        documents = load_input(options->input_file_name, options->duplicate_strategy);
     }
 
     kanabo_debug("entering non-tty interative mode");
@@ -401,17 +369,17 @@ static void pipe_interactive_mode(struct options *options)
             continue;
         }
         input[read - 1] = '\0';  // N.B. `read` should always be positive here
-        dispatch_interactive_command(input, options, &model);
+        dispatch_interactive_command(input, options, &documents);
         fputs("EOD\n", stdout);
         fflush(stdout);
     }
+
     free(input);
-    model_free(model);
+    model_free(documents);
 }
 
 static int interactive_mode(struct options *options)
 {
-    is_interactive = true;
     if(isatty(fileno(stdin)))
     {
         tty_interctive_mode(options);
@@ -426,20 +394,16 @@ static int interactive_mode(struct options *options)
 
 static int expression_mode(struct options *options)
 {
-    DocumentModel *model = load_document(options->input_file_name, options->duplicate_strategy);
-    if(NULL == model)
+    DocumentSet *documents = load_input(options->input_file_name, options->duplicate_strategy);
+    if(NULL == documents)
     {
         return EXIT_FAILURE;
     }
-    else
-    {
-        kanabo_trace("model loaded.");
 
-        int result = apply_expression(options->expression, model, options->emit_mode);
-        model_free(model);
+    int result = apply_expression(options->expression, documents, options->emit_mode);
+    documents_free(documents);
 
-        return result;
-    }
+    return result;
 }
 
 static int execute_command(enum command cmd, struct options *options)
@@ -500,6 +464,7 @@ static inline const char *get_program_name(const char *argv0)
     {
         return DEFAULT_PROGRAM_NAME;
     }
+
     return name;
 }
 
@@ -510,6 +475,7 @@ static void install_handlers(const char * argv0)
         perror(argv0);
         exit(EXIT_FAILURE);
     }
+
     if(SIG_ERR == signal(SIGABRT, handle_signal))
     {
         perror(argv0);
@@ -521,9 +487,10 @@ int main(const int argc, char * const *argv)
 {
     if(1 > argc || NULL == argv || NULL == argv[0])
     {
-        fputs("error: whoa! something is wrong, there are no program arguments.\n", stderr);
+        fputs("error: something is wrong, there are no program arguments\n", stderr);
         return EXIT_FAILURE;
     }
+    
     program_name = get_program_name(argv[0]);
     install_handlers(program_name);
 

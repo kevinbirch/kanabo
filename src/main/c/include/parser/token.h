@@ -1,6 +1,6 @@
 #pragma once
 
-#include "parser/location.h"
+#include "location.h"
 
 enum token_kind_e
 {

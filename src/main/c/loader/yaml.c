@@ -22,22 +22,15 @@ static const char * const REGEX_PANIC_MSG = "regex compilation failed: '%s': %s"
 
 static const Position NO_POSITION = (Position){};
 
-enum state_e
-{
-    ANY,
-    SEQ,
-    KEY,
-    VAL,
-};
+typedef DuplicateKeyStrategy Strategy;
 
 struct loader_context_s
 {
-    DuplicateKeyStrategy  strategy;
-    DocumentSet          *documents;
-    Vector               *errors;
-    Node                 *current;
-    enum state_e          state;
-    String               *key_cache;
+    Strategy     strategy;
+    DocumentSet *documents;
+    Vector      *errors;
+    Node        *current;
+    Node        *key_cache;
 };
 
 typedef struct loader_context_s Loader;
@@ -120,25 +113,40 @@ static void set_anchor(Loader *context, Node *target, uint8_t *anchor)
     hashtable_put(document->anchors, anchor, target);
 }
 
-static inline void add_to_mapping_node(Loader *context, Node *value, const yaml_event_t *event)
+static inline void add_to_mapping(Loader *context, Node *node, const yaml_event_t *event)
 {
-    bool duplicate = mapping_contains(mapping(context->current),
-                                      strdta(context->key_cache),
-                                      strlen(context->key_cache));
+    if(NULL == context->key_cache)
+    {
+        if(!is_scalar(node))
+        {
+            loader_debug("uh oh! found a non scalar mapping key");
+            add_error(context->errors, position(event->start_mark), ERR_NON_SCALAR_KEY);
+            return;
+        }
+
+        loader_trace("caching node (%p) as key for mapping context (%p)", node, context->current);
+        context->key_cache = node;
+        return;
+    }
+
+    Mapping *mapping = mapping(context->current);
+    bool duplicate = mapping_contains(mapping, context->key_cache);
+
     if(duplicate && DUPE_FAIL == context->strategy)
     {
         loader_debug("uh oh! a duplicate key found");
         add_error(context->errors, position(event->start_mark), ERR_DUPLICATE_KEY);
+        return;
     }
-    if(duplicate && DUPE_WARN == context->strategy)
+    else if(duplicate && DUPE_WARN == context->strategy)
     {
-        fprintf(stderr, "warning: duplicate mapping key found: '%s'\n", C(context->key_cache));
+        Position pos = position(event->start_mark);
+        fprintf(stderr, "%zd:%zd: warning: duplicate mapping key\n", pos.line+1, pos.offset+1);
     }
-    mapping_put(mapping(context->current),
-                strdta(context->key_cache),
-                strlen(context->key_cache), value);
 
-    string_free(context->key_cache);
+    mapping_put(mapping, context->key_cache, node);
+
+    context->key_cache = NULL;
 }
 
 static void add_node(Loader *context, Node *node, const yaml_event_t *event)
@@ -152,8 +160,8 @@ static void add_node(Loader *context, Node *node, const yaml_event_t *event)
             loader_trace("adding node (%p) to sequence context (%p)", node, context->current);
             sequence_add(sequence(context->current), node);
         case MAPPING:
-            loader_trace("adding {\"%s\": node (%p)} to mapping context (%p)", C(context->key_cache), node, context->current);
-            add_to_mapping_node(context, node, event);
+            loader_trace("adding node (%p) to mapping context (%p)", node, context->current);
+            add_to_mapping(context, node, event);
         case SCALAR:
             loader_debug("uh oh! a scalar node has become the context node");
             add_error(context->errors, position(event->start_mark), ERR_INTERNAL);
@@ -166,76 +174,68 @@ static void add_node(Loader *context, Node *node, const yaml_event_t *event)
 static void start_document(Loader *context)
 {
     Document *doc = make_document_node();
-    loader_trace("started new document (%p)", doc);
     context->current = node(doc);
     document_set_add(context->documents, doc);
+
+    loader_trace("started document (%p)", doc);
 }
 
 static void end_document(Loader *context)
 {
     loader_trace("completed document (%p)", context->current);
+
     context->current = NULL;
 }
 
 static void start_sequence(Loader *context, const yaml_event_t *event)
 {
-    if(KEY == context->state)
-    {
-        add_error(context->errors, position(event->start_mark), ERR_NON_SCALAR_KEY);
-    }
+    Sequence *sequence = make_sequence_node();
 
-    Sequence *seq = make_sequence_node();
     if(NULL != event->data.sequence_start.tag)
     {
         size_t len = strlen((char *)event->data.sequence_start.tag);
-        node_set_tag(seq, event->data.sequence_start.tag, len);
+        node_set_tag(sequence, event->data.sequence_start.tag, len);
     }
-    set_anchor(context, node(seq), event->data.sequence_start.anchor);
+    set_anchor(context, node(sequence), event->data.sequence_start.anchor);
 
-    loader_trace("started sequence (%p)", seq);
+    loader_trace("started sequence (%p)", sequence);
 
-    add_node(context, node(seq), event);
-    context->current = node(seq);
+    add_node(context, node(sequence), event);
+    context->current = node(sequence);
 }
 
 static void end_sequence(Loader *context)
 {
     Sequence *sequence = sequence(context->current);
-    loader_trace("completed sequence (%p)", sequence);
-    loader_trace("added sequence (%p) of length: %zu", sequence, node_size(sequence));
     vector_trim(sequence->values);
     context->current = sequence->parent;
+
+    loader_trace("completed sequence (%p) of length: %zu", sequence, node_size(sequence));
 }
 
 static void start_mapping(Loader *context, const yaml_event_t *event)
 {
-    if(NULL == context->key_cache && is_mapping(context->current))
-    {
-        loader_debug("uh oh! found a non scalar mapping key");
-        add_error(context->errors, position(event->start_mark), ERR_NON_SCALAR_KEY);
-        return;
-    }
+    Mapping *mapping = make_mapping_node();
 
-    Mapping *map = make_mapping_node();
     if(NULL != event->data.mapping_start.tag)
     {
         size_t length = strlen((char *)event->data.mapping_start.tag);
-        node_set_tag(map, event->data.mapping_start.tag, length);
+        node_set_tag(mapping, event->data.mapping_start.tag, length);
     }
-    set_anchor(context, node(map), event->data.mapping_start.anchor);
+    set_anchor(context, node(mapping), event->data.mapping_start.anchor);
 
-    loader_trace("started mapping (%p)", map);
+    add_node(context, node(mapping), event);
+    context->current = node(mapping);
 
-    add_node(context, node(map), event);
-    context->current = node(map);
+    loader_trace("started mapping (%p)", mapping);
 }
 
 static void end_mapping(Loader *context)
 {
     Mapping *mapping = mapping(context->current);
-    loader_trace("completed mapping (%p)", mapping);
-    loader_trace("loaded mapping of length: %zu", node_size(mapping));
     context->current = mapping->parent;
+
+    loader_trace("completed mapping (%p) of length: %zu", mapping, node_size(mapping));
 }
 
 static void add_alias(Loader *context, const yaml_event_t *event)
@@ -257,9 +257,10 @@ static void add_alias(Loader *context, const yaml_event_t *event)
         }
     }
 
-    loader_trace("added '%s' alias target (%p)", event->data.alias.anchor, target);
-    Alias *value = make_alias_node(target);
-    add_node(context, node(value), event);
+    Alias *alias = make_alias_node(target);
+    add_node(context, node(alias), event);
+
+    loader_trace("added alias '%s' for target (%p)", event->data.alias.anchor, target);
 }
 
 static bool match_decimal(const char *value)
@@ -360,17 +361,17 @@ static ScalarKind resolve_scalar_kind(const Loader *context, const yaml_event_t 
         trace_string("found scalar boolean '%s'", event->data.scalar.value, event->data.scalar.length);
         kind = SCALAR_BOOLEAN;
     }
-    else if(match_integer(event->data.scalar.value))
+    else if(match_integer((const char *)event->data.scalar.value))
     {
         trace_string("found scalar integer '%s'", event->data.scalar.value, event->data.scalar.length);
         kind = SCALAR_INTEGER;
     }
-    else if(match_decimal(event->data.scalar.value))
+    else if(match_decimal((const char *)event->data.scalar.value))
     {
         trace_string("found scalar real '%s'", event->data.scalar.value, event->data.scalar.length);
         kind = SCALAR_REAL;
     }
-    else if(match_timestamp(event->data.scalar.value))
+    else if(match_timestamp((const char *)event->data.scalar.value))
     {
         trace_string("found scalar timestamp '%s'", event->data.scalar.value, event->data.scalar.length);
         kind = SCALAR_TIMESTAMP;
@@ -383,35 +384,20 @@ static ScalarKind resolve_scalar_kind(const Loader *context, const yaml_event_t 
     return kind;
 }
 
-static Scalar *build_scalar_node(Loader *context, const yaml_event_t *event)
+static void add_scalar(Loader *context, const yaml_event_t *event)
 {
     ScalarKind kind = resolve_scalar_kind(context, event);
-    Scalar *result = make_scalar_node(event->data.scalar.value, event->data.scalar.length, kind);
+    Scalar *scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, kind);
 
     if(NULL != event->data.scalar.tag)
     {
-        node_set_tag(result, event->data.scalar.tag, strlen((char *)event->data.scalar.tag));
+        node_set_tag(scalar, event->data.scalar.tag, strlen((char *)event->data.scalar.tag));
     }
-    set_anchor(context, node(result), event->data.scalar.anchor);
+    set_anchor(context, node(scalar), event->data.scalar.anchor);
 
-    return result;
-}
+    add_node(context, node(scalar), event);
 
-static void add_scalar(Loader *context, const yaml_event_t *event)
-{
-    if(NULL == context->key_holder.value && is_mapping(context->target))
-    {
-        return cache_mapping_key(context, event);
-    }
-
-    Scalar *value = build_scalar_node(context, event);
-    if(NULL == value)
-    {
-        return true;
-    }
-
-    loader_trace("added scalar (%p)", value);
-    return add_node(context, node(value));
+    loader_trace("added scalar (%p)", scalar);
 }
 
 static bool dispatch_event(Loader *context, yaml_event_t *event)
@@ -494,14 +480,29 @@ static void event_loop(Loader *context, yaml_parser_t *parser)
     }
 }
 
-Maybe(DocumentSet) load_yaml(FILE *input, DuplicateKeyStrategy strategy)
+static int input_handler(void *data, unsigned char *buffer, size_t size, size_t *size_read)
+{
+    Input *input = (Input *)data;
+    *size_read = input_consume_many(input, size, buffer);
+    return 1;
+}
+
+static Maybe(DocumentSet) load(Input *input, DuplicateKeyStrategy strategy)
+{
+    
+}
+
+Maybe(DocumentSet) load_yaml_from_stdin(DuplicateKeyStrategy strategy)
+{
+    
+}
+
+Maybe(DocumentSet) load_yaml(Input *input, DuplicateKeyStrategy strategy)
 {
     Loader context;
     memset(&context, 0, sizeof(Loader));
 
     context_init(&context, strategy);
-
-    // xxx - validate input here
 
     yaml_parser_t parser;
     if(!yaml_parser_initialize(&parser))
@@ -509,9 +510,9 @@ Maybe(DocumentSet) load_yaml(FILE *input, DuplicateKeyStrategy strategy)
         panic("loader: initialize: allocate yaml parser");
     }
 
-    yaml_parser_set_input_file(&parser, input);
+    yaml_parser_set_input(&parser, input_handler, input);
 
-    loader_debug("loading model from yaml source...");
+    loader_debug("loading from yaml source...");
     event_loop(&context, &parser);
     loader_debug("done. found %zu documents.", document_set_size(context.documents));
 

@@ -1,7 +1,7 @@
 #pragma once
 
+#include "input.h"
 #include "parser.h"
-#include "parser/input.h"
 #include "parser/token.h"
 
 typedef void (*ErrorCallback)(Position position, ParserErrorCode code, void *parameter);

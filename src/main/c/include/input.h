@@ -5,8 +5,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "location.h"
+#include "maybe.h"
 #include "str.h"
-#include "parser/location.h"
 
 // Input Entities
 
@@ -28,20 +29,34 @@ struct input_s
 
 typedef struct input_s Input;
 
-struct source_location_s
+enum input_error_e
 {
-    Input   *input;
-    Location location;
+    MISSING_FILENAME,
+    OPEN_FAILED,
+    EMPTY_FILE,
+    READ_ERROR,
 };
 
-typedef struct source_location_s SourceLocation;
+typedef enum input_error_e InputErrorCode;
+
+struct input_error_s
+{
+    InputErrorCode code;
+    int            err;
+};
+
+typedef struct input_error_s InputError;
 
 // Input Constructors
 
-Input *make_input_from_file(const char *filename);
+make_maybep_error(Input, InputError);
+
+Maybe(Input) make_input_from_file(const char *filename);
 Input *make_input_from_buffer(const char *data, size_t length);
 
 void input_init(Input *self, const char *filename, size_t length);
+
+const char *input_strerror(InputErrorCode error);
 
 // Input Destructor
 
@@ -58,6 +73,7 @@ bool    input_is_tracking_lines(Input *self);
 // Input Postion API
 
 Position input_position(const Input *self);
+SourcePosition input_source_position(const Input *self);
 #define input_index(INPUT) input_position((INPUT)).index
 #define input_line(INPUT) input_position((INPUT)).line
 #define input_offset(INPUT) input_position((INPUT)).offset

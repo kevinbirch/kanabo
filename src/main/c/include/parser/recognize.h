@@ -2,4 +2,4 @@
 
 #include "parser.h"
 
-JsonPath recognize(Parser *parser);
+JsonPath *recognize(Parser *parser);

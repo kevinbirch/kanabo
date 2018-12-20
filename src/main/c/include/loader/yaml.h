@@ -2,4 +2,4 @@
 
 #include "loader.h"
 
-Maybe(DocumentSet) load_yaml(FILE *, DuplicateKeyStrategy);
+Maybe(DocumentSet) load_yaml(Input *, DuplicateKeyStrategy);

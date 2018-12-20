@@ -49,7 +49,7 @@ struct internal_error_s
 
 typedef struct internal_error_s ParserInternalError;
 
-make_maybe_error(JsonPath, Vector *);
+make_maybep_error(JsonPath, Vector *);
 
 Maybe(JsonPath) parse(const char *expression);
 

@@ -13,3 +13,11 @@ struct location_s
 };
 
 typedef struct location_s Location;
+
+struct source_location_s
+{
+    String   *name;
+    Location  location;
+};
+
+typedef struct source_location_s SourceLocation;

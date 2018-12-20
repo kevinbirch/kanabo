@@ -73,7 +73,7 @@ Maybe(JsonPath) parse(const char *expression)
 
     parser.scanner = scanner;
 
-    JsonPath path = recognize(&parser);
+    JsonPath *path = recognize(&parser);
 
     dispose_scanner(scanner);
     if(vector_is_empty(parser.errors))

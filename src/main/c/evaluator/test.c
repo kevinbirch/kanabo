@@ -250,20 +250,25 @@ static bool apply_name_test(Node *each, void *argument, Nodelist *target)
         evaluator_trace("name test: node is not a mapping type, cannot use a key on it (kind: %d), dropping (%p)", node_kind(each), each);
         return true;
     }
-    Mapping *map = mapping((Node *)each);
+
+    Mapping *map = mapping(each);
     Node *value = mapping_get(map, name_test_step_name(context_step), name_test_step_length(context_step));
     if(NULL == value)
     {
         evaluator_trace("name test: key not found in mapping, dropping (%p)", each);
         return true;
     }
+
     evaluator_trace("name test: match! adding node (%p)", value);
+
     if(is_alias(value))
     {
         evaluator_trace("name test: resolved alias from: (%p) to: (%p)",
                         value, alias_target(alias((Node *)value)));
         value = alias_target(alias((Node *)value));
     }
+
     nodelist_add(target, value);
+
     return true;
 }

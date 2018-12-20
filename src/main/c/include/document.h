@@ -233,8 +233,8 @@ bool sequence_iterate(const Sequence *seq, sequence_iterator iterator, void *con
  */
 
 Node *mapping_get(const Mapping *map, uint8_t *key, size_t length);
-bool  mapping_contains(const Mapping *map, const uint8_t *scalar, size_t length);
-bool  mapping_put(Mapping *map, const uint8_t *key, size_t length, Node *value);
+bool mapping_contains(const Mapping *map, Node *key);
+bool mapping_put(Mapping *self, Node *key, Node *value);
 
 typedef bool (*mapping_iterator)(Node *key, Node *value, void *context);
 bool mapping_iterate(const Mapping *map, mapping_iterator iterator, void *context);

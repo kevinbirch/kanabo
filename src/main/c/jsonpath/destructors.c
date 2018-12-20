@@ -1,54 +1,43 @@
 #include "jsonpath.h"
 
-static inline void step_destructor(void *each);
-
-static inline void jsonpath_free(JsonPath *path)
+static void predicate_free(Predicate *self)
 {
-    if(NULL == path)
+    if(NULL == self)
     {
         return;
     }
 
-    vector_destroy(path->steps, step_destructor);
-    free(path);
+    if(JOIN == self->kind)
+    {
+        dispose_path(self->join.left);
+        dispose_path(self->join.right);
+    }
+
+    free(self);
 }
 
-static void predicate_free(Predicate *value)
+static inline void step_free(Step *self)
 {
-    if(NULL == value)
+    if(NULL == self)
     {
         return;
     }
-    if(JOIN == value->kind)
-    {
-        jsonpath_free(value->join.left);
-        jsonpath_free(value->join.right);
-    }
 
-    free(value);
-}
-
-static inline void step_free(Step *value)
-{
-    if(NULL == value)
+    if(NAME_TEST == self->test.kind)
     {
-        return;
-    }
-    if(NAME_TEST == value->test.kind)
-    {
-        if(NULL != value->test.name.value)
+        if(NULL != self->test.name.value)
         {
-            free(value->test.name.value);
-            value->test.name.value = NULL;
-            value->test.name.length = 0;
+            free(self->test.name.value);
+            self->test.name.value = NULL;
+            self->test.name.length = 0;
         }
     }
-    if(NULL != value->predicate)
+    if(NULL != self->predicate)
     {
-        predicate_free(value->predicate);
+        predicate_free(self->predicate);
     }
 
-    free(value);
+    free(self);
 }
 
 static inline void step_destructor(void *each)
@@ -56,7 +45,13 @@ static inline void step_destructor(void *each)
     step_free((Step *)each);
 }
 
-void dispose_path(JsonPath path)
+void dispose_path(JsonPath *path)
 {
-    vector_destroy(path.steps, step_destructor);
+    if(NULL == path)
+    {
+        return;
+    }
+
+    vector_destroy(path->steps, step_destructor);
+    free(path);    
 }

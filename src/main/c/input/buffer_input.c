@@ -2,7 +2,7 @@
 
 #include "conditions.h"
 
-#include "parser/input.h"
+#include "input.h"
 
 
 Input *make_input_from_buffer(const char *data, size_t length)

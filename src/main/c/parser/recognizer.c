@@ -413,13 +413,12 @@ static void parse_head_step(Parser *self, JsonPath *path)
     }
 }
 
-JsonPath recognize(Parser *self)
+JsonPath *recognize(Parser *self)
 {
-    JsonPath path;
-    path.steps = make_vector_with_capacity(1);
+    JsonPath *path = make_jsonpath(RELATIVE_PATH);
 
     next(self);
-    parse_head_step(self, &path);
+    parse_head_step(self, path);
 
     bool done = false;
     while(!done)
@@ -427,10 +426,10 @@ JsonPath recognize(Parser *self)
         switch(current(self))
         {
             case DOT:
-                parse_relative_step(self, &path);
+                parse_relative_step(self, path);
                 break;
             case DOT_DOT:
-                parse_recursive_step(self, &path);
+                parse_recursive_step(self, path);
                 break;
             case END_OF_INPUT:
                 done = true;

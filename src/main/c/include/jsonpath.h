@@ -4,8 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "vector.h"
 #include "maybe.h"
+#include "str.h"
+#include "vector.h"
 
 enum path_kind
 {
@@ -13,10 +14,12 @@ enum path_kind
     RELATIVE_PATH
 };
 
+typedef enum path_kind PathKind;
+
 struct jsonpath_s
 {
-    enum path_kind kind;
-    Vector *steps;
+    PathKind  kind;
+    Vector   *steps;
 };
 
 typedef struct jsonpath_s JsonPath;
@@ -114,9 +117,13 @@ struct step_s
 
 typedef struct step_s Step;
 
+/* Constructor */
+
+JsonPath *make_jsonpath(PathKind kind);
+
 /* Destructor */
 
-void dispose_path(JsonPath path);
+void dispose_path(JsonPath *path);
 
 /* Path API */
 
