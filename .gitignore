@@ -5,3 +5,6 @@ target/
 
 *~
 *.[oa]
+
+compile_commands.json
+
