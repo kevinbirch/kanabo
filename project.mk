@@ -18,6 +18,7 @@ TEST_LDFLAGS = -fsanitize=address,integer,undefined -fno-sanitize=unsigned-integ
 release_LDFLAGS = -flto
 
 system = $(shell uname -s)
+
 ifeq ($(system),Linux)
 TEST_LIBS += -pthread -lrt
 else ifeq ($(system),Darwin)
