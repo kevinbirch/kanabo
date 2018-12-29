@@ -106,7 +106,7 @@ enum command process_options(const int argc, char * const *argv, struct options 
     bool done = false;
     enum command command = INTERACTIVE_MODE;
 
-    options->emit_mode = BASH;
+    options->emit_mode = JSON;
     options->duplicate_strategy = DUPE_CLOBBER;
     options->input_file_name = NULL;
     options->mode = INTERACTIVE_MODE;
@@ -169,21 +169,30 @@ enum command process_options(const int argc, char * const *argv, struct options 
                 break;
         }
     }
+
     if(optind > argc)
     {
         fputs("uh oh! something went wrong handing arguments!\n", stderr);
         return SHOW_HELP;
     }
+
     if(argc - optind)
     {
         options->input_file_name = argv[optind];
     }
+
     if(INTERACTIVE_MODE == options->mode &&
        options->input_file_name &&
        0 == memcmp("-", options->input_file_name, 1))
     {
-        fputs("error: the standard in shortcut `-' can't be used with interactive evaluation\n", stderr);
+        fputs("error: the standard input shortcut `-' can't be used with interactive evaluation\n", stderr);
         command = SHOW_HELP;
     }
+    else if(EXPRESSION_MODE == options->mode && NULL == options->input_file_name)
+    {
+        fputs("error: an input filename (or '-') must be provided for single expression evaluation\n", stderr);
+        command = SHOW_HELP;
+    }
+
     return command;
 }

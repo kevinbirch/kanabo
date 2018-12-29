@@ -27,12 +27,11 @@
 static const char * const DEFAULT_PROGRAM_NAME = "kanabo";
 
 static const char * const HELP =
-    "usage: kanabo [-o <format>] [-d <strategy>] -q <jsonpath> [<file> | '-']\n"
-    "       kanabo [-o <format>] [-d <strategy>] [<file>]\n"
+    "usage: kanabo [-o <format>] [-d <strategy>] [ [-q <jsonpath>] (<file> | '-') ]\n"
     "\n"
     "OPTIONS:\n"
     "-q, --query <jsonpath>      Specify a single JSONPath query to execute against the input document and exit.\n"
-    "-o, --output <format>       Specify the output format (`bash' (default), `zsh', `json' or `yaml').\n"
+    "-o, --output <format>       Specify the output format (`bash', `zsh', `json' (default) or `yaml').\n"
     "-d, --duplicate <strategy>  Specify how to handle duplicate mapping keys (`clobber' (default), `warn' or `fail').\n"
     "\n"
     "STANDALONE OPTIONS:\n"
@@ -65,7 +64,6 @@ static const char *program_name = NULL;
 #define kanabo_debug(FORMAT, ...) log_debug(program_name, (FORMAT), ##__VA_ARGS__)
 #define kanabo_trace(FORMAT, ...) log_trace(program_name, (FORMAT), ##__VA_ARGS__)
 
-
 __attribute__((__format__ (__printf__, 1, 2)))
 static void error(const char *format, ...)
 {
@@ -73,6 +71,7 @@ static void error(const char *format, ...)
     va_start(rest, format);
     vfprintf(stderr, format, rest);
     va_end(rest);
+    fputc('\n', stderr);
 }
 
 static emit_function get_emitter(enum emit_mode emit_mode)
