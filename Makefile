@@ -9,7 +9,7 @@ include $(PROJECT_CONFIG_FILE)
 
 ## Defaults for common shell commands
 CC ?= cc
-AR ?= ar
+AR ?= ar rcs
 RM ?= rm -f
 DIFF ?= diff
 TAR ?= tar
@@ -425,7 +425,7 @@ $(TEST_RESOURCES_TARGET_DIR)/%: $(TEST_RESOURCES_DIR)/%
 
 $(LIBRARY_TARGET): $(LIBRARY_OBJECTS)
 	@$(info $(call announce_section_detail_message,Builing library,Creating $(LIBRARY_TARGET)))
-	$(AR) rcs $(LIBRARY_TARGET) $(shell $(FIND) $(OBJECT_DIR) -type f -name '*.o')
+	$(AR) $(LIBRARY_TARGET) $(shell $(FIND) $(OBJECT_DIR) -type f -name '*.o')
 
 $(LIBRARY_NAME): $(LIBRARY_TARGET)
 

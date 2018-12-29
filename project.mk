@@ -17,8 +17,11 @@ TEST_LIBS =
 TEST_LDFLAGS = -fsanitize=address,integer,undefined -fno-sanitize=unsigned-integer-overflow -flto
 release_LDFLAGS = -flto
 
-ifeq ($(shell uname -s),Linux)
+system = $(shell uname -s)
+ifeq ($(system),Linux)
 TEST_LIBS += -pthread -lrt
+else ifeq ($(system),Darwin)
+AR = libtool -static -o
 endif
 
 VERSION_H = $(GENERATED_HEADERS_DIR)/version.h
