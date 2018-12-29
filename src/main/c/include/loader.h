@@ -36,6 +36,7 @@ typedef struct loader_error_s LoaderError;
 
 make_maybep_error(DocumentSet, Vector *);
 
-Maybe(DocumentSet) load(Input *, DuplicateKeyStrategy);
+Maybe(DocumentSet) load_yaml(Input *, DuplicateKeyStrategy);
+Maybe(DocumentSet) load_yaml_from_stdin(DuplicateKeyStrategy strategy);
 
 const char *loader_strerror(LoaderErrorCode);

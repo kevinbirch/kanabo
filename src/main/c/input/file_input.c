@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>  // for fileno
 #include <sys/stat.h>
 
@@ -18,14 +19,11 @@ static inline off_t file_size(FILE *file)
 
 Maybe(Input) make_input_from_file(const char *filename)
 {
-    PRECOND_NONNULL_ELSE_FAIL(Input, (InputError){.code=MISSING_FILENAME, .err=EINVAL}, filename);
+    ENSURE_NONNULL_ELSE_FAIL(Input, ((InputError){MISSING_FILENAME, EINVAL}), filename);
 
     errno = 0;
     FILE *file = fopen(filename, "r");
-    if(NULL == file)
-    {
-        return fail(Input, ((InputError){.code=OPEN_FAILED, .err=errno}));
-    }
+    ENSURE_NONNULL_ELSE_FAIL(Input, ((InputError){.code=OPEN_FAILED, .err=errno}), file);
 
     Maybe(Input) result;
 

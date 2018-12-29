@@ -69,66 +69,12 @@ void dispose_input(Input *self)
     free(self);
 }
 
-String *input_name(Input *self)
-{
-    PRECOND_NONNULL_ELSE_NULL(self);
-
-    return self->name;
-}
-
-size_t input_length(Input *self)
-{
-    PRECOND_NONNULL_ELSE_ZERO(self);
-
-    return self->source.length;
-}
-
-void input_set_track_lines(Input *self, bool value)
-{
-    PRECOND_NONNULL_ELSE_VOID(self);
-
-    self->track_lines = value;
-}
-
-bool input_is_tracking_lines(Input *self)
-{
-    PRECOND_NONNULL_ELSE_FALSE(self);
-    return self->track_lines;
-}
-
-Position input_position(const Input *self)
-{
-    if(NULL == self)
-    {
-        return (Position){};
-    }
-
-    return self->position;
-}
-
-SourcePosition input_source_position(const Input *self)
-{
-    if(NULL == self)
-    {
-        return (SourcePosition){.name=NULL};
-    }
-
-    return (SourcePosition){self->name, self->position};
-}
-
 void input_goto(Input *self, Position position)
 {
     PRECOND_NONNULL_ELSE_VOID(self);
     PRECOND_ELSE_VOID(position.index < self->source.length);
 
     self->position = position;
-}
-
-void input_advance_to_end(Input *self)
-{
-    PRECOND_NONNULL_ELSE_VOID(self);
-
-    advance_by(self, input_remaining(self));
 }
 
 void input_reset(Input *self)
@@ -138,13 +84,6 @@ void input_reset(Input *self)
     self->position.index = 0;
     self->position.line = 0;
     self->position.offset = 0;
-}
-
-bool input_has_more(Input *self)
-{
-    PRECOND_NONNULL_ELSE_FALSE(self);
-
-    return index(self) < self->source.length;
 }
 
 size_t input_remaining(Input *self)
@@ -159,17 +98,10 @@ size_t input_remaining(Input *self)
     return self->source.length - index(self);
 }
 
-char input_peek(Input *self)
-{
-    PRECOND_NONNULL_ELSE_ZERO(self);
-    PRECOND_ELSE_ZERO(input_has_more(self));
-
-    return current(self);
-}
-
 void input_skip_whitespace(Input *self)
 {
     PRECOND_NONNULL_ELSE_VOID(self);
+
     while(input_has_more(self) && isspace(current(self)))
     {
         incr(self);

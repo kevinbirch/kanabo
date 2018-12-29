@@ -57,6 +57,7 @@
 * fix incorrect non-static uses of inline specifier
 * alphabetize includes
 * kill all file headers
+* use only `ENSURE` condition macros instead of also `PRECOND`
 
 * update spacecadet
   * move changes back

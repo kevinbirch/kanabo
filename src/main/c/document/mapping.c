@@ -1,3 +1,5 @@
+#include <errno.h>
+
 #include "document.h"
 #include "conditions.h"
 

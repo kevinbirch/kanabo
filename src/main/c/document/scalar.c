@@ -54,7 +54,6 @@ Scalar *make_scalar_node(const uint8_t *value, size_t length, ScalarKind kind)
 {
     if(NULL == value && 0 != length)
     {
-        errno = EINVAL;
         return NULL;
     }
 

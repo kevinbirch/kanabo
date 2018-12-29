@@ -101,18 +101,17 @@ static emit_function get_emitter(enum emit_mode emit_mode)
     return result;
 }
 
-static inline bool error_printer(void *each, void *context)
+static inline bool parser_error_printer(void *each, void *context)
 {
     ParserError *err = (ParserError *)each;
     if(INTERNAL_ERROR == err->code)
     {
         ParserInternalError *ierr = (ParserInternalError *)err;
-        fprintf(stderr, "%s:%d internal error: %s\n", ierr->filename, ierr->line, ierr->message);
+        error("%s:%d internal error: %s\n", ierr->filename, ierr->line, ierr->message);
     }
     else
     {
-        const char *message = parser_strerror(err->code);
-        fprintf(stderr, "expression:%zu error: %s\n", err->position.index + 1, message);
+        error("expression:%zu error: %s\n", err->position.index + 1, parser_strerror(err->code));
     }
 
     return true;
@@ -126,7 +125,7 @@ static int apply_expression(const char *expression, DocumentSet *documents, enum
     Maybe(JsonPath) path = parse(expression);
     if(is_nothing(path))
     {
-        vector_iterate(from_nothing(path), error_printer, NULL);
+        vector_iterate(from_nothing(path), parser_error_printer, NULL);
         result = EXIT_FAILURE;
         goto end;
     }
@@ -153,46 +152,45 @@ static int apply_expression(const char *expression, DocumentSet *documents, enum
     return result;
 }
 
+static inline bool loader_error_printer(void *each, void *context)
+{
+    LoaderError *err = (LoaderError *)each;
+    const char *input_name = (const char *)context;
+
+    error("%s:%zd:%zd: error: %s", input_name, err->position.line+1, err->position.offset+1, loader_strerror(err->code));
+
+    return true;
+}
+
 static Maybe(DocumentSet) load_input(const char *file_name, DuplicateKeyStrategy strategy)
 {
     const char *input_name = get_input_name(file_name);
     
-    // xxx - do we really want to use input for libyaml loading?
-    // - what does a standard error message print function look like?
-    // - does using input help make a std err msg print function?
-    // - how to handle stdin? buffer-less input impl?
+    Maybe(DocumentSet) documents;
+
     if(use_stdin(file_name))
     {
-        
-    }
-    Maybe(Input) input =  ? make_input_from_stdin() : make_input_from_file(file_name);
-    if(is_nothing(input))
-    {
-        char errstr = input.error.err == 0 ? "" : strerror(input.error.err);
-        error("error: %s: %s\n", input_strerror(input.error.code), errstr);
-        return nothing(DocumentSet);
-    }
-
-    Maybe(DocumentSet) documents = load(from_just(input), strategy);
-    dispose_input(from_just(input));
-
-    if(is_nothing(documents))
-    {
-        
-    }
-
-    if(NOTHING == maybe.tag)
-    {
-        const char *name = get_input_name(input_file_name);
-        error("while reading '%s': %s", name, maybe.nothing.message);
-        free(maybe.nothing.message);
-
-        return NULL;
+        documents = load_yaml_from_stdin(strategy);
     }
     else
     {
-        return maybe.just;
+        Maybe(Input) input = make_input_from_file(file_name);
+        if(is_nothing(input))
+        {
+            error("error: %s: %s\n", input_strerror(input.error.code), strerror(input.error.err));
+            return nothing(DocumentSet);
+        }
+
+        documents = load_yaml(from_just(input), strategy);
+        dispose_input(from_just(input));
     }
+
+    if(is_nothing(documents))
+    {
+        vector_iterate(from_nothing(documents), loader_error_printer, (void *)input_name);
+    }
+
+    return documents;
 }
 
 static void output_command(const char *argument, struct options *options)
@@ -234,49 +232,44 @@ static void duplicate_command(const char *argument, struct options *options)
     }
 
     kanabo_debug("setting value to: %s", argument);
-    options->duplicate_strategy = (enum loader_duplicate_key_strategy)strategy;
+    options->duplicate_strategy = (DuplicateKeyStrategy)strategy;
 }
 
-static DocumentSet *load_command(const char *argument, struct options *options)
+static Maybe(DocumentSet) load_command(const char *argument, struct options *options)
 {
     kanabo_debug("processing load command...");
     if(!argument)
     {
         kanabo_trace("no command argument, aborting...");
         error(":load command requires an argument");
-        return NULL;
+        return nothing(DocumentSet);
     }
 
-    kanabo_debug("found command argument, loading '%s'...", argument);
     return load_input(argument, options->duplicate_strategy);
 }
 
 static const char *get_argument(const char *command)
 {
     char *arg = (char *)command;
-    // find end of command
     while(!isspace(*arg) && '\0' != *arg)
     {
         arg++;
     }
-    // there is no spoon
+
     if('\0' == *arg)
     {
         return NULL;
     }
 
-    // strip leading whitespace
     while('\0' != *arg && isspace(*arg))
     {
         arg++;
     }
-    // still no spoon
     if('\0' == *arg)
     {
         return NULL;
     }
 
-    // oh wait, I found the spoon over here
     return arg;
 }
 
@@ -296,21 +289,21 @@ static void dispatch_interactive_command(const char *command, struct options *op
     }
     else if(0 == memcmp(":load", command, 5))
     {
-        DocumentSet *new_model = load_command(get_argument(command), options);
-        if(new_model)
+        Maybe(DocumentSet) new_documents = load_command(get_argument(command), options);
+        if(is_just(new_documents))
         {
-            model_free(*model);
-            *model = new_model;
+            dispose_document_set(*documents);
+            *documents = from_just(new_documents);
         }
     }
     else
     {
-        if(NULL == *model)
+        if(NULL == *documents)
         {
             error("no input loaded, use the `:load' command");
             return;
         }
-        apply_expression(command, *model, options->emit_mode);
+        apply_expression(command, *documents, options->emit_mode);
     }
 }
 
@@ -324,7 +317,11 @@ static void tty_interctive_mode(struct options *options)
     DocumentSet *documents = NULL;
     if(options->input_file_name)
     {
-        documents = load_input(options->input_file_name, options->duplicate_strategy);
+        Maybe(DocumentSet) docs = load_input(options->input_file_name, options->duplicate_strategy);
+        if(is_just(docs))
+        {
+            documents = from_just(docs);
+        }
     }
 
     char *input;
@@ -342,7 +339,7 @@ static void tty_interctive_mode(struct options *options)
         }
 
         linenoiseHistoryAdd(input);
-        dispatch_interactive_command(input, options, documents);
+        dispatch_interactive_command(input, options, &documents);
         free(input);
     }
     
@@ -358,7 +355,11 @@ static void pipe_interactive_mode(struct options *options)
     DocumentSet *documents = NULL;
     if(options->input_file_name)
     {
-        documents = load_input(options->input_file_name, options->duplicate_strategy);
+        Maybe(DocumentSet) docs = load_input(options->input_file_name, options->duplicate_strategy);
+        if(is_just(docs))
+        {
+            documents = from_just(docs);
+        }
     }
 
     kanabo_debug("entering non-tty interative mode");
@@ -375,7 +376,7 @@ static void pipe_interactive_mode(struct options *options)
     }
 
     free(input);
-    model_free(documents);
+    dispose_document_set(documents);
 }
 
 static int interactive_mode(struct options *options)
@@ -394,14 +395,14 @@ static int interactive_mode(struct options *options)
 
 static int expression_mode(struct options *options)
 {
-    DocumentSet *documents = load_input(options->input_file_name, options->duplicate_strategy);
-    if(NULL == documents)
+    Maybe(DocumentSet) documents = load_input(options->input_file_name, options->duplicate_strategy);
+    if(is_nothing(documents))
     {
         return EXIT_FAILURE;
     }
 
-    int result = apply_expression(options->expression, documents, options->emit_mode);
-    documents_free(documents);
+    int result = apply_expression(options->expression, from_just(documents), options->emit_mode);
+    dispose_document_set(from_just(documents));
 
     return result;
 }
@@ -449,7 +450,7 @@ static void handle_signal(int sigval)
     if(SIGSEGV == sigval || SIGABRT == sigval)
     {
         depth = backtrace(stack, 20);
-        fprintf(stderr, "Backtrace follows (most recent first):\n");
+        error("Backtrace follows (most recent first):\n");
         backtrace_symbols_fd(stack, depth, fileno(stderr));
         signal(sigval, SIG_DFL);
     }

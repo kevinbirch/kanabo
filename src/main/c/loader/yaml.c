@@ -6,7 +6,7 @@
 
 #include "vector.h"
 #include "str.h"
-#include "loader/yaml.h"
+#include "loader.h"
 #include "loader/debug.h"
 #include "loader/error.h"
 
@@ -480,29 +480,60 @@ static void event_loop(Loader *context, yaml_parser_t *parser)
     }
 }
 
-static int input_handler(void *data, unsigned char *buffer, size_t size, size_t *size_read)
-{
-    Input *input = (Input *)data;
-    *size_read = input_consume_many(input, size, buffer);
-    return 1;
-}
-
-static Maybe(DocumentSet) load(Input *input, DuplicateKeyStrategy strategy)
-{
-    
-}
-
-Maybe(DocumentSet) load_yaml_from_stdin(DuplicateKeyStrategy strategy)
-{
-    
-}
-
-Maybe(DocumentSet) load_yaml(Input *input, DuplicateKeyStrategy strategy)
+static Maybe(DocumentSet) parse(yaml_parser_t *parser, DuplicateKeyStrategy strategy)
 {
     Loader context;
     memset(&context, 0, sizeof(Loader));
 
     context_init(&context, strategy);
+
+    event_loop(&context, parser);
+
+    if(vector_is_empty(context.errors))
+    {
+        loader_debug("found %zu documents.", document_set_size(context.documents));
+
+        if(0 == document_set_size(context.documents))
+        {
+            dispose_document_set(context.documents);
+            add_error(context.errors, NO_POSITION, ERR_NO_DOCUMENTS_FOUND);
+            return fail(DocumentSet, context.errors);
+        }
+
+        vector_free(context.errors);
+        return just(DocumentSet, context.documents);
+    }
+
+    dispose_document_set(context.documents);
+    return fail(DocumentSet, context.errors);
+}
+
+Maybe(DocumentSet) load_yaml_from_stdin(DuplicateKeyStrategy strategy)
+{
+    yaml_parser_t parser;
+    if(!yaml_parser_initialize(&parser))
+    {
+        panic("loader: initialize: allocate yaml parser");
+    }
+
+    loader_debug("loading yaml from stdin");
+    yaml_parser_set_input_file(&parser, stdin);
+
+    Maybe(DocumentSet) result = parse(&parser, strategy);
+
+    yaml_parser_delete(&parser);
+
+    return result;
+}
+
+Maybe(DocumentSet) load_yaml(Input *input, DuplicateKeyStrategy strategy)
+{
+    if(NULL == input)
+    {
+        Vector *errors = make_vector_with_capacity(1);
+        add_error(errors, ((Position){}), ERR_INPUT_IS_NULL);
+        return fail(DocumentSet, errors);
+    }
 
     yaml_parser_t parser;
     if(!yaml_parser_initialize(&parser))
@@ -510,26 +541,12 @@ Maybe(DocumentSet) load_yaml(Input *input, DuplicateKeyStrategy strategy)
         panic("loader: initialize: allocate yaml parser");
     }
 
-    yaml_parser_set_input(&parser, input_handler, input);
+    loader_debug("loading yaml from %s", input_name(input));
+    yaml_parser_set_input_string(&parser, (const unsigned char *)input->source.buffer, input_length(input));
 
-    loader_debug("loading from yaml source...");
-    event_loop(&context, &parser);
-    loader_debug("done. found %zu documents.", document_set_size(context.documents));
+    Maybe(DocumentSet) result = parse(&parser, strategy);
 
     yaml_parser_delete(&parser);
 
-    if(vector_is_empty(context.errors))
-    {
-        if(0 == document_set_size(context.documents))
-        {
-            dispose_document_set(context.documents);
-            add_error(context.errors, NO_POSITION, ERR_NO_DOCUMENTS_FOUND);
-            return fail(DocumentSet, context.errors);
-        }
-        vector_free(context.errors);
-        return just(DocumentSet, context.documents);
-    }
-
-    dispose_document_set(context.documents);
-    return fail(DocumentSet, context.errors);
+    return result;
 }
