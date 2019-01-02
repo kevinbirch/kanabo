@@ -58,6 +58,8 @@
 * alphabetize includes
 * kill all file headers
 * use only `ENSURE` condition macros instead of also `PRECOND`
+* split xalloc.c into panic.c, stop all global includes
+* clean up build flags, remove cargo
 
 * update spacecadet
   * move changes back
@@ -78,7 +80,10 @@
 * use str in name test jsonpath model object
 * computed goto dispatch table?
   * http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables
-  
+* track fragment of original query for each added result node
+* support in-place document patching
+  * should there be a stack of edits atop of loaded tree (immutable loads?)
+  * can whole documents be saved and named? (`${doc-name or index}` `$index`?)
 
 ### parser
 
@@ -140,6 +145,7 @@
 * regex's can use '{}' repetition counts
 * support sets and ordered maps
 * http://cbor.io/ ?
+* track path of all loaded document nodes, use in error reports
 
 ### unit testing
 

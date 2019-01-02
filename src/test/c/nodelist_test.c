@@ -319,12 +319,14 @@ END_TEST
 bool transform(Node *each, void *context, nodelist *target)
 {
     assert_not_null(each);
+
     size_t *count = (size_t *)context;
     (*count)++;
-    // xxx - is this pointer leaking?
-    char *value;
-    int result = asprintf(&value, "%zd", *count);
+
+    char buffer[32];
+    int result = snprintf(buffer, 32, "%zd", *count);
     assert_int_ne(-1, result);
+
     return nodelist_add(target, make_scalar_integer(value));
 }
 

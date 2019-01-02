@@ -3,75 +3,70 @@
 
 #include "builders.h"
 
-node *sequence_builder(node *one, ...)
+Node *sequence_builder(Node *one, ...)
 {
-    node *sequence = make_sequence_node();
+    Sequence *sequence = make_sequence_node();
     sequence_add(sequence, one);
 
     va_list items;
     va_start(items, one);
-    for(node *each = va_arg(items, node *); NULL != each; each = va_arg(items, node *))
+    for(Node *each = va_arg(items, Node *); NULL != each; each = va_arg(items, Node *))
     {
         sequence_add(sequence, each);
     }
     va_end(items);
 
-    return sequence;
+    return node(sequence);
 }
 
-node *mapping_builder(const char *key1, node *value1, ...)
+Node *mapping_builder(const char *key1_repr, Node *value1, ...)
 {
-    node *mapping = make_mapping_node();
-    mapping_put(mapping, (uint8_t *)key1, strlen(key1), value1);
+    Mapping *mapping = make_mapping_node();
+    Scalar *key1 = make_scalar_node((uint8_t *)key1_repr, strlen(key1_repr), SCALAR_STRING);
+    mapping_put(mapping, key1, value1);
     
     va_list values;
     va_start(values, value1);
-    char *key = va_arg(values, char *);
-    while(NULL != key)
+    char *key_n_repr = va_arg(values, char *);
+    while(NULL != key_n_repr)
     {
-        node *value = va_arg(values, node *);
-        mapping_put(mapping, (uint8_t *)key, strlen(key), value);
+        Scalar *key_n = make_scalar_node((uint8_t *)key_n_repr, strlen(key_n_repr), SCALAR_STRING);
+        Node *value_n = va_arg(values, Node *);
+        mapping_put(mapping, key_n, value_n);
     }
     va_end(values);
 
-    return mapping;
+    return node(mapping);
 }
 
-node *string(const char *value)
+Node *string(const char *value)
 {
-    return make_scalar_node((uint8_t *)value, strlen(value), SCALAR_STRING);
+    return node(make_scalar_node((uint8_t *)value, strlen(value), SCALAR_STRING));
 }
 
-node *integer(int value)
+Node *integer(const char *value)
 {
-    char *scalar;
-    asprintf(&scalar, "%i", value);
-    node *result = make_scalar_node((uint8_t *)scalar, strlen(scalar), SCALAR_INTEGER);
-    free(scalar);
-    return result;
+    return node(make_scalar_node((uint8_t *)value, strlen(value), SCALAR_INTEGER));
 }
 
-node *real(float value)
+Node *real(const char *value)
 {
-    char *scalar;
-    asprintf(&scalar, "%f", value);
-    node *result = make_scalar_node((uint8_t *)scalar, strlen(scalar), SCALAR_REAL);
-    free(scalar);
-    return result;
+    return node(make_scalar_node((uint8_t *)value, strlen(value), SCALAR_REAL));
 }
 
-node *timestamp(const char *value)
+Node *timestamp(const char *value)
 {
-    return make_scalar_node((uint8_t *)value, strlen(value), SCALAR_TIMESTAMP);
+    return node(make_scalar_node((uint8_t *)value, strlen(value), SCALAR_TIMESTAMP));
 }
 
-node *boolean(bool value)
+Node *boolean(bool value)
 {
     char *scalar = value ? "true" : "false";
-    return make_scalar_node((uint8_t *)scalar, strlen(scalar), SCALAR_BOOLEAN);
+    size_t len = value ? 4ul : 5ul;
+    return node(make_scalar_node((uint8_t *)scalar, len, SCALAR_BOOLEAN));
 }
 
-node *null(void)
+Node *null(void)
 {
-    return make_scalar_node((uint8_t *)"null", 4ul, SCALAR_NULL);
+    return node(make_scalar_node((uint8_t *)"null", 4ul, SCALAR_NULL));
 }

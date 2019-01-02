@@ -80,10 +80,10 @@ static bool emit_tagged_scalar(const Scalar *value, yaml_char_t *tag, yaml_scala
     return true;
 }
 
-static bool emit_mapping_item(Node *key, Node *value, void *context)
+static bool emit_mapping_item(Scalar *key, Node *value, void *context)
 {
     log_trace(component, "emitting mapping item");
-    if(!emit_tagged_scalar(scalar(key), (yaml_char_t *)YAML_STR_TAG, YAML_PLAIN_SCALAR_STYLE, 1, context))
+    if(!emit_tagged_scalar(key, (yaml_char_t *)YAML_STR_TAG, YAML_PLAIN_SCALAR_STYLE, 1, context))
     {
         return false;
     }

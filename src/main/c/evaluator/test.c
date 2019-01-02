@@ -9,7 +9,7 @@ struct meta_context
 typedef struct meta_context meta_context;
 
 static bool recursive_test_sequence_iterator(Node *each, void *context);
-static bool recursive_test_map_iterator(Node *key, Node *value, void *context);
+static bool recursive_test_map_iterator(Scalar *key, Node *value, void *context);
 static bool apply_greedy_wildcard_test(Node *each, void *argument, Nodelist *target);
 static bool apply_recursive_wildcard_test(Node *each, void *argument, Nodelist *target);
 static bool apply_type_test(Node *each, void *argument, Nodelist *target);
@@ -86,13 +86,13 @@ static bool recursive_test_sequence_iterator(Node *each, void *context)
     return apply_recursive_node_test(each, iterator_context->evaluator, iterator_context->target);
 }
 
-static bool recursive_test_map_iterator(Node *key, Node *value, void *context)
+static bool recursive_test_map_iterator(Scalar *key, Node *value, void *context)
 {
     meta_context *iterator_context = (meta_context *)context;
     return apply_recursive_node_test(value, iterator_context->evaluator, iterator_context->target);
 }
 
-static bool add_values_to_nodelist_map_iterator(Node *key, Node *value, void *context)
+static bool add_values_to_nodelist_map_iterator(Scalar *key, Node *value, void *context)
 {
     meta_context *iterator_context = (meta_context *)context;
     bool result = false;

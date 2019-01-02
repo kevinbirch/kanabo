@@ -87,7 +87,7 @@ Node *mapping_get(const Mapping *self, uint8_t *value, size_t length)
     return result;
 }
 
-bool mapping_contains(const Mapping *self, Node *key)
+bool mapping_contains(const Mapping *self, Scalar *key)
 {
     PRECOND_NONNULL_ELSE_FALSE(self, key);
 
@@ -97,7 +97,7 @@ bool mapping_contains(const Mapping *self, Node *key)
 static bool mapping_iterator_adpater(void *key, void *value, void *context)
 {
     context_adapter *adapter = (context_adapter *)context;
-    return adapter->iterator(node(key), node(value), adapter->context);
+    return adapter->iterator(scalar(key), node(value), adapter->context);
 }
 
 bool mapping_iterate(const Mapping *self, mapping_iterator iterator, void *context)
@@ -108,7 +108,7 @@ bool mapping_iterate(const Mapping *self, mapping_iterator iterator, void *conte
     return hashtable_iterate(self->values, mapping_iterator_adpater, &adapter);
 }
 
-bool mapping_put(Mapping *self, Node *key, Node *value)
+bool mapping_put(Mapping *self, Scalar *key, Node *value)
 {
     PRECOND_NONNULL_ELSE_FALSE(self, key, value);
 

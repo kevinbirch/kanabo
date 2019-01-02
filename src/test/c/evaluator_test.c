@@ -2,56 +2,45 @@
 #include "test_document.h"
 #include "test_nodelist.h"
 
-// check defines a fail helper that conflicts with the maybe constructor
-#undef fail
-
 #include "evaluator.h"
-#include "evaluator/private.h"
-#undef component_name
 #include "parser.h"
 #include "loader.h"
 
 
-static DocumentModel *model_fixture = NULL;
+static DocumentSet *model_fixture = NULL;
 
 #define assert_evaluator_failure(CONTEXT, CODE)                         \
     do                                                                  \
     {                                                                   \
-        assert_int_eq((CODE), (CONTEXT).nothing.code);                  \
-        log_debug("evaluator test", "received expected failure message: '%s'", evaluator_status_message((CODE))); \
+        assert_int_eq((CODE), (CONTEXT).error);                         \
+        log_debug("evaluator test", "received expected failure message: '%s'", evaluator_strerror((CODE))); \
     } while(0)
 
-static DocumentModel *load_document(const char *filename)
+static DocumentSet *must_load_document(const char *filename)
 {
     assert_not_null(filename);
-    FILE *input = fopen(filename, "r");
-    assert_not_null(input);
+    Maybe(Input) input = make_input_from_file(filename);
+    assert_just(input);
 
-    reset_errno();
-    MaybeDocument maybe = load_file(input, DUPE_CLOBBER);
-    assert_noerr();
-    int result = fclose(input);
-    assert_int_eq(0, result);
+    Maybe(DocumentSet) yaml = load_yaml(from_just(input), DUPE_FAIL);
+    assert_just(yaml);
 
-    assert_int_eq(JUST, maybe.tag);
-    assert_not_null(maybe.just);
-
-    return maybe.just;
+    return from_just(yaml);
 }
 
 static void inventory_setup(void)
 {
-    model_fixture = load_document("test-resources/inventory.json");
+    model_fixture = must_load_document("test-resources/inventory.json");
 }
 
 static void invoice_setup(void)
 {
-    model_fixture = load_document("test-resources/invoice.yaml");
+    model_fixture = must_load_document("test-resources/invoice.yaml");
 }
 
 static void evaluator_teardown(void)
 {
-    model_free(model_fixture);
+    dispose_document_set(model_fixture);
     model_fixture = NULL;
 }
 
@@ -59,28 +48,24 @@ START_TEST (null_model)
 {
     char *expression = "foo";
 
-    Maybe(JsonPath) maybe = parse(expression);
-    assert_int_eq(JUST, maybe.tag);
+    Maybe(JsonPath) path = parse(expression);
+    assert_just(path);
 
-    reset_errno();
-    MaybeNodelist maybe = evaluate(NULL, path);
-    assert_errno(EINVAL);
-    assert_evaluator_failure(maybe, ERR_MODEL_IS_NULL);
+    Maybe(Nodelist) list = evaluate(NULL, from_just(path));
+    assert_evaluator_failure(list, ERR_MODEL_IS_NULL);
 
-    dispose_path(from_just(maybe));
+    dispose_path(from_just(path));
 }
 END_TEST
 
 START_TEST (null_path)
 {
-    DocumentModel *bad_model = make_document_set();
+    DocumentSet *bad_model = make_document_set();
 
-    reset_errno();
-    MaybeNodelist maybe = evaluate(bad_model, NULL);
-    assert_errno(EINVAL);
-    assert_evaluator_failure(maybe, ERR_PATH_IS_NULL);
+    Maybe(Nodelist) list = evaluate(bad_model, NULL);
+    assert_evaluator_failure(list, ERR_PATH_IS_NULL);
 
-    model_free(bad_model);
+    dispose_document_set(bad_model);
 }
 END_TEST
 
@@ -88,18 +73,16 @@ START_TEST (null_document)
 {
     char *expression = "foo";
 
-    Maybe(JsonPath) maybe = parse(expression);
-    assert_int_eq(JUST, maybe.tag);
+    Maybe(JsonPath) path = parse(expression);
+    assert_just(path);
 
-    DocumentModel *bad_model = make_document_set();
+    DocumentSet *bad_model = make_document_set();
 
-    reset_errno();
-    MaybeNodelist maybe = evaluate(bad_model, path);
-    assert_errno(EINVAL);
-    assert_evaluator_failure(maybe, ERR_NO_DOCUMENT_IN_MODEL);
+    Maybe(Nodelist) list = evaluate(bad_model, from_just(path));
+    assert_evaluator_failure(list, ERR_NO_DOCUMENT_IN_MODEL);
 
-    model_free(bad_model);
-    dispose_path(from_just(maybe));
+    dispose_document_set(bad_model);
+    dispose_path(from_just(path));
 }
 END_TEST
 
@@ -107,21 +90,19 @@ START_TEST (null_document_root)
 {
     char *expression = "foo";
 
-    Maybe(JsonPath) maybe = parse(expression);
-    assert_int_eq(JUST, maybe.tag);
+    Maybe(JsonPath) path = parse(expression);
+    assert_just(path);
 
-    DocumentModel *bad_model = make_document_set();
+    DocumentSet *bad_model = make_document_set();
     Document *doc = make_document_node();
     assert_not_null(doc);
     model_add(bad_model, doc);
 
-    reset_errno();
-    MaybeNodelist maybe = evaluate(bad_model, path);
-    assert_errno(EINVAL);
-    assert_evaluator_failure(maybe, ERR_NO_ROOT_IN_DOCUMENT);
+    Maybe(Nodelist) list = evaluate(bad_model, from_just(path));
+    assert_evaluator_failure(list, ERR_NO_ROOT_IN_DOCUMENT);
 
-    model_free(bad_model);
-    dispose_path(from_just(maybe));
+    dispose_document_set(bad_model);
+    dispose_path(from_just(path));
 }
 END_TEST
 
@@ -129,22 +110,20 @@ START_TEST (relative_path)
 {
     char *expression = "foo";
 
-    Maybe(JsonPath) maybe = parse(expression);
-    assert_int_eq(JUST, maybe.tag);
+    Maybe(JsonPath) path = parse(expression);
+    assert_just(path);
 
-    DocumentModel *bad_model = make_document_set();
+    DocumentSet *bad_model = make_document_set();
     Mapping *root = make_mapping_node();
     Document *doc = make_document_node();
     document_set_root(doc, node(root));
     model_add(bad_model, doc);
 
-    reset_errno();
-    MaybeNodelist maybe = evaluate(bad_model, path);
-    assert_errno(EINVAL);
-    assert_evaluator_failure(maybe, ERR_PATH_IS_NOT_ABSOLUTE);
+    Maybe(Nodelist) list = evaluate(bad_model, from_just(path));
+    assert_evaluator_failure(list, ERR_PATH_IS_NOT_ABSOLUTE);
 
-    model_free(bad_model);
-    path_free(path);
+    dispose_document_set(bad_model);
+    dispose_path(path);
 }
 END_TEST
 
@@ -156,53 +135,49 @@ START_TEST (empty_path)
     path->kind = ABSOLUTE_PATH;
     path->steps = NULL;
 
-    DocumentModel *bad_model = make_document_set();
+    DocumentSet *bad_model = make_document_set();
     Mapping *root = make_mapping_node();
     Document *doc = make_document_node();
     document_set_root(doc, node(root));
     model_add(bad_model, doc);
 
-    reset_errno();
-    MaybeNodelist maybe = evaluate(bad_model, path);
-    assert_errno(EINVAL);
-    assert_evaluator_failure(maybe, ERR_PATH_IS_EMPTY);
+    Maybe(Nodelist) list = evaluate(bad_model, path);
+    assert_evaluator_failure(list, ERR_PATH_IS_EMPTY);
 
-    model_free(bad_model);
+    dispose_document_set(bad_model);
     free(path);
 }
 END_TEST
 
-static nodelist *evaluate_expression(const char *expression)
+static Nodelist *evaluate_expression(const char *expression)
 {
-    Maybe(JsonPath) maybe_path = parse(expression);
-    assert_int_eq(JUST, maybe.tag);
+    Maybe(JsonPath) path_path = parse(expression);
+    assert_just(path);
 
-    reset_errno();
-    MaybeNodelist maybe = evaluate(model_fixture, path);
-    assert_noerr();
-    assert_int_eq(JUST, maybe.tag);
+    Maybe(Nodelist) list = evaluate(model_fixture, path);
+    assert_just(path);
     assert_not_null(maybe.just);
-    path_free(path);
+    dispose_path(path);
 
     return maybe.just;
 }
 
 START_TEST (dollar_only)
 {
-    nodelist *list = evaluate_expression("$");
+    Nodelist *list = evaluate_expression("$");
 
-    assert_nodelist_length(list, 1);
-    assert_node_kind(nodelist_get(list, 0), MAPPING);
-    assert_node_size(nodelist_get(list, 0), 1);
-    assert_mapping_has_key(nodelist_get(list, 0), "store");
+    assert_Nodelist_length(list, 1);
+    assert_node_kind(Nodelist_get(list, 0), MAPPING);
+    assert_node_size(Nodelist_get(list, 0), 1);
+    assert_mapping_has_key(Nodelist_get(list, 0), "store");
 
-    nodelist_free(list);
+    Nodelist_free(list);
 }
 END_TEST
 
 START_TEST (single_name_step)
 {
-    nodelist *list = evaluate_expression("$.store");
+    Nodelist *list = evaluate_expression("$.store");
 
     assert_nodelist_length(list, 1);
     Node *store = nodelist_get(list, 0);
@@ -219,7 +194,7 @@ END_TEST
 
 START_TEST (simple_recursive_step)
 {
-    nodelist *list = evaluate_expression("$..author");
+    Nodelist *list = evaluate_expression("$..author");
 
     assert_nodelist_length(list, 5);
 
@@ -234,7 +209,7 @@ END_TEST
 
 START_TEST (compound_recursive_step)
 {
-    nodelist *list = evaluate_expression("$.store..price");
+    Nodelist *list = evaluate_expression("$.store..price");
 
     assert_nodelist_length(list, 6);
 
@@ -251,7 +226,7 @@ END_TEST
 
 START_TEST (long_path)
 {
-    nodelist *list = evaluate_expression("$.store.bicycle.color");
+    Nodelist *list = evaluate_expression("$.store.bicycle.color");
 
     assert_nodelist_length(list, 1);
     Node *color = nodelist_get(list, 0);
@@ -266,7 +241,7 @@ END_TEST
 
 START_TEST (wildcard)
 {
-    nodelist *list = evaluate_expression("$.store.*");
+    Nodelist *list = evaluate_expression("$.store.*");
 
     assert_nodelist_length(list, 6);
 
@@ -282,7 +257,7 @@ END_TEST
 
 START_TEST (recursive_wildcard)
 {
-    nodelist *list = evaluate_expression("$..*");
+    Nodelist *list = evaluate_expression("$..*");
 
     assert_nodelist_length(list, 34);
 
@@ -294,7 +269,7 @@ END_TEST
 
 START_TEST (object_test)
 {
-    nodelist *list = evaluate_expression("$.store.object()");
+    Nodelist *list = evaluate_expression("$.store.object()");
 
     assert_nodelist_length(list, 1);
 
@@ -311,7 +286,7 @@ END_TEST
 
 START_TEST (array_test)
 {
-    nodelist *list = evaluate_expression("$.store.book.array()");
+    Nodelist *list = evaluate_expression("$.store.book.array()");
 
     assert_nodelist_length(list, 1);
 
@@ -326,7 +301,7 @@ END_TEST
 
 START_TEST (number_test)
 {
-    nodelist *list = evaluate_expression("$.store.book[*].price.number()");
+    Nodelist *list = evaluate_expression("$.store.book[*].price.number()");
 
     assert_nodelist_length(list, 5);
 
@@ -341,7 +316,7 @@ END_TEST
 
 START_TEST (wildcard_predicate)
 {
-    nodelist *list = evaluate_expression("$.store.book[*].author");
+    Nodelist *list = evaluate_expression("$.store.book[*].author");
 
     assert_nodelist_length(list, 5);
 
@@ -356,7 +331,7 @@ END_TEST
 
 START_TEST (wildcard_predicate_on_mapping)
 {
-    nodelist *list = evaluate_expression("$.store.bicycle[*].color");
+    Nodelist *list = evaluate_expression("$.store.bicycle[*].color");
 
     assert_nodelist_length(list, 1);
 
@@ -370,7 +345,7 @@ END_TEST
 
 START_TEST (wildcard_predicate_on_scalar)
 {
-    nodelist *list = evaluate_expression("$.store.bicycle.color[*]");
+    Nodelist *list = evaluate_expression("$.store.bicycle.color[*]");
 
     assert_nodelist_length(list, 1);
 
@@ -384,17 +359,14 @@ END_TEST
 
 START_TEST (subscript_predicate)
 {
-    nodelist *list = evaluate_expression("$.store.book[2]");
+    Nodelist *list = evaluate_expression("$.store.book[2]");
 
     assert_nodelist_length(list, 1);
 
-    reset_errno();
     Node *map = nodelist_get(list, 0);
     assert_node_kind(map, MAPPING);
     assert_noerr();
-    reset_errno();
     Node *author = mapping_get(mapping(map), (uint8_t *)"author", 6ul);
-    assert_noerr();
     assert_not_null(author);
     assert_scalar_value((author), "Herman Melville");
 
@@ -404,17 +376,13 @@ END_TEST
 
 START_TEST (recursive_subscript_predicate)
 {
-    nodelist *list = evaluate_expression("$..book[2]");
+    Nodelist *list = evaluate_expression("$..book[2]");
 
     assert_nodelist_length(list, 1);
 
-    reset_errno();
     Node *map = nodelist_get(list, 0);
     assert_node_kind(map, MAPPING);
-    assert_noerr();
-    reset_errno();
     Node *author = mapping_get(mapping(map), (uint8_t *)"author", 6ul);
-    assert_noerr();
     assert_not_null(author);
     assert_scalar_value((author), "Herman Melville");
 
@@ -424,29 +392,21 @@ END_TEST
 
 START_TEST (slice_predicate)
 {
-    nodelist *list = evaluate_expression("$.store.book[:2]");
+    Nodelist *list = evaluate_expression("$.store.book[:2]");
 
     assert_nodelist_length(list, 2);
 
-    reset_errno();
     Node *book = nodelist_get(list, 0);
-    assert_noerr();
     assert_node_kind(book, MAPPING);
 
-    reset_errno();
     Node *author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
-    assert_noerr();
     assert_not_null(author);
     assert_scalar_value((author), "Nigel Rees");
 
-    reset_errno();
     book = nodelist_get(list, 1);
-    assert_noerr();
     assert_node_kind(book, MAPPING);
 
-    reset_errno();
     author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
-    assert_noerr();
     assert_not_null(author);
     assert_scalar_value((author), "Evelyn Waugh");
 
@@ -456,29 +416,21 @@ END_TEST
 
 START_TEST (recursive_slice_predicate)
 {
-    nodelist *list = evaluate_expression("$..book[:2]");
+    Nodelist *list = evaluate_expression("$..book[:2]");
 
     assert_nodelist_length(list, 2);
 
-    reset_errno();
     Node *book = nodelist_get(list, 0);
-    assert_noerr();
     assert_node_kind(book, MAPPING);
 
-    reset_errno();
     Node *author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
-    assert_noerr();
     assert_not_null(author);
     assert_scalar_value((author), "Nigel Rees");
 
-    reset_errno();
     book = nodelist_get(list, 1);
-    assert_noerr();
     assert_node_kind(book, MAPPING);
 
-    reset_errno();
     author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
-    assert_noerr();
     assert_not_null(author);
     assert_scalar_value((author), "Evelyn Waugh");
 
@@ -488,18 +440,14 @@ END_TEST
 
 START_TEST (slice_predicate_with_step)
 {
-    nodelist *list = evaluate_expression("$.store.book[:2:2]");
+    Nodelist *list = evaluate_expression("$.store.book[:2:2]");
 
     assert_nodelist_length(list, 1);
 
-    reset_errno();
     Node *book = nodelist_get(list, 0);
-    assert_noerr();
     assert_node_kind(book, MAPPING);
 
-    reset_errno();
     Node *author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
-    assert_noerr();
     assert_not_null(author);
     assert_scalar_value((author), "Nigel Rees");
 
@@ -509,18 +457,14 @@ END_TEST
 
 START_TEST (slice_predicate_negative_from)
 {
-    nodelist *list = evaluate_expression("$.store.book[-1:]");
+    Nodelist *list = evaluate_expression("$.store.book[-1:]");
 
     assert_nodelist_length(list, 1);
 
-    reset_errno();
     Node *book = nodelist_get(list, 0);
-    assert_noerr();
     assert_node_kind(book, MAPPING);
 
-    reset_errno();
     Node *author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
-    assert_noerr();
     assert_not_null(author);
     assert_scalar_value((author), "夏目漱石 (NATSUME Sōseki)");
 
@@ -530,18 +474,14 @@ END_TEST
 
 START_TEST (recursive_slice_predicate_negative_from)
 {
-    nodelist *list = evaluate_expression("$..book[-1:]");
+    Nodelist *list = evaluate_expression("$..book[-1:]");
 
     assert_nodelist_length(list, 1);
 
-    reset_errno();
     Node *book = nodelist_get(list, 0);
-    assert_noerr();
     assert_node_kind(book, MAPPING);
 
-    reset_errno();
     Node *author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
-    assert_noerr();
     assert_not_null(author);
     assert_scalar_value((author), "夏目漱石 (NATSUME Sōseki)");
 
@@ -551,27 +491,19 @@ END_TEST
 
 START_TEST (slice_predicate_copy)
 {
-    nodelist *list = evaluate_expression("$.store.book[::]");
+    Nodelist *list = evaluate_expression("$.store.book[::]");
 
     assert_nodelist_length(list, 5);
 
-    reset_errno();
     Node *value;
     value = mapping_get(nodelist_get(list, 0), (uint8_t *)"author", 6ul);
     assert_scalar_value((value), "Nigel Rees");
-    assert_noerr();
-    reset_errno();
     value = mapping_get(nodelist_get(list, 1), (uint8_t *)"author", 6ul);
     assert_scalar_value((value), "Evelyn Waugh");
-    assert_noerr();
-    reset_errno();
     value = mapping_get(nodelist_get(list, 2), (uint8_t *)"author", 6ul);
     assert_scalar_value((value), "Herman Melville");
-    assert_noerr();
-    reset_errno();
     value = mapping_get(nodelist_get(list, 3), (uint8_t *)"author", 6ul);
     assert_scalar_value((value), "J. R. R. Tolkien");
-    assert_noerr();
 
     nodelist_free(list);
 }
@@ -579,31 +511,21 @@ END_TEST
 
 START_TEST (slice_predicate_reverse)
 {
-    nodelist *list = evaluate_expression("$.store.book[::-1]");
+    Nodelist *list = evaluate_expression("$.store.book[::-1]");
 
     assert_nodelist_length(list, 5);
 
-    reset_errno();
     Node *value;
     value = mapping_get(nodelist_get(list, 0), (uint8_t *)"author", 6ul);
     assert_scalar_value((value), "夏目漱石 (NATSUME Sōseki)");
-    assert_noerr();
-    reset_errno();
     value = mapping_get(nodelist_get(list, 1), (uint8_t *)"author", 6ul);
     assert_scalar_value((value), "J. R. R. Tolkien");
-    assert_noerr();
-    reset_errno();
     value = mapping_get(nodelist_get(list, 2), (uint8_t *)"author", 6ul);
     assert_scalar_value((value), "Herman Melville");
-    assert_noerr();
-    reset_errno();
     value = mapping_get(nodelist_get(list, 3), (uint8_t *)"author", 6ul);
     assert_scalar_value((value), "Evelyn Waugh");
-    assert_noerr();
-    reset_errno();
     value = mapping_get(nodelist_get(list, 4), (uint8_t *)"author", 6ul);
     assert_scalar_value((value), "Nigel Rees");
-    assert_noerr();
 
     nodelist_free(list);
 }
@@ -611,12 +533,10 @@ END_TEST
 
 START_TEST (name_alias)
 {
-    nodelist *list = evaluate_expression("$.payment.billing-address.name");
+    Nodelist *list = evaluate_expression("$.payment.billing-address.name");
 
     assert_nodelist_length(list, 1);
-    reset_errno();
     assert_scalar_value(nodelist_get(list, 0), "Ramond Hessel");
-    assert_noerr();
 
     nodelist_free(list);
 }
@@ -624,12 +544,10 @@ END_TEST
 
 START_TEST (type_alias)
 {
-    nodelist *list = evaluate_expression("$.shipments[0].*.number()");
+    Nodelist *list = evaluate_expression("$.shipments[0].*.number()");
 
     assert_nodelist_length(list, 1);
-    reset_errno();
     assert_scalar_value(nodelist_get(list, 0), "237.23");
-    assert_noerr();
 
     nodelist_free(list);
 }
@@ -637,19 +555,16 @@ END_TEST
 
 START_TEST (greedy_wildcard_alias)
 {
-    nodelist *list = evaluate_expression("$.shipments[0].items.*");
+    Nodelist *list = evaluate_expression("$.shipments[0].items.*");
 
     assert_nodelist_length(list, 2);
 
-    reset_errno();
     Node *zero = nodelist_get(list, 0);
-    assert_noerr();
     assert_node_kind(zero, MAPPING);
     Node *zero_value = mapping_get(mapping(zero), (uint8_t *)"isbn", 4);
     assert_scalar_value((zero_value), "1428312250");
 
     Node *one = nodelist_get(list, 1);
-    assert_noerr();
     assert_node_kind(one, MAPPING);
     Node *one_value = mapping_get(mapping(one), (uint8_t *)"isbn", 4);
     assert_scalar_value((one_value), "0323073867");
@@ -660,7 +575,7 @@ END_TEST
 
 START_TEST (recursive_alias)
 {
-    nodelist *list = evaluate_expression("$.shipments..isbn");
+    Nodelist *list = evaluate_expression("$.shipments..isbn");
 
     assert_nodelist_length(list, 2);
 
@@ -673,7 +588,7 @@ END_TEST
 
 START_TEST (wildcard_predicate_alias)
 {
-    nodelist *list = evaluate_expression("$.shipments[0].items[*].price");
+    Nodelist *list = evaluate_expression("$.shipments[0].items[*].price");
 
     assert_nodelist_length(list, 2);
 
@@ -686,7 +601,7 @@ END_TEST
 
 START_TEST (recursive_wildcard_alias)
 {
-    nodelist *list = evaluate_expression("$.shipments[0].items..*");
+    Nodelist *list = evaluate_expression("$.shipments[0].items..*");
 
     assert_nodelist_length(list, 15);
 

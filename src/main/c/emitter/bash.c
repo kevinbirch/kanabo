@@ -4,7 +4,7 @@
 #include "emitter/shell.h"
 #include "log.h"
 
-static bool emit_mapping_item(Node *key, Node *value, void *context);
+static bool emit_mapping_item(Scalar *key, Node *value, void *context);
 
 bool emit_bash(const Nodelist *list)
 {
@@ -17,14 +17,14 @@ bool emit_bash(const Nodelist *list)
     return nodelist_iterate(list, emit_node, &context);
 }
 
-static bool emit_mapping_item(Node *key, Node *value, void *context)
+static bool emit_mapping_item(Scalar *key, Node *value, void *context)
 {
     if(is_scalar(value))
     {
         log_trace("bash", "emitting mapping item");
         EMIT("[");
         log_trace("bash", "emitting mapping item key");
-        if(!emit_raw_scalar(scalar(key)))
+        if(!emit_raw_scalar(key))
         {
             log_error("bash", "uh oh! couldn't emit mapping key");
             return false;

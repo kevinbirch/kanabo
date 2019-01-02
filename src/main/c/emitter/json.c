@@ -77,7 +77,7 @@ static bool emit_json_scalar(const Scalar *each)
     }
 }
 
-static bool emit_json_mapping_item(Node *key, Node *value, void *context)
+static bool emit_json_mapping_item(Scalar *key, Node *value, void *context)
 {
     log_trace(component, "emitting mapping item");
     size_t *count = (size_t *)context;
@@ -85,7 +85,7 @@ static bool emit_json_mapping_item(Node *key, Node *value, void *context)
     {
         EMIT(",");
     }
-    if(!emit_json_quoted_scalar(scalar(key)))
+    if(!emit_json_quoted_scalar(key))
     {
         return false;
     }

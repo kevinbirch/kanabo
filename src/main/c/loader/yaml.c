@@ -30,7 +30,7 @@ struct loader_context_s
     DocumentSet *documents;
     Vector      *errors;
     Node        *current;
-    Node        *key_cache;
+    Scalar      *key_cache;
 };
 
 typedef struct loader_context_s Loader;
@@ -125,7 +125,8 @@ static inline void add_to_mapping(Loader *context, Node *node, const yaml_event_
         }
 
         loader_trace("caching node (%p) as key for mapping context (%p)", node, context->current);
-        context->key_cache = node;
+        context->key_cache = scalar(node);
+
         return;
     }
 
