@@ -1,6 +1,3 @@
-#include <errno.h>
-#include <string.h>
-
 #include "conditions.h"
 #include "evaluator/debug.h"
 #include "evaluator/step.h"

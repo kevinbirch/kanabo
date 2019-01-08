@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdio.h>
-#include <errno.h>
 #include <check.h>
 
 #undef fail
@@ -54,12 +53,11 @@
 #define assert_true(X)              ck_assert_msg((X) == true, "'"#X" == true' failed")
 #define assert_false(X)             ck_assert_msg((X) == false, "'"#X" == false' failed")
 
-#define assert_errno(X) ck_assert_msg(errno == (X), "'errno == "#X"' failed. errno is %d (%s)", errno, strerror(errno))
-#define assert_noerr()  assert_errno(0)
-#define reset_errno()   errno = 0
-
 #define assert_nothing(X) ck_assert_msg(is_nothing((X)), "'is_nothing("#X") failed.")
 #define assert_just(X) ck_assert_msg(is_just((X)), "'is_just("#X") failed.")
+
+#define make_scalar_string(VALUE) make_scalar_node((uint8_t *)(VALUE), strlen((VALUE)), SCALAR_STRING)
+#define make_scalar_integer(VALUE) make_scalar_node((uint8_t *)(VALUE), strlen((VALUE)), SCALAR_INTEGER)
 
 // test suites
 

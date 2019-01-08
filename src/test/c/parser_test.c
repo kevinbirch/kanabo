@@ -1,17 +1,13 @@
 #include "test.h"
 
-// check defines a fail helper that conflicts with the maybe constructor
-#undef fail
-
 #include "parser.h"
 
 #define assert_parser_success(M, K, L)                                  \
     do                                                                  \
     {                                                                   \
-        assert_false(is_nothing(M));                                    \
-        assert_int_eq(from_just((M)).kind, (K));                        \
-        assert_uint_eq(vector_length(from_just((M)).steps), (L));       \
-        assert_not_null(from_just((M)).steps);                          \
+        assert_true(is_just(M));                                        \
+        assert_int_eq(from_just((M))->kind, (K));                       \
+        assert_uint_eq(vector_length(from_just((M))->steps), (L));      \
     } while(0)
 
 #define assert_parser_failure(M, E)                                     \
@@ -31,7 +27,7 @@
         }                                                               \
     } while(0)
 
-#define path_get(PATH, INDEX) ((Step *)vector_get((PATH).steps, INDEX))
+#define path_get(PATH, INDEX) ((Step *)vector_get((PATH)->steps, INDEX))
 
 #define assert_step_kind(STEP, EXPECTED_KIND) assert_int_eq((EXPECTED_KIND), (STEP)->kind)
 #define assert_test_kind(STEP, EXPECTED_KIND) assert_int_eq((EXPECTED_KIND), (STEP)->test.kind)
@@ -1166,7 +1162,7 @@ START_TEST (iteration)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
 
     unsigned long counter = 0;
-    assert_true(path_iterate(&from_just(maybe), count, &counter));
+    assert_true(path_iterate(from_just(maybe), count, &counter));
     assert_uint_eq(3, counter);
 
     dispose_maybe(maybe);
@@ -1192,7 +1188,7 @@ START_TEST (fail_iteration)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
 
     unsigned long counter = 0;
-    assert_false(path_iterate(&from_just(maybe), fail_count, &counter));
+    assert_false(path_iterate(from_just(maybe), fail_count, &counter));
     assert_uint_eq(1, counter);
 
     dispose_maybe(maybe);

@@ -75,16 +75,11 @@ Mapping *make_mapping_node(void)
     return self;
 }
 
-Node *mapping_get(const Mapping *self, uint8_t *value, size_t length)
+Node *mapping_get(const Mapping *self, Scalar *key)
 {
-    PRECOND_NONNULL_ELSE_NULL(self, value);
-    PRECOND_ELSE_NULL(0 < length);
+    PRECOND_NONNULL_ELSE_NULL(self, key);
 
-    Scalar *key = make_scalar_node(value, length, SCALAR_STRING);
-    Node *result = hashtable_get(self->values, key);
-    dispose_node(key);
-
-    return result;
+    return hashtable_get(self->values, key);
 }
 
 bool mapping_contains(const Mapping *self, Scalar *key)

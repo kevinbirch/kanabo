@@ -21,12 +21,15 @@
         ck_assert_msg(_assert_result, "Assertion 'memcmp("#TAG", \"%s\", %zu)' failed", _actual_tag, _expected_len); \
     } while(0)
 
-#define assert_node_equals(X, Y)              assert_true(node_equals((X), (Y)))
+#define assert_node_equals(X, Y) assert_true(node_equals((X), (Y)))
 
-#define assert_mapping_has_key(NODE, KEY)     assert_not_null(mapping_get((NODE), (uint8_t *)(KEY), NULL == (KEY) ? 0 : strlen(KEY)))
-#define assert_mapping_has_no_key(NODE, KEY)  assert_null(mapping_get((NODE), (uint8_t *)(KEY), NULL == (KEY) ? 0 : strlen(KEY)))
+#define assert_mapping_has_key(NODE, KEY) do {                          \
+        Scalar *key = make_scalar_node((uint8_t *)(KEY), strlen((KEY)), SCALAR_STRING); \
+        assert_true(mapping_contains((NODE), key));                     \
+        dispose_node(key);                                              \
+    } while(0)
 
-#define assert_scalar_kind(NODE, EXPECTED)    assert_int_eq(EXPECTED, scalar_kind(scalar((NODE))))
+#define assert_scalar_kind(NODE, EXPECTED) assert_int_eq(EXPECTED, scalar_kind(scalar((NODE))))
 
 #define assert_scalar_value(NODE, VALUE) do {                           \
         assert_not_null(NODE);                                          \

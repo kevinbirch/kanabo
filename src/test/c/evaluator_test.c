@@ -12,11 +12,12 @@ static DocumentSet *model_fixture = NULL;
 #define assert_evaluator_failure(CONTEXT, CODE)                         \
     do                                                                  \
     {                                                                   \
+        assert_nothing((CONTEXT));                                      \
         assert_int_eq((CODE), (CONTEXT).error);                         \
         log_debug("evaluator test", "received expected failure message: '%s'", evaluator_strerror((CODE))); \
     } while(0)
 
-static DocumentSet *must_load_document(const char *filename)
+static DocumentSet *must_load(const char *filename)
 {
     assert_not_null(filename);
     Maybe(Input) input = make_input_from_file(filename);
@@ -30,12 +31,12 @@ static DocumentSet *must_load_document(const char *filename)
 
 static void inventory_setup(void)
 {
-    model_fixture = must_load_document("test-resources/inventory.json");
+    model_fixture = must_load("test-resources/inventory.json");
 }
 
 static void invoice_setup(void)
 {
-    model_fixture = must_load_document("test-resources/invoice.yaml");
+    model_fixture = must_load("test-resources/invoice.yaml");
 }
 
 static void evaluator_teardown(void)
@@ -96,7 +97,7 @@ START_TEST (null_document_root)
     DocumentSet *bad_model = make_document_set();
     Document *doc = make_document_node();
     assert_not_null(doc);
-    model_add(bad_model, doc);
+    document_set_add(bad_model, doc);
 
     Maybe(Nodelist) list = evaluate(bad_model, from_just(path));
     assert_evaluator_failure(list, ERR_NO_ROOT_IN_DOCUMENT);
@@ -117,13 +118,13 @@ START_TEST (relative_path)
     Mapping *root = make_mapping_node();
     Document *doc = make_document_node();
     document_set_root(doc, node(root));
-    model_add(bad_model, doc);
+    document_set_add(bad_model, doc);
 
     Maybe(Nodelist) list = evaluate(bad_model, from_just(path));
     assert_evaluator_failure(list, ERR_PATH_IS_NOT_ABSOLUTE);
 
     dispose_document_set(bad_model);
-    dispose_path(path);
+    dispose_path(from_just(path));
 }
 END_TEST
 
@@ -139,39 +140,39 @@ START_TEST (empty_path)
     Mapping *root = make_mapping_node();
     Document *doc = make_document_node();
     document_set_root(doc, node(root));
-    model_add(bad_model, doc);
+    document_set_add(bad_model, doc);
 
     Maybe(Nodelist) list = evaluate(bad_model, path);
     assert_evaluator_failure(list, ERR_PATH_IS_EMPTY);
 
     dispose_document_set(bad_model);
-    free(path);
+    dispose_path(path);
 }
 END_TEST
 
 static Nodelist *evaluate_expression(const char *expression)
 {
-    Maybe(JsonPath) path_path = parse(expression);
+    Maybe(JsonPath) path = parse(expression);
     assert_just(path);
 
-    Maybe(Nodelist) list = evaluate(model_fixture, path);
-    assert_just(path);
-    assert_not_null(maybe.just);
-    dispose_path(path);
+    Maybe(Nodelist) list = evaluate(model_fixture, from_just(path));
+    assert_just(list);
 
-    return maybe.just;
+    dispose_path(from_just(path));
+
+    return from_just(list);
 }
 
 START_TEST (dollar_only)
 {
     Nodelist *list = evaluate_expression("$");
 
-    assert_Nodelist_length(list, 1);
-    assert_node_kind(Nodelist_get(list, 0), MAPPING);
-    assert_node_size(Nodelist_get(list, 0), 1);
-    assert_mapping_has_key(Nodelist_get(list, 0), "store");
+    assert_nodelist_length(list, 1);
+    assert_node_kind(nodelist_get(list, 0), MAPPING);
+    assert_node_size(nodelist_get(list, 0), 1);
+    assert_mapping_has_key(nodelist_get(list, 0), "store");
 
-    Nodelist_free(list);
+    nodelist_free(list);
 }
 END_TEST
 
@@ -363,10 +364,12 @@ START_TEST (subscript_predicate)
 
     assert_nodelist_length(list, 1);
 
-    Node *map = nodelist_get(list, 0);
-    assert_node_kind(map, MAPPING);
-    assert_noerr();
-    Node *author = mapping_get(mapping(map), (uint8_t *)"author", 6ul);
+    Node *book = nodelist_get(list, 0);
+    assert_node_kind(book, MAPPING);
+
+    Scalar *key = make_scalar_string("author");
+    Node *author = mapping_get(mapping(book), key);
+    dispose_node(key);
     assert_not_null(author);
     assert_scalar_value((author), "Herman Melville");
 
@@ -380,9 +383,12 @@ START_TEST (recursive_subscript_predicate)
 
     assert_nodelist_length(list, 1);
 
-    Node *map = nodelist_get(list, 0);
-    assert_node_kind(map, MAPPING);
-    Node *author = mapping_get(mapping(map), (uint8_t *)"author", 6ul);
+    Node *book = nodelist_get(list, 0);
+    assert_node_kind(book, MAPPING);
+
+    Scalar *key = make_scalar_string("author");
+    Node *author = mapping_get(mapping(book), key);
+    dispose_node(key);
     assert_not_null(author);
     assert_scalar_value((author), "Herman Melville");
 
@@ -399,17 +405,20 @@ START_TEST (slice_predicate)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Node *author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
+    Scalar *key = make_scalar_string("author");
+
+    Node *author = mapping_get(mapping(book), key);
     assert_not_null(author);
     assert_scalar_value((author), "Nigel Rees");
 
     book = nodelist_get(list, 1);
     assert_node_kind(book, MAPPING);
 
-    author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
+    author = mapping_get(mapping(book), key);
     assert_not_null(author);
     assert_scalar_value((author), "Evelyn Waugh");
 
+    dispose_node(key);
     nodelist_free(list);
 }
 END_TEST
@@ -423,17 +432,20 @@ START_TEST (recursive_slice_predicate)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Node *author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
+    Scalar *key = make_scalar_string("author");
+
+    Node *author = mapping_get(mapping(book), key);
     assert_not_null(author);
     assert_scalar_value((author), "Nigel Rees");
 
     book = nodelist_get(list, 1);
     assert_node_kind(book, MAPPING);
 
-    author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
+    author = mapping_get(mapping(book), key);
     assert_not_null(author);
     assert_scalar_value((author), "Evelyn Waugh");
 
+    dispose_node(key);
     nodelist_free(list);
 }
 END_TEST
@@ -447,7 +459,9 @@ START_TEST (slice_predicate_with_step)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Node *author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
+    Scalar *key = make_scalar_string("author");
+    Node *author = mapping_get(mapping(book), key);
+    dispose_node(key);
     assert_not_null(author);
     assert_scalar_value((author), "Nigel Rees");
 
@@ -464,7 +478,9 @@ START_TEST (slice_predicate_negative_from)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Node *author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
+    Scalar *key = make_scalar_string("author");
+    Node *author = mapping_get(mapping(book), key);
+    dispose_node(key);
     assert_not_null(author);
     assert_scalar_value((author), "夏目漱石 (NATSUME Sōseki)");
 
@@ -481,7 +497,9 @@ START_TEST (recursive_slice_predicate_negative_from)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Node *author = mapping_get(mapping(book), (uint8_t *)"author", 6ul);
+    Scalar *key = make_scalar_string("author");
+    Node *author = mapping_get(mapping(book), key);
+    dispose_node(key);
     assert_not_null(author);
     assert_scalar_value((author), "夏目漱石 (NATSUME Sōseki)");
 
@@ -495,14 +513,16 @@ START_TEST (slice_predicate_copy)
 
     assert_nodelist_length(list, 5);
 
+    Scalar *key = make_scalar_string("author");
+
     Node *value;
-    value = mapping_get(nodelist_get(list, 0), (uint8_t *)"author", 6ul);
+    value = mapping_get(nodelist_get(list, 0), key);
     assert_scalar_value((value), "Nigel Rees");
-    value = mapping_get(nodelist_get(list, 1), (uint8_t *)"author", 6ul);
+    value = mapping_get(nodelist_get(list, 1), key);
     assert_scalar_value((value), "Evelyn Waugh");
-    value = mapping_get(nodelist_get(list, 2), (uint8_t *)"author", 6ul);
+    value = mapping_get(nodelist_get(list, 2), key);
     assert_scalar_value((value), "Herman Melville");
-    value = mapping_get(nodelist_get(list, 3), (uint8_t *)"author", 6ul);
+    value = mapping_get(nodelist_get(list, 3), key);
     assert_scalar_value((value), "J. R. R. Tolkien");
 
     nodelist_free(list);
@@ -515,18 +535,21 @@ START_TEST (slice_predicate_reverse)
 
     assert_nodelist_length(list, 5);
 
+    Scalar *key = make_scalar_string("author");
+
     Node *value;
-    value = mapping_get(nodelist_get(list, 0), (uint8_t *)"author", 6ul);
+    value = mapping_get(nodelist_get(list, 0), key);
     assert_scalar_value((value), "夏目漱石 (NATSUME Sōseki)");
-    value = mapping_get(nodelist_get(list, 1), (uint8_t *)"author", 6ul);
+    value = mapping_get(nodelist_get(list, 1), key);
     assert_scalar_value((value), "J. R. R. Tolkien");
-    value = mapping_get(nodelist_get(list, 2), (uint8_t *)"author", 6ul);
+    value = mapping_get(nodelist_get(list, 2), key);
     assert_scalar_value((value), "Herman Melville");
-    value = mapping_get(nodelist_get(list, 3), (uint8_t *)"author", 6ul);
+    value = mapping_get(nodelist_get(list, 3), key);
     assert_scalar_value((value), "Evelyn Waugh");
-    value = mapping_get(nodelist_get(list, 4), (uint8_t *)"author", 6ul);
+    value = mapping_get(nodelist_get(list, 4), key);
     assert_scalar_value((value), "Nigel Rees");
 
+    dispose_node(key);
     nodelist_free(list);
 }
 END_TEST
@@ -559,16 +582,19 @@ START_TEST (greedy_wildcard_alias)
 
     assert_nodelist_length(list, 2);
 
+    Scalar *key = make_scalar_string("isbn");
+
     Node *zero = nodelist_get(list, 0);
     assert_node_kind(zero, MAPPING);
-    Node *zero_value = mapping_get(mapping(zero), (uint8_t *)"isbn", 4);
+    Node *zero_value = mapping_get(mapping(zero), key);
     assert_scalar_value((zero_value), "1428312250");
 
     Node *one = nodelist_get(list, 1);
     assert_node_kind(one, MAPPING);
-    Node *one_value = mapping_get(mapping(one), (uint8_t *)"isbn", 4);
+    Node *one_value = mapping_get(mapping(one),key);
     assert_scalar_value((one_value), "0323073867");
 
+    dispose_node(key);
     nodelist_free(list);
 }
 END_TEST

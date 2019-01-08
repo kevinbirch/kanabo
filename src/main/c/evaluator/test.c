@@ -197,6 +197,7 @@ static bool apply_type_test(Node *each, void *argument, Nodelist *target)
                         each, alias_target((alias((Node *)each))));
         return apply_type_test(alias_target(alias((Node *)each)), argument, target);
     }
+
     Evaluator *evaluator = (Evaluator *)argument;
     switch(current_step(evaluator)->test.type)
     {
@@ -225,6 +226,7 @@ static bool apply_type_test(Node *each, void *argument, Nodelist *target)
             match = is_null((Node *)each);
             break;
     }
+
     if(match)
     {
         evaluator_trace("type test: match! adding node (%p)", each);
@@ -252,7 +254,10 @@ static bool apply_name_test(Node *each, void *argument, Nodelist *target)
     }
 
     Mapping *map = mapping(each);
-    Node *value = mapping_get(map, name_test_step_name(context_step), name_test_step_length(context_step));
+    Scalar *key = make_scalar_node(name_test_step_name(context_step), name_test_step_length(context_step), SCALAR_STRING);
+    Node *value = mapping_get(map, key);
+    dispose_node(key);
+
     if(NULL == value)
     {
         evaluator_trace("name test: key not found in mapping, dropping (%p)", each);

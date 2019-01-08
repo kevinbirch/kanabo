@@ -1,283 +1,40 @@
-#ifdef __linux__
-#define _POSIX_C_SOURCE 200809L
-#define _GNU_SOURCE
-#endif
-
-#ifdef __APPLE__
-#define _DARWIN_SOURCE
-#endif
-
-#include <errno.h>
-#include <check.h>
-
 #include "nodelist.h"
 #include "test.h"
 #include "test_document.h"
 #include "test_nodelist.h"
 
-void nodelist_setup(void);
-void nodelist_teardown(void);
+static Nodelist *list_fixture;
 
-bool  fail_nodelist(Node *each, void *context);
-bool  check_nodelist(Node *each, void *context);
-bool  transform(Node *each, void *context, nodelist *target);
-bool  fail_transform(Node *each, void *context, nodelist *target);
-
-#define make_scalar_string(VALUE) make_scalar_node((uint8_t *)(VALUE), strlen((VALUE)), SCALAR_STRING)
-#define make_scalar_integer(VALUE) make_scalar_node((uint8_t *)(VALUE), strlen((VALUE)), SCALAR_INTEGER)
-
-static nodelist *list;
-
-START_TEST (bad_length)
+static void nodelist_setup(void)
 {
-    reset_errno();
-    assert_nodelist_length(NULL, 0);
-    assert_errno(EINVAL);
-}
-END_TEST
+    list_fixture = make_nodelist();
 
-START_TEST (bad_get)
-{
-    reset_errno();
-    assert_null(nodelist_get(NULL, 0));
-    assert_errno(EINVAL);
-
-    reset_errno();
-    nodelist *empty_list = make_nodelist();
-    assert_not_null(empty_list);
-    assert_noerr();
-
-    reset_errno();
-    assert_null(nodelist_get(empty_list, 0));
-    assert_errno(EINVAL);
-
-    nodelist_free(empty_list);
-}
-END_TEST
-
-START_TEST (bad_add)
-{
-    reset_errno();
-    assert_false(nodelist_add(NULL, NULL));
-    assert_errno(EINVAL);
-
-    reset_errno();
-    nodelist *empty_list = make_nodelist();
-    assert_not_null(empty_list);
-    assert_noerr();
-
-    reset_errno();
-    assert_false(nodelist_add(empty_list, NULL));
-    assert_errno(EINVAL);
-
-    nodelist_free(empty_list);
-}
-END_TEST
-
-START_TEST (bad_set)
-{
-    reset_errno();
-    assert_false(nodelist_set(NULL, NULL, 0));
-    assert_errno(EINVAL);
-
-    reset_errno();
-    nodelist *empty_list = make_nodelist();
-    assert_not_null(empty_list);
-    assert_noerr();
-
-    reset_errno();
-    Scalar *s = make_scalar_string("foo");
-    assert_not_null(s);
-    assert_noerr();
-
-    reset_errno();
-    assert_false(nodelist_set(empty_list, s, 0));
-    assert_errno(EINVAL);
-
-    node_free(node(s));
-    nodelist_free(empty_list);
-}
-END_TEST
-
-START_TEST (bad_iterate)
-{
-    reset_errno();
-    nodelist *empty_list = make_nodelist();
-    assert_not_null(empty_list);
-    assert_noerr();
-
-    reset_errno();
-    assert_false(nodelist_iterate(NULL, NULL, NULL));
-    assert_errno(EINVAL);
-
-    reset_errno();
-    assert_false(nodelist_iterate(empty_list, NULL, NULL));
-    assert_errno(EINVAL);
-
-    nodelist_free(empty_list);
-}
-END_TEST
-    
-START_TEST (bad_map)
-{
-    reset_errno();
-    nodelist *empty_list = make_nodelist();
-    assert_not_null(empty_list);
-    assert_noerr();
-
-    reset_errno();
-    assert_null(nodelist_map(NULL, NULL, NULL));
-    assert_errno(EINVAL);
-
-    reset_errno();
-    assert_null(nodelist_map(empty_list, NULL, NULL));
-    assert_errno(EINVAL);
-
-    nodelist_free(empty_list);
-}
-END_TEST
-    
-START_TEST (bad_map_into)
-{
-    reset_errno();
-    nodelist *empty_list = make_nodelist();
-    assert_not_null(empty_list);
-    assert_noerr();
-
-    reset_errno();
-    assert_null(nodelist_map_into(NULL, NULL, NULL, NULL));
-    assert_errno(EINVAL);
-
-    reset_errno();
-    assert_null(nodelist_map_into(empty_list, NULL, NULL, NULL));
-    assert_errno(EINVAL);
-
-    reset_errno();
-    assert_null(nodelist_map_into(empty_list, (nodelist_map_function)1, NULL, NULL));
-    assert_errno(EINVAL);
-
-    nodelist_free(empty_list);
-}
-END_TEST
-    
-START_TEST (ctor_dtor)
-{
-    reset_errno();
-    nodelist *empty_list = make_nodelist();
-    assert_not_null(empty_list);
-    assert_noerr();
-
-    assert_nodelist_length(empty_list, 0);
-    assert_nodelist_empty(empty_list);
-    
-    reset_errno();
-    nodelist_free(empty_list);
-    assert_noerr();
-}
-END_TEST
-
-void nodelist_setup(void)
-{
-    list = make_nodelist();
-
-    reset_errno();
     Scalar *foo = make_scalar_string("foo");
-    assert_noerr();
     assert_not_null(foo);
 
-    reset_errno();
     Scalar *bar = make_scalar_string("bar");
-    assert_noerr();
     assert_not_null(bar);
 
-    reset_errno();
-    assert_true(nodelist_add(list, foo));
-    assert_noerr();
-    assert_nodelist_length(list, 1);
+    nodelist_add(list_fixture, node(foo));
+    assert_nodelist_length(list_fixture, 1);
 
-    reset_errno();
-    assert_true(nodelist_add(list, bar));
-    assert_noerr();
-    assert_nodelist_length(list, 2);
+    nodelist_add(list_fixture, node(bar));
+    assert_nodelist_length(list_fixture, 2);
 }
-
-static bool freedom_iterator(Node *each, void *context);
 
 static bool freedom_iterator(Node *each, void *context)
 {
-    node_free(each);
+    dispose_node(each);
     return true;
 }
 
-void nodelist_teardown(void)
+static void nodelist_teardown(void)
 {
-    nodelist_iterate(list, freedom_iterator, NULL);
-    nodelist_free(list);
+    nodelist_iterate(list_fixture, freedom_iterator, NULL);
+    nodelist_free(list_fixture);
 }
 
-START_TEST (add)
-{
-    reset_errno();
-    Scalar *baz = make_scalar_string("baz");
-    assert_not_null(baz);
-    assert_noerr();
-
-    reset_errno();
-    nodelist_add(list, baz);
-    assert_noerr();
-    assert_nodelist_length(list, 3);
-    assert_node_equals(node(baz), nodelist_get(list, 2));
-
-    // N.B. not freeing baz here as it is added to `list` and will be freed by teardown
-}
-END_TEST
-
-START_TEST (set)
-{
-    reset_errno();
-    Scalar *baz = make_scalar_string("baz");
-    assert_not_null(baz);
-    assert_noerr();
-
-    reset_errno();
-    assert_true(nodelist_set(list, baz, 0));
-    assert_noerr();
-    assert_nodelist_length(list, 2);
-    assert_node_equals(node(baz), nodelist_get(list, 0));
-
-    // N.B. not freeing baz here as it is added to `list` and will be freed by teardown
-}
-END_TEST
-
-START_TEST (iteration)
-{
-    size_t count = 0;
-    reset_errno();
-    assert_true(nodelist_iterate(list, check_nodelist, &count));
-    assert_noerr();
-    assert_uint_eq(2, count);
-}
-END_TEST
-
-bool check_nodelist(Node *each, void *context)
-{
-    assert_not_null(each);
-    size_t *count = (size_t *)context;
-    (*count)++;
-    return true;
-}
-
-START_TEST (fail_iteration)
-{
-    size_t count = 0;
-    reset_errno();
-    assert_false(nodelist_iterate(list, fail_nodelist, &count));
-    assert_noerr();
-    assert_uint_eq(1, count);
-}
-END_TEST
-
-bool fail_nodelist(Node *each, void *context)
+static bool fail_nodelist(Node *each, void *context)
 {
     size_t *count = (size_t *)context;
     if(0 < *count)
@@ -291,13 +48,185 @@ bool fail_nodelist(Node *each, void *context)
     }
 }
 
+static bool check_nodelist(Node *each, void *context)
+{
+    assert_not_null(each);
+    size_t *count = (size_t *)context;
+    (*count)++;
+    return true;
+}
+
+static bool transform(Node *each, void *context, Nodelist *target)
+{
+    assert_not_null(each);
+
+    size_t *count = (size_t *)context;
+    (*count)++;
+
+    char buffer[32];
+    int result = snprintf(buffer, 32, "%zd", *count);
+    assert_int_ne(-1, result);
+
+    nodelist_add(target, node(make_scalar_integer(buffer)));
+    return true;
+}
+
+static bool fail_transform(Node *each, void *context, Nodelist *target)
+{
+    size_t *count = (size_t *)context;
+    if(0 < *count)
+    {
+        return false;
+    }
+    else
+    {
+        (*count)++;
+        nodelist_add(target, node(make_scalar_string("munky")));
+        return true;
+    }
+}
+
+START_TEST (bad_length)
+{
+    assert_nodelist_length(NULL, 0);
+}
+END_TEST
+
+START_TEST (bad_get)
+{
+    assert_null(nodelist_get(NULL, 0));
+
+    Nodelist *empty_list = make_nodelist();
+    assert_not_null(empty_list);
+
+    assert_null(nodelist_get(empty_list, 0));
+
+    nodelist_free(empty_list);
+}
+END_TEST
+
+START_TEST (bad_add)
+{
+    Nodelist *empty_list = make_nodelist();
+    assert_not_null(empty_list);
+
+    nodelist_add(empty_list, NULL);
+    assert_nodelist_length(empty_list, 0);
+
+    nodelist_free(empty_list);
+}
+END_TEST
+
+START_TEST (bad_set)
+{
+    Nodelist *empty_list = make_nodelist();
+    assert_not_null(empty_list);
+
+    Scalar *s = make_scalar_string("foo");
+    nodelist_set(empty_list, node(s), 0);
+    assert_nodelist_length(empty_list, 0);
+
+    dispose_node(s);
+    nodelist_free(empty_list);
+}
+END_TEST
+
+START_TEST (bad_iterate)
+{
+    Nodelist *empty_list = make_nodelist();
+    assert_not_null(empty_list);
+
+    assert_false(nodelist_iterate(NULL, NULL, NULL));
+
+    assert_false(nodelist_iterate(empty_list, NULL, NULL));
+
+    nodelist_free(empty_list);
+}
+END_TEST
+    
+START_TEST (bad_map)
+{
+    Nodelist *empty_list = make_nodelist();
+    assert_not_null(empty_list);
+
+    assert_null(nodelist_map(NULL, NULL, NULL));
+
+    assert_null(nodelist_map(empty_list, NULL, NULL));
+
+    nodelist_free(empty_list);
+}
+END_TEST
+    
+START_TEST (bad_map_into)
+{
+    Nodelist *empty_list = make_nodelist();
+    assert_not_null(empty_list);
+
+    assert_null(nodelist_map_into(NULL, NULL, NULL, NULL));
+
+    assert_null(nodelist_map_into(empty_list, NULL, NULL, NULL));
+
+    assert_null(nodelist_map_into(empty_list, (nodelist_map_function)1, NULL, NULL));
+
+    nodelist_free(empty_list);
+}
+END_TEST
+    
+START_TEST (ctor_dtor)
+{
+    Nodelist *empty_list = make_nodelist();
+    assert_not_null(empty_list);
+
+    assert_nodelist_length(empty_list, 0);
+    assert_nodelist_empty(empty_list);
+    
+    nodelist_free(empty_list);
+}
+END_TEST
+
+START_TEST (add)
+{
+    Scalar *baz = make_scalar_string("baz");
+    assert_not_null(baz);
+
+    nodelist_add(list_fixture, node(baz));
+    assert_nodelist_length(list_fixture, 3);
+    assert_node_equals(node(baz), nodelist_get(list_fixture, 2));
+}
+END_TEST
+
+START_TEST (set)
+{
+    Scalar *baz = make_scalar_string("baz");
+    assert_not_null(baz);
+
+    nodelist_set(list_fixture, node(baz), 0);
+    assert_nodelist_length(list_fixture, 2);
+    assert_node_equals(node(baz), nodelist_get(list_fixture, 0));
+}
+END_TEST
+
+START_TEST (iteration)
+{
+    size_t count = 0;
+    assert_true(nodelist_iterate(list_fixture, check_nodelist, &count));
+    assert_uint_eq(2, count);
+}
+END_TEST
+
+START_TEST (fail_iteration)
+{
+    size_t count = 0;
+    assert_false(nodelist_iterate(list_fixture, fail_nodelist, &count));
+    assert_uint_eq(1, count);
+}
+END_TEST
+
 START_TEST (map)
 {
     size_t count = 0;
 
-    reset_errno();
-    nodelist *result = nodelist_map(list, transform, &count);
-    assert_noerr();
+    Nodelist *result = nodelist_map(list_fixture, transform, &count);
     assert_not_null(result);
     assert_uint_eq(2, count);
     assert_nodelist_length(result, 2);
@@ -316,45 +245,15 @@ START_TEST (map)
 }
 END_TEST
 
-bool transform(Node *each, void *context, nodelist *target)
-{
-    assert_not_null(each);
-
-    size_t *count = (size_t *)context;
-    (*count)++;
-
-    char buffer[32];
-    int result = snprintf(buffer, 32, "%zd", *count);
-    assert_int_ne(-1, result);
-
-    return nodelist_add(target, make_scalar_integer(value));
-}
-
 START_TEST (fail_map)
 {
     size_t count = 0;
-    reset_errno();
-    nodelist *result = nodelist_map(list, fail_transform, &count);
+    Nodelist *result = nodelist_map(list_fixture, fail_transform, &count);
     assert_null(result);
-    assert_not_null(list);
-    assert_noerr();
+    assert_not_null(list_fixture);
     assert_uint_eq(1, count);
 }
 END_TEST
-
-bool fail_transform(Node *each, void *context, nodelist *target)
-{
-    size_t *count = (size_t *)context;
-    if(0 < *count)
-    {
-        return false;
-    }
-    else
-    {
-        (*count)++;
-        return nodelist_add(target, make_scalar_string("munky"));
-    }
-}
 
 Suite *nodelist_suite(void)
 {

@@ -232,7 +232,7 @@ bool sequence_iterate(const Sequence *seq, sequence_iterator iterator, void *con
  * Mapping API
  */
 
-Node *mapping_get(const Mapping *map, uint8_t *key, size_t length);
+Node *mapping_get(const Mapping *map, Scalar *key);
 bool mapping_contains(const Mapping *map, Scalar *key);
 bool mapping_put(Mapping *self, Scalar *key, Node *value);
 
