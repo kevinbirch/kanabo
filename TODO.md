@@ -60,6 +60,14 @@
 * use only `ENSURE` condition macros instead of also `PRECOND`
 * split xalloc.c into panic.c, stop all global includes
 * clean up build flags, remove cargo
+* ignored keys and values are leaked
+  * build bad tree, generate error and discard?
+  * stop building tree on first error, but continue processing?
+* don't use callback between scanner and parser for errors, track error vector in each
+  * use single add_parser_error function
+  * why are postion macros different for parser and scanner?
+* panic backtrace looks like crap on Linux?
+* function tracing? https://github.com/namhyung/uftrace
 
 * update spacecadet
   * move changes back
