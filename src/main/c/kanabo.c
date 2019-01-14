@@ -1,5 +1,5 @@
 #ifdef __linux__
-#define _POSIX_C_SOURCE 200809L
+#define _POSIX_C_SOURCE 200809L  // for fileno, getline
 #endif
 
 #include <stdlib.h>

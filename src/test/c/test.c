@@ -28,11 +28,7 @@ static void handle_signal(int sigval)
     raise(sigval);
 }
 
-#ifdef CHECK_0_9_8
 int main(int argc, char **argv)
-#else
-int main(int argc, char **argv)
-#endif
 {
     if(SIG_ERR == signal(SIGSEGV, handle_signal))
     {
@@ -49,7 +45,7 @@ int main(int argc, char **argv)
 
     SRunner *runner = srunner_create(master_suite());
     srunner_add_suite(runner, scanner_suite());
-    srunner_add_suite(runner, jsonpath_suite());
+    srunner_add_suite(runner, parser_suite());
     srunner_add_suite(runner, model_suite());
     srunner_add_suite(runner, nodelist_suite());
     srunner_add_suite(runner, loader_suite());

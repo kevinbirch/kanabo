@@ -21,9 +21,6 @@ MKTEMP ?= mktemp
 version ?= 1.0.0-SNAPSHOT
 artifact ?= program
 build ?= debug
-INCLUDES ?=
-CFLAGS ?=
-LIBS ?=
 DEPENDENCIES ?=
 TEST_DEPENDENCIES ?=
 

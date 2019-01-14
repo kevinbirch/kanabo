@@ -29,23 +29,23 @@ static inline int8_t ucs4_to_utf8(uint32_t ucs4, uint8_t utf8[4])
     }
     if(ucs4 < 0x800)
     {
-        utf8[0] = (uint8_t)(ucs4 >> 6) | 0xC0;
-        utf8[1] = (uint8_t)(ucs4 & 0x3F) | 0x80;
+        utf8[0] = (uint8_t)((ucs4 >> 6) | 0xC0);
+        utf8[1] = (uint8_t)((ucs4 & 0x3F) | 0x80);
         return 2;
     }
     if(ucs4 < 0x10000)
     {
-        utf8[0] = (uint8_t)(ucs4 >> 12) | 0xE0;
-        utf8[1] = (uint8_t)((ucs4 >> 6) & 0x3F) | 0x80;
-        utf8[2] = (uint8_t)(ucs4 & 0x3F) | 0x80;
+        utf8[0] = (uint8_t)((ucs4 >> 12) | 0xE0);
+        utf8[1] = (uint8_t)(((ucs4 >> 6) & 0x3F) | 0x80);
+        utf8[2] = (uint8_t)((ucs4 & 0x3F) | 0x80);
         return 3;
     }
     if(ucs4 < 0x110000)
     {
-        utf8[0] = (uint8_t)(ucs4 >> 18) | 0xF0;
-        utf8[1] = (uint8_t)((ucs4 >> 12) & 0x3F) | 0x80;
-        utf8[2] = (uint8_t)((ucs4 >> 6) & 0x3F) | 0x80;
-        utf8[3] = (uint8_t)((ucs4 & 0x3F)) | 0x80;
+        utf8[0] = (uint8_t)((ucs4 >> 18) | 0xF0);
+        utf8[1] = (uint8_t)(((ucs4 >> 12) & 0x3F) | 0x80);
+        utf8[2] = (uint8_t)(((ucs4 >> 6) & 0x3F) | 0x80);
+        utf8[3] = (uint8_t)(((ucs4 & 0x3F)) | 0x80);
         return 4;
     }
 
@@ -60,7 +60,7 @@ static inline bool unescape_unicode(Parser *self, uint32_t ucs4, MutableString *
 
     if(!(length > 0))
     {
-        add_error(self, position(self), UNSUPPORTED_UNICODE_SEQUENCE);
+        add_parser_error(self, position(self), UNSUPPORTED_UNICODE_SEQUENCE);
         return false;
     }
 
@@ -162,7 +162,7 @@ char *unescape(Parser *self, const char *lexeme)
                 break;
             }
             default:
-                add_error(self, position(self), UNSUPPORTED_ESCAPE_SEQUENCE);
+                add_parser_error(self, position(self), UNSUPPORTED_ESCAPE_SEQUENCE);
                 goto cleanup;
                 break;
         }

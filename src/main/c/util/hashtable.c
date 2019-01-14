@@ -787,15 +787,24 @@ static void rehash(Hashtable *hashtable)
     free(table);
 }
 
-void hashtable_summary(const Hashtable *hashtable, FILE *stream)
+void hashtable_dump(const Hashtable *hashtable, FILE *stream)
 {
-    fputs("hashtable summary:\n", stream);
-    fprintf(stream, "mutable: %s\n", hashtable_is_mutable(hashtable) ? "yes" : "no");
-    fprintf(stream, "occupied: %zu of %zu\n", hashtable->occupied, hashtable->capacity);
-    fprintf(stream, "capacity: %zu (%zu * %g)\n", hashtable->capacity, hashtable->length >> 1, hashtable->load_factor);
-    fprintf(stream, "table length: %zu\n", hashtable->length);
-    fprintf(stream, "load factor: %g\n", hashtable->load_factor);
-    fputs("bucket report:\n", stream);
+    fprintf(stream,
+            "hashtable summary:\n"
+            "mutable: %s\n"
+            "occupied: %zu of %zu\n"
+            "capacity: %zu (%zu * %g)\n"
+            "table length: %zu\n"
+            "load factor: %g\n"
+            "bucket report:\n",
+            hashtable_is_mutable(hashtable) ? "yes" : "no",
+            hashtable->occupied,
+            hashtable->capacity,
+            hashtable->capacity,
+            hashtable->length >> 1,
+            hashtable->load_factor,
+            hashtable->length,
+            hashtable->load_factor);
     size_t count = 0ul, min = 0ul, max = 0ul, total = 0ul;
     float avg = 0.0f;
     for(size_t i = 0; i < hashtable->length; i += 2)

@@ -1,5 +1,7 @@
-#include "document.h"
 #include "conditions.h"
+#include "document.h"
+#include "panic.h"
+#include "xalloc.h"
 
 struct context_adapter_s
 {

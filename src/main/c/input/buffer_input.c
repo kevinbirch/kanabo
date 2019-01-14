@@ -1,9 +1,8 @@
 #include <string.h>
 
 #include "conditions.h"
-
 #include "input.h"
-
+#include "xalloc.h"
 
 Input *make_input_from_buffer(const char *data, size_t length)
 {

@@ -75,17 +75,17 @@ inline const char * emit_mode_name(enum emit_mode value)
     return EMIT_MODES[value];
 }
 
-inline int32_t parse_duplicate_strategy(const char *argument)
+inline int32_t parse_duplicate_strategy(const char *value)
 {
-    if(0 == strncmp("clobber", argument, 7ul))
+    if(0 == strncmp("clobber", value, 7ul))
     {
         return DUPE_CLOBBER;
     }
-    else if(0 == strncmp("warn", argument, 4ul))
+    else if(0 == strncmp("warn", value, 4ul))
     {
         return DUPE_WARN;
     }
-    else if(0 == strncmp("fail", argument, 4ul))
+    else if(0 == strncmp("fail", value, 4ul))
     {
         return DUPE_FAIL;
     }

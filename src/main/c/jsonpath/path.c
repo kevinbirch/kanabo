@@ -1,5 +1,6 @@
-#include "jsonpath.h"
 #include "conditions.h"
+#include "jsonpath.h"
+#include "xalloc.h"
 
 static const char * const PATH_KIND_NAMES[] =
 {
@@ -28,7 +29,7 @@ static bool iterator_adapter(void *each, void *context)
     return adapter->iterator((Step *)each, adapter->original_context);
 }
 
-bool inline path_iterate(const JsonPath *path, path_iterator iterator, void *context)
+bool path_iterate(const JsonPath *path, path_iterator iterator, void *context)
 {
     PRECOND_NONNULL_ELSE_FALSE(path, iterator);
 

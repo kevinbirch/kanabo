@@ -3,8 +3,8 @@
 #include <string.h>  // for memcmp, memcpy
 
 #include "conditions.h"
-
 #include "input.h"
+#include "xalloc.h"
 
 #define current(INPUT) (INPUT)->source.buffer[(INPUT)->position.index]
 #define cursor(INPUT) (INPUT)->source.buffer + (INPUT)->position.index

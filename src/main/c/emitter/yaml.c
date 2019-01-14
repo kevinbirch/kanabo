@@ -4,7 +4,6 @@
 #include "emitter/yaml.h"
 #include "log.h"
 
-
 #define component "yaml"
 #define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 

@@ -14,13 +14,10 @@
     do                                                                  \
     {                                                                   \
         assert_true(is_nothing(M));                                     \
-        Vector *nothing = from_nothing(M);                              \
-        assert_false(vector_is_empty(nothing));                         \
-        size_t count = sizeof(E)/sizeof(ParserError);                   \
-        assert_uint_eq(vector_length(nothing), count);                  \
-        for(size_t i = 0; i < count; i++)                               \
+        assert_false(vector_is_empty(from_nothing(M)));                 \
+        for(size_t i = 0; i < sizeof(E)/sizeof(ParserError); i++)       \
         {                                                               \
-            ParserError *err = vector_get(nothing, i);                  \
+            ParserError *err = vector_get(from_nothing(M), i);          \
             assert_not_null(err);                                       \
             ck_assert_msg(E[i].code == err->code, "Assertion '"#E"[%zu].code == err->code' failed: "#E"[%zu].code==\"%s\", err->code==\"%s\"", i, i, parser_strerror(E[i].code), parser_strerror(err->code)); \
             assert_uint_eq(E[i].position.index, err->position.index);   \
@@ -90,13 +87,6 @@
     assert_slice_from(path_get((PATH), (PATH_INDEX))->predicate, (FROM_VALUE)); \
     assert_slice_to(path_get((PATH), (PATH_INDEX))->predicate, (TO_VALUE)); \
     assert_slice_step(path_get((PATH), (PATH_INDEX))->predicate, (STEP_VALUE))
-
-#define print_errors(MAYBE)                                             \
-    for(size_t i = 0; i < vector_length(from_nothing(MAYBE)); i++)      \
-    {                                                                   \
-        ParserError *err = (ParserError *)vector_get(from_nothing(MAYBE), i); \
-        log_error(tcase_name(), "at %zu error: %s", err->position.index, parser_strerror(err->code)); \
-    }
 
 #define print_steps(MAYBE)                                              \
     for(size_t i = 0; i < vector_length(from_just(MAYBE).steps); i++)   \
@@ -706,7 +696,6 @@ START_TEST (ucs2_surrogate)
     ParserError errors[] = {
         (ParserError){UNSUPPORTED_UNICODE_SEQUENCE, .position.index=2},
     };
-    print_errors(maybe);
 
     assert_parser_failure(maybe, errors);
     dispose_maybe(maybe);
@@ -1238,7 +1227,7 @@ START_TEST (bad_predicate_input)
 }
 END_TEST
 
-Suite *jsonpath_suite(void)
+Suite *parser_suite(void)
 {
     TCase *bad_input_case = tcase_create("bad input");
     tcase_add_test(bad_input_case, null_expression);

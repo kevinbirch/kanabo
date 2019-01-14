@@ -9,18 +9,18 @@ build = debug
 DEPENDENCIES = yaml
 TEST_DEPENDENCIES = check
 
-CFLAGS += -std=c11 -fstrict-aliasing -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-gnu -fms-extensions -Wno-microsoft -Wno-unused-parameter --include=xalloc.h --include=panic.h
-debug_CFLAGS = -DUSE_LOGGING -O0 -g
+CFLAGS += -std=c11 -fstrict-aliasing -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-gnu -fms-extensions -Wno-microsoft -Wno-unused-parameter
+debug_CFLAGS = -DUSE_LOGGING -g
 release_CFLAGS = -O3 -flto
-LIBS = -lm
-TEST_LIBS =
-TEST_LDFLAGS = -fsanitize=address,integer,undefined -fno-sanitize=unsigned-integer-overflow -flto
+#TEST_LDFLAGS = -fsanitize=address,undefined -fno-sanitize=signed-integer-overflow
 release_LDFLAGS = -flto
 
 system = $(shell uname -s)
 
 ifeq ($(system),Linux)
-TEST_LIBS += -pthread -lrt
+LDLIBS = -lm
+TEST_LDLIBS = $(LDLIBS) -pthread -lrt -lsubunit
+AR = ar rcs
 else ifeq ($(system),Darwin)
 AR = libtool -static -o
 endif

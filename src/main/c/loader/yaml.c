@@ -4,11 +4,13 @@
 
 #include <yaml.h>
 
-#include "vector.h"
-#include "str.h"
 #include "loader.h"
 #include "loader/debug.h"
 #include "loader/error.h"
+#include "panic.h"
+#include "str.h"
+#include "vector.h"
+#include "xalloc.h"
 
 static const char * const DECIMAL_PATTERN = "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$";
 static const char * const INTEGER_PATTERN = "^-?(0|([1-9][[:digit:]]*))$";
@@ -26,11 +28,12 @@ typedef DuplicateKeyStrategy Strategy;
 
 struct loader_context_s
 {
-    Strategy     strategy;
-    DocumentSet *documents;
-    Vector      *errors;
-    Node        *current;
-    Scalar      *key_cache;
+    Strategy      strategy;
+    const String *input_name;
+    DocumentSet  *documents;
+    Vector       *errors;
+    Node         *current;
+    Scalar       *key_cache;
 };
 
 typedef struct loader_context_s Loader;
@@ -54,7 +57,7 @@ static void must_make_regex(regex_t *regex, const char * pattern)
     }       
 }
 
-static void context_init(Loader *context, DuplicateKeyStrategy strategy)
+static void context_init(Loader *context, DuplicateKeyStrategy strategy, const String *input_name)
 {
     context->errors = make_vector_with_capacity(1);
     if(NULL == context->errors)
@@ -69,6 +72,7 @@ static void context_init(Loader *context, DuplicateKeyStrategy strategy)
     }
 
     context->strategy = strategy;
+    context->input_name = input_name;
 }
 
 static void interpret_yaml_error(Loader *context, yaml_parser_t *parser)
@@ -77,17 +81,17 @@ static void interpret_yaml_error(Loader *context, yaml_parser_t *parser)
     {
         // xxx - is there extra text error messages in yaml parser?
         case YAML_READER_ERROR:
-            add_error(context->errors, position(parser->problem_mark), ERR_READER_FAILED);
+            add_loader_error(context->errors, position(parser->problem_mark), ERR_READER_FAILED);
             break;
         case YAML_SCANNER_ERROR:
-            add_error(context->errors, position(parser->problem_mark), ERR_SCANNER_FAILED);
+            add_loader_error(context->errors, position(parser->problem_mark), ERR_SCANNER_FAILED);
             break;
         case YAML_PARSER_ERROR:
-            add_error(context->errors, position(parser->problem_mark), ERR_PARSER_FAILED);
+            add_loader_error(context->errors, position(parser->problem_mark), ERR_PARSER_FAILED);
             break;
         default:
             // xxx - can the unhandled code be added as a string?
-            add_error(context->errors, position(parser->problem_mark), ERR_INTERNAL);
+            add_loader_error(context->errors, position(parser->problem_mark), ERR_INTERNAL);
             break;
     }
 }
@@ -113,14 +117,15 @@ static void set_anchor(Loader *context, Node *target, uint8_t *anchor)
     hashtable_put(document->anchors, anchor, target);
 }
 
-static inline void add_to_mapping(Loader *context, Node *node, const yaml_event_t *event)
+static void add_to_mapping(Loader *context, Node *node, const yaml_event_t *event)
 {
     if(NULL == context->key_cache)
     {
         if(!is_scalar(node))
         {
             loader_debug("uh oh! found a non scalar mapping key");
-            add_error(context->errors, position(event->start_mark), ERR_NON_SCALAR_KEY);
+            add_loader_error(context->errors, position(event->start_mark), ERR_NON_SCALAR_KEY);
+            node->parent = context->current;
             return;
         }
 
@@ -136,13 +141,14 @@ static inline void add_to_mapping(Loader *context, Node *node, const yaml_event_
     if(duplicate && DUPE_FAIL == context->strategy)
     {
         loader_debug("uh oh! a duplicate key found");
-        add_error(context->errors, position(event->start_mark), ERR_DUPLICATE_KEY);
+        add_loader_error(context->errors, position(event->start_mark), ERR_DUPLICATE_KEY);
+        node->parent = context->current;
         return;
     }
     else if(duplicate && DUPE_WARN == context->strategy)
     {
         Position pos = position(event->start_mark);
-        fprintf(stderr, "%zd:%zd: warning: duplicate mapping key\n", pos.line+1, pos.offset+1);
+        fprintf(stderr, "%s:%zd: warning: duplicate mapping key\n", C(context->input_name), pos.line+1);
     }
 
     mapping_put(mapping, context->key_cache, node);
@@ -157,28 +163,29 @@ static void add_node(Loader *context, Node *node, const yaml_event_t *event)
         case DOCUMENT:
             loader_trace("adding node (%p) to document context (%p)", node, context->current);
             document_set_root(document(context->current), node);
+            break;
         case SEQUENCE:
             loader_trace("adding node (%p) to sequence context (%p)", node, context->current);
             sequence_add(sequence(context->current), node);
+            break;
         case MAPPING:
             loader_trace("adding node (%p) to mapping context (%p)", node, context->current);
             add_to_mapping(context, node, event);
-        case SCALAR:
-            loader_debug("uh oh! a scalar node has become the context node");
-            add_error(context->errors, position(event->start_mark), ERR_INTERNAL);
-        case ALIAS:
-            loader_debug("uh oh! an alias node has become the context node");
-            add_error(context->errors, position(event->start_mark), ERR_INTERNAL);
+            break;
+        default:
+            loader_debug("uh oh! an unsupported node kind has become the context node");
+            add_loader_error(context->errors, position(event->start_mark), ERR_INTERNAL);
+            break;
     }
 }
 
 static void start_document(Loader *context)
 {
-    Document *doc = make_document_node();
-    context->current = node(doc);
-    document_set_add(context->documents, doc);
+    Document *document = make_document_node();
+    context->current = node(document);
+    document_set_add(context->documents, document);
 
-    loader_trace("started document (%p)", doc);
+    loader_trace("started document (%p)", document);
 }
 
 static void end_document(Loader *context)
@@ -199,10 +206,10 @@ static void start_sequence(Loader *context, const yaml_event_t *event)
     }
     set_anchor(context, node(sequence), event->data.sequence_start.anchor);
 
-    loader_trace("started sequence (%p)", sequence);
-
     add_node(context, node(sequence), event);
     context->current = node(sequence);
+
+    loader_trace("started sequence (%p)", sequence);
 }
 
 static void end_sequence(Loader *context)
@@ -245,7 +252,8 @@ static void add_alias(Loader *context, const yaml_event_t *event)
     Node *target = hashtable_get(document->anchors, event->data.alias.anchor);
     if(NULL == target)
     {
-        add_error(context->errors, position(event->start_mark), ERR_NO_ANCHOR_FOR_ALIAS);
+        loader_debug("uh oh! alias anchor is not known");
+        add_loader_error(context->errors, position(event->start_mark), ERR_NO_ANCHOR_FOR_ALIAS);
         return;
     }
 
@@ -253,7 +261,8 @@ static void add_alias(Loader *context, const yaml_event_t *event)
     {
         if(cur == target)
         {
-            add_error(context->errors, position(event->start_mark), ERR_ALIAS_LOOP);
+            loader_debug("uh oh! an alias loop was detected");
+            add_loader_error(context->errors, position(event->start_mark), ERR_ALIAS_LOOP);
             return;
         }
     }
@@ -481,12 +490,12 @@ static void event_loop(Loader *context, yaml_parser_t *parser)
     }
 }
 
-static Maybe(DocumentSet) parse(yaml_parser_t *parser, DuplicateKeyStrategy strategy)
+static Maybe(DocumentSet) parse(const String *input_name, yaml_parser_t *parser, DuplicateKeyStrategy strategy)
 {
     Loader context;
     memset(&context, 0, sizeof(Loader));
 
-    context_init(&context, strategy);
+    context_init(&context, strategy, input_name);
 
     event_loop(&context, parser);
 
@@ -497,7 +506,7 @@ static Maybe(DocumentSet) parse(yaml_parser_t *parser, DuplicateKeyStrategy stra
         if(0 == document_set_size(context.documents))
         {
             dispose_document_set(context.documents);
-            add_error(context.errors, NO_POSITION, ERR_NO_DOCUMENTS_FOUND);
+            add_loader_error(context.errors, NO_POSITION, ERR_NO_DOCUMENTS_FOUND);
             return fail(DocumentSet, context.errors);
         }
 
@@ -520,7 +529,9 @@ Maybe(DocumentSet) load_yaml_from_stdin(DuplicateKeyStrategy strategy)
     loader_debug("loading yaml from stdin");
     yaml_parser_set_input_file(&parser, stdin);
 
-    Maybe(DocumentSet) result = parse(&parser, strategy);
+    String *name = S("stdin");
+    Maybe(DocumentSet) result = parse(name, &parser, strategy);
+    string_free(name);
 
     yaml_parser_delete(&parser);
 
@@ -532,7 +543,7 @@ Maybe(DocumentSet) load_yaml(Input *input, DuplicateKeyStrategy strategy)
     if(NULL == input)
     {
         Vector *errors = make_vector_with_capacity(1);
-        add_error(errors, ((Position){}), ERR_INPUT_IS_NULL);
+        add_loader_error(errors, NO_POSITION, ERR_INPUT_IS_NULL);
         return fail(DocumentSet, errors);
     }
 
@@ -542,10 +553,10 @@ Maybe(DocumentSet) load_yaml(Input *input, DuplicateKeyStrategy strategy)
         panic("loader: initialize: allocate yaml parser");
     }
 
-    loader_debug("loading yaml from %s", input_name(input));
+    loader_debug("loading yaml from \"%s\"", C(input_name(input)));
     yaml_parser_set_input_string(&parser, (const unsigned char *)input->source.buffer, input_length(input));
 
-    Maybe(DocumentSet) result = parse(&parser, strategy);
+    Maybe(DocumentSet) result = parse(input_name(input), &parser, strategy);
 
     yaml_parser_delete(&parser);
 

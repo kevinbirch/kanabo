@@ -114,11 +114,10 @@ int vlogger(enum log_level level, const char *component, const char *format, va_
 int print_prelude(enum log_level level, const char *component)
 {
     time_t now = time(NULL);
-    struct tm now_tm;
-    localtime_r(&now, &now_tm);
+    struct tm *now_tm = localtime(&now);
     return fprintf(stderr, "%d-%d-%d %02d:%02d:%02d %s %s - ",
-                   now_tm.tm_year + 1900, now_tm.tm_mon + 1, now_tm.tm_mday,
-                   now_tm.tm_hour, now_tm.tm_min, now_tm.tm_sec, LEVELS[level], component);
+                   now_tm->tm_year + 1900, now_tm->tm_mon + 1, now_tm->tm_mday,
+                   now_tm->tm_hour, now_tm->tm_min, now_tm->tm_sec, LEVELS[level], component);
 }
 
 #endif

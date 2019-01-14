@@ -1,7 +1,8 @@
 #include <errno.h>
 
-#include "evaluator.h"
 #include "conditions.h"
+#include "evaluator.h"
+#include "panic.h"
 
 struct context_adapter_s
 {

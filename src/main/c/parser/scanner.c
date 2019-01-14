@@ -1,13 +1,13 @@
 #include <ctype.h>
 
 #include "conditions.h"
-#include "vector.h"
-
 #include "parser/scanner.h"
+#include "vector.h"
+#include "xalloc.h"
 
 #define position(SCANNER) (SCANNER)->input.position
 
-static inline void add_error_at(Scanner *self, Position position, ParserErrorCode code)
+static inline void add_scanner_error_at(Scanner *self, Position position, ParserErrorCode code)
 {
     if(NULL == self->handler.callback)
     {
@@ -17,9 +17,9 @@ static inline void add_error_at(Scanner *self, Position position, ParserErrorCod
     self->handler.callback(position, code, self->handler.parameter);
 }
 
-static inline void add_error(Scanner *self, ParserErrorCode code)
+static inline void add_scanner_error(Scanner *self, ParserErrorCode code)
 {
-    add_error_at(self, position(self), code);
+    add_scanner_error_at(self, position(self), code);
 }
 
 static bool read_hex_sequence(Scanner *self, size_t count)
@@ -28,13 +28,13 @@ static bool read_hex_sequence(Scanner *self, size_t count)
     {
         if(!input_has_more(&self->input))
         {
-            add_error(self, PREMATURE_END_OF_INPUT);
+            add_scanner_error(self, PREMATURE_END_OF_INPUT);
             return false;
         }
 
         if(!isxdigit(input_peek(&self->input)))
         {
-            add_error(self, UNSUPPORTED_ESCAPE_SEQUENCE);
+            add_scanner_error(self, UNSUPPORTED_ESCAPE_SEQUENCE);
         }
         input_consume_one(&self->input);
     }
@@ -53,7 +53,7 @@ static bool read_escape_sequence(Scanner *self)
 
     if(!input_has_more(&self->input))
     {
-        add_error(self, PREMATURE_END_OF_INPUT);
+        add_scanner_error(self, PREMATURE_END_OF_INPUT);
         return false;
     }
 
@@ -85,7 +85,7 @@ static bool read_escape_sequence(Scanner *self)
         case 'U':
             return read_hex_sequence(self, 8);
         default:
-            add_error_at(self, start, UNSUPPORTED_ESCAPE_SEQUENCE);
+            add_scanner_error_at(self, start, UNSUPPORTED_ESCAPE_SEQUENCE);
     }
 
     return true;
@@ -100,7 +100,7 @@ static bool read_name_escape_sequence(Scanner *self)
     }
     if(!input_has_more(&self->input))
     {
-        add_error(self, PREMATURE_END_OF_INPUT);
+        add_scanner_error(self, PREMATURE_END_OF_INPUT);
         return false;
     }
 
@@ -127,13 +127,13 @@ static void match_quoted_term(Scanner *self, char quote, EscapeSequenceReader re
     {
         if(!input_has_more(&self->input))
         {
-            add_error_at(self, start, UNCLOSED_QUOTATION);
-            add_error(self, PREMATURE_END_OF_INPUT);
+            add_scanner_error_at(self, start, UNCLOSED_QUOTATION);
+            add_scanner_error(self, PREMATURE_END_OF_INPUT);
             break;
         }
         if(iscntrl(input_peek(&self->input)))
         {
-            add_error(self, UNSUPPORTED_CONTROL_CHARACTER);
+            add_scanner_error(self, UNSUPPORTED_CONTROL_CHARACTER);
         }
         if(input_peek(&self->input) == '\\')
         {
@@ -163,7 +163,7 @@ static bool read_digit_sequence(Scanner *self)
         {
             if(input_index(&self->input) == start.index)
             {
-                add_error(self, PREMATURE_END_OF_INPUT);
+                add_scanner_error(self, PREMATURE_END_OF_INPUT);
                 return false;
             }
 
@@ -226,14 +226,15 @@ static void match_name(Scanner *self)
         {
             if(input_index(&self->input) == start.index)
             {
-                add_error(self, PREMATURE_END_OF_INPUT);
+                add_scanner_error(self, PREMATURE_END_OF_INPUT);
             }
 
             break;
         }
+
         if(iscntrl(input_peek(&self->input)))
         {
-            add_error(self, UNSUPPORTED_CONTROL_CHARACTER);
+            add_scanner_error(self, UNSUPPORTED_CONTROL_CHARACTER);
             break;
         }
 
@@ -252,7 +253,7 @@ static void match_name(Scanner *self)
             case '}':
             case '(':
             case ')':
-                break;
+                return;
             default:
                 input_consume_one(&self->input);
         }
@@ -497,6 +498,7 @@ void scanner_next(Scanner *self)
     }
 
   finish:
+    ;
     Position end = position(self);    
     self->current.location.position = start;
     self->current.location.extent = end.index - start.index;

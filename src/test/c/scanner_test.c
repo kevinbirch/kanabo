@@ -4,9 +4,6 @@
 
 #include "test.h"
 
-// check defines a fail helper that conflicts with the maybe constructor
-#undef fail
-
 #include "parser/scanner.h"
 
 #define expected_token(KIND, EXTENT, INDEX) (Token){.kind=(KIND), .location.extent=(EXTENT), .location.index=(INDEX), .location.line=0, .location.offset=0}
@@ -16,6 +13,7 @@
     ck_assert_msg(E.location.extent == A.location.extent, "Assertion for expected %s '"#E".location.extent == "#A"location.extent failed: "#E".location.extent==%zu, "#A"location.extent==%zu", token_name(E.kind), E.location.extent, A.location.extent); \
     assert_uint_eq(E.location.line, A.location.line);                   \
     assert_uint_eq(E.location.offset, A.location.offset)
+
 #define assert_expectations(L, E)                                       \
     for(size_t i = 0; i < sizeof(E)/sizeof(Token); i++)                 \
     {                                                                   \
@@ -24,6 +22,7 @@
         assert_token(expected, L->current);                             \
     }                                                                   \
     assert_true(vector_is_empty(errors))
+
 #define assert_errors(L, X, E)                                          \
     L->handler.callback = record_error;                                 \
     for(size_t i = 0; i < sizeof(X)/sizeof(Token); i++)                 \
@@ -1169,8 +1168,7 @@ START_TEST (name_includes_ack)
     Token expectations[] = {
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
-        expected_token(NAME, 7, 2),
-        expected_token(END_OF_INPUT, 0, 9),
+        expected_token(NAME, 3, 2),
     };
     ParserError expected_errors[] = {
         (ParserError){UNSUPPORTED_CONTROL_CHARACTER, .position.index=5},

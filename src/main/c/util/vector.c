@@ -14,12 +14,33 @@ struct vector_s
     uint8_t **items;
 };
 
-static inline bool ensure_capacity(Vector *vector, size_t min_capacity);
-static inline size_t calculate_new_capacity(size_t capacity);
-static inline bool reallocate(Vector *vector, size_t capacity);
+static inline size_t calculate_new_capacity(size_t capacity)
+{
+    return (capacity * 3) / 2 + 1;
+}
 
+static inline bool reallocate(Vector *vector, size_t capacity)
+{
+    uint8_t **cache = vector->items;
+    vector->items = realloc(vector->items, sizeof(uint8_t *) * capacity);
+    if(NULL == vector->items)
+    {
+        vector->items = cache;
+        return false;
+    }
+    vector->capacity = capacity;
+    return true;
+}
 
-static bool add_to_vector_iterator(void *each, void *context);
+static inline bool ensure_capacity(Vector *vector, size_t min_capacity)
+{
+    if(vector->capacity < min_capacity)
+    {
+        size_t new_capacity = calculate_new_capacity(min_capacity);
+        return reallocate(vector, new_capacity);
+    }
+    return true;
+}
 
 Vector *make_vector(void)
 {
@@ -703,30 +724,15 @@ Vector *vector_filter_not(const Vector *vector, vector_iterator fn, void *contex
     return result;
 }
 
-static inline size_t calculate_new_capacity(size_t capacity)
+void vector_dump(const Vector *vector, FILE *stream)
 {
-    return (capacity * 3) / 2 + 1;
-}
-
-static inline bool ensure_capacity(Vector *vector, size_t min_capacity)
-{
-    if(vector->capacity < min_capacity)
+    fprintf(stream,
+            "vector summary:\n"
+            "length: %zu\n"
+            "capacity: %zu\n",
+            vector->length, vector->capacity);
+    for(size_t i = 0; i < vector->length; i++)
     {
-        size_t new_capacity = calculate_new_capacity(min_capacity);
-        return reallocate(vector, new_capacity);
+        fprintf(stream, "[%zu]: (%p)\n", i, vector->items[i]);
     }
-    return true;
-}
-
-static inline bool reallocate(Vector *vector, size_t capacity)
-{
-    uint8_t **cache = vector->items;
-    vector->items = realloc(vector->items, sizeof(uint8_t *) * capacity);
-    if(NULL == vector->items)
-    {
-        vector->items = cache;
-        return false;
-    }
-    vector->capacity = capacity;
-    return true;
 }

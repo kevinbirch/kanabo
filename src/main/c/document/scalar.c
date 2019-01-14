@@ -1,7 +1,8 @@
 #include <string.h>
 
-#include "document.h"
 #include "conditions.h"
+#include "document.h"
+#include "xalloc.h"
 
 static const char * const SCALAR_KINDS [] =
 {

@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "document.h"
 #include "conditions.h"
+#include "document.h"
 #include "log.h"
+#include "xalloc.h"
 
 static const char * const NODE_KINDS [] =
 {

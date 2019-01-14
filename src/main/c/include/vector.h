@@ -1,7 +1,8 @@
 #pragma once
 
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef struct vector_s Vector;
 
@@ -72,3 +73,5 @@ Vector *vector_map_into(const Vector *vector, vector_mapper function, void *cont
 void   *vector_reduce(const Vector *vector, vector_reducer function, void *context);
 Vector *vector_filter(const Vector *vector, vector_iterator function, void *context);
 Vector *vector_filter_not(const Vector *vector, vector_iterator function, void *context);
+
+void vector_dump(const Vector *vector, FILE *stream);

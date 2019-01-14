@@ -1,7 +1,9 @@
 #include <errno.h>
 
-#include "document.h"
 #include "conditions.h"
+#include "document.h"
+#include "panic.h"
+#include "xalloc.h"
 
 struct context_adapter_s
 {
@@ -111,6 +113,7 @@ bool mapping_put(Mapping *self, Scalar *key, Node *value)
     hashtable_put(self->values, key, value);
     if(0 == errno)
     {
+        key->parent = node(self);
         value->parent = node(self);
     }
 

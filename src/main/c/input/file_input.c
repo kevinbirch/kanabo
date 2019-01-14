@@ -1,9 +1,17 @@
+#ifdef __linux__
+#define _POSIX_C_SOURCE 200112L  // for fileno
+#endif
+
 #include <errno.h>
 #include <stdio.h>  // for fileno
-#include <sys/stat.h>
+#ifdef __linux__
+#include <sys/types.h>  // for off_t
+#endif
+#include <sys/stat.h>  // for fstat
 
 #include "conditions.h"
 #include "input.h"
+#include "xalloc.h"
 
 static inline off_t file_size(FILE *file)
 {
@@ -39,7 +47,7 @@ Maybe(Input) make_input_from_file(const char *filename)
 
     errno = 0;
     size_t count = fread(self->source.buffer, (size_t)size, 1, file);
-    if(count != (size_t)size || ferror(file))
+    if(1 != count || ferror(file))
     {
         result = fail(Input, ((InputError){.code=READ_ERROR, .err=errno}));
         dispose_input(self);

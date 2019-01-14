@@ -11,15 +11,20 @@ static DocumentSet *model_fixture = NULL;
     do                                                                  \
     {                                                                   \
         assert_nothing((CONTEXT));                                      \
-        assert_int_eq(1, vector_length((CONTEXT).error));               \
-        LoaderError *e = vector_get((CONTEXT).error, 1);                \
-        assert_int_eq((EXPECTED_RESULT), e->code);                      \
+        assert_uint_eq(1, vector_length((CONTEXT).error));              \
+        LoaderError *e = vector_get((CONTEXT).error, 0);                \
+        assert_uint_eq((EXPECTED_RESULT), e->code);                     \
     } while(0)
 
 static Maybe(DocumentSet) load(const char *filename, DuplicateKeyStrategy strategy)
 {
     assert_not_null(filename);
     Maybe(Input) input = make_input_from_file(filename);
+    if(is_nothing(input))
+    {
+        InputError err = from_nothing(input);
+        printf("%s: %s: %s\n", filename, input_strerror(err.code), strerror(err.err));
+    }
     assert_just(input);
 
     return load_yaml(from_just(input), strategy);
@@ -327,7 +332,7 @@ END_TEST
 
 START_TEST (duplicate_clobber)
 {
-    Maybe(DocumentSet) documents = load("test-resources/duplicate_key.yaml", DUPE_CLOBBER);
+    Maybe(DocumentSet) documents = load("test-resources/duplicate-key.yaml", DUPE_CLOBBER);
     assert_just(documents);
 
     Node *root = document_set_get_root(from_just(documents), 0);
@@ -346,7 +351,7 @@ END_TEST
 
 START_TEST (duplicate_warn)
 {
-    Maybe(DocumentSet) documents = load("test-resources/duplicate_key.yaml", DUPE_WARN);
+    Maybe(DocumentSet) documents = load("test-resources/duplicate-key.yaml", DUPE_WARN);
     assert_just(documents);
 
     Node *root = document_set_get_root(from_just(documents), 0);
@@ -365,7 +370,7 @@ END_TEST
 
 START_TEST (duplicate_fail)
 {
-    Maybe(DocumentSet) documents = load("test-resources/duplicate_key.yaml", DUPE_FAIL);
+    Maybe(DocumentSet) documents = load("test-resources/duplicate-key.yaml", DUPE_FAIL);
     assert_loader_failure(documents, ERR_DUPLICATE_KEY);
 }
 END_TEST
