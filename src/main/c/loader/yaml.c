@@ -32,8 +32,9 @@ struct loader_context_s
     const String *input_name;
     DocumentSet  *documents;
     Vector       *errors;
+    Vector       *detached;
     Node         *current;
-    Scalar       *key_cache;
+    Node         *key_cache;
 };
 
 typedef struct loader_context_s Loader;
@@ -65,6 +66,12 @@ static void context_init(Loader *context, DuplicateKeyStrategy strategy, const S
         panic("loader: initialize: allocate error list");
     }
 
+    context->detached = make_vector_with_capacity(1);
+    if(NULL == context->detached)
+    {
+        panic("loader: initialize: allocate detached node list");
+    }
+
     context->documents = make_document_set();
     if(NULL == context->documents)
     {
@@ -91,7 +98,7 @@ static void interpret_yaml_error(Loader *context, yaml_parser_t *parser)
             break;
         default:
             // xxx - can the unhandled code be added as a string?
-            add_loader_error(context->errors, position(parser->problem_mark), ERR_INTERNAL);
+            add_loader_error(context->errors, position(parser->problem_mark), ERR_INTERNAL_LIBYAML);
             break;
     }
 }
@@ -117,43 +124,56 @@ static void set_anchor(Loader *context, Node *target, uint8_t *anchor)
     hashtable_put(document->anchors, anchor, target);
 }
 
-static void add_to_mapping(Loader *context, Node *node, const yaml_event_t *event)
+static void add_to_mapping(Loader *context, Node *node)
 {
     if(NULL == context->key_cache)
     {
-        if(!is_scalar(node))
-        {
-            loader_debug("uh oh! found a non scalar mapping key");
-            add_loader_error(context->errors, position(event->start_mark), ERR_NON_SCALAR_KEY);
-            node->parent = context->current;
-            return;
-        }
-
         loader_trace("caching node (%p) as key for mapping context (%p)", node, context->current);
-        context->key_cache = scalar(node);
+        context->key_cache = node;
 
-        return;
+        goto done;
+    }
+
+    if(!is_scalar(context->key_cache))
+    {
+        loader_debug("uh oh! found a non scalar mapping key");
+        add_loader_error(context->errors, context->key_cache->position, ERR_NON_SCALAR_KEY);
+
+        vector_append(context->detached, context->key_cache);
+        vector_append(context->detached, node);
+        
+        goto cleanup;
     }
 
     Mapping *mapping = mapping(context->current);
-    bool duplicate = mapping_contains(mapping, context->key_cache);
+    Scalar *key = scalar(context->key_cache);
+
+    bool duplicate = mapping_contains(mapping, key);
 
     if(duplicate && DUPE_FAIL == context->strategy)
     {
         loader_debug("uh oh! a duplicate key found");
-        add_loader_error(context->errors, position(event->start_mark), ERR_DUPLICATE_KEY);
-        node->parent = context->current;
-        return;
+        add_loader_error(context->errors, key->position, ERR_DUPLICATE_KEY);
+
+        vector_append(context->detached, key);
+        vector_append(context->detached, node);
+        
+        goto cleanup;
     }
     else if(duplicate && DUPE_WARN == context->strategy)
     {
-        Position pos = position(event->start_mark);
-        fprintf(stderr, "%s:%zd: warning: duplicate mapping key\n", C(context->input_name), pos.line+1);
+        const char *name = C(context->input_name);
+        size_t line = key->position.line + 1;
+        size_t offset  = key->position.offset + 1;
+        fprintf(stderr, "%s:%zu:%zu: warning: duplicate mapping key\n", name, line, offset);
     }
 
-    mapping_put(mapping, context->key_cache, node);
+    mapping_put(mapping, key, node);
 
+  cleanup:
     context->key_cache = NULL;
+  done:
+    node->parent = context->current;
 }
 
 static void add_node(Loader *context, Node *node, const yaml_event_t *event)
@@ -170,18 +190,21 @@ static void add_node(Loader *context, Node *node, const yaml_event_t *event)
             break;
         case MAPPING:
             loader_trace("adding node (%p) to mapping context (%p)", node, context->current);
-            add_to_mapping(context, node, event);
+            add_to_mapping(context, node);
             break;
         default:
             loader_debug("uh oh! an unsupported node kind has become the context node");
-            add_loader_error(context->errors, position(event->start_mark), ERR_INTERNAL);
+            add_loader_error(context->errors, position(event->start_mark), ERR_INTERNAL_CTX_NODE);
+            vector_append(context->detached, node);
             break;
     }
 }
 
-static void start_document(Loader *context)
+static void start_document(Loader *context, const yaml_event_t *event)
 {
     Document *document = make_document_node();
+    document->position = position(event->start_mark);
+
     context->current = node(document);
     document_set_add(context->documents, document);
 
@@ -198,6 +221,7 @@ static void end_document(Loader *context)
 static void start_sequence(Loader *context, const yaml_event_t *event)
 {
     Sequence *sequence = make_sequence_node();
+    sequence->position = position(event->start_mark);
 
     if(NULL != event->data.sequence_start.tag)
     {
@@ -224,6 +248,7 @@ static void end_sequence(Loader *context)
 static void start_mapping(Loader *context, const yaml_event_t *event)
 {
     Mapping *mapping = make_mapping_node();
+    mapping->position = position(event->start_mark);
 
     if(NULL != event->data.mapping_start.tag)
     {
@@ -268,6 +293,8 @@ static void add_alias(Loader *context, const yaml_event_t *event)
     }
 
     Alias *alias = make_alias_node(target);
+    alias->position = position(event->start_mark);
+
     add_node(context, node(alias), event);
 
     loader_trace("added alias '%s' for target (%p)", event->data.alias.anchor, target);
@@ -388,7 +415,7 @@ static ScalarKind resolve_scalar_kind(const Loader *context, const yaml_event_t 
     }
     else
     {
-        trace_string("defaulting to scalar string '%s'", event->data.scalar.value, event->data.scalar.length, event->data.scalar.length);
+        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length, event->data.scalar.length);
     }
 
     return kind;
@@ -398,6 +425,7 @@ static void add_scalar(Loader *context, const yaml_event_t *event)
 {
     ScalarKind kind = resolve_scalar_kind(context, event);
     Scalar *scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, kind);
+    scalar->position = position(event->start_mark);
 
     if(NULL != event->data.scalar.tag)
     {
@@ -429,7 +457,7 @@ static bool dispatch_event(Loader *context, yaml_event_t *event)
 
         case YAML_DOCUMENT_START_EVENT:
             loader_trace("document start event");
-            start_document(context);
+            start_document(context, event);
             break;
 
         case YAML_DOCUMENT_END_EVENT:
@@ -490,6 +518,11 @@ static void event_loop(Loader *context, yaml_parser_t *parser)
     }
 }
 
+static void node_destroyer(void *each)
+{
+    dispose_node(each);
+}
+
 static Maybe(DocumentSet) parse(const String *input_name, yaml_parser_t *parser, DuplicateKeyStrategy strategy)
 {
     Loader context;
@@ -514,6 +547,7 @@ static Maybe(DocumentSet) parse(const String *input_name, yaml_parser_t *parser,
         return just(DocumentSet, context.documents);
     }
 
+    vector_destroy(context.detached, node_destroyer);
     dispose_document_set(context.documents);
     return fail(DocumentSet, context.errors);
 }

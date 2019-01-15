@@ -2,6 +2,8 @@
 
 static const char * const MESSAGES[] =
 {
+    [ERR_INTERNAL_CTX_NODE] = "internal error: unexpected kind for context node",
+    [ERR_INTERNAL_LIBYAML] = "internal error: unknown error loading input file",
     [ERR_INPUT_IS_NULL] = "internal error: input is NULL",
     [ERR_INPUT_SIZE_IS_ZERO] = "internal error: input is zero length",
     [ERR_NO_DOCUMENTS_FOUND] = "no documents found",

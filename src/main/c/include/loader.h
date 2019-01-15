@@ -11,7 +11,8 @@
 
 enum loader_error_code_e
 {
-    ERR_INTERNAL,            // internal error
+    ERR_INTERNAL_CTX_NODE,   // internal error - non-complex context node
+    ERR_INTERNAL_LIBYAML,    // internal error - unknown libyaml error
     ERR_INPUT_IS_NULL,       // the input argument given was NULL
     ERR_INPUT_SIZE_IS_ZERO,  // input length was 0
     ERR_NO_DOCUMENTS_FOUND,  // no documents in input stream

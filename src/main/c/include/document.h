@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "hashtable.h"
+#include "position.h"
 #include "vector.h"
 
 typedef Vector DocumentSet;
@@ -37,6 +38,7 @@ struct node_s
         uint8_t  *name;
     } tag;
 
+    Position              position;
     const struct vtable_s *vtable;
     struct node_s         *parent;
     uint8_t               *anchor;
@@ -159,6 +161,7 @@ const Node *const_node_narrow(const Node *instance, NodeKind kind, const char * 
 #define node(obj) ((Node *)(obj))
 #define const_node(obj) ((const Node *)(obj))
 
+#define     node_position(object) (object).position
 const char *node_kind_name_(const Node *value);
 #define     node_kind_name(object) node_kind_name_(node((object)))
 

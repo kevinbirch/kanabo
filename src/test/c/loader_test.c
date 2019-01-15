@@ -12,7 +12,7 @@ static DocumentSet *model_fixture = NULL;
     {                                                                   \
         assert_nothing((CONTEXT));                                      \
         assert_uint_eq(1, vector_length((CONTEXT).error));              \
-        LoaderError *e = vector_get((CONTEXT).error, 0);                \
+        LoaderError *e = vector_last((CONTEXT).error);                  \
         assert_uint_eq((EXPECTED_RESULT), e->code);                     \
     } while(0)
 

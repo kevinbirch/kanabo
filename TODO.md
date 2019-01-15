@@ -68,6 +68,13 @@
   * why are postion macros different for parser and scanner?
 * panic backtrace looks like crap on Linux?
 * function tracing? https://github.com/namhyung/uftrace
+* switch to structured logging
+  * `log(const char *, ...)` vararg params are all subtypes of `event`
+  * https://github.com/uber-go/zap
+  * https://www.structlog.org/en/stable/getting-started.html
+* loader error handing
+  * failure in `add_node` or error from libyaml are fatal
+  * add extra context string to capture scalar value *or* libyaml message
 
 * update spacecadet
   * move changes back
