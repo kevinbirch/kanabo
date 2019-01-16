@@ -21,11 +21,10 @@ Send [DogeCoin](http://dogecoin.com) donations to [DCebBka8DZxtsvn8Dxhh171HTJ6rh
 
 ## License
 
-Copyright (c) 2012 [Kevin Birch](mailto:kmb@pobox.com).  All rights reserved.
+Copyright (c) 2012-2019 [Kevin Birch](mailto:kmb@pobox.com).  All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
-it under the terms of an [MIT-style License][mit] as described in
-the [LICENSE file][license].
+it under the terms described in the [LICENSE file][license].
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
