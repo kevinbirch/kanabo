@@ -10,9 +10,11 @@ Maybe(Nodelist) evaluate(const DocumentSet *documents, const JsonPath *path)
     PRECOND_NONNULL_ELSE_FAIL(Nodelist, ERR_NO_ROOT_IN_DOCUMENT, document_set_get_root(documents, 0));
     PRECOND_ELSE_FAIL(Nodelist, ERR_PATH_IS_EMPTY, 0 != vector_length(path->steps));
 
-    evaluator_debug("starting...");
+    String *repr = path_repr(path);
+    evaluator_debug("evaluating path \"%s\"", C(repr));
+    string_free(repr);
+
     Maybe(Nodelist) results = evaluate_steps(documents, path);
-    evaluator_debug("done.");
 
     return results;
 }

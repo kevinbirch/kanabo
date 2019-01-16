@@ -122,6 +122,7 @@ bool mstring_append_stream(MutableString **self, const uint8_t *value, size_t le
                                              const char [sizeof(VALUE)]: mstring_append_c_str, \
                                              uint8_t: mstring_append_byte, \
                                              const uint8_t: mstring_append_byte, \
+                                             int: mstring_append_char, \
                                              char: mstring_append_char, \
                                              const char: mstring_append_char, \
                                              String *: mstring_append_string, \

@@ -14,7 +14,39 @@ static DocumentSet *model_fixture = NULL;
     {                                                                   \
         assert_nothing((CONTEXT));                                      \
         assert_int_eq((CODE), (CONTEXT).error);                         \
-        log_debug("evaluator test", "received expected failure message: '%s'", evaluator_strerror((CODE))); \
+    } while(0)
+
+#define assert_node_kinds(L, K)                                 \
+    do                                                          \
+    {                                                           \
+        size_t count = sizeof(K)/sizeof(NodeKind);              \
+        assert_uint_eq(nodelist_length((L)), count);            \
+        for(size_t i = 0; i < count; i++)                       \
+        {                                                       \
+            assert_node_kind(nodelist_get((L), i), (K)[i]);     \
+        }                                                       \
+    } while(0)
+
+#define assert_scalar_kinds(L, K)                               \
+    do                                                          \
+    {                                                           \
+        size_t count = sizeof(K)/sizeof(ScalarKind);            \
+        assert_uint_eq(nodelist_length((L)), count);            \
+        for(size_t i = 0; i < count; i++)                       \
+        {                                                       \
+            assert_scalar_kind(nodelist_get((L), i), (K)[i]);   \
+        }                                                       \
+    } while(0)
+
+#define assert_scalar_values(L, V)                              \
+    do                                                          \
+    {                                                           \
+        size_t count = sizeof(V)/sizeof(char *);                \
+        assert_uint_eq(nodelist_length((L)), count);            \
+        for(size_t i = 0; i < count; i++)                       \
+        {                                                       \
+            assert_scalar_value(nodelist_get((L), i), (V)[i]);  \
+        }                                                       \
     } while(0)
 
 static DocumentSet *must_load(const char *filename)
@@ -107,28 +139,6 @@ START_TEST (null_document_root)
 }
 END_TEST
 
-START_TEST (relative_path)
-{
-    char *expression = "foo";
-
-    Maybe(JsonPath) path = parse(expression);
-    assert_just(path);
-
-    DocumentSet *bad_model = make_document_set();
-    Mapping *root = make_mapping_node();
-    Document *doc = make_document_node();
-    document_set_root(doc, node(root));
-    document_set_add(bad_model, doc);
-
-    Maybe(Nodelist) list = evaluate(bad_model, from_just(path));
-    assert_evaluator_failure(list, ERR_PATH_IS_NOT_ABSOLUTE);
-
-    dispose_document_set(bad_model);
-    dispose_path(from_just(path));
-}
-END_TEST
-
-
 START_TEST (empty_path)
 {
     JsonPath *path = (JsonPath *)calloc(1, sizeof(JsonPath));
@@ -162,6 +172,28 @@ static Nodelist *evaluate_expression(const char *expression)
 
     return from_just(list);
 }
+
+START_TEST (relative_path)
+{
+    char *expression = "foo";
+
+    Maybe(JsonPath) path = parse(expression);
+    assert_just(path);
+
+    DocumentSet *documents = make_document_set();
+    Mapping *root = make_mapping_node();
+    Document *doc = make_document_node();
+    document_set_root(doc, node(root));
+    document_set_add(documents, doc);
+
+    Maybe(Nodelist) list = evaluate(documents, from_just(path));
+    assert_just(list);
+    assert_nodelist_length(from_just(list), 0);
+
+    dispose_document_set(documents);
+    dispose_path(from_just(path));
+}
+END_TEST
 
 START_TEST (dollar_only)
 {
@@ -197,12 +229,8 @@ START_TEST (simple_recursive_step)
 {
     Nodelist *list = evaluate_expression("$..author");
 
-    assert_nodelist_length(list, 5);
-
-    assert_node_kind(nodelist_get(list, 0), SCALAR);
-    assert_node_kind(nodelist_get(list, 1), SCALAR);
-    assert_node_kind(nodelist_get(list, 2), SCALAR);
-    assert_node_kind(nodelist_get(list, 3), SCALAR);
+    NodeKind kinds[] = {SCALAR, SCALAR, SCALAR, SCALAR, SCALAR};
+    assert_node_kinds(list, kinds);
 
     nodelist_free(list);
 }
@@ -212,14 +240,8 @@ START_TEST (compound_recursive_step)
 {
     Nodelist *list = evaluate_expression("$.store..price");
 
-    assert_nodelist_length(list, 6);
-
-    assert_scalar_kind(nodelist_get(list, 0), SCALAR_REAL);
-    assert_scalar_kind(nodelist_get(list, 1), SCALAR_REAL);
-    assert_scalar_kind(nodelist_get(list, 2), SCALAR_REAL);
-    assert_scalar_kind(nodelist_get(list, 3), SCALAR_REAL);
-    assert_scalar_kind(nodelist_get(list, 4), SCALAR_REAL);
-    assert_scalar_kind(nodelist_get(list, 5), SCALAR_REAL);
+    ScalarKind kinds[] = {SCALAR_REAL, SCALAR_REAL, SCALAR_REAL, SCALAR_REAL, SCALAR_REAL, SCALAR_REAL};
+    assert_scalar_kinds(list, kinds);
 
     nodelist_free(list);
 }
@@ -244,13 +266,8 @@ START_TEST (wildcard)
 {
     Nodelist *list = evaluate_expression("$.store.*");
 
-    assert_nodelist_length(list, 6);
-
-    assert_node_kind(nodelist_get(list, 0), MAPPING);
-    assert_node_kind(nodelist_get(list, 1), MAPPING);
-    assert_node_kind(nodelist_get(list, 2), MAPPING);
-    assert_node_kind(nodelist_get(list, 3), MAPPING);
-    assert_node_kind(nodelist_get(list, 4), MAPPING);
+    NodeKind kinds[] = {MAPPING, SEQUENCE};
+    assert_node_kinds(list, kinds);
 
     nodelist_free(list);
 }
@@ -260,9 +277,11 @@ START_TEST (recursive_wildcard)
 {
     Nodelist *list = evaluate_expression("$..*");
 
-    assert_nodelist_length(list, 34);
-
-    assert_node_kind(nodelist_get(list, 0), MAPPING);
+    assert_nodelist_length(list, 25);
+    for(size_t i = 0; i < 25; i++)
+    {
+        assert_node_kind(nodelist_get(list, i), SCALAR);
+    }
 
     nodelist_free(list);
 }
@@ -304,13 +323,9 @@ START_TEST (number_test)
 {
     Nodelist *list = evaluate_expression("$.store.book[*].price.number()");
 
-    assert_nodelist_length(list, 5);
-
-    assert_scalar_value(nodelist_get(list, 0), "8.95");
-    assert_scalar_value(nodelist_get(list, 1), "12.99");
-    assert_scalar_value(nodelist_get(list, 2), "8.99");
-    assert_scalar_value(nodelist_get(list, 3), "22.99");
-
+    char *values[] = {"8.95", "12.99", "8.99", "22.99", "13.29"};
+    assert_scalar_values(list, values);
+        
     nodelist_free(list);
 }
 END_TEST
@@ -319,12 +334,8 @@ START_TEST (wildcard_predicate)
 {
     Nodelist *list = evaluate_expression("$.store.book[*].author");
 
-    assert_nodelist_length(list, 5);
-
-    assert_node_kind(nodelist_get(list, 0), SCALAR);
-    assert_node_kind(nodelist_get(list, 1), SCALAR);
-    assert_node_kind(nodelist_get(list, 2), SCALAR);
-    assert_node_kind(nodelist_get(list, 3), SCALAR);
+    NodeKind kinds[] = {SCALAR, SCALAR, SCALAR, SCALAR, SCALAR};
+    assert_node_kinds(list, kinds);
 
     nodelist_free(list);
 }
@@ -603,10 +614,8 @@ START_TEST (recursive_alias)
 {
     Nodelist *list = evaluate_expression("$.shipments..isbn");
 
-    assert_nodelist_length(list, 2);
-
-    assert_scalar_value(nodelist_get(list, 0), "1428312250");
-    assert_scalar_value(nodelist_get(list, 1), "0323073867");
+    char *values[] = {"1428312250", "0323073867"};
+    assert_scalar_values(list, values);
 
     nodelist_free(list);
 }
@@ -616,10 +625,8 @@ START_TEST (wildcard_predicate_alias)
 {
     Nodelist *list = evaluate_expression("$.shipments[0].items[*].price");
 
-    assert_nodelist_length(list, 2);
-
-    assert_scalar_value(nodelist_get(list, 0), "135.48");
-    assert_scalar_value(nodelist_get(list, 1), "84.18");
+    char *values[] = {"135.48", "84.18"};
+    assert_scalar_values(list, values);
 
     nodelist_free(list);
 }
@@ -629,7 +636,11 @@ START_TEST (recursive_wildcard_alias)
 {
     Nodelist *list = evaluate_expression("$.shipments[0].items..*");
 
-    assert_nodelist_length(list, 15);
+    assert_nodelist_length(list, 12);
+    for(size_t i = 0; i < 12; i++)
+    {
+        assert_node_kind(nodelist_get(list, i), SCALAR);
+    }
 
     nodelist_free(list);
 }
@@ -642,11 +653,11 @@ Suite *evaluator_suite(void)
     tcase_add_test(bad_input_case, null_path);
     tcase_add_test(bad_input_case, null_document);
     tcase_add_test(bad_input_case, null_document_root);
-    tcase_add_test(bad_input_case, relative_path);
     tcase_add_test(bad_input_case, empty_path);
 
     TCase *basic_case = tcase_create("basic");
     tcase_add_unchecked_fixture(basic_case, inventory_setup, evaluator_teardown);
+    tcase_add_test(basic_case, relative_path);
     tcase_add_test(basic_case, dollar_only);
     tcase_add_test(basic_case, single_name_step);
     tcase_add_test(basic_case, long_path);

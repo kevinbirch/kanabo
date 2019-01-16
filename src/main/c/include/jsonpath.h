@@ -128,22 +128,24 @@ void dispose_path(JsonPath *path);
 /* Path API */
 
 const char *        path_kind_name(enum path_kind value);
+String *            path_repr(const JsonPath *path);
 
 typedef bool (*path_iterator)(Step *each, void *parser);
 bool path_iterate(const JsonPath *path, path_iterator iterator, void *context);
 
 const char *        step_kind_name(enum step_kind value);
+#define             test_kind(SELF) (SELF)->test.kind
 const char *        test_kind_name(enum test_kind value);
 
 /* Type Test API */
 
-enum type_test_kind type_test_step_kind(const Step *value);
+#define             type_test_step_kind(SELF) (TYPE_TEST == (SELF)->test.kind ? (SELF)->test.type : 0)
 const char *        type_test_kind_name(enum type_test_kind value);
 
 /* Name Test API */
 
-uint8_t *           name_test_step_name(const Step *value);
-size_t              name_test_step_length(const Step *value);
+#define             name_test_step_name(SELF) (NAME_TEST == (SELF)->test.kind ? (SELF)->test.name.value : NULL)
+#define             name_test_step_length(SELF) (NAME_TEST == (SELF)->test.kind ? (SELF)->test.name.length : 0)
 
 /* Predicate API */
 
@@ -151,18 +153,18 @@ const char *        predicate_kind_name(enum predicate_kind value);
 
 /* Subscript Predicate API */
 
-int64_t             subscript_predicate_index(const Predicate *value);
+#define             subscript_predicate_index(SELF) (SUBSCRIPT == (SELF)->kind ? (SELF)->subscript.index : 0)
 
 /* Slice Predicate API */
 
-int64_t             slice_predicate_to(const Predicate *value);
-int64_t             slice_predicate_from(const Predicate *value);
-int64_t             slice_predicate_step(const Predicate *value);
-bool                slice_predicate_has_to(const Predicate *value);
-bool                slice_predicate_has_from(const Predicate *value);
-bool                slice_predicate_has_step(const Predicate *value);
+#define             slice_predicate_from(SELF) (SLICE == (SELF)->kind ? (SELF)->slice.from : (int64_t)0)
+#define             slice_predicate_to(SELF) (SLICE == (SELF)->kind ? (SELF)->slice.to : (int64_t)0)
+#define             slice_predicate_step(SELF) (SLICE == (SELF)->kind ? (((SELF)->slice.specified & SLICE_STEP) ? (SELF)->slice.step : (int64_t)1) : (int64_t)1)
+#define             slice_predicate_has_from(SELF) (SLICE == (SELF)->kind ? (SELF)->slice.specified & SLICE_FROM : false)
+#define             slice_predicate_has_to(SELF) (SLICE == (SELF)->kind ? (SELF)->slice.specified & SLICE_TO : false)
+#define             slice_predicate_has_step(SELF) (SLICE == (SELF)->kind ? (SELF)->slice.specified & SLICE_STEP : false)
 
 /* Join (Union) Predicate API */
 
-JsonPath *          join_predicate_left(const Predicate *value);
-JsonPath *          join_predicate_right(const Predicate *value);
+#define             join_predicate_left(SELF) (JOIN == (SELF)->kind ? (SELF)->join.left : NULL)
+#define             join_predicate_right(SELF) (JOIN == (SELF)->kind ? (SELF)->join.right : NULL)

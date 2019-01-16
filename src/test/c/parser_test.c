@@ -1215,10 +1215,6 @@ END_TEST
 
 START_TEST (bad_predicate_input)
 {
-    assert_null(join_predicate_left(NULL));
-
-    assert_null(join_predicate_right(NULL));
-
     char *expression = "$.foo[42].bar[*]";
     Maybe(JsonPath) maybe = parse(expression);
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);

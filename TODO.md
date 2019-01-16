@@ -75,6 +75,7 @@
 * loader error handing
   * failure in `add_node` or error from libyaml are fatal
   * add extra context string to capture scalar value *or* libyaml message
+* normalize uses of `%zd` to `%lld` where necessary
 
 * update spacecadet
   * move changes back
@@ -99,6 +100,10 @@
 * support in-place document patching
   * should there be a stack of edits atop of loaded tree (immutable loads?)
   * can whole documents be saved and named? (`${doc-name or index}` `$index`?)
+* update evaluator err msgs to specify which are internal errors
+* update `add_values_to_nodelist_map_iterator` trace with key name
+* update `apply_greedy_wildcard_test` sequence case to trace index and element kind
+* convert `scalar` value to `String`
 
 ### parser
 
