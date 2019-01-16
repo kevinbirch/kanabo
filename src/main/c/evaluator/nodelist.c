@@ -46,7 +46,7 @@ static bool nodelist_iterator_adpater(void *each, void *context)
 
 bool nodelist_iterate(const Nodelist *list, nodelist_iterator iterator, void *context)
 {
-    PRECOND_NONNULL_ELSE_FALSE(list, iterator);
+    ENSURE_NONNULL_ELSE_FALSE(list, iterator);
     return vector_iterate(list, nodelist_iterator_adpater, &(context_adapter){.iterator.foreach=iterator, context});
 }
 
@@ -58,12 +58,12 @@ static bool nodelist_map_adpater(void *each, void *context, Vector *target)
 
 Nodelist *nodelist_map(const Nodelist *list, nodelist_map_function function, void *context)
 {
-    PRECOND_NONNULL_ELSE_NULL(list, function);
+    ENSURE_NONNULL_ELSE_NULL(list, function);
     return vector_map(list, nodelist_map_adpater, &(context_adapter){.iterator.map=function, context});
 }
 
 Nodelist *nodelist_map_into(const Nodelist *list, nodelist_map_function function, void *context, Nodelist *target)
 {
-    PRECOND_NONNULL_ELSE_NULL(list, function, target);
+    ENSURE_NONNULL_ELSE_NULL(list, function, target);
     return vector_map_into(list, nodelist_map_adpater, &(context_adapter){.iterator.map=function, context}, target);
 }

@@ -31,7 +31,7 @@ static bool iterator_adapter(void *each, void *context)
 
 bool path_iterate(const JsonPath *path, path_iterator iterator, void *context)
 {
-    PRECOND_NONNULL_ELSE_FALSE(path, iterator);
+    ENSURE_NONNULL_ELSE_FALSE(path, iterator);
 
     return vector_iterate(path->steps, iterator_adapter, &(struct context_adapter){context, iterator});
 }

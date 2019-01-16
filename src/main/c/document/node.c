@@ -64,7 +64,7 @@ void _dispose_node(Node *value)
 
 size_t node_size_(const Node *self)
 {
-    PRECOND_NONNULL_ELSE_ZERO(self);
+    ENSURE_NONNULL_ELSE_ZERO(self);
 
     return self->vtable->size(self);
 }
@@ -76,20 +76,20 @@ NodeKind node_kind_(const Node *self)
 
 uint8_t *node_name_(const Node *self)
 {
-    PRECOND_NONNULL_ELSE_NULL(self);
+    ENSURE_NONNULL_ELSE_NULL(self);
 
     return self->tag.name;
 }
 
 Node *node_parent_(const Node *self)
 {
-    PRECOND_NONNULL_ELSE_NULL(self);
+    ENSURE_NONNULL_ELSE_NULL(self);
     return self->parent;
 }
 
 void node_set_tag_(Node *self, const uint8_t *value, size_t length)
 {
-    PRECOND_NONNULL_ELSE_VOID(self, value);
+    ENSURE_NONNULL_ELSE_VOID(self, value);
     self->tag.name = xcalloc(length + 1);
     memcpy(self->tag.name, value, length);
     self->tag.name[length] = '\0';
@@ -97,7 +97,7 @@ void node_set_tag_(Node *self, const uint8_t *value, size_t length)
 
 void node_set_anchor_(Node *self, const uint8_t *value, size_t length)
 {
-    PRECOND_NONNULL_ELSE_VOID(self, value);
+    ENSURE_NONNULL_ELSE_VOID(self, value);
     self->anchor = xcalloc(length + 1);
     memcpy(self->anchor, value, length);
     self->anchor[length] = '\0';

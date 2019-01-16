@@ -33,7 +33,7 @@ Node *document_set_get_root(const DocumentSet *self, size_t index)
 
 bool document_set_add(DocumentSet *self, Document *doc)
 {
-    PRECOND_NONNULL_ELSE_FALSE(self, doc);
+    ENSURE_NONNULL_ELSE_FALSE(self, doc);
 
     return vector_add(self, doc);
 }

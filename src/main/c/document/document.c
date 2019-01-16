@@ -37,14 +37,14 @@ Document *make_document_node(void)
 
 Node *document_root(const Document *self)
 {
-    PRECOND_NONNULL_ELSE_NULL(self);
+    ENSURE_NONNULL_ELSE_NULL(self);
 
     return self->root;
 }
 
 bool document_set_root(Document *self, Node *root)
 {
-    PRECOND_NONNULL_ELSE_FALSE(self, root);
+    ENSURE_NONNULL_ELSE_FALSE(self, root);
 
     self->root = root;
     root->parent = node(self);

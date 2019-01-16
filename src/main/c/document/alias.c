@@ -36,7 +36,7 @@ Alias *make_alias_node(Node *target)
 
 Node *alias_target(const Alias *self)
 {
-    PRECOND_NONNULL_ELSE_NULL(self);
+    ENSURE_NONNULL_ELSE_NULL(self);
 
     return self->target;
 }

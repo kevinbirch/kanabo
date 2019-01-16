@@ -4,7 +4,6 @@
 
 ## fixes
 
-* use only `ENSURE` condition macros instead of also `PRECOND`
 * fix scalar to use string as value
   * normalize `mapping_get` to use string
 * fix incorrect non-static uses of inline specifier

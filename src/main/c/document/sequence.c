@@ -64,8 +64,8 @@ Sequence *make_sequence_node(void)
 
 Node *sequence_get(const Sequence *self, size_t index)
 {
-    PRECOND_NONNULL_ELSE_NULL(self);
-    PRECOND_ELSE_NULL(index < vector_length(self->values));
+    ENSURE_NONNULL_ELSE_NULL(self);
+    ENSURE_ELSE_NULL(index < vector_length(self->values));
 
     return vector_get(self->values, index);
 }
@@ -78,7 +78,7 @@ static bool sequence_iterator_adpater(void *each, void *context)
 
 bool sequence_iterate(const Sequence *self, sequence_iterator iterator, void *context)
 {
-    PRECOND_NONNULL_ELSE_FALSE(self, iterator);
+    ENSURE_NONNULL_ELSE_FALSE(self, iterator);
 
     context_adapter adapter = {.iterator=iterator, .context=context};
     return vector_iterate(self->values, sequence_iterator_adpater, &adapter);
@@ -86,7 +86,7 @@ bool sequence_iterate(const Sequence *self, sequence_iterator iterator, void *co
 
 bool sequence_add(Sequence *self, Node *item)
 {
-    PRECOND_NONNULL_ELSE_FALSE(self, item);
+    ENSURE_NONNULL_ELSE_FALSE(self, item);
 
     bool result = vector_add(self->values, item);
     if(result)

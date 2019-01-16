@@ -71,7 +71,7 @@ Scalar *make_scalar_node(const uint8_t *value, size_t length, ScalarKind kind)
 
 uint8_t *scalar_value(const Scalar *self)
 {
-    PRECOND_NONNULL_ELSE_NULL(self);
+    ENSURE_NONNULL_ELSE_NULL(self);
 
     return self->value;
 }

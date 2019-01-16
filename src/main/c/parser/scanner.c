@@ -327,8 +327,8 @@ static void match_symbol(Scanner *self)
 
 Scanner *make_scanner(const char *data, size_t length)
 {
-    PRECOND_NONNULL_ELSE_NULL(data);
-    PRECOND_ELSE_NULL(0 != length);
+    ENSURE_NONNULL_ELSE_NULL(data);
+    ENSURE_ELSE_NULL(0 != length);
 
     Scanner *self = xcalloc(sizeof(Scanner) + length);
     input_init(&self->input, NULL, length);
@@ -339,7 +339,7 @@ Scanner *make_scanner(const char *data, size_t length)
 
 void dispose_scanner(Scanner *self)
 {
-    PRECOND_NONNULL_ELSE_VOID(self);
+    ENSURE_NONNULL_ELSE_VOID(self);
 
     input_release(&self->input);
     free(self);
@@ -347,7 +347,7 @@ void dispose_scanner(Scanner *self)
 
 void scanner_next(Scanner *self)
 {
-    PRECOND_NONNULL_ELSE_VOID(self);
+    ENSURE_NONNULL_ELSE_VOID(self);
 
     if(END_OF_INPUT == self->current.kind)
     {
@@ -506,14 +506,14 @@ void scanner_next(Scanner *self)
 
 void scanner_reset(Scanner *self)
 {
-    PRECOND_NONNULL_ELSE_VOID(self);
+    ENSURE_NONNULL_ELSE_VOID(self);
 
     input_reset(&self->input);
 }
 
 char *scanner_extract_lexeme(Scanner *self, Location location)
 {
-    PRECOND_NONNULL_ELSE_NULL(self);
+    ENSURE_NONNULL_ELSE_NULL(self);
 
     return input_extract(&self->input, location);
 }

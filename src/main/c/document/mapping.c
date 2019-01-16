@@ -79,14 +79,14 @@ Mapping *make_mapping_node(void)
 
 Node *mapping_get(const Mapping *self, Scalar *key)
 {
-    PRECOND_NONNULL_ELSE_NULL(self, key);
+    ENSURE_NONNULL_ELSE_NULL(self, key);
 
     return hashtable_get(self->values, key);
 }
 
 bool mapping_contains(const Mapping *self, Scalar *key)
 {
-    PRECOND_NONNULL_ELSE_FALSE(self, key);
+    ENSURE_NONNULL_ELSE_FALSE(self, key);
 
     return hashtable_contains(self->values, key);
 }
@@ -99,7 +99,7 @@ static bool mapping_iterator_adpater(void *key, void *value, void *context)
 
 bool mapping_iterate(const Mapping *self, mapping_iterator iterator, void *context)
 {
-    PRECOND_NONNULL_ELSE_FALSE(self, iterator);
+    ENSURE_NONNULL_ELSE_FALSE(self, iterator);
 
     context_adapter adapter = {.iterator=iterator, .context=context};
     return hashtable_iterate(self->values, mapping_iterator_adpater, &adapter);
@@ -107,7 +107,7 @@ bool mapping_iterate(const Mapping *self, mapping_iterator iterator, void *conte
 
 bool mapping_put(Mapping *self, Scalar *key, Node *value)
 {
-    PRECOND_NONNULL_ELSE_FALSE(self, key, value);
+    ENSURE_NONNULL_ELSE_FALSE(self, key, value);
 
     errno = 0;
     hashtable_put(self->values, key, value);

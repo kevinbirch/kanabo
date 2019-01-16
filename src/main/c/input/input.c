@@ -40,7 +40,7 @@ static inline void advance_by(Input *self, size_t amount)
 
 void input_init(Input *self, const char *name, size_t length)
 {
-    PRECOND_NONNULL_ELSE_VOID(self);
+    ENSURE_NONNULL_ELSE_VOID(self);
 
     self->position.index = 0;
     self->position.line = 0;
@@ -56,14 +56,14 @@ void input_init(Input *self, const char *name, size_t length)
 
 void input_release(Input *self)
 {
-    PRECOND_NONNULL_ELSE_VOID(self);
+    ENSURE_NONNULL_ELSE_VOID(self);
 
     string_free(self->name);
 }
 
 void dispose_input(Input *self)
 {
-    PRECOND_NONNULL_ELSE_VOID(self);
+    ENSURE_NONNULL_ELSE_VOID(self);
 
     string_free(self->name);
     free(self);
@@ -71,15 +71,15 @@ void dispose_input(Input *self)
 
 void input_goto(Input *self, Position position)
 {
-    PRECOND_NONNULL_ELSE_VOID(self);
-    PRECOND_ELSE_VOID(position.index < self->source.length);
+    ENSURE_NONNULL_ELSE_VOID(self);
+    ENSURE_ELSE_VOID(position.index < self->source.length);
 
     self->position = position;
 }
 
 void input_reset(Input *self)
 {
-    PRECOND_NONNULL_ELSE_VOID(self);
+    ENSURE_NONNULL_ELSE_VOID(self);
 
     self->position.index = 0;
     self->position.line = 0;
@@ -88,7 +88,7 @@ void input_reset(Input *self)
 
 size_t input_remaining(Input *self)
 {
-    PRECOND_NONNULL_ELSE_ZERO(self);
+    ENSURE_NONNULL_ELSE_ZERO(self);
 
     if(index(self) >= self->source.length)
     {
@@ -100,7 +100,7 @@ size_t input_remaining(Input *self)
 
 void input_skip_whitespace(Input *self)
 {
-    PRECOND_NONNULL_ELSE_VOID(self);
+    ENSURE_NONNULL_ELSE_VOID(self);
 
     while(input_has_more(self) && isspace(current(self)))
     {
@@ -110,8 +110,8 @@ void input_skip_whitespace(Input *self)
 
 char input_consume_one(Input *self)
 {
-    PRECOND_NONNULL_ELSE_ZERO(self);
-    PRECOND_ELSE_ZERO(input_has_more(self));
+    ENSURE_NONNULL_ELSE_ZERO(self);
+    ENSURE_ELSE_ZERO(input_has_more(self));
 
     char current = current(self);
     incr(self);
@@ -121,8 +121,8 @@ char input_consume_one(Input *self)
 
 size_t input_consume_many(Input *self, size_t count, char *result)
 {
-    PRECOND_NONNULL_ELSE_ZERO(self);
-    PRECOND_ELSE_ZERO(input_has_more(self));
+    ENSURE_NONNULL_ELSE_ZERO(self);
+    ENSURE_ELSE_ZERO(input_has_more(self));
 
     size_t length = count;
     if(count > input_remaining(self))
@@ -141,11 +141,11 @@ size_t input_consume_many(Input *self, size_t count, char *result)
 
 bool input_consume_if(Input *self, const char *value)
 {
-    PRECOND_NONNULL_ELSE_FALSE(self);
-    PRECOND_ELSE_FALSE(input_has_more(self));
+    ENSURE_NONNULL_ELSE_FALSE(self);
+    ENSURE_ELSE_FALSE(input_has_more(self));
 
     size_t length = strlen(value);
-    PRECOND_ELSE_FALSE(length <= input_remaining(self));
+    ENSURE_ELSE_FALSE(length <= input_remaining(self));
 
     if(memcmp(cursor(self), value, length) == 0)
     {
@@ -158,8 +158,8 @@ bool input_consume_if(Input *self, const char *value)
 
 void input_push_back(Input *self)
 {
-    PRECOND_NONNULL_ELSE_VOID(self);
-    PRECOND_ELSE_VOID(0 != index(self));
+    ENSURE_NONNULL_ELSE_VOID(self);
+    ENSURE_ELSE_VOID(0 != index(self));
 
     self->position.index--;
     if(!self->track_lines)
@@ -186,9 +186,9 @@ void input_push_back(Input *self)
 
 char *input_extract(Input *self, Location location)
 {
-    PRECOND_NONNULL_ELSE_NULL(self);
-    PRECOND_ELSE_NULL(location.index < self->source.length);
-    PRECOND_ELSE_NULL(location.index + location.extent <= self->source.length);
+    ENSURE_NONNULL_ELSE_NULL(self);
+    ENSURE_ELSE_NULL(location.index < self->source.length);
+    ENSURE_ELSE_NULL(location.index + location.extent <= self->source.length);
 
     char *value = xcalloc(location.extent + 1);
     memcpy(value, self->source.buffer + location.index, location.extent);
