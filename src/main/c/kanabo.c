@@ -13,16 +13,16 @@
 #include <execinfo.h>
 #include <libgen.h>
 
-#include "linenoise.h"
 
-#include "warranty.h"
-#include "options.h"
-#include "loader.h"
-#include "parser.h"
-#include "evaluator.h"
 #include "emitter.h"
+#include "evaluator.h"
+#include "linenoise.h"
+#include "loader.h"
 #include "log.h"
+#include "options.h"
+#include "parser.h"
 #include "version.h"
+#include "warranty.h"
 
 static const char * const DEFAULT_PROGRAM_NAME = "kanabo";
 

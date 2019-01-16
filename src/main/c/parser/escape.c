@@ -1,10 +1,9 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-#include "str.h"
-
 #include "parser/escape.h"
 #include "parser/context.h"
+#include "str.h"
 
 #define SURROGATE_START    0xD800
 #define SURROGATE_END      0xDFFF

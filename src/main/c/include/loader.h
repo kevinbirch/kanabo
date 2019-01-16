@@ -2,9 +2,9 @@
 
 #include <stdio.h>
 
-#include "maybe.h"
 #include "document.h"
 #include "input.h"
+#include "maybe.h"
 #include "options.h"
 #include "position.h"
 #include "vector.h"

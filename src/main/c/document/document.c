@@ -1,5 +1,5 @@
-#include "document.h"
 #include "conditions.h"
+#include "document.h"
 #include "xalloc.h"
 
 static bool document_equals(const Node *one, const Node *two)

@@ -1,5 +1,5 @@
-#include "jsonpath.h"
 #include "conditions.h"
+#include "jsonpath.h"
 
 static const char * const TYPE_TEST_KIND_NAMES[] =
 {

@@ -3,8 +3,8 @@
 #include "maybe.h"
 
 #include "document.h"
-#include "nodelist.h"
 #include "jsonpath.h"
+#include "nodelist.h"
 
 enum evaluator_error_e
 {

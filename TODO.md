@@ -4,9 +4,6 @@
 
 ## fixes
 
-* eliminate file headers
-* eliminate double spacing
-* alphabetize includes
 * use only `ENSURE` condition macros instead of also `PRECOND`
 * fix scalar to use string as value
   * normalize `mapping_get` to use string

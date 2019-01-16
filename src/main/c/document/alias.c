@@ -1,5 +1,5 @@
-#include "document.h"
 #include "conditions.h"
+#include "document.h"
 #include "xalloc.h"
 
 static void alias_free(Node *value)

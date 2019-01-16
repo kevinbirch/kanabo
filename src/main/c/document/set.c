@@ -1,5 +1,5 @@
-#include "document.h"
 #include "conditions.h"
+#include "document.h"
 
 static bool freedom_iterator(void *each, void *context __attribute__((unused)))
 {
