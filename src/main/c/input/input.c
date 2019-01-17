@@ -184,15 +184,11 @@ void input_push_back(Input *self)
     }
 }
 
-char *input_extract(Input *self, Location location)
+String *input_extract(Input *self, Location location)
 {
     ENSURE_NONNULL_ELSE_NULL(self);
     ENSURE_ELSE_NULL(location.index < self->source.length);
     ENSURE_ELSE_NULL(location.index + location.extent <= self->source.length);
 
-    char *value = xcalloc(location.extent + 1);
-    memcpy(value, self->source.buffer + location.index, location.extent);
-    value[location.extent] = '\0';
-
-    return value;
+    return make_string_with_bytestring((const uint8_t *)(self->source.buffer + location.index), location.extent);
 }

@@ -68,22 +68,24 @@ static inline bool unescape_unicode(Parser *self, uint32_t ucs4, MutableString *
     return true;
 }
 
-char *unescape(Parser *self, const char *lexeme)
+String *unescape(Parser *self, const String *lexeme)
 {
-    char *result = NULL;
+    String *result = NULL;
 
     size_t length = strlen(lexeme);
     MutableString *cooked = make_mstring(length);
 
     for(size_t i = 0; i < length; i++)
     {
-        if(lexeme[i] != '\\')
+        uint8_t cur = string_get(lexeme, i);
+        if(cur != '\\')
         {
-            mstring_append(&cooked, lexeme[i]);
+            mstring_append(&cooked, cur);
             continue;
         }
         i++;
-        switch(lexeme[i])
+        cur = string_get(lexeme, i);
+        switch(cur)
         {
             case '"':
             case '\'':
@@ -91,7 +93,7 @@ char *unescape(Parser *self, const char *lexeme)
             case ' ':
             case '\\':
                 // N.B. - unescape as the literal value
-                mstring_append(&cooked, lexeme[i]);
+                mstring_append(&cooked, cur);
                 break;
             case 'b':
                 mstring_append(&cooked, (char)'\b');
@@ -132,7 +134,7 @@ char *unescape(Parser *self, const char *lexeme)
             case 'x':
                 i++;
                 uint8_t c;
-                sscanf(lexeme + i, "%2"SCNx8, &c);
+                sscanf(C(lexeme) + i, "%2"SCNx8, &c);
                 mstring_append(&cooked, c);
                 i++;
                 break;
@@ -140,7 +142,7 @@ char *unescape(Parser *self, const char *lexeme)
             {
                 i++;
                 uint32_t ucs4;
-                sscanf(lexeme + i, "%4"SCNx32, &ucs4);
+                sscanf(C(lexeme) + i, "%4"SCNx32, &ucs4);
                 if(!unescape_unicode(self, ucs4, &cooked))
                 {
                     goto cleanup;
@@ -152,7 +154,7 @@ char *unescape(Parser *self, const char *lexeme)
             {
                 i++;
                 uint32_t ucs4;
-                sscanf(lexeme + i, "%8"SCNx32, &ucs4);
+                sscanf(C(lexeme) + i, "%8"SCNx32, &ucs4);
                 if(!unescape_unicode(self, ucs4, &cooked))
                 {
                     goto cleanup;
@@ -168,7 +170,7 @@ char *unescape(Parser *self, const char *lexeme)
     }
 
 
-    result = mstring_copy(cooked);
+    result = mstring_as_string(cooked);
 
   cleanup:
     mstring_free(cooked);

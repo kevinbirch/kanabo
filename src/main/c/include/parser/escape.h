@@ -1,5 +1,6 @@
 #pragma once
 
 #include "parser/context.h"
+#include "str.h"
 
-char *unescape(Parser *parser, const char *lexeme);
+String *unescape(Parser *parser, const String *lexeme);

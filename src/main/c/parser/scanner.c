@@ -511,7 +511,7 @@ void scanner_reset(Scanner *self)
     input_reset(&self->input);
 }
 
-char *scanner_extract_lexeme(Scanner *self, Location location)
+String *scanner_extract_lexeme(Scanner *self, Location location)
 {
     ENSURE_NONNULL_ELSE_NULL(self);
 

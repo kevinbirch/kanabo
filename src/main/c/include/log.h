@@ -29,8 +29,7 @@ void set_log_level_from_env(void);
 #define log_debug(COMPONENT, FORMAT, ...)  logger(LVL_DEBUG, COMPONENT, FORMAT, ##__VA_ARGS__)
 #define log_trace(COMPONENT, FORMAT, ...)  logger(LVL_TRACE, COMPONENT, FORMAT, ##__VA_ARGS__)
 
-#define log_string(LEVEL, COMP, FORMAT, VALUE, LENGTH, ...)             \
-    do {                                                                \
+#define log_string(LEVEL, COMP, FORMAT, VALUE, LENGTH, ...) do {        \
         const uint8_t *_log_value = (VALUE);                            \
         const size_t _log_length = (LENGTH);                            \
         char _log_string[_log_length + 1];                              \

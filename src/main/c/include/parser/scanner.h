@@ -3,6 +3,7 @@
 #include "input.h"
 #include "parser.h"
 #include "parser/token.h"
+#include "str.h"
 
 typedef void (*ErrorCallback)(Position position, ParserErrorCode code, void *parameter);
 
@@ -29,4 +30,4 @@ void     dispose_scanner(Scanner *self);
 void scanner_next(Scanner *self);
 void scanner_reset(Scanner *self);
 
-char *scanner_extract_lexeme(Scanner *self, Location location);
+String *scanner_extract_lexeme(Scanner *self, Location location);

@@ -22,15 +22,15 @@ Node *sequence_builder(Node *one, ...)
 Node *mapping_builder(const char *key1_repr, Node *value1, ...)
 {
     Mapping *mapping = make_mapping_node();
-    Scalar *key1 = make_scalar_node((uint8_t *)key1_repr, strlen(key1_repr), SCALAR_STRING);
-    mapping_put(mapping, key1, value1);
+    String *key_1 = make_string(key1_repr);
+    mapping_put(mapping, key_1, value1);
     
     va_list values;
     va_start(values, value1);
     char *key_n_repr = va_arg(values, char *);
     while(NULL != key_n_repr)
     {
-        Scalar *key_n = make_scalar_node((uint8_t *)key_n_repr, strlen(key_n_repr), SCALAR_STRING);
+        String *key_n = make_string(key_n_repr);
         Node *value_n = va_arg(values, Node *);
         mapping_put(mapping, key_n, value_n);
     }
@@ -41,32 +41,31 @@ Node *mapping_builder(const char *key1_repr, Node *value1, ...)
 
 Node *string(const char *value)
 {
-    return node(make_scalar_node((uint8_t *)value, strlen(value), SCALAR_STRING));
+    return node(make_scalar_node(make_string(value), SCALAR_STRING));
 }
 
 Node *integer(const char *value)
 {
-    return node(make_scalar_node((uint8_t *)value, strlen(value), SCALAR_INTEGER));
+    return node(make_scalar_node(make_string(value), SCALAR_INTEGER));
 }
 
 Node *real(const char *value)
 {
-    return node(make_scalar_node((uint8_t *)value, strlen(value), SCALAR_REAL));
+    return node(make_scalar_node(make_string(value), SCALAR_REAL));
 }
 
 Node *timestamp(const char *value)
 {
-    return node(make_scalar_node((uint8_t *)value, strlen(value), SCALAR_TIMESTAMP));
+    return node(make_scalar_node(make_string(value), SCALAR_TIMESTAMP));
 }
 
 Node *boolean(bool value)
 {
     char *scalar = value ? "true" : "false";
-    size_t len = value ? 4ul : 5ul;
-    return node(make_scalar_node((uint8_t *)scalar, len, SCALAR_BOOLEAN));
+    return node(make_scalar_node(make_string(scalar), SCALAR_BOOLEAN));
 }
 
 Node *null(void)
 {
-    return node(make_scalar_node((uint8_t *)"null", 4ul, SCALAR_NULL));
+    return node(make_scalar_node(make_string("null"), SCALAR_NULL));
 }

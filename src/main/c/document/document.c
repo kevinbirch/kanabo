@@ -35,18 +35,10 @@ Document *make_document_node(void)
     return self;
 }
 
-Node *document_root(const Document *self)
+void document_set_root(Document *self, Node *root)
 {
-    ENSURE_NONNULL_ELSE_NULL(self);
-
-    return self->root;
-}
-
-bool document_set_root(Document *self, Node *root)
-{
-    ENSURE_NONNULL_ELSE_FALSE(self, root);
+    ENSURE_NONNULL_ELSE_VOID(self, root);
 
     self->root = root;
     root->parent = node(self);
-    return true;
 }

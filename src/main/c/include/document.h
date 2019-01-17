@@ -6,6 +6,7 @@
 
 #include "hashtable.h"
 #include "position.h"
+#include "str.h"
 #include "vector.h"
 
 typedef Vector DocumentSet;
@@ -77,8 +78,7 @@ struct scalar_s
         struct node_s;
     };
     ScalarKind    kind;
-    uint8_t      *value;
-    size_t        length;
+    String       *value;
 };
 
 typedef struct scalar_s Scalar;
@@ -123,76 +123,76 @@ typedef struct alias_s Alias;
  * Constructors
  */
 
-#define   make_document_set() make_vector_with_capacity(1)
-Document *make_document_node(void);
-Sequence *make_sequence_node(void);
-Mapping  *make_mapping_node(void);
-Scalar   *make_scalar_node(const uint8_t *value, size_t length, ScalarKind kind);
-Alias    *make_alias_node(Node *target);
+#define      make_document_set() make_vector_with_capacity(1)
+Document    *make_document_node(void);
+Sequence    *make_sequence_node(void);
+Mapping     *make_mapping_node(void);
+Scalar      *make_scalar_node(String *value, ScalarKind kind);
+Alias       *make_alias_node(Node *target);
 
 /*
  * Destructors
  */
 
-void dispose_document_set(DocumentSet *value);
-void _dispose_node(Node *value);
-#define dispose_node(object) _dispose_node(node((object)))
+void        dispose_document_set(DocumentSet *value);
+void        _dispose_node(Node *value);
+#define     dispose_node(SELF) _dispose_node(node((SELF)))
 
 /*
  * Document Set API
  */
 
-#define document_set_size vector_length
-#define document_set_get vector_get
-Node   *document_set_get_root(const DocumentSet *model, size_t index);
-bool    document_set_add(DocumentSet *model, Document *doc);
+#define     document_set_size vector_length
+#define     document_set_get vector_get
+Node       *document_set_get_root(const DocumentSet *model, size_t index);
+bool        document_set_add(DocumentSet *model, Document *doc);
 
 /*
  * Node API
  */
 
-void node_init(Node *self, NodeKind kind, const struct vtable_s *vtable);
+void        node_init(Node *self, NodeKind kind, const struct vtable_s *vtable);
 
-Node *node_narrow(Node *instance, NodeKind kind, const char * restrict file, int line);
+Node       *node_narrow(Node *instance, NodeKind kind, const char * restrict file, int line);
 const Node *const_node_narrow(const Node *instance, NodeKind kind, const char * restrict file, int line);
-#define CHECKED_CAST(OBJ, KIND, TYPE) (TYPE *)node_narrow((OBJ), (KIND), __FILE__, __LINE__)
-#define CONST_CHECKED_CAST(OBJ, KIND, TYPE) (const TYPE *)const_node_narrow((OBJ), (KIND), __FILE__, __LINE__)
+#define     CHECKED_CAST(OBJ, KIND, TYPE) (TYPE *)node_narrow((OBJ), (KIND), __FILE__, __LINE__)
+#define     CONST_CHECKED_CAST(OBJ, KIND, TYPE) (const TYPE *)const_node_narrow((OBJ), (KIND), __FILE__, __LINE__)
 
-#define node(obj) ((Node *)(obj))
-#define const_node(obj) ((const Node *)(obj))
+#define     node(SELF) ((Node *)(SELF))
+#define     const_node(SELF) ((const Node *)(SELF))
 
-#define     node_position(object) (object).position
+#define     node_position(SELF) (SELF).position
 const char *node_kind_name_(const Node *value);
-#define     node_kind_name(object) node_kind_name_(node((object)))
+#define     node_kind_name(SELF) node_kind_name_(node((SELF)))
 
 NodeKind    node_kind_(const Node *value);
-#define     node_kind(object) node_kind_(node((object)))
+#define     node_kind(SELF) node_kind_(node((SELF)))
 uint8_t    *node_name_(const Node *value);
-#define     node_name(object) node_name_(node((object)))
+#define     node_name(SELF) node_name_(node((SELF)))
 Node       *node_parent_(const Node *value);
-#define     node_parent(object) node_parent_(node((object)))
+#define     node_parent(SELF) node_parent_(node((SELF)))
 size_t      node_size_(const Node *value);
-#define     node_size(object) node_size_(node((object)))
+#define     node_size(SELF) node_size_(node((SELF)))
 
 bool        node_equals_(const Node *one, const Node *two);
 #define     node_equals(one, two) node_equals_(const_node((one)), const_node((two)))
 bool        node_comparitor(const void *one, const void *two);
 
 void        node_set_tag_(Node *target, const uint8_t *value, size_t length);
-#define     node_set_tag(object, value, length) node_set_tag_(node((object)), (value), (length))
+#define     node_set_tag(SELF, value, length) node_set_tag_(node((SELF)), (value), (length))
 void        node_set_anchor_(Node *target, const uint8_t *value, size_t length);
-#define     node_set_anchor(object, value, length) node_set_anchor_(node((object)), (value), (length))
+#define     node_set_anchor(SELF, value, length) node_set_anchor_(node((SELF)), (value), (length))
 
 /*
  * Document API
  */
 
-Node *document_root(const Document *doc);
-bool  document_set_root(Document *doc, Node *root);
+#define     document_root(SELF) (SELF)->root
+void        document_set_root(Document *doc, Node *root);
 
-#define document(obj) (CHECKED_CAST((obj), DOCUMENT, Document))
-#define const_document(obj) (CONST_CHECKED_CAST((obj), DOCUMENT, Document))
-#define is_document(obj) (DOCUMENT == node_kind(node((obj))))
+#define     document(SELF) (CHECKED_CAST((SELF), DOCUMENT, Document))
+#define     const_document(SELF) (CONST_CHECKED_CAST((SELF), DOCUMENT, Document))
+#define     is_document(SELF) (DOCUMENT == node_kind(node((SELF))))
 
 /*
  * Scalar API
@@ -200,58 +200,58 @@ bool  document_set_root(Document *doc, Node *root);
 
 const char *scalar_kind_name(const Scalar *value);
 
-uint8_t    *scalar_value(const Scalar *scalar);
-ScalarKind  scalar_kind(const Scalar *scalar);
-bool        scalar_boolean_is_true(const Scalar *scalar);
-bool        scalar_boolean_is_false(const Scalar *scalar);
+#define     scalar_value(SELF) (SELF)->value
+#define     scalar_kind(SELF) (SELF)->kind
+#define     scalar_boolean_is_true(SELF) (0 == memcmp("true", strdta((SELF)->value), 4))
+#define     scalar_boolean_is_false(SELF) (0 == memcmp("false", strdta((SELF)->value), 5))
 
-#define scalar(obj) (CHECKED_CAST((obj), SCALAR, Scalar))
-#define const_scalar(obj) (CONST_CHECKED_CAST((obj), SCALAR, Scalar))
+#define     scalar(SELF) (CHECKED_CAST((SELF), SCALAR, Scalar))
+#define     const_scalar(SELF) (CONST_CHECKED_CAST((SELF), SCALAR, Scalar))
 
-#define is_scalar(obj) (SCALAR == node_kind(node((obj))))
-#define is_string(obj) (is_scalar((obj)) && SCALAR_STRING == scalar_kind(scalar((obj))))
-#define is_integer(obj) (is_scalar((obj)) && SCALAR_INTEGER == scalar_kind(scalar((obj))))
-#define is_real(obj) (is_scalar((obj)) && SCALAR_REAL == scalar_kind(scalar((obj))))
-#define is_number(obj) (is_integer((obj)) || is_real((obj)))
-#define is_timestamp(obj) (is_scalar((obj)) && SCALAR_TIMESTAMP == scalar_kind(scalar((obj))))
-#define is_boolean(obj) (is_scalar((obj)) && SCALAR_BOOLEAN == scalar_kind(scalar((obj))))
-#define is_null(obj) (is_scalar((obj)) && SCALAR_NULL == scalar_kind(scalar((obj))))
+#define     is_scalar(SELF) (SCALAR == node_kind(node((SELF))))
+#define     is_string(SELF) (is_scalar((SELF)) && SCALAR_STRING == scalar_kind(scalar((SELF))))
+#define     is_integer(SELF) (is_scalar((SELF)) && SCALAR_INTEGER == scalar_kind(scalar((SELF))))
+#define     is_real(SELF) (is_scalar((SELF)) && SCALAR_REAL == scalar_kind(scalar((SELF))))
+#define     is_number(SELF) (is_integer((SELF)) || is_real((SELF)))
+#define     is_timestamp(SELF) (is_scalar((SELF)) && SCALAR_TIMESTAMP == scalar_kind(scalar((SELF))))
+#define     is_boolean(SELF) (is_scalar((SELF)) && SCALAR_BOOLEAN == scalar_kind(scalar((SELF))))
+#define     is_null(SELF) (is_scalar((SELF)) && SCALAR_NULL == scalar_kind(scalar((SELF))))
 
 /*
  * Sequence API
  */
 
-Node *sequence_get(const Sequence *seq, size_t index);
-bool  sequence_add(Sequence *seq, Node *item);
+#define     sequence_get(SELF, INDEX) vector_get((SELF)->values, (INDEX))
+bool        sequence_add(Sequence *seq, Node *item);
 
 typedef bool (*sequence_iterator)(Node *each, void *context);
-bool sequence_iterate(const Sequence *seq, sequence_iterator iterator, void *context);
+bool        sequence_iterate(const Sequence *seq, sequence_iterator iterator, void *context);
 
-#define sequence(obj) (CHECKED_CAST((obj), SEQUENCE, Sequence))
-#define const_sequence(obj) (CONST_CHECKED_CAST((obj), SEQUENCE, Sequence))
-#define is_sequence(obj) (SEQUENCE == node_kind(node((obj))))
+#define     sequence(SELF) (CHECKED_CAST((SELF), SEQUENCE, Sequence))
+#define     const_sequence(SELF) (CONST_CHECKED_CAST((SELF), SEQUENCE, Sequence))
+#define     is_sequence(SELF) (SEQUENCE == node_kind(node((SELF))))
 
 /*
  * Mapping API
  */
 
-Node *mapping_get(const Mapping *map, Scalar *key);
-bool mapping_contains(const Mapping *map, Scalar *key);
-bool mapping_put(Mapping *self, Scalar *key, Node *value);
+Node       *mapping_get(const Mapping *map, String *key);
+bool        mapping_contains(const Mapping *map, String *key);
+bool        mapping_put(Mapping *self, String *key, Node *value);
 
-typedef bool (*mapping_iterator)(Scalar *key, Node *value, void *context);
-bool mapping_iterate(const Mapping *map, mapping_iterator iterator, void *context);
+typedef bool (*mapping_iterator)(String *key, Node *value, void *context);
+bool        mapping_iterate(const Mapping *map, mapping_iterator iterator, void *context);
 
-#define mapping(obj) (CHECKED_CAST((obj), MAPPING, Mapping))
-#define const_mapping(obj) (CONST_CHECKED_CAST((obj), MAPPING, Mapping))
-#define is_mapping(obj) (MAPPING == node_kind(node((obj))))
+#define     mapping(SELF) (CHECKED_CAST((SELF), MAPPING, Mapping))
+#define     const_mapping(SELF) (CONST_CHECKED_CAST((SELF), MAPPING, Mapping))
+#define     is_mapping(SELF) (MAPPING == node_kind(node((SELF))))
 
 /*
  * Alias API
  */
 
-Node *alias_target(const Alias *alias);
+#define     alias_target(SELF) (SELF)->target
 
-#define alias(obj) (CHECKED_CAST((obj), ALIAS, Alias))
-#define const_alias(obj) (CONST_CHECKED_CAST((obj), ALIAS, Alias))
-#define is_alias(obj) (ALIAS == node_kind(node((obj))))
+#define     alias(SELF) (CHECKED_CAST((SELF), ALIAS, Alias))
+#define     const_alias(SELF) (CONST_CHECKED_CAST((SELF), ALIAS, Alias))
+#define     is_alias(SELF) (ALIAS == node_kind(node((SELF))))

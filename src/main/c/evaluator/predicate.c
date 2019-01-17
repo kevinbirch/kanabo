@@ -9,7 +9,7 @@ static bool apply_wildcard_predicate(Node *value, Evaluator *evaluator, Nodelist
     switch(node_kind(value))
     {
         case SCALAR:
-            trace_string("wildcard predicate: adding scalar '%s' (%p)", scalar_value(scalar(value)), node_size(value), value);
+            evaluator_trace("wildcard predicate: adding scalar '%s' (%p)", C(scalar_value(scalar(value))), value);
             nodelist_add(target, value);
             break;
         case MAPPING:

@@ -33,10 +33,3 @@ Alias *make_alias_node(Node *target)
 
     return self;
 }
-
-Node *alias_target(const Alias *self)
-{
-    ENSURE_NONNULL_ELSE_NULL(self);
-
-    return self->target;
-}

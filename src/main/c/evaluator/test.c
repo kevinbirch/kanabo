@@ -14,13 +14,13 @@ static bool recursive_test_sequence_iterator(Node *each, void *context)
     return apply_recursive_node_test(each, iterator_context->evaluator, iterator_context->target);
 }
 
-static bool recursive_test_map_iterator(Scalar *key, Node *value, void *context)
+static bool recursive_test_map_iterator(String *key, Node *value, void *context)
 {
     meta_context *iterator_context = (meta_context *)context;
     return apply_recursive_node_test(value, iterator_context->evaluator, iterator_context->target);
 }
 
-static bool add_values_to_nodelist_map_iterator(Scalar *key, Node *value, void *context)
+static bool add_values_to_nodelist_map_iterator(String *key, Node *value, void *context)
 {
     meta_context *iterator_context = (meta_context *)context;
     bool result = true;
@@ -56,19 +56,19 @@ static bool apply_greedy_wildcard_test(Node *each, void *argument, Nodelist *tar
     {
         case MAPPING:
             evaluator_trace("wildcard test: adding %zu mapping values (%p)", node_size(each), each);
-            result = mapping_iterate(mapping((Node *)each), add_values_to_nodelist_map_iterator, &(meta_context){evaluator, target});
+            result = mapping_iterate(mapping(each), add_values_to_nodelist_map_iterator, &(meta_context){evaluator, target});
             break;
         case SEQUENCE:
             evaluator_trace("wildcard test: adding %zu sequence items (%p)", node_size(each), each);
-            result = sequence_iterate(sequence((Node *)each), add_to_nodelist_sequence_iterator, target);
+            result = sequence_iterate(sequence(each), add_to_nodelist_sequence_iterator, target);
             break;
         case SCALAR:
-            trace_string("wildcard test: adding scalar: '%s' (%p)", scalar_value(scalar((Node *)each)), node_size(each), each);
+            evaluator_trace("wildcard test: adding scalar: '%s' (%p)", C(scalar_value(scalar(each))), each);
             nodelist_add(target, each);
             break;
         case ALIAS:
             evaluator_trace("wildcard test: resolving alias (%p)", each);
-            result = apply_greedy_wildcard_test(alias_target(alias((Node *)each)), argument, target);
+            result = apply_greedy_wildcard_test(alias_target(alias(each)), argument, target);
             break;
         case DOCUMENT:
             evaluator_error("wildcard test: uh-oh! found a document node somehow (%p), aborting...", each);
@@ -94,12 +94,12 @@ static bool apply_recursive_wildcard_test(Node *each, void *argument, Nodelist *
             evaluator_trace("recurisve wildcard test: skipping sequence node (%p)", each);
             break;
         case SCALAR:
-            trace_string("recurisve wildcard test: adding scalar: '%s' (%p)", scalar_value(scalar((Node *)each)), node_size(each), each);
+            evaluator_trace("recurisve wildcard test: adding scalar: '%s' (%p)", C(scalar_value(scalar(each))), each);
             nodelist_add(target, each);
             break;
         case ALIAS:
             evaluator_trace("recurisve wildcard test: resolving alias (%p)", each);
-            result = apply_recursive_wildcard_test(alias_target(alias((Node *)each)), argument, target);
+            result = apply_recursive_wildcard_test(alias_target(alias(each)), argument, target);
             break;
         case DOCUMENT:
             evaluator_error("recurisve wildcard test: uh oh! found a document node somehow (%p), aborting...", each);
@@ -117,8 +117,8 @@ static bool apply_type_test(Node *each, void *argument, Nodelist *target)
     if(is_alias(each))
     {
         evaluator_trace("type test: resolved alias from: (%p) to: (%p)",
-                        each, alias_target((alias((Node *)each))));
-        return apply_type_test(alias_target(alias((Node *)each)), argument, target);
+                        each, alias_target((alias(each))));
+        return apply_type_test(alias_target(alias(each)), argument, target);
     }
 
     Evaluator *evaluator = (Evaluator *)argument;
@@ -134,19 +134,19 @@ static bool apply_type_test(Node *each, void *argument, Nodelist *target)
             break;
         case STRING_TEST:
             evaluator_trace("type test: testing for a string");
-            match = is_string((Node *)each);
+            match = is_string(each);
             break;
         case NUMBER_TEST:
             evaluator_trace("type test: testing for a number");
-            match = is_number((Node *)each);
+            match = is_number(each);
             break;
         case BOOLEAN_TEST:
             evaluator_trace("type test: testing for a boolean");
-            match = is_boolean((Node *)each);
+            match = is_boolean(each);
             break;
         case NULL_TEST:
             evaluator_trace("type test: testing for a null");
-            match = is_null((Node *)each);
+            match = is_null(each);
             break;
     }
 
@@ -157,7 +157,7 @@ static bool apply_type_test(Node *each, void *argument, Nodelist *target)
     }
     else
     {
-        const char *name = is_scalar(each) ? scalar_kind_name(scalar((Node *)each)) : node_kind_name(each);
+        const char *name = is_scalar(each) ? scalar_kind_name(scalar(each)) : node_kind_name(each);
         evaluator_trace("type test: no match (actual: %d). dropping (%p)", name, each);
     }
 
@@ -168,7 +168,8 @@ static bool apply_name_test(Node *each, void *argument, Nodelist *target)
 {
     Evaluator *evaluator = (Evaluator *)argument;
     Step *context_step = current_step(evaluator);
-    trace_string("name test: using key '%s'", name_test_step_name(context_step), name_test_step_length(context_step));
+
+    evaluator_trace("name test: using key '%s'", C(name_test_step_name(context_step)));
 
     if(!is_mapping(each))
     {
@@ -177,9 +178,7 @@ static bool apply_name_test(Node *each, void *argument, Nodelist *target)
     }
 
     Mapping *map = mapping(each);
-    Scalar *key = make_scalar_node(name_test_step_name(context_step), name_test_step_length(context_step), SCALAR_STRING);
-    Node *value = mapping_get(map, key);
-    dispose_node(key);
+    Node *value = mapping_get(map, name_test_step_name(context_step));
 
     if(NULL == value)
     {
@@ -192,8 +191,8 @@ static bool apply_name_test(Node *each, void *argument, Nodelist *target)
     if(is_alias(value))
     {
         evaluator_trace("name test: resolved alias from: (%p) to: (%p)",
-                        value, alias_target(alias((Node *)value)));
-        value = alias_target(alias((Node *)value));
+                        value, alias_target(alias(value)));
+        value = alias_target(alias(value));
     }
 
     nodelist_add(target, value);

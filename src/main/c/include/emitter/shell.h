@@ -6,8 +6,7 @@
 
 bool emit_node(Node *value, void *context);
 bool emit_scalar(const Scalar *);
-bool emit_quoted_scalar(const Scalar *);
-bool emit_raw_scalar(const Scalar *);
+bool emit_quoted_string(const String *);
 bool emit_sequence_item(Node *each, void *context);
 
 struct emit_context

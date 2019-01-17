@@ -34,13 +34,13 @@ static bool scalar_equals(const Node *one, const Node *two)
 
 static size_t scalar_size(const Node *self)
 {
-    return const_scalar(self)->length;
+    return strlen(const_scalar(self)->value);
 }
 
 static void scalar_free(Node *value)
 {
     Scalar *self = scalar(value);
-    free(self->value);
+    string_free(self->value);
     self->value = NULL;
 }
 
@@ -51,50 +51,15 @@ static const struct vtable_s scalar_vtable =
     scalar_equals
 };
 
-Scalar *make_scalar_node(const uint8_t *value, size_t length, ScalarKind kind)
+Scalar *make_scalar_node(String *value, ScalarKind kind)
 {
-    if(NULL == value && 0 != length)
-    {
-        return NULL;
-    }
+    ENSURE_NONNULL_ELSE_NULL(value);
 
     Scalar *self = xcalloc(sizeof(Scalar));
     node_init(node(self), SCALAR, &scalar_vtable);
 
-    self->length = length;
     self->kind = kind;
-    self->value = xcalloc(length);
-    memcpy(self->value, value, length);
+    self->value = value;
 
     return self;
-}
-
-uint8_t *scalar_value(const Scalar *self)
-{
-    ENSURE_NONNULL_ELSE_NULL(self);
-
-    return self->value;
-}
-
-ScalarKind scalar_kind(const Scalar *self)
-{
-    return self->kind;
-}
-
-bool scalar_boolean_is_true(const Scalar *self)
-{
-    if(4 != scalar_size(node(self)))
-    {
-        return false;
-    }
-    return 0 == memcmp("true", self->value, 4);
-}
-
-bool scalar_boolean_is_false(const Scalar *self)
-{
-    if(5 != scalar_size(node(self)))
-    {
-        return false;
-    }
-    return 0 == memcmp("false", self->value, 5);
 }

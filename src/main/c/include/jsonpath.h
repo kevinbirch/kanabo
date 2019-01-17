@@ -102,12 +102,7 @@ struct step_s
 
         union
         {
-            struct
-            {
-                uint8_t *value;
-                size_t  length;
-            } name;
-
+            String *name;
             enum type_test_kind type;
         };
     } test;
@@ -144,8 +139,8 @@ const char *        type_test_kind_name(enum type_test_kind value);
 
 /* Name Test API */
 
-#define             name_test_step_name(SELF) (NAME_TEST == (SELF)->test.kind ? (SELF)->test.name.value : NULL)
-#define             name_test_step_length(SELF) (NAME_TEST == (SELF)->test.kind ? (SELF)->test.name.length : 0)
+#define             name_test_step_name(SELF) (NAME_TEST == (SELF)->test.kind ? (SELF)->test.name : NULL)
+#define             name_test_step_length(SELF) (NAME_TEST == (SELF)->test.kind ? strlen((SELF)->test.name) : 0)
 
 /* Predicate API */
 

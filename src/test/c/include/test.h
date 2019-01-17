@@ -56,8 +56,9 @@
 #define assert_nothing(X) ck_assert_msg(is_nothing((X)), "'is_nothing("#X") failed.")
 #define assert_just(X) ck_assert_msg(is_just((X)), "'is_just("#X") failed.")
 
-#define make_scalar_string(VALUE) make_scalar_node((uint8_t *)(VALUE), strlen((VALUE)), SCALAR_STRING)
-#define make_scalar_integer(VALUE) make_scalar_node((uint8_t *)(VALUE), strlen((VALUE)), SCALAR_INTEGER)
+#define make_scalar_string(VALUE) make_scalar_node(make_string((VALUE)), SCALAR_STRING)
+#define make_scalar_integer(VALUE) make_scalar_node(make_string((VALUE)), SCALAR_INTEGER)
+#define make_scalar_real(VALUE) make_scalar_node(make_string((VALUE)), SCALAR_REAL)
 
 // test suites
 

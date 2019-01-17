@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
+#include "emitter/scalar.h"
 #include "emitter/shell.h"
 #include "log.h"
 
@@ -49,12 +50,12 @@ bool emit_node(Node *each, void *argument)
     return result;
 }
 
-static bool scalar_contains_space(const Scalar *each)
+static bool contains_space(const String *value)
 {
-    uint8_t *value = scalar_value(each);
-    for(size_t i = 0; i < node_size(each); i++)
+    const uint8_t *raw = strdta(value);
+    for(size_t i = 0; i < strlen(value); i++)
     {
-        if(isspace(*(value + i)))
+        if(isspace(*(raw + i)))
         {
             return true;
         }
@@ -63,24 +64,10 @@ static bool scalar_contains_space(const Scalar *each)
     return false;
 }
 
-bool emit_scalar(const Scalar *each)
-{
-    if(SCALAR_STRING == scalar_kind(each) && scalar_contains_space(each))
-    {
-        log_trace("shell", "emitting quoted scalar");
-        return emit_quoted_scalar(each);
-    }
-    else
-    {
-        log_trace("shell", "emitting raw scalar");
-        return emit_raw_scalar(each);
-    }
-}
-
-bool emit_quoted_scalar(const Scalar *each)
+bool emit_quoted_string(const String *value)
 {
     EMIT("'");
-    if(!emit_raw_scalar(each))
+    if(!emit_raw_string(value))
     {
         log_error("shell", "uh oh! couldn't emit quoted scalar");
         return false;
@@ -90,9 +77,19 @@ bool emit_quoted_scalar(const Scalar *each)
     return true;
 }
 
-bool emit_raw_scalar(const Scalar *each)
+bool emit_scalar(const Scalar *each)
 {
-    return 1 == fwrite(scalar_value(each), node_size(each), 1, stdout);
+    String *value = scalar_value(each);
+    if(SCALAR_STRING == scalar_kind(each) && contains_space(value))
+    {
+        log_trace("shell", "emitting quoted scalar");
+        return emit_quoted_string(value);
+    }
+    else
+    {
+        log_trace("shell", "emitting raw scalar");
+        return emit_raw_string(scalar_value(each));
+    }
 }
 
 bool emit_sequence_item(Node *each, void *context)

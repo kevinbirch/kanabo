@@ -23,24 +23,6 @@ START_TEST (null_node)
 }
 END_TEST
 
-START_TEST (null_document)
-{
-    assert_null(document_root(NULL));
-}
-END_TEST
-
-START_TEST (null_scalar)
-{
-    assert_null(scalar_value(NULL));
-}
-END_TEST
-
-START_TEST (null_sequence)
-{
-    assert_null(sequence_get(NULL, 0));
-}
-END_TEST
-
 START_TEST (null_mapping)
 {
     assert_null(mapping_get(NULL, NULL));
@@ -64,23 +46,23 @@ static void model_setup(void)
     Mapping *root = make_mapping_node();
 
     Scalar *foo1 = make_scalar_string("foo1");
-    Scalar *one_point_five = make_scalar_node((uint8_t *)"1.5", 4, SCALAR_REAL);
+    Scalar *one_point_five = make_scalar_real("1.5");
     Sequence *one_value = make_sequence_node();
     sequence_add(one_value, node(foo1));
     sequence_add(one_value, node(one_point_five));
 
-    Scalar *one = make_scalar_string("one");
+    String *one = make_string("one");
     mapping_put(root, one, node(one_value));
 
-    Scalar *two = make_scalar_string("two");
+    String *two = make_string("two");
     Scalar *two_value = make_scalar_string("foo2");
     mapping_put(root, two, node(two_value));
 
-    Scalar *three = make_scalar_string("three");
+    String *three = make_string("three");
     Scalar *three_value = make_scalar_string("false");
     mapping_put(root, three, node(three_value));
 
-    Scalar *four = make_scalar_string("four");
+    String *four = make_string("four");
     Scalar *four_value = make_scalar_string("true");
     mapping_put(root, four, node(four_value));
 
@@ -116,7 +98,7 @@ static bool fail_sequence(Node *each, void *context)
     }
 }
 
-static bool check_mapping(Scalar *key, Node *value, void *context)
+static bool check_mapping(String *key, Node *value, void *context)
 {
     assert_not_null(key);
     assert_not_null(value);
@@ -125,7 +107,7 @@ static bool check_mapping(Scalar *key, Node *value, void *context)
     return true;
 }
 
-static bool fail_mapping(Scalar *key, Node *value, void *context)
+static bool fail_mapping(String *key, Node *value, void *context)
 {
     assert_not_null(key);
     assert_not_null(value);
@@ -143,11 +125,7 @@ static bool fail_mapping(Scalar *key, Node *value, void *context)
 
 START_TEST (constructors)
 {
-    Scalar *s = make_scalar_node(NULL, 0, SCALAR_STRING);
-    assert_not_null(s);
-    dispose_node(node(s));
-
-    s = make_scalar_string("foo");
+    Scalar *s = make_scalar_string("foo");
     assert_not_null(s);
     
     Document *d = make_document_node();
@@ -198,9 +176,9 @@ START_TEST (scalar_type)
     assert_not_null(r);
     assert_node_kind(r, MAPPING);
 
-    Scalar *key = make_scalar_node((uint8_t *)"two", 3ul, SCALAR_STRING);
+    String *key = make_string("two");
     Node *s = mapping_get(mapping(r), key);
-    dispose_node(key);
+    string_free(key);
     assert_not_null(s);
     assert_node_kind(s, SCALAR);
     assert_scalar_value((s), "foo2");
@@ -213,17 +191,17 @@ START_TEST (scalar_boolean)
     assert_not_null(r);
     assert_node_kind(r, MAPPING);
 
-    Scalar *key1 = make_scalar_node((uint8_t *)"three", 5ul, SCALAR_STRING);
+    String *key1 = make_string("three");
     Node *three = mapping_get(mapping(r), key1);
-    dispose_node(key1);
+    string_free(key1);
     assert_not_null(three);
     assert_node_kind(three, SCALAR);
     assert_true(scalar_boolean_is_false(scalar(three)));
     assert_false(scalar_boolean_is_true(scalar(three)));
 
-    Scalar *key2 = make_scalar_node((uint8_t *)"four", 4ul, SCALAR_STRING);
+    String *key2 = make_string("four");
     Node *four = mapping_get(mapping(r), key2);
-    dispose_node(key2);
+    string_free(key2);
     assert_not_null(four);
     assert_node_kind(four, SCALAR);
     assert_true(scalar_boolean_is_true(scalar(four)));
@@ -237,9 +215,9 @@ START_TEST (sequence_type)
     assert_not_null(r);
     assert_node_kind(r, MAPPING);
 
-    Scalar *key = make_scalar_node((uint8_t *)"one", 3ul, SCALAR_STRING);
+    String *key = make_string("one");
     Node *s = mapping_get(mapping(r), key);
-    dispose_node(key);
+    string_free(key);
     assert_not_null(s);
     assert_node_kind(s, SEQUENCE);
     assert_node_size(s, 2);
@@ -279,13 +257,13 @@ START_TEST (mapping_type)
     assert_node_kind(r, MAPPING);
     assert_node_size(r, 4);
 
-    Scalar *bogus = make_scalar_node((uint8_t *)"bogus", 5ul, SCALAR_STRING);
+    String *bogus = make_string("bogus");
     assert_null(mapping_get(mapping(r), bogus));
-    dispose_node(bogus);
+    string_free(bogus);
 
-    Scalar *key = make_scalar_node((uint8_t *)"two", 3ul, SCALAR_STRING);
+    String *key = make_string("two");
     Node *scalar_value = mapping_get(mapping(r), key);
-    dispose_node(key);
+    string_free(key);
     assert_not_null(scalar_value);
     assert_node_kind(scalar_value, SCALAR);
 }
@@ -297,9 +275,9 @@ START_TEST (sequence_iteration)
     assert_not_null(r);
     assert_node_kind(r, MAPPING);
     
-    Scalar *key = make_scalar_node((uint8_t *)"one", 3ul, SCALAR_STRING);
+    String *key = make_string("one");
     Node *s = mapping_get(mapping(r), key);
-    dispose_node(key);
+    string_free(key);
     assert_not_null(s);
     assert_node_kind(s, SEQUENCE);
     assert_node_size(s, 2);
@@ -316,9 +294,9 @@ START_TEST (fail_sequence_iteration)
     assert_not_null(r);
     assert_node_kind(r, MAPPING);
     
-    Scalar *key = make_scalar_node((uint8_t *)"one", 3ul, SCALAR_STRING);
+    String *key = make_string("one");
     Node *s = mapping_get(mapping(r), key);
-    dispose_node(key);
+    string_free(key);
     assert_not_null(s);
     assert_node_kind(s, SEQUENCE);
     assert_node_size(s, 2);
@@ -360,9 +338,6 @@ Suite *model_suite(void)
     TCase *bad_input = tcase_create("bad input");
     tcase_add_test(bad_input, null_model);
     tcase_add_test(bad_input, null_node);
-    tcase_add_test(bad_input, null_document);
-    tcase_add_test(bad_input, null_scalar);
-    tcase_add_test(bad_input, null_sequence);
     tcase_add_test(bad_input, null_mapping);
 
     TCase *basic = tcase_create("basic");

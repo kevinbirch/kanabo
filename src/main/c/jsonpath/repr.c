@@ -62,7 +62,7 @@ static void repr_test(const Step *step, MutableString **buf)
             mstring_append(buf, '*');
             break;
         case NAME_TEST:
-            mstring_append_stream(buf, name_test_step_name(step), name_test_step_length(step));
+            mstring_append(buf, name_test_step_name(step));
             break;
         case TYPE_TEST:
             switch(type_test_step_kind(step))

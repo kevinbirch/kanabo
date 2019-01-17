@@ -4,40 +4,43 @@
 
 ## fixes
 
-* fix scalar to use string as value
-  * normalize `mapping_get` to use string
 * fix incorrect non-static uses of inline specifier
+* clean up logging in emitter module
+* remove all redundant casts to `(Node *)`
 * ignored keys and values are leaked
-  * build bad tree, generate error and discard?
-  * stop building tree on first error, but continue processing?
 * x_free to dispose_x
 * panic on illegal downcast
 * \_POSIX_C_SOURCE usage?
-* don't use callback between scanner and parser for errors, track error vector in each
-  * use single add_parser_error function
-  * why are postion macros different for parser and scanner?
+* `dispose_node` should be type-generic macro
+* `node` upcast should be a type-generic macro
+* mapping
+  * fnv1 hash?
+  * use simple array for small collections?
 * normalize uses of `%zd` to `%lld` where necessary
-* change license to bsd 3 clause
-* normalize all panic messages: `<module>: <operation>: <failure>`
-* `dispose_node` should be type generic macro
 * preserve input file names to use with warning lines (`loader/yaml.c:add_to_mapping`)
   * print dupe key name when scalar no
+* normalize all panic messages: `<module>: <operation>: <failure>`
 * formatting for `String`
   * http://www.tin.org/bin/man.cgi?section=3&topic=snprintf
   * http://stackoverflow.com/questions/69738/c-how-to-get-fprintf-results-as-a-stdstring-w-o-sprintf/69911#69911
-* libbacktrace instead of execinfo?
-  * panic backtrace looks like crap on Linux?
 * switch to structured logging
   * `log(const char *, ...)` vararg params are all subtypes of `event`
   * https://github.com/uber-go/zap
   * https://www.structlog.org/en/stable/getting-started.html
   * rework log.h to assume `component_name` is defined before import
   * eliminate all uses of `trace_string`
+* don't use callback between scanner and parser for errors, track error vector in each
+  * use single add_parser_error function
+  * why are postion macros different for parser and scanner?
+* clean up `xxx` notes
+* libbacktrace instead of execinfo?
+  * panic backtrace looks like crap on Linux?
 * loader error handing
   * failure in `add_node` or error from libyaml are fatal
   * add extra context string to capture scalar value *or* libyaml message
 * model dumper w/ secret command line option, nice tree-like layout
   * `--output=ast`
+* change license to bsd 3 clause
 * add safe arithmetic functions
   * http://lists.nongnu.org/archive/html/qemu-devel/2013-01/msg05387.html
   * https://sourceware.org/ml/libc-alpha/2013-12/msg00098.html

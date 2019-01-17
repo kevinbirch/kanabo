@@ -50,7 +50,7 @@ static inline int64_t parse_index(Parser *self)
         }
     }
     
-    char *raw = lexeme(self);
+    String *raw = lexeme(self);
     next(self);
 
     if(NULL == raw)
@@ -60,26 +60,20 @@ static inline int64_t parse_index(Parser *self)
         goto end;
     }
 
-    if(negate)
-    {
-        size_t length = strlen(raw);
-        char *negative = xcalloc(length + 2);
-        negative[0] = '-';
-        memcpy(negative + 1, raw, length);
-        negative[length + 1] = '\0';
-        free(raw);
-        raw = negative;
-    }
-
     errno = 0;
-    index = strtoll(raw, NULL, 10);
-    if(ERANGE == errno && LLONG_MAX == index)
+    index = strtoll(C(raw), NULL, 10);
+    if(ERANGE == errno && negate)
+    {
+        add_parser_error(self, start, INTEGER_TOO_SMALL);
+    }
+    else if(ERANGE == errno)
     {
         add_parser_error(self, start, INTEGER_TOO_BIG);
     }
-    else if(ERANGE == errno && LLONG_MIN == index)
+
+    if(negate)
     {
-        add_parser_error(self, start, INTEGER_TOO_SMALL);
+        index = -index;
     }
 
     free(raw);
@@ -216,7 +210,15 @@ static void parse_predicate(Parser *self, Step *step)
 static void parse_quoted_name(Parser *self, Step *step)
 {
     Location loc = self->scanner->current.location;
-    char *raw = lexeme(self);
+    Location unquoted = 
+        {
+            .index = loc.index + 1,
+            .line = loc.line,
+            .offset = loc.offset + 1,
+            .extent = loc.extent - 2
+        };
+        
+    String *raw = scanner_extract_lexeme(self->scanner, unquoted);
     if(NULL == raw)
     {
         add_parser_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", loc.index, loc.extent);
@@ -229,23 +231,16 @@ static void parse_quoted_name(Parser *self, Step *step)
     }
 
     // N.B. - trim leading quote
-    char *cooked = unescape(self, raw + 1);
+    String *cooked = unescape(self, raw);
     if(NULL == cooked)
     {
         goto cleanup;
     }
 
-    size_t length = strlen(cooked);
-    if('\'' == cooked[length-1])
-    {
-        cooked[length-1] = '\0';
-        length--;
-    }
-    step->test.name.value = (uint8_t *)cooked;
-    step->test.name.length = length;
+    step->test.name = cooked;
 
   cleanup:
-    free(raw);
+    string_free(raw);
 }
 
 static void recover(Parser *self, Step *step)
@@ -282,8 +277,7 @@ static void parse_step(Parser *self, Step *step)
             parse_quoted_name(self, step);
             break;
         case NAME:
-            step->test.name.length = token(self).location.extent;
-            step->test.name.value = (uint8_t *)lexeme(self);
+            step->test.name = lexeme(self);
             break;
         /*
         case EQUALS:

@@ -36,7 +36,7 @@
 #define assert_name_length(STEP, NAME) assert_uint_eq(strlen((NAME)), name_test_step_length((STEP)))
 #define assert_name(STEP, NAME)                                         \
     assert_name_length((STEP), (NAME));                                 \
-    assert_buf_eq((NAME), strlen((NAME)), name_test_step_name((STEP)), name_test_step_length((STEP)))
+    ck_assert_str_eq((NAME), C(name_test_step_name((STEP))));
 
 #define assert_no_predicate(PATH, INDEX)                             \
     assert_null(path_get((PATH), (INDEX))->predicate)
@@ -45,7 +45,7 @@
     assert_step((PATH), 0, ROOT, NAME_TEST);    \
     assert_no_predicate((PATH), 0)
 
-#define assert_name_step(PATH,INDEX, NAME, EXPECTED_STEP_KIND)      \
+#define assert_name_step(PATH, INDEX, NAME, EXPECTED_STEP_KIND)      \
     assert_step((PATH), (INDEX), (EXPECTED_STEP_KIND), NAME_TEST);   \
     assert_name(path_get((PATH), (INDEX)), (NAME))
 #define assert_single_name_step(PATH, INDEX, NAME) assert_name_step((PATH), (INDEX), (NAME), SINGLE)

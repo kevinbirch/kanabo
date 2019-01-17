@@ -378,9 +378,9 @@ START_TEST (subscript_predicate)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Scalar *key = make_scalar_string("author");
+    String *key = make_string("author");
     Node *author = mapping_get(mapping(book), key);
-    dispose_node(key);
+    string_free(key);
     assert_not_null(author);
     assert_scalar_value((author), "Herman Melville");
 
@@ -397,9 +397,9 @@ START_TEST (recursive_subscript_predicate)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Scalar *key = make_scalar_string("author");
+    String *key = make_string("author");
     Node *author = mapping_get(mapping(book), key);
-    dispose_node(key);
+    string_free(key);
     assert_not_null(author);
     assert_scalar_value((author), "Herman Melville");
 
@@ -416,7 +416,7 @@ START_TEST (slice_predicate)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Scalar *key = make_scalar_string("author");
+    String *key = make_string("author");
 
     Node *author = mapping_get(mapping(book), key);
     assert_not_null(author);
@@ -429,7 +429,7 @@ START_TEST (slice_predicate)
     assert_not_null(author);
     assert_scalar_value((author), "Evelyn Waugh");
 
-    dispose_node(key);
+    string_free(key);
     nodelist_free(list);
 }
 END_TEST
@@ -443,7 +443,7 @@ START_TEST (recursive_slice_predicate)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Scalar *key = make_scalar_string("author");
+    String *key = make_string("author");
 
     Node *author = mapping_get(mapping(book), key);
     assert_not_null(author);
@@ -456,7 +456,7 @@ START_TEST (recursive_slice_predicate)
     assert_not_null(author);
     assert_scalar_value((author), "Evelyn Waugh");
 
-    dispose_node(key);
+    string_free(key);
     nodelist_free(list);
 }
 END_TEST
@@ -470,9 +470,9 @@ START_TEST (slice_predicate_with_step)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Scalar *key = make_scalar_string("author");
+    String *key = make_string("author");
     Node *author = mapping_get(mapping(book), key);
-    dispose_node(key);
+    string_free(key);
     assert_not_null(author);
     assert_scalar_value((author), "Nigel Rees");
 
@@ -489,9 +489,9 @@ START_TEST (slice_predicate_negative_from)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Scalar *key = make_scalar_string("author");
+    String *key = make_string("author");
     Node *author = mapping_get(mapping(book), key);
-    dispose_node(key);
+    string_free(key);
     assert_not_null(author);
     assert_scalar_value((author), "夏目漱石 (NATSUME Sōseki)");
 
@@ -508,9 +508,9 @@ START_TEST (recursive_slice_predicate_negative_from)
     Node *book = nodelist_get(list, 0);
     assert_node_kind(book, MAPPING);
 
-    Scalar *key = make_scalar_string("author");
+    String *key = make_string("author");
     Node *author = mapping_get(mapping(book), key);
-    dispose_node(key);
+    string_free(key);
     assert_not_null(author);
     assert_scalar_value((author), "夏目漱石 (NATSUME Sōseki)");
 
@@ -524,7 +524,7 @@ START_TEST (slice_predicate_copy)
 
     assert_nodelist_length(list, 5);
 
-    Scalar *key = make_scalar_string("author");
+    String *key = make_string("author");
 
     Node *value;
     value = mapping_get(nodelist_get(list, 0), key);
@@ -546,7 +546,7 @@ START_TEST (slice_predicate_reverse)
 
     assert_nodelist_length(list, 5);
 
-    Scalar *key = make_scalar_string("author");
+    String *key = make_string("author");
 
     Node *value;
     value = mapping_get(nodelist_get(list, 0), key);
@@ -560,7 +560,7 @@ START_TEST (slice_predicate_reverse)
     value = mapping_get(nodelist_get(list, 4), key);
     assert_scalar_value((value), "Nigel Rees");
 
-    dispose_node(key);
+    string_free(key);
     nodelist_free(list);
 }
 END_TEST
@@ -593,7 +593,7 @@ START_TEST (greedy_wildcard_alias)
 
     assert_nodelist_length(list, 2);
 
-    Scalar *key = make_scalar_string("isbn");
+    String *key = make_string("isbn");
 
     Node *zero = nodelist_get(list, 0);
     assert_node_kind(zero, MAPPING);
@@ -605,7 +605,7 @@ START_TEST (greedy_wildcard_alias)
     Node *one_value = mapping_get(mapping(one),key);
     assert_scalar_value((one_value), "0323073867");
 
-    dispose_node(key);
+    string_free(key);
     nodelist_free(list);
 }
 END_TEST

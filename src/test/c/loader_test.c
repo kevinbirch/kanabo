@@ -116,14 +116,14 @@ static void assert_model_state(DocumentSet *model)
     assert_node_kind(root, MAPPING);
     assert_node_size(root, 5);
 
-    Scalar *key = NULL;
+    String *key = NULL;
 
-    key = make_scalar_string("one");
+    key = make_string("one");
     Node *one = mapping_get(mapping(root), key);
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
-    dispose_node(key);
+    string_free(key);
 
     Node *one_0 = sequence_get(sequence(one), 0);
     assert_node_kind(one_0, SCALAR);
@@ -134,27 +134,27 @@ static void assert_model_state(DocumentSet *model)
     assert_scalar_value((one_1), "bar1");
     assert_scalar_kind(one_1, SCALAR_STRING);
 
-    key = make_scalar_string("two");
+    key = make_string("two");
     Node *two = mapping_get(mapping(root), key);
     assert_not_null(two);
     assert_node_kind(two, SCALAR);
     assert_scalar_value((two), "foo2");
     assert_scalar_kind(two, SCALAR_STRING);
-    dispose_node(key);
+    string_free(key);
 
-    key = make_scalar_string("three");
+    key = make_string("three");
     Node *three = mapping_get(mapping(root), key);
     assert_not_null(three);
     assert_node_kind(three, SCALAR);
     assert_scalar_value((three), "null");
     assert_scalar_kind(three, SCALAR_NULL);
-    dispose_node(key);
+    string_free(key);
 
-    key = make_scalar_string("four");
+    key = make_string("four");
     Node *four = mapping_get(mapping(root), key);
     assert_not_null(four);
     assert_node_kind(four, SEQUENCE);
-    dispose_node(key);
+    string_free(key);
 
     Node *four_0 = sequence_get(sequence(four), 0);
     assert_node_kind(four_0, SCALAR);
@@ -169,7 +169,7 @@ static void assert_model_state(DocumentSet *model)
     assert_true(scalar_boolean_is_false(scalar(four_1)));
     assert_false(scalar_boolean_is_true(scalar(four_1)));
 
-    key = make_scalar_string("five");
+    key = make_string("five");
     Node *five = mapping_get(mapping(root), key);
     assert_not_null(five);
     assert_node_kind(five, SEQUENCE);
@@ -185,7 +185,7 @@ static void assert_model_state(DocumentSet *model)
     assert_node_kind(five_2, SCALAR);
     assert_scalar_value(five_2, "1978-07-26 10:15");
     assert_scalar_kind(five_2, SCALAR_TIMESTAMP);
-    dispose_node(key);
+    string_free(key);
 }
 
 START_TEST (load_from_file)
@@ -204,29 +204,29 @@ START_TEST (shorthand_tags)
     Mapping *root = mapping(document_set_get_root(model_fixture, 0));
     assert_node_tag(node(root), "tag:vampire-squid.com,2008:instrument");
 
-    Scalar *asset_class = make_scalar_node((uint8_t *)"asset-class", 11ul, SCALAR_STRING);
+    String *asset_class = make_string("asset-class");
     Node *asset_class_value = mapping_get(root, asset_class);
     assert_not_null(asset_class_value);
     assert_node_kind(asset_class_value, SCALAR);
     assert_scalar_kind(asset_class_value, SCALAR_STRING);
     assert_node_tag(asset_class_value, "tag:vampire-squid.com,2008:asset-class");
-    dispose_node(asset_class);
+    string_free(asset_class);
 
-    Scalar *type = make_scalar_string("type");
+    String *type = make_string("type");
     Node *type_value = mapping_get(root, type);
     assert_not_null(type_value);
     assert_node_kind(type_value, SCALAR);
     assert_scalar_kind(type_value, SCALAR_STRING);
     assert_node_tag(type_value, "tag:vampire-squid.com,2008:instrument/type");
-    dispose_node(type);
+    string_free(type);
 
-    Scalar *symbol = make_scalar_string("symbol");
+    String *symbol = make_string("symbol");
     Node *symbol_value = mapping_get(root, symbol);
     assert_not_null(symbol_value);
     assert_node_kind(symbol_value, SCALAR);
     assert_scalar_kind(symbol_value, SCALAR_STRING);
     assert_node_tag(symbol_value, "tag:vampire-squid.com,2008:instrument/symbol");
-    dispose_node(symbol);
+    string_free(symbol);
 }
 END_TEST
 
@@ -234,37 +234,37 @@ START_TEST (explicit_tags)
 {
     Mapping *root = mapping(document_set_get_root(model_fixture, 0));
 
-    Scalar *name = make_scalar_string("name");
+    String *name = make_string("name");
     Node *name_value = mapping_get(root, name);
     assert_not_null(name_value);
     assert_node_kind(name_value, SCALAR);
     assert_scalar_kind(name_value, SCALAR_STRING);
     assert_node_tag(name_value, "tag:yaml.org,2002:str");
-    dispose_node(name);
+    string_free(name);
 
-    Scalar *exchange_rate = make_scalar_node((uint8_t *)"exchange-rate", 13ul, SCALAR_STRING);
+    String *exchange_rate = make_string("exchange-rate");
     Node *exchange_rate_value = mapping_get(root, exchange_rate);
     assert_not_null(exchange_rate_value);
     assert_node_kind(exchange_rate_value, SCALAR);
     assert_scalar_kind(exchange_rate_value, SCALAR_REAL);
     assert_node_tag(exchange_rate_value, "tag:yaml.org,2002:float");
-    dispose_node(exchange_rate);
+    string_free(exchange_rate);
 
-    Scalar *spot_date = make_scalar_node((uint8_t *)"spot-date", 9ul, SCALAR_STRING);
+    String *spot_date = make_string("spot-date");
     Node *spot_date_value = mapping_get(root, spot_date);
     assert_not_null(spot_date_value);
     assert_node_kind(spot_date_value, SCALAR);
     assert_scalar_kind(spot_date_value, SCALAR_TIMESTAMP);
     assert_node_tag(spot_date_value, "tag:yaml.org,2002:timestamp");
-    dispose_node(spot_date);
+    string_free(spot_date);
 
-    Scalar *settlement_date = make_scalar_node((uint8_t *)"settlement-date", 15ul, SCALAR_STRING);
+    String *settlement_date = make_string("settlement-date");
     Node *settlement_date_value = mapping_get(root, settlement_date);
     assert_not_null(settlement_date_value);
     assert_node_kind(settlement_date_value, SCALAR);
     assert_scalar_kind(settlement_date_value, SCALAR_TIMESTAMP);
     assert_node_tag(settlement_date_value, "tag:yaml.org,2002:timestamp");
-    dispose_node(settlement_date);
+    string_free(settlement_date);
 }
 END_TEST
 
@@ -272,20 +272,20 @@ START_TEST (anchor)
 {
     Mapping *root = mapping(document_set_get_root(model_fixture, 0));
 
-    Scalar *key = NULL;
+    String *key = NULL;
 
-    key = make_scalar_string("one");
-    Node *one = mapping_get(root,  key);
+    key = make_string("one");
+    Node *one = mapping_get(root, key);
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
-    dispose_node(key);
+    string_free(key);
 
-    key = make_scalar_string("two");
+    key = make_string("two");
     Node *a = mapping_get(root, key);
     assert_not_null(a);
     assert_node_kind(a, ALIAS);
-    dispose_node(key);
+    string_free(key);
 
     Node *two = alias_target(alias(a));
     assert_not_null(two);
@@ -299,14 +299,14 @@ START_TEST (key_anchor)
 {
     Mapping *root = mapping(document_set_get_root(model_fixture, 0));
 
-    Scalar *key = NULL;
+    String *key = NULL;
 
-    key = make_scalar_string("one");
+    key = make_string("one");
     Node *one = mapping_get(root, key);
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
-    dispose_node(key);
+    string_free(key);
 
     Node *alias1 = sequence_get(sequence(one), 1);
     assert_not_null(alias1);
@@ -318,10 +318,10 @@ START_TEST (key_anchor)
     assert_scalar_kind(one_1, SCALAR_STRING);
     assert_scalar_value(one_1, "one");
 
-    key = make_scalar_string("two");
+    key = make_string("two");
     Node *alias2 = mapping_get(root, key);
     assert_not_null(alias2);
-    dispose_node(key);
+    string_free(key);
 
     Node *two = alias_target(alias(alias2));
     assert_node_kind(two, SCALAR);
@@ -339,13 +339,13 @@ START_TEST (duplicate_clobber)
     assert_node_kind(root, MAPPING);
     assert_node_size(root, 3);
 
-    Scalar *key = make_scalar_string("one");
+    String *key = make_string("one");
     Node *one = mapping_get(mapping(root), key);
     assert_not_null(one);
     assert_node_kind(one, SCALAR);
     assert_scalar_value(one, "bar");
     assert_scalar_kind(one, SCALAR_STRING);
-    dispose_node(key);
+    string_free(key);
 }
 END_TEST
 
@@ -358,13 +358,13 @@ START_TEST (duplicate_warn)
     assert_node_kind(root, MAPPING);
     assert_node_size(root, 3);
 
-    Scalar *key = make_scalar_string("one");
+    String *key = make_string("one");
     Node *one = mapping_get(mapping(root), key);
     assert_not_null(one);
     assert_node_kind(one, SCALAR);
     assert_scalar_value(one, "bar");
     assert_scalar_kind(one, SCALAR_STRING);
-    dispose_node(key);
+    string_free(key);
 }
 END_TEST
 

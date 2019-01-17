@@ -1,8 +1,8 @@
 #include <stdio.h>
 
 #include "emitter/json.h"
+#include "emitter/scalar.h"
 #include "log.h"
-
 
 #define component "json"
 
@@ -44,15 +44,10 @@ bool emit_json(const Nodelist *list)
     return result;
 }
 
-static bool emit_json_raw_scalar(const Scalar *each)
-{
-    return 1 == fwrite(scalar_value(each), node_size(each), 1, stdout);
-}
-
-static bool emit_json_quoted_scalar(const Scalar *each)
+static bool emit_json_quoted_scalar(const String *value)
 {
     EMIT("\"");
-    if(!emit_json_raw_scalar(each))
+    if(!emit_raw_string(value))
     {
         log_error(component, "uh oh! couldn't emit quoted scalar");
         return false;
@@ -68,16 +63,16 @@ static bool emit_json_scalar(const Scalar *each)
        SCALAR_TIMESTAMP == scalar_kind(each))
     {
         log_trace(component, "emitting quoted scalar");
-        return emit_json_quoted_scalar(each);
+        return emit_json_quoted_scalar(scalar_value(each));
     }
     else
     {
         log_trace(component, "emitting raw scalar");
-        return emit_json_raw_scalar(each);
+        return emit_raw_string(scalar_value(each));
     }
 }
 
-static bool emit_json_mapping_item(Scalar *key, Node *value, void *context)
+static bool emit_json_mapping_item(String *key, Node *value, void *context)
 {
     log_trace(component, "emitting mapping item");
     size_t *count = (size_t *)context;

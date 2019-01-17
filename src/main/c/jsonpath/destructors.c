@@ -25,13 +25,13 @@ static inline void step_free(Step *self)
 
     if(NAME_TEST == self->test.kind)
     {
-        if(NULL != self->test.name.value)
+        if(NULL != self->test.name)
         {
-            free(self->test.name.value);
-            self->test.name.value = NULL;
-            self->test.name.length = 0;
+            string_free(self->test.name);
+            self->test.name = NULL;
         }
     }
+
     if(NULL != self->predicate)
     {
         predicate_free(self->predicate);

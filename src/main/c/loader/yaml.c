@@ -139,23 +139,23 @@ static void add_to_mapping(Loader *context, Node *node)
         loader_debug("uh oh! found a non scalar mapping key");
         add_loader_error(context->errors, context->key_cache->position, ERR_NON_SCALAR_KEY);
 
-        vector_append(context->detached, context->key_cache);
         vector_append(context->detached, node);
         
         goto cleanup;
     }
 
-    Mapping *mapping = mapping(context->current);
-    Scalar *key = scalar(context->key_cache);
+    Scalar *scalar = scalar(context->key_cache);
+    String *key = scalar_value(scalar);
+    scalar->value = NULL;  // N.B. - ownership of value transferred to mapping
 
+    Mapping *mapping = mapping(context->current);
     bool duplicate = mapping_contains(mapping, key);
 
     if(duplicate && DUPE_FAIL == context->strategy)
     {
         loader_debug("uh oh! a duplicate key found");
-        add_loader_error(context->errors, key->position, ERR_DUPLICATE_KEY);
+        add_loader_error(context->errors, scalar->position, ERR_DUPLICATE_KEY);
 
-        vector_append(context->detached, key);
         vector_append(context->detached, node);
         
         goto cleanup;
@@ -163,14 +163,15 @@ static void add_to_mapping(Loader *context, Node *node)
     else if(duplicate && DUPE_WARN == context->strategy)
     {
         const char *name = C(context->input_name);
-        size_t line = key->position.line + 1;
-        size_t offset  = key->position.offset + 1;
-        fprintf(stderr, "%s:%zu:%zu: warning: duplicate mapping key\n", name, line, offset);
+        size_t line = scalar->position.line + 1;
+        size_t offset  = scalar->position.offset + 1;
+        fprintf(stderr, "%s:%zu:%zu: warning: duplicate mapping key \"%s\"\n", name, line, offset, C(key));
     }
 
     mapping_put(mapping, key, node);
 
   cleanup:
+    dispose_node(context->key_cache);
     context->key_cache = NULL;
   done:
     node->parent = context->current;
@@ -424,7 +425,8 @@ static ScalarKind resolve_scalar_kind(const Loader *context, const yaml_event_t 
 static void add_scalar(Loader *context, const yaml_event_t *event)
 {
     ScalarKind kind = resolve_scalar_kind(context, event);
-    Scalar *scalar = make_scalar_node(event->data.scalar.value, event->data.scalar.length, kind);
+    String *value = make_string_with_bytestring(event->data.scalar.value, event->data.scalar.length);
+    Scalar *scalar = make_scalar_node(value, kind);
     scalar->position = position(event->start_mark);
 
     if(NULL != event->data.scalar.tag)

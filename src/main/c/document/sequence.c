@@ -62,14 +62,6 @@ Sequence *make_sequence_node(void)
     return self;
 }
 
-Node *sequence_get(const Sequence *self, size_t index)
-{
-    ENSURE_NONNULL_ELSE_NULL(self);
-    ENSURE_ELSE_NULL(index < vector_length(self->values));
-
-    return vector_get(self->values, index);
-}
-
 static bool sequence_iterator_adpater(void *each, void *context)
 {
     context_adapter *adapter = (context_adapter *)context;

@@ -5,7 +5,6 @@
 #include "log.h"
 
 #define component "yaml"
-#define trace_string(FORMAT, VALUE, LENGTH, ...) log_string(LVL_TRACE, component, FORMAT, VALUE, LENGTH, ##__VA_ARGS__)
 
 
 static bool emit_node(Node *each, void *context);
@@ -46,7 +45,7 @@ static bool emit_sequence(Sequence *value, void *context)
     yaml_event_t event;
 
     log_trace(component, "seqence start");
-    uint8_t *name = node_name((Node *)value);
+    uint8_t *name = node_name(value);
     yaml_char_t *tag = NULL == name ? (yaml_char_t *)YAML_DEFAULT_SEQUENCE_TAG : (yaml_char_t *)name;
     yaml_sequence_start_event_initialize(&event, NULL, tag, NULL == name, YAML_BLOCK_SEQUENCE_STYLE);
     if (!yaml_emitter_emit(emitter, &event))
@@ -65,13 +64,13 @@ static bool emit_sequence(Sequence *value, void *context)
     return true;
 }
 
-static bool emit_tagged_scalar(const Scalar *value, yaml_char_t *tag, yaml_scalar_style_t style, int implicit, void *context)
+static bool emit_tagged_scalar(const String *value, yaml_char_t *tag, yaml_scalar_style_t style, int implicit, void *context)
 {
-    trace_string("emitting scalar \"%s\"", scalar_value(value), node_size(value));
+    log_trace("emitting scalar \"%s\"", C(value));
     yaml_emitter_t *emitter = (yaml_emitter_t *)context;
     yaml_event_t event;
 
-    yaml_scalar_event_initialize(&event, NULL, tag, scalar_value(value),
+    yaml_scalar_event_initialize(&event, NULL, tag, (yaml_char_t *)C(value),
                                  (int)node_size(value), implicit, implicit, style);
     if (!yaml_emitter_emit(emitter, &event))
         return false;
@@ -79,7 +78,7 @@ static bool emit_tagged_scalar(const Scalar *value, yaml_char_t *tag, yaml_scala
     return true;
 }
 
-static bool emit_mapping_item(Scalar *key, Node *value, void *context)
+static bool emit_mapping_item(String *key, Node *value, void *context)
 {
     log_trace(component, "emitting mapping item");
     if(!emit_tagged_scalar(key, (yaml_char_t *)YAML_STR_TAG, YAML_PLAIN_SCALAR_STYLE, 1, context))
@@ -96,7 +95,7 @@ static bool emit_mapping(Mapping *value, void *context)
     yaml_event_t event;
 
     log_trace(component, "mapping start");
-    uint8_t *name = node_name((Node *)value);
+    uint8_t *name = node_name(value);
     yaml_char_t *tag = NULL == name ? (yaml_char_t *)YAML_DEFAULT_MAPPING_TAG : (yaml_char_t *)name;
     yaml_mapping_start_event_initialize(&event, NULL, tag, NULL == name, YAML_BLOCK_MAPPING_STYLE);
     if (!yaml_emitter_emit(emitter, &event))
@@ -119,7 +118,7 @@ static bool emit_scalar(const Scalar *each, void *context)
 {
     yaml_char_t *tag = NULL;
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
-    uint8_t *name = node_name((Node *)each);
+    uint8_t *name = node_name(each);
 
     switch(scalar_kind(each))
     {
@@ -144,7 +143,7 @@ static bool emit_scalar(const Scalar *each, void *context)
             break;
     }
 
-    return emit_tagged_scalar(each, tag, style, NULL == name, context);
+    return emit_tagged_scalar(scalar_value(each), tag, style, NULL == name, context);
 }
 
 static bool emit_node(Node *each, void *context)
