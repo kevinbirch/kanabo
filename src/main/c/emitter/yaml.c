@@ -13,7 +13,7 @@ static bool emit_tagged_scalar(const String *value, yaml_char_t *tag, yaml_scala
     yaml_event_t event;
 
     yaml_scalar_event_initialize(&event, NULL, tag, (yaml_char_t *)C(value),
-                                 (int)node_size(value), implicit, implicit, style);
+                                 (int)strlen(value), implicit, implicit, style);
     if (!yaml_emitter_emit(emitter, &event))
     {
         return false;

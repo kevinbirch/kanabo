@@ -51,7 +51,7 @@ void node_init(Node *self, NodeKind kind, const struct vtable_s *vtable)
     }
 }
 
-void _dispose_node(Node *value)
+void dispose_node_(Node *value)
 {
     if(NULL == value)
     {
@@ -61,31 +61,6 @@ void _dispose_node(Node *value)
     free(value->tag.name);
     free(value->anchor);
     free(value);
-}
-
-size_t node_size_(const Node *self)
-{
-    ENSURE_NONNULL_ELSE_ZERO(self);
-
-    return self->vtable->size(self);
-}
-
-NodeKind node_kind_(const Node *self)
-{
-    return self->tag.kind;
-}
-
-uint8_t *node_name_(const Node *self)
-{
-    ENSURE_NONNULL_ELSE_NULL(self);
-
-    return self->tag.name;
-}
-
-Node *node_parent_(const Node *self)
-{
-    ENSURE_NONNULL_ELSE_NULL(self);
-    return self->parent;
 }
 
 void node_set_tag_(Node *self, const uint8_t *value, size_t length)

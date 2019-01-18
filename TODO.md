@@ -5,7 +5,6 @@
 ## fixes
 
 * x_free to dispose_x
-* `node` upcast should be a type-generic macro
 * mapping
   * fnv1 hash?
   * use simple array for small collections?

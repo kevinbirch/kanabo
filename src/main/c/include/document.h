@@ -135,8 +135,8 @@ Alias       *make_alias_node(Node *target);
  */
 
 void         dispose_document_set(DocumentSet *value);
-void         _dispose_node(Node *value);
-#define      dispose_node(SELF) _dispose_node(node((SELF)))
+void         dispose_node_(Node *value);
+#define      dispose_node(SELF) dispose_node_(node((SELF)))
 
 /*
  * Document Set API
@@ -158,21 +158,40 @@ const Node  *const_node_narrow(const Node *instance, NodeKind kind, const char *
 #define      CHECKED_CAST(OBJ, KIND, TYPE) (TYPE *)node_narrow((OBJ), (KIND), __FILE__, __LINE__)
 #define      CONST_CHECKED_CAST(OBJ, KIND, TYPE) (const TYPE *)const_node_narrow((OBJ), (KIND), __FILE__, __LINE__)
 
-#define      node(SELF) ((Node *)(SELF))
-#define      const_node(SELF) ((const Node *)(SELF))
+#define      node(SELF) _Generic((SELF),                        \
+                                 Document *: ((Node *)(SELF)),  \
+                                 Mapping *: ((Node *)(SELF)),   \
+                                 Sequence *: ((Node *)(SELF)),  \
+                                 Scalar *: ((Node *)(SELF)),    \
+                                 Alias *: ((Node *)(SELF)),     \
+                                 Node *: (SELF),                \
+                                 void *: ((Node *)(SELF))       \
+                                 )
+#define      const_node(SELF) _Generic((SELF),                          \
+                                       Document *: ((const Node *)(SELF)), \
+                                       Mapping *: ((const Node *)(SELF)), \
+                                       Sequence *: ((const Node *)(SELF)), \
+                                       Scalar *: ((const Node *)(SELF)), \
+                                       Alias *: ((const Node *)(SELF)), \
+                                       Node *: ((const Node *)(SELF)),  \
+                                       void *: ((const Node *)(SELF)),        \
+                                       const Document *: ((const Node *)(SELF)), \
+                                       const Mapping *: ((const Node *)(SELF)), \
+                                       const Sequence *: ((const Node *)(SELF)), \
+                                       const Scalar *: ((const Node *)(SELF)), \
+                                       const Alias *: ((const Node *)(SELF)), \
+                                       const Node *: (SELF),            \
+                                       const void *: ((const Node *)(SELF)) \
+                                       )
 
 #define      node_position(SELF) (SELF).position
 const char  *node_kind_name_(const Node *value);
-#define      node_kind_name(SELF) node_kind_name_(node((SELF)))
+#define      node_kind_name(SELF) node_kind_name_(const_node((SELF)))
 
-NodeKind     node_kind_(const Node *value);
-#define      node_kind(SELF) node_kind_(node((SELF)))
-uint8_t     *node_name_(const Node *value);
-#define      node_name(SELF) node_name_(node((SELF)))
-Node        *node_parent_(const Node *value);
-#define      node_parent(SELF) node_parent_(node((SELF)))
-size_t       node_size_(const Node *value);
-#define      node_size(SELF) node_size_(node((SELF)))
+#define      node_kind(SELF) (SELF)->tag.kind
+#define      node_name(SELF) (SELF)->tag.name
+#define      node_parent(SELF) (SELF)->parent
+#define      node_size(SELF) (SELF)->vtable->size(const_node(SELF))
 
 bool         node_equals_(const Node *one, const Node *two);
 #define      node_equals(one, two) node_equals_(const_node((one)), const_node((two)))
@@ -190,8 +209,16 @@ void         node_set_anchor_(Node *target, const uint8_t *value, size_t length)
 #define      document_root(SELF) (SELF)->root
 void         document_set_root(Document *doc, Node *root);
 
-#define      document(SELF) (CHECKED_CAST((SELF), DOCUMENT, Document))
-#define      const_document(SELF) (CONST_CHECKED_CAST((SELF), DOCUMENT, Document))
+#define      document(SELF) _Generic((SELF),\
+                                  Node *: (CHECKED_CAST((SELF), DOCUMENT, Document)), \
+                                  void *: (CHECKED_CAST((SELF), DOCUMENT, Document)) \
+                                  )
+#define      const_document(SELF) _Generic((SELF),\
+                                        Node *: (CONST_CHECKED_CAST((SELF), DOCUMENT, Document)), \
+                                        void *: (CONST_CHECKED_CAST((SELF), DOCUMENT, Document)), \
+                                        const Node *: (CONST_CHECKED_CAST((SELF), DOCUMENT, Document)), \
+                                        const void *: (CONST_CHECKED_CAST((SELF), DOCUMENT, Document)) \
+                                        )
 #define      is_document(SELF) (DOCUMENT == node_kind(node((SELF))))
 
 /*
@@ -205,8 +232,16 @@ const char  *scalar_kind_name(const Scalar *value);
 #define      scalar_boolean_is_true(SELF) (0 == memcmp("true", strdta((SELF)->value), 4))
 #define      scalar_boolean_is_false(SELF) (0 == memcmp("false", strdta((SELF)->value), 5))
 
-#define      scalar(SELF) (CHECKED_CAST((SELF), SCALAR, Scalar))
-#define      const_scalar(SELF) (CONST_CHECKED_CAST((SELF), SCALAR, Scalar))
+#define      scalar(SELF) _Generic((SELF),                              \
+                                   Node *: CHECKED_CAST((SELF), SCALAR, Scalar), \
+                                   void *: CHECKED_CAST((SELF), SCALAR, Scalar) \
+                                   )
+#define      const_scalar(SELF) _Generic((SELF),                        \
+                                         Node *: CONST_CHECKED_CAST((SELF), SCALAR, Scalar), \
+                                         void *: CONST_CHECKED_CAST((SELF), SCALAR, Scalar), \
+                                         const Node *: CONST_CHECKED_CAST((SELF), SCALAR, Scalar), \
+                                         const void *: CONST_CHECKED_CAST((SELF), SCALAR, Scalar) \
+                                   )
 
 #define      is_scalar(SELF) (SCALAR == node_kind(node((SELF))))
 #define      is_string(SELF) (is_scalar((SELF)) && SCALAR_STRING == scalar_kind(scalar((SELF))))
@@ -227,8 +262,16 @@ bool         sequence_add(Sequence *seq, Node *item);
 typedef bool (*sequence_iterator)(Node *each, void *context);
 bool         sequence_iterate(const Sequence *seq, sequence_iterator iterator, void *context);
 
-#define      sequence(SELF) (CHECKED_CAST((SELF), SEQUENCE, Sequence))
-#define      const_sequence(SELF) (CONST_CHECKED_CAST((SELF), SEQUENCE, Sequence))
+#define      sequence(SELF) _Generic((SELF),\
+                                     Node *: CHECKED_CAST((SELF), SEQUENCE, Sequence), \
+                                     void *:CHECKED_CAST((SELF), SEQUENCE, Sequence) \
+                                     )
+#define      const_sequence(SELF) _Generic((SELF),\
+                                           Node *: (CONST_CHECKED_CAST((SELF), SEQUENCE, Sequence)), \
+                                           void *:(CONST_CHECKED_CAST((SELF), SEQUENCE, Sequence)), \
+                                           const Node *: (CONST_CHECKED_CAST((SELF), SEQUENCE, Sequence)), \
+                                           const void *: (CONST_CHECKED_CAST((SELF), SEQUENCE, Sequence)) \
+                                           )
 #define      is_sequence(SELF) (SEQUENCE == node_kind(node((SELF))))
 
 /*
@@ -242,8 +285,16 @@ bool         mapping_put(Mapping *self, String *key, Node *value);
 typedef bool (*mapping_iterator)(String *key, Node *value, void *context);
 bool         mapping_iterate(const Mapping *map, mapping_iterator iterator, void *context);
 
-#define      mapping(SELF) (CHECKED_CAST((SELF), MAPPING, Mapping))
-#define      const_mapping(SELF) (CONST_CHECKED_CAST((SELF), MAPPING, Mapping))
+#define      mapping(SELF) _Generic((SELF),\
+                                    Node *: CHECKED_CAST((SELF), MAPPING, Mapping), \
+                                    void *: CHECKED_CAST((SELF), MAPPING, Mapping) \
+                                    )
+#define      const_mapping(SELF) _Generic((SELF),\
+                                          Node *:CONST_CHECKED_CAST((SELF), MAPPING, Mapping), \
+                                          void *: CONST_CHECKED_CAST((SELF), MAPPING, Mapping), \
+                                          const Node *: CONST_CHECKED_CAST((SELF), MAPPING, Mapping), \
+                                          const void *: CONST_CHECKED_CAST((SELF), MAPPING, Mapping) \
+                                          )
 #define      is_mapping(SELF) (MAPPING == node_kind(node((SELF))))
 
 /*
@@ -252,6 +303,14 @@ bool         mapping_iterate(const Mapping *map, mapping_iterator iterator, void
 
 #define      alias_target(SELF) (SELF)->target
 
-#define      alias(SELF) (CHECKED_CAST((SELF), ALIAS, Alias))
-#define      const_alias(SELF) (CONST_CHECKED_CAST((SELF), ALIAS, Alias))
+#define      alias(SELF) _Generic((SELF),\
+                                  Node *: (CHECKED_CAST((SELF), ALIAS, Alias)), \
+                                  void *: (CHECKED_CAST((SELF), ALIAS, Alias)) \
+                                  )
+#define      const_alias(SELF) _Generic((SELF),\
+                                        Node *: (CONST_CHECKED_CAST((SELF), ALIAS, Alias)), \
+                                        void *: (CONST_CHECKED_CAST((SELF), ALIAS, Alias)), \
+                                        const Node *: (CONST_CHECKED_CAST((SELF), ALIAS, Alias)), \
+                                        const void *: (CONST_CHECKED_CAST((SELF), ALIAS, Alias)) \
+                                        )
 #define      is_alias(SELF) (ALIAS == node_kind(node((SELF))))

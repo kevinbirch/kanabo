@@ -16,13 +16,6 @@ START_TEST (null_model)
 }
 END_TEST
 
-START_TEST (null_node)
-{
-    assert_null(node_name(NULL));
-    assert_node_size(NULL, 0);
-}
-END_TEST
-
 START_TEST (null_mapping)
 {
     assert_null(mapping_get(NULL, NULL));
@@ -337,7 +330,6 @@ Suite *model_suite(void)
 {
     TCase *bad_input = tcase_create("bad input");
     tcase_add_test(bad_input, null_model);
-    tcase_add_test(bad_input, null_node);
     tcase_add_test(bad_input, null_mapping);
 
     TCase *basic = tcase_create("basic");

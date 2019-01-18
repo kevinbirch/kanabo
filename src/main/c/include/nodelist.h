@@ -26,7 +26,7 @@ typedef Vector Nodelist;
 #define      nodelist_is_empty vector_is_empty
 
 /*
- * Elemment Access
+ * Element Access
  */
 
 #define      nodelist_get vector_get
@@ -42,4 +42,5 @@ bool         nodelist_iterate(const Nodelist *list, nodelist_iterator iterator, 
 
 typedef bool (*nodelist_map_function)(Node *each, void *context, Nodelist *target);
 
+Nodelist    *nodelist_map(const Nodelist *list, nodelist_map_function function, void *context);
 Nodelist    *nodelist_map_into(const Nodelist *list, nodelist_map_function function, void *context, Nodelist *target);
