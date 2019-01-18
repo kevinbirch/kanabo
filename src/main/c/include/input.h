@@ -89,8 +89,8 @@ size_t       input_remaining(Input *self);
 
 // Consumption API
 
-#define      input_peek(SELF) (SELF)->source.buffer[(SELF)->position.index]
 void         input_skip_whitespace(Input *self);
+char         input_peek(Input *self);
 char         input_consume_one(Input *self);
 size_t       input_consume_many(Input *self, size_t count, char *result);
 bool         input_consume_if(Input *self, const char *value);

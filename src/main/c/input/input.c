@@ -108,6 +108,14 @@ void input_skip_whitespace(Input *self)
     }
 }
 
+char input_peek(Input *self)
+{
+    ENSURE_NONNULL_ELSE_ZERO(self);
+    ENSURE_ELSE_ZERO(input_has_more(self));
+
+    return current(self);
+}
+
 char input_consume_one(Input *self)
 {
     ENSURE_NONNULL_ELSE_ZERO(self);

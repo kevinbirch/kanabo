@@ -5,6 +5,7 @@
 ## fixes
 
 * x_free to dispose_x
+* clean up `xxx` notes
 * formatting for `String`
   * http://www.tin.org/bin/man.cgi?section=3&topic=snprintf
   * http://stackoverflow.com/questions/69738/c-how-to-get-fprintf-results-as-a-stdstring-w-o-sprintf/69911#69911
@@ -17,7 +18,6 @@
 * don't use callback between scanner and parser for errors, track error vector in each
   * use single add_parser_error function
   * why are postion macros different for parser and scanner?
-* clean up `xxx` notes
 * libbacktrace instead of execinfo?
   * panic backtrace looks like crap on Linux?
 * loader error handing
@@ -25,9 +25,6 @@
   * add extra context string to capture scalar value *or* libyaml message
 * jsonpath model dumper w/ secret command line option, nice tree-like layout
   * `--output=ast`
-* add safe arithmetic functions
-  * http://lists.nongnu.org/archive/html/qemu-devel/2013-01/msg05387.html
-  * https://sourceware.org/ml/libc-alpha/2013-12/msg00098.html
 * switch weather example to yaml config file
 * memory leaks
   * (should be fixed) ignored keys and values are leaked
@@ -92,6 +89,9 @@
 * computed goto dispatch table?
   * http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables
 * refactor iteration methods to use filter, tranform, fold
+* add safe arithmetic functions
+  * http://lists.nongnu.org/archive/html/qemu-devel/2013-01/msg05387.html
+  * https://sourceware.org/ml/libc-alpha/2013-12/msg00098.html
 
 ## unit testing
 
