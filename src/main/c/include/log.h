@@ -38,8 +38,8 @@ void set_log_level_from_env(void);
         logger(LEVEL, COMP, FORMAT, _log_string, ##__VA_ARGS__);        \
     } while(0)
 
-int logger(enum log_level level, const char *component, const char *format, ...);
-int vlogger(enum log_level level, const char *component, const char *format, va_list args);
+int logger(enum log_level level, const char *component, const char *format, ...);// __attribute__ ((format (printf, 3, 4)));
+int vlogger(enum log_level level, const char *component, const char *format, va_list args);// __attribute__ ((format (printf, 3, 0)));
 
 #else
 

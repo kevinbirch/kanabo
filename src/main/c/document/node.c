@@ -4,6 +4,7 @@
 #include "conditions.h"
 #include "document.h"
 #include "log.h"
+#include "panic.h"
 #include "xalloc.h"
 
 static const char * const NODE_KINDS [] =
@@ -20,11 +21,11 @@ const char *node_kind_name_(const Node *self)
     return NODE_KINDS[self->tag.kind];
 }
 
-#define assert_kind(EXPECTED, ACTUAL, FILE, LINE) if((ACTUAL) != (EXPECTED)) \
+#define assert_kind(EXPECTED, ACTUAL, FILE, LINE)                       \
+    if((ACTUAL) != (EXPECTED))                                          \
     {                                                                   \
-        printf("invalid cast from `%s` to `%s` at %s:%d\n",             \
-               NODE_KINDS[(ACTUAL)], NODE_KINDS[(EXPECTED)], file, line); \
-        exit(EXIT_FAILURE);                                             \
+        panicf("invalid cast from `%s` to `%s`",                        \
+               NODE_KINDS[(ACTUAL)], NODE_KINDS[(EXPECTED)]);           \
     }
 
 Node *node_narrow(Node *instance, NodeKind kind, const char * restrict file, int line)

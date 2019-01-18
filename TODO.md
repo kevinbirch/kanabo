@@ -5,10 +5,7 @@
 ## fixes
 
 * clean up logging in emitter module
-* remove all redundant casts to `(Node *)`
-* ignored keys and values are leaked
 * x_free to dispose_x
-* panic on illegal downcast
 * \_POSIX_C_SOURCE usage?
 * `dispose_node` should be type-generic macro
 * `node` upcast should be a type-generic macro
@@ -45,6 +42,8 @@
   * https://sourceware.org/ml/libc-alpha/2013-12/msg00098.html
 * switch weather example to yaml config file
 * various getopt alternatvies: https://news.ycombinator.com/item?id=10687375
+* memory leaks
+  * (should be fixed) ignored keys and values are leaked
 
 * update spacecadet
   * move changes back
@@ -229,6 +228,8 @@
 * support in-place document patching
   * should there be a stack of edits atop of loaded tree (immutable loads?)
   * can whole documents be saved and named? (`${doc-name or index}` `$index`?)
+* use `flatten` attribute on evaluator, parser core functions?
+  * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
 
 ## competition
 

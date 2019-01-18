@@ -1,9 +1,9 @@
 #pragma once
 
-typedef void (*OOMErrorHandler)(size_t, const char * restrict file, int line);
+typedef void (*OOMErrorHandler)(const char * restrict, int, size_t);
 
 void set_oom_handler(OOMErrorHandler handler);
 
-void *_xcalloc_at(size_t size, const char * restrict file, int line);
+void *_xcalloc_at(const char * restrict file, int line, size_t size);
 
-#define xcalloc(SIZE) _xcalloc_at(SIZE, __FILE__, __LINE__)
+#define xcalloc(SIZE) _xcalloc_at(__FILE__, __LINE__, SIZE)

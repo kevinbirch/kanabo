@@ -3,6 +3,7 @@
 #endif
 
 #include <execinfo.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>  // for exit
 
@@ -10,7 +11,7 @@
 
 static const char * const PANIC_MESSAGE = "panic - ";
 
-void _panic_at(const char * restrict message, const char * restrict file, int line)
+static void print_prelude(const char * restrict file, int line)
 {
     if(NULL != file)
     {
@@ -22,6 +23,11 @@ void _panic_at(const char * restrict message, const char * restrict file, int li
         fputs(": ", stderr);
     }
     fputs(PANIC_MESSAGE, stderr);
+}
+
+void _panic_at(const char * restrict file, int line, const char * restrict message)
+{
+    print_prelude(file, line);
     fputs(message, stderr);
     fputs("\n", stderr);
 
@@ -29,6 +35,24 @@ void _panic_at(const char * restrict message, const char * restrict file, int li
     int depth;
 
     depth = backtrace(stack, 20);
+    fputs("Backtrace follows (most recent first):\n", stderr);
+    backtrace_symbols_fd(stack, depth, fileno(stderr));
+
+    exit(EXIT_FAILURE);
+}
+
+void _panicf_at(const char * restrict file, int line, const char * restrict format, ...)
+{
+    print_prelude(file, line);
+
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+    fputs("\n", stderr);
+
+    void *stack[20];
+    int depth = backtrace(stack, 20);
     fputs("Backtrace follows (most recent first):\n", stderr);
     backtrace_symbols_fd(stack, depth, fileno(stderr));
 
