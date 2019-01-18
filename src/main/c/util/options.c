@@ -46,7 +46,7 @@ static argument arguments[] =
         break;                             \
     }
 
-inline int32_t parse_emit_mode(const char *value)
+int32_t parse_emit_mode(const char *value)
 {
     if(strncmp("bash", value, 4) == 0)
     {
@@ -70,12 +70,12 @@ inline int32_t parse_emit_mode(const char *value)
     }
 }
 
-inline const char * emit_mode_name(enum emit_mode value)
+const char * emit_mode_name(enum emit_mode value)
 {
     return EMIT_MODES[value];
 }
 
-inline int32_t parse_duplicate_strategy(const char *value)
+int32_t parse_duplicate_strategy(const char *value)
 {
     if(0 == strncmp("clobber", value, 7ul))
     {
@@ -95,7 +95,7 @@ inline int32_t parse_duplicate_strategy(const char *value)
     }
 }
 
-inline const char * duplicate_strategy_name(DuplicateKeyStrategy value)
+const char * duplicate_strategy_name(DuplicateKeyStrategy value)
 {
     return DUPLICATE_STRATEGIES[value];
 }

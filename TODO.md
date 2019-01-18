@@ -4,7 +4,6 @@
 
 ## fixes
 
-* fix incorrect non-static uses of inline specifier
 * clean up logging in emitter module
 * remove all redundant casts to `(Node *)`
 * ignored keys and values are leaked
