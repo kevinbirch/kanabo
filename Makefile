@@ -189,6 +189,7 @@ TEST_LDFLAGS ?= $(LDFLAGS)
 TEST_LDFLAGS := $(TEST_LDFLAGS)
 TEST_LDLIBS ?= $(LDLIBS)
 TEST_LDLIBS := $(TEST_LDLIBS)
+TEST_ENV ?=
 
 ## Automation helper functions
 source_to_target = $(foreach s, $(1), $(2)/$(basename $(s)).$(3))
@@ -570,8 +571,8 @@ test-target: library process-test-objects $(TEST_PROGRAM_TARGET)
 
 test: test-target
 ifeq ($(strip $(skip_tests)),)
-	@$(info $(call announce_section_detail_message,Executing test harness))
-	@cd $(TARGET_DIR); ./$(TEST_PROGRAM)
+	@$(info $(call announce_section_detail_message,Executing test harness,$(TEST_ENV) ./$(TARGET_DIR)/$(TEST_PROGRAM)))
+	@cd $(TARGET_DIR); $(TEST_ENV) ./$(TEST_PROGRAM)
 else
 	@$(info $(call announce_section_detail_message,Skipping tests))
 	@:

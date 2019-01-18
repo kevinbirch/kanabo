@@ -27,6 +27,9 @@
   * `--output=ast`
 * switch weather example to yaml config file
 * memory leaks
+  * use memory sanitizer on linux w clang
+    * `debug_CFLAGS := $(debug_CFLAGS) -sanitize=memory`
+    * `debug_LDFLAGS := $(debug_LDFLAGS) -sanitize=memory`
   * (should be fixed) ignored keys and values are leaked
 
 * update spacecadet

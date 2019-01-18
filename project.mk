@@ -10,19 +10,20 @@ DEPENDENCIES = yaml
 TEST_DEPENDENCIES = check yaml
 
 CFLAGS += -std=c11 -fstrict-aliasing -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-gnu -fms-extensions -Wno-microsoft -Wno-unused-parameter
-debug_CFLAGS = -DUSE_LOGGING -g -fsanitize=address,undefined
+debug_CFLAGS = -DUSE_LOGGING -g -fno-omit-frame-pointer -fsanitize=address,undefined
 release_CFLAGS = -DUSE_LOGGING -O3
-debug_LDFLAGS = -fsanitize=address,undefined
+debug_LDFLAGS = -fno-omit-frame-pointer -fsanitize=address,undefined
 release_LDFLAGS = -flto
 
 system = $(shell uname -s)
 
 ifeq ($(system),Linux)
-LDLIBS = -lm
-TEST_LDLIBS = $(LDLIBS) -pthread -lrt -lsubunit
+LDLIBS := -lm
+TEST_LDLIBS := $(LDLIBS) -pthread -lrt -lsubunit
+TEST_ENV := CK_FORK=no ASAN_OPTIONS=detect_leaks=1
 AR = ar rcs
 else ifeq ($(system),Darwin)
-AR = libtool -static -o
+AR := libtool -static -o
 endif
 
 VERSION_H = $(GENERATED_HEADERS_DIR)/version.h
