@@ -71,7 +71,7 @@ Mapping *make_mapping_node(void)
     self->values = make_hashtable_with_function(scalar_comparitor, scalar_hash);
     if(NULL == self->values)
     {
-        panic("unable to allocate mapping hashtable delegate");
+        panic("document: mapping: allocate mapping hashtable failed");
     }
 
     return self;

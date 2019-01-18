@@ -5,9 +5,6 @@
 ## fixes
 
 * x_free to dispose_x
-* preserve input file names to use with warning lines (`loader/yaml.c:add_to_mapping`)
-  * print dupe key name when scalar no
-* normalize all panic messages: `<module>: <operation>: <failure>`
 * formatting for `String`
   * http://www.tin.org/bin/man.cgi?section=3&topic=snprintf
   * http://stackoverflow.com/questions/69738/c-how-to-get-fprintf-results-as-a-stdstring-w-o-sprintf/69911#69911
@@ -26,14 +23,12 @@
 * loader error handing
   * failure in `add_node` or error from libyaml are fatal
   * add extra context string to capture scalar value *or* libyaml message
-* model dumper w/ secret command line option, nice tree-like layout
+* jsonpath model dumper w/ secret command line option, nice tree-like layout
   * `--output=ast`
-* change license to bsd 3 clause
 * add safe arithmetic functions
   * http://lists.nongnu.org/archive/html/qemu-devel/2013-01/msg05387.html
   * https://sourceware.org/ml/libc-alpha/2013-12/msg00098.html
 * switch weather example to yaml config file
-* various getopt alternatvies: https://news.ycombinator.com/item?id=10687375
 * memory leaks
   * (should be fixed) ignored keys and values are leaked
 
@@ -223,6 +218,7 @@
 * use `flatten` attribute on evaluator, parser core functions?
   * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
 * use simple array for small size mapping instances?
+* various getopt alternatvies: https://news.ycombinator.com/item?id=10687375
 
 ## competition
 

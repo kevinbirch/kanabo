@@ -23,7 +23,7 @@ void nodelist_add(Nodelist *list, Node *value)
 {
     if(!vector_add(list, value))
     {
-        panic("nodelist_add failed");
+        panic("nodelist: add: vector_add failed");
     }
 }
 
@@ -34,7 +34,7 @@ void nodelist_set(Nodelist *list, Node *value, size_t index)
 
     if(0 != errno)
     {
-        panic("nodelist_set failed");
+        panic("nodelist: set: vector_set failed");
     }
 }
 

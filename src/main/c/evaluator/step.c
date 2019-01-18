@@ -71,7 +71,7 @@ Maybe(Nodelist) evaluate_steps(const DocumentSet *model, const JsonPath *path)
     self.results = make_nodelist();
     if(NULL == self.results)
     {
-        panic("can't allocate the result nodelist");
+        panic("evaluator: evaluate steps: allocate result nodelist failed");
     }
 
     self.model = model;

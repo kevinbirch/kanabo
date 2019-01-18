@@ -20,7 +20,7 @@ static regex_t decimal_regex;
 static regex_t integer_regex;
 static regex_t timestamp_regex;
 
-static const char * const REGEX_PANIC_MSG = "regex compilation failed: \"%s\": %s";
+static const char * const REGEX_PANIC_MSG = "loader: initialize: regex compilation failed: \"%s\": %s";
 
 static const Position NO_POSITION = (Position){};
 

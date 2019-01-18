@@ -56,7 +56,7 @@ Sequence *make_sequence_node(void)
     self->values = make_vector();
     if(NULL == self->values)
     {
-        panic("unable to allocate sequence vector delegate");
+        panic("document: sequence: allocate sequence vector failed");
     }
 
     return self;
