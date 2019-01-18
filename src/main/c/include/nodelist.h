@@ -16,7 +16,7 @@ typedef Vector Nodelist;
  * Destructors
  */
 
-#define      nodelist_free vector_free
+#define      dispose_nodelist dispose_vector
 
 /*
  * Property Access

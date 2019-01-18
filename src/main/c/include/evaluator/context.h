@@ -19,7 +19,7 @@ typedef struct evaluator_context_s Evaluator;
     Nodelist *result = nodelist_map(evaluator->results, (FUNCTION), evaluator); \
     evaluator_trace("%s: %s", (TEST), NULL == result ? "failed" : "completed"); \
     evaluator_trace("%s: added %zu nodes", (NAME), nodelist_length(result)); \
-    return NULL == result ? false : (nodelist_free(evaluator->results), evaluator->results = result, true);
+    return NULL == result ? false : (dispose_nodelist(evaluator->results), evaluator->results = result, true);
 
 #define current_step(CTX) ((Step *)vector_get((CTX)->path->steps, (CTX)->current_step))
 

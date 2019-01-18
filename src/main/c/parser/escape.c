@@ -173,7 +173,7 @@ String *unescape(Parser *self, const String *lexeme)
     result = mstring_as_string(cooked);
 
   cleanup:
-    mstring_free(cooked);
+    dispose_mstring(cooked);
 
     return result;
 }

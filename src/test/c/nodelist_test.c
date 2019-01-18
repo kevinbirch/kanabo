@@ -31,7 +31,7 @@ static bool freedom_iterator(Node *each, void *context)
 static void nodelist_teardown(void)
 {
     nodelist_iterate(list_fixture, freedom_iterator, NULL);
-    nodelist_free(list_fixture);
+    dispose_nodelist(list_fixture);
 }
 
 static bool fail_nodelist(Node *each, void *context)
@@ -101,7 +101,7 @@ START_TEST (bad_get)
 
     assert_null(nodelist_get(empty_list, 0));
 
-    nodelist_free(empty_list);
+    dispose_nodelist(empty_list);
 }
 END_TEST
 
@@ -135,7 +135,7 @@ START_TEST (bad_iterate)
 
     assert_false(nodelist_iterate(empty_list, NULL, NULL));
 
-    nodelist_free(empty_list);
+    dispose_nodelist(empty_list);
 }
 END_TEST
     
@@ -148,7 +148,7 @@ START_TEST (bad_map)
 
     assert_null(nodelist_map(empty_list, NULL, NULL));
 
-    nodelist_free(empty_list);
+    dispose_nodelist(empty_list);
 }
 END_TEST
     
@@ -163,7 +163,7 @@ START_TEST (bad_map_into)
 
     assert_null(nodelist_map_into(empty_list, (nodelist_map_function)1, NULL, NULL));
 
-    nodelist_free(empty_list);
+    dispose_nodelist(empty_list);
 }
 END_TEST
     
@@ -175,7 +175,7 @@ START_TEST (ctor_dtor)
     assert_nodelist_length(empty_list, 0);
     assert_nodelist_empty(empty_list);
     
-    nodelist_free(empty_list);
+    dispose_nodelist(empty_list);
 }
 END_TEST
 
@@ -236,7 +236,7 @@ START_TEST (map)
     assert_scalar_kind(one, SCALAR_INTEGER);
     assert_scalar_value(one, "2");
 
-    nodelist_free(result);
+    dispose_nodelist(result);
 }
 END_TEST
 

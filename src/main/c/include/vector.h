@@ -22,7 +22,7 @@ Vector *vector_with(const Vector *vector, void *value);
 Vector *vector_with_all(const Vector *vector, const Vector *from);
 
 /* Destructors */
-void    vector_free(Vector *vector);
+void    dispose_vector(Vector *vector);
 void    vector_destroy(Vector *vector, vector_item_destructor destructor);
 
 /* Size API */

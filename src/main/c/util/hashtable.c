@@ -186,7 +186,7 @@ static void init(Hashtable *hashtable,
     hashtable->compare = comparitor;
 }
 
-void hashtable_free(Hashtable *hashtable)
+void dispose_hashtable(Hashtable *hashtable)
 {
     if(NULL == hashtable)
     {

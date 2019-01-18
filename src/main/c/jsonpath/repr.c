@@ -141,7 +141,7 @@ String *path_repr(const JsonPath *path)
     repr_path(path, &buf);
 
     String *result = mstring_as_string(buf);
-    mstring_free(buf);
+    dispose_mstring(buf);
 
     return result;
 }

@@ -21,7 +21,7 @@ String *string_clone(const String *self);
 
 // String Destructor
 
-void    string_free(String *self);
+void    dispose_string(String *self);
 
 // String Data API
 
@@ -67,7 +67,7 @@ MutableString *mstring_clone(const MutableString *self);
 
 // Mutable String Destructor
 
-void mstring_free(MutableString *self);
+void dispose_mstring(MutableString *self);
 
 // Mutable String Attribute API
 

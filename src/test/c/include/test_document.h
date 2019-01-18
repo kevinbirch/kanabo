@@ -26,7 +26,7 @@
 #define assert_mapping_has_key(NODE, KEY) do {                          \
         String *key = make_string((KEY));                               \
         assert_true(mapping_contains((NODE), key));                     \
-        string_free(key);                                               \
+        dispose_string(key);                                               \
     } while(0)
 
 #define assert_scalar_kind(NODE, EXPECTED) assert_int_eq(EXPECTED, scalar_kind(scalar((NODE))))

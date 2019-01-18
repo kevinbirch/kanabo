@@ -26,7 +26,7 @@ Hashtable *make_hashtable_with_capacity_factor_function(compare_function compari
                                                         float load_factor, 
                                                         hash_function function);
 
-void hashtable_free(Hashtable *hashtable);
+void dispose_hashtable(Hashtable *hashtable);
 
 size_t hashtable_size(const Hashtable *hashtable);
 size_t hashtable_capacity(const Hashtable *hashtable);

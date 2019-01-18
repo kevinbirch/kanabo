@@ -27,7 +27,7 @@ static inline void step_free(Step *self)
     {
         if(NULL != self->test.name)
         {
-            string_free(self->test.name);
+            dispose_string(self->test.name);
             self->test.name = NULL;
         }
     }

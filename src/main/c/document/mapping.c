@@ -27,7 +27,7 @@ static size_t mapping_size(const Node *self)
 
 static bool mapping_freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
 {
-    string_free((String *)key);
+    dispose_string((String *)key);
     dispose_node(value);
 
     return true;
@@ -42,7 +42,7 @@ static void mapping_free(Node *value)
     }
 
     hashtable_iterate(map->values, mapping_freedom_iterator, NULL);
-    hashtable_free(map->values);
+    dispose_hashtable(map->values);
     map->values = NULL;
 }
 

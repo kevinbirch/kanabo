@@ -15,7 +15,7 @@ void dispose_document_set(DocumentSet *self)
         return;
     }
     vector_iterate(self, freedom_iterator, NULL);
-    vector_free(self);
+    dispose_vector(self);
 }
 
 Node *document_set_get_root(const DocumentSet *self, size_t index)

@@ -12,7 +12,7 @@ Maybe(Nodelist) evaluate(const DocumentSet *documents, const JsonPath *path)
 
     String *repr = path_repr(path);
     evaluator_debug("evaluating path \"%s\"", C(repr));
-    string_free(repr);
+    dispose_string(repr);
 
     Maybe(Nodelist) results = evaluate_steps(documents, path);
 

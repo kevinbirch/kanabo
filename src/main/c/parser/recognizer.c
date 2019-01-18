@@ -240,7 +240,7 @@ static void parse_quoted_name(Parser *self, Step *step)
     step->test.name = cooked;
 
   cleanup:
-    string_free(raw);
+    dispose_string(raw);
 }
 
 static void recover(Parser *self, Step *step)

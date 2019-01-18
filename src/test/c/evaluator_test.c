@@ -204,7 +204,7 @@ START_TEST (dollar_only)
     assert_node_size(nodelist_get(list, 0), 1);
     assert_mapping_has_key(nodelist_get(list, 0), "store");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -221,7 +221,7 @@ START_TEST (single_name_step)
     assert_mapping_has_key(mapping(store), "book");
     assert_mapping_has_key(mapping(store), "bicycle");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -232,7 +232,7 @@ START_TEST (simple_recursive_step)
     NodeKind kinds[] = {SCALAR, SCALAR, SCALAR, SCALAR, SCALAR};
     assert_node_kinds(list, kinds);
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -243,7 +243,7 @@ START_TEST (compound_recursive_step)
     ScalarKind kinds[] = {SCALAR_REAL, SCALAR_REAL, SCALAR_REAL, SCALAR_REAL, SCALAR_REAL, SCALAR_REAL};
     assert_scalar_kinds(list, kinds);
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -258,7 +258,7 @@ START_TEST (long_path)
     assert_node_kind(color, SCALAR);
     assert_scalar_value((color), "red");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -269,7 +269,7 @@ START_TEST (wildcard)
     NodeKind kinds[] = {SEQUENCE, MAPPING};
     assert_node_kinds(list, kinds);
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -283,7 +283,7 @@ START_TEST (recursive_wildcard)
         assert_node_kind(nodelist_get(list, i), SCALAR);
     }
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -300,7 +300,7 @@ START_TEST (object_test)
     assert_mapping_has_key(mapping(value), "book");
     assert_mapping_has_key(mapping(value), "bicycle");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -315,7 +315,7 @@ START_TEST (array_test)
     assert_node_kind(value, SEQUENCE);
     assert_node_size(value, 5);
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -326,7 +326,7 @@ START_TEST (number_test)
     char *values[] = {"8.95", "12.99", "8.99", "22.99", "13.29"};
     assert_scalar_values(list, values);
         
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -337,7 +337,7 @@ START_TEST (wildcard_predicate)
     NodeKind kinds[] = {SCALAR, SCALAR, SCALAR, SCALAR, SCALAR};
     assert_node_kinds(list, kinds);
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -351,7 +351,7 @@ START_TEST (wildcard_predicate_on_mapping)
     assert_node_kind(s, SCALAR);
     assert_scalar_value((s), "red");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -365,7 +365,7 @@ START_TEST (wildcard_predicate_on_scalar)
     assert_node_kind(s, SCALAR);
     assert_scalar_value((s), "red");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -380,11 +380,11 @@ START_TEST (subscript_predicate)
 
     String *key = make_string("author");
     Node *author = mapping_get(mapping(book), key);
-    string_free(key);
+    dispose_string(key);
     assert_not_null(author);
     assert_scalar_value((author), "Herman Melville");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -399,11 +399,11 @@ START_TEST (recursive_subscript_predicate)
 
     String *key = make_string("author");
     Node *author = mapping_get(mapping(book), key);
-    string_free(key);
+    dispose_string(key);
     assert_not_null(author);
     assert_scalar_value((author), "Herman Melville");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -429,8 +429,8 @@ START_TEST (slice_predicate)
     assert_not_null(author);
     assert_scalar_value((author), "Evelyn Waugh");
 
-    string_free(key);
-    nodelist_free(list);
+    dispose_string(key);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -456,8 +456,8 @@ START_TEST (recursive_slice_predicate)
     assert_not_null(author);
     assert_scalar_value((author), "Evelyn Waugh");
 
-    string_free(key);
-    nodelist_free(list);
+    dispose_string(key);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -472,11 +472,11 @@ START_TEST (slice_predicate_with_step)
 
     String *key = make_string("author");
     Node *author = mapping_get(mapping(book), key);
-    string_free(key);
+    dispose_string(key);
     assert_not_null(author);
     assert_scalar_value((author), "Nigel Rees");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -491,11 +491,11 @@ START_TEST (slice_predicate_negative_from)
 
     String *key = make_string("author");
     Node *author = mapping_get(mapping(book), key);
-    string_free(key);
+    dispose_string(key);
     assert_not_null(author);
     assert_scalar_value((author), "夏目漱石 (NATSUME Sōseki)");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -510,11 +510,11 @@ START_TEST (recursive_slice_predicate_negative_from)
 
     String *key = make_string("author");
     Node *author = mapping_get(mapping(book), key);
-    string_free(key);
+    dispose_string(key);
     assert_not_null(author);
     assert_scalar_value((author), "夏目漱石 (NATSUME Sōseki)");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -536,7 +536,7 @@ START_TEST (slice_predicate_copy)
     value = mapping_get(nodelist_get(list, 3), key);
     assert_scalar_value((value), "J. R. R. Tolkien");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -560,8 +560,8 @@ START_TEST (slice_predicate_reverse)
     value = mapping_get(nodelist_get(list, 4), key);
     assert_scalar_value((value), "Nigel Rees");
 
-    string_free(key);
-    nodelist_free(list);
+    dispose_string(key);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -572,7 +572,7 @@ START_TEST (name_alias)
     assert_nodelist_length(list, 1);
     assert_scalar_value(nodelist_get(list, 0), "Ramond Hessel");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -583,7 +583,7 @@ START_TEST (type_alias)
     assert_nodelist_length(list, 1);
     assert_scalar_value(nodelist_get(list, 0), "237.23");
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -605,8 +605,8 @@ START_TEST (greedy_wildcard_alias)
     Node *one_value = mapping_get(mapping(one),key);
     assert_scalar_value((one_value), "0323073867");
 
-    string_free(key);
-    nodelist_free(list);
+    dispose_string(key);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -617,7 +617,7 @@ START_TEST (recursive_alias)
     char *values[] = {"1428312250", "0323073867"};
     assert_scalar_values(list, values);
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -628,7 +628,7 @@ START_TEST (wildcard_predicate_alias)
     char *values[] = {"135.48", "84.18"};
     assert_scalar_values(list, values);
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 
@@ -642,7 +642,7 @@ START_TEST (recursive_wildcard_alias)
         assert_node_kind(nodelist_get(list, i), SCALAR);
     }
 
-    nodelist_free(list);
+    dispose_nodelist(list);
 }
 END_TEST
 

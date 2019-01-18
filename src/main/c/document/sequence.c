@@ -38,7 +38,7 @@ static void sequence_free(Node *value)
         return;
     }
     vector_iterate(self->values, sequence_freedom_iterator, NULL);
-    vector_free(self->values);
+    dispose_vector(self->values);
     self->values = NULL;
 }
 

@@ -144,7 +144,7 @@ static int apply_expression(const char *expression, DocumentSet *documents, enum
     }
 
   cleanup:
-    nodelist_free(list);
+    dispose_nodelist(list);
     dispose_path(from_just(path));
 
   end:

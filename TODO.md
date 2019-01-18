@@ -4,7 +4,6 @@
 
 ## fixes
 
-* x_free to dispose_x
 * clean up `xxx` notes
 * formatting for `String`
   * http://www.tin.org/bin/man.cgi?section=3&topic=snprintf

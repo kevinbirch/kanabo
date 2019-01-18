@@ -61,7 +61,7 @@ String *make_string_with_bytestring(const uint8_t *value, size_t length)
     return string_init_with_bytestring(self, value, length);
 }
 
-void string_free(String *self)
+void dispose_string(String *self)
 {
     if(NULL == self)
     {
@@ -271,7 +271,7 @@ MutableString *make_mstring_with_string(const String *value)
     return self;
 }
 
-void mstring_free(MutableString *self)
+void dispose_mstring(MutableString *self)
 {
     free(self);
 }

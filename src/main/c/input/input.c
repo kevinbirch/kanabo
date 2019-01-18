@@ -58,14 +58,14 @@ void input_release(Input *self)
 {
     ENSURE_NONNULL_ELSE_VOID(self);
 
-    string_free(self->name);
+    dispose_string(self->name);
 }
 
 void dispose_input(Input *self)
 {
     ENSURE_NONNULL_ELSE_VOID(self);
 
-    string_free(self->name);
+    dispose_string(self->name);
     free(self);
 }
 

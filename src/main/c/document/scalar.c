@@ -40,7 +40,7 @@ static size_t scalar_size(const Node *self)
 static void scalar_free(Node *value)
 {
     Scalar *self = scalar(value);
-    string_free(self->value);
+    dispose_string(self->value);
     self->value = NULL;
 }
 

@@ -123,7 +123,7 @@ static void assert_model_state(DocumentSet *model)
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
-    string_free(key);
+    dispose_string(key);
 
     Node *one_0 = sequence_get(sequence(one), 0);
     assert_node_kind(one_0, SCALAR);
@@ -140,7 +140,7 @@ static void assert_model_state(DocumentSet *model)
     assert_node_kind(two, SCALAR);
     assert_scalar_value((two), "foo2");
     assert_scalar_kind(two, SCALAR_STRING);
-    string_free(key);
+    dispose_string(key);
 
     key = make_string("three");
     Node *three = mapping_get(mapping(root), key);
@@ -148,13 +148,13 @@ static void assert_model_state(DocumentSet *model)
     assert_node_kind(three, SCALAR);
     assert_scalar_value((three), "null");
     assert_scalar_kind(three, SCALAR_NULL);
-    string_free(key);
+    dispose_string(key);
 
     key = make_string("four");
     Node *four = mapping_get(mapping(root), key);
     assert_not_null(four);
     assert_node_kind(four, SEQUENCE);
-    string_free(key);
+    dispose_string(key);
 
     Node *four_0 = sequence_get(sequence(four), 0);
     assert_node_kind(four_0, SCALAR);
@@ -185,7 +185,7 @@ static void assert_model_state(DocumentSet *model)
     assert_node_kind(five_2, SCALAR);
     assert_scalar_value(five_2, "1978-07-26 10:15");
     assert_scalar_kind(five_2, SCALAR_TIMESTAMP);
-    string_free(key);
+    dispose_string(key);
 }
 
 START_TEST (load_from_file)
@@ -210,7 +210,7 @@ START_TEST (shorthand_tags)
     assert_node_kind(asset_class_value, SCALAR);
     assert_scalar_kind(asset_class_value, SCALAR_STRING);
     assert_node_tag(asset_class_value, "tag:vampire-squid.com,2008:asset-class");
-    string_free(asset_class);
+    dispose_string(asset_class);
 
     String *type = make_string("type");
     Node *type_value = mapping_get(root, type);
@@ -218,7 +218,7 @@ START_TEST (shorthand_tags)
     assert_node_kind(type_value, SCALAR);
     assert_scalar_kind(type_value, SCALAR_STRING);
     assert_node_tag(type_value, "tag:vampire-squid.com,2008:instrument/type");
-    string_free(type);
+    dispose_string(type);
 
     String *symbol = make_string("symbol");
     Node *symbol_value = mapping_get(root, symbol);
@@ -226,7 +226,7 @@ START_TEST (shorthand_tags)
     assert_node_kind(symbol_value, SCALAR);
     assert_scalar_kind(symbol_value, SCALAR_STRING);
     assert_node_tag(symbol_value, "tag:vampire-squid.com,2008:instrument/symbol");
-    string_free(symbol);
+    dispose_string(symbol);
 }
 END_TEST
 
@@ -240,7 +240,7 @@ START_TEST (explicit_tags)
     assert_node_kind(name_value, SCALAR);
     assert_scalar_kind(name_value, SCALAR_STRING);
     assert_node_tag(name_value, "tag:yaml.org,2002:str");
-    string_free(name);
+    dispose_string(name);
 
     String *exchange_rate = make_string("exchange-rate");
     Node *exchange_rate_value = mapping_get(root, exchange_rate);
@@ -248,7 +248,7 @@ START_TEST (explicit_tags)
     assert_node_kind(exchange_rate_value, SCALAR);
     assert_scalar_kind(exchange_rate_value, SCALAR_REAL);
     assert_node_tag(exchange_rate_value, "tag:yaml.org,2002:float");
-    string_free(exchange_rate);
+    dispose_string(exchange_rate);
 
     String *spot_date = make_string("spot-date");
     Node *spot_date_value = mapping_get(root, spot_date);
@@ -256,7 +256,7 @@ START_TEST (explicit_tags)
     assert_node_kind(spot_date_value, SCALAR);
     assert_scalar_kind(spot_date_value, SCALAR_TIMESTAMP);
     assert_node_tag(spot_date_value, "tag:yaml.org,2002:timestamp");
-    string_free(spot_date);
+    dispose_string(spot_date);
 
     String *settlement_date = make_string("settlement-date");
     Node *settlement_date_value = mapping_get(root, settlement_date);
@@ -264,7 +264,7 @@ START_TEST (explicit_tags)
     assert_node_kind(settlement_date_value, SCALAR);
     assert_scalar_kind(settlement_date_value, SCALAR_TIMESTAMP);
     assert_node_tag(settlement_date_value, "tag:yaml.org,2002:timestamp");
-    string_free(settlement_date);
+    dispose_string(settlement_date);
 }
 END_TEST
 
@@ -279,13 +279,13 @@ START_TEST (anchor)
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
-    string_free(key);
+    dispose_string(key);
 
     key = make_string("two");
     Node *a = mapping_get(root, key);
     assert_not_null(a);
     assert_node_kind(a, ALIAS);
-    string_free(key);
+    dispose_string(key);
 
     Node *two = alias_target(alias(a));
     assert_not_null(two);
@@ -306,7 +306,7 @@ START_TEST (key_anchor)
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
-    string_free(key);
+    dispose_string(key);
 
     Node *alias1 = sequence_get(sequence(one), 1);
     assert_not_null(alias1);
@@ -321,7 +321,7 @@ START_TEST (key_anchor)
     key = make_string("two");
     Node *alias2 = mapping_get(root, key);
     assert_not_null(alias2);
-    string_free(key);
+    dispose_string(key);
 
     Node *two = alias_target(alias(alias2));
     assert_node_kind(two, SCALAR);
@@ -345,7 +345,7 @@ START_TEST (duplicate_clobber)
     assert_node_kind(one, SCALAR);
     assert_scalar_value(one, "bar");
     assert_scalar_kind(one, SCALAR_STRING);
-    string_free(key);
+    dispose_string(key);
 }
 END_TEST
 
@@ -365,7 +365,7 @@ START_TEST (duplicate_warn)
     assert_node_kind(one, SCALAR);
     assert_scalar_value(one, "bar");
     assert_scalar_kind(one, SCALAR_STRING);
-    string_free(key);
+    dispose_string(key);
 }
 END_TEST
 

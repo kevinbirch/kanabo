@@ -36,7 +36,7 @@ Maybe(JsonPath) parse(const char *expression)
     dispose_scanner(scanner);
     if(vector_is_empty(parser.errors))
     {
-        vector_free(parser.errors);
+        dispose_vector(parser.errors);
         return just(JsonPath, path);
     }
 

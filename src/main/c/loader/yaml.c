@@ -546,7 +546,7 @@ static Maybe(DocumentSet) parse(const String *input_name, yaml_parser_t *parser,
             return fail(DocumentSet, context.errors);
         }
 
-        vector_free(context.errors);
+        dispose_vector(context.errors);
         return just(DocumentSet, context.documents);
     }
 
@@ -568,7 +568,7 @@ Maybe(DocumentSet) load_yaml_from_stdin(DuplicateKeyStrategy strategy)
 
     String *name = S("stdin");
     Maybe(DocumentSet) result = parse(name, &parser, strategy);
-    string_free(name);
+    dispose_string(name);
 
     yaml_parser_delete(&parser);
 

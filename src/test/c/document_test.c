@@ -171,7 +171,7 @@ START_TEST (scalar_type)
 
     String *key = make_string("two");
     Node *s = mapping_get(mapping(r), key);
-    string_free(key);
+    dispose_string(key);
     assert_not_null(s);
     assert_node_kind(s, SCALAR);
     assert_scalar_value((s), "foo2");
@@ -186,7 +186,7 @@ START_TEST (scalar_boolean)
 
     String *key1 = make_string("three");
     Node *three = mapping_get(mapping(r), key1);
-    string_free(key1);
+    dispose_string(key1);
     assert_not_null(three);
     assert_node_kind(three, SCALAR);
     assert_true(scalar_boolean_is_false(scalar(three)));
@@ -194,7 +194,7 @@ START_TEST (scalar_boolean)
 
     String *key2 = make_string("four");
     Node *four = mapping_get(mapping(r), key2);
-    string_free(key2);
+    dispose_string(key2);
     assert_not_null(four);
     assert_node_kind(four, SCALAR);
     assert_true(scalar_boolean_is_true(scalar(four)));
@@ -210,7 +210,7 @@ START_TEST (sequence_type)
 
     String *key = make_string("one");
     Node *s = mapping_get(mapping(r), key);
-    string_free(key);
+    dispose_string(key);
     assert_not_null(s);
     assert_node_kind(s, SEQUENCE);
     assert_node_size(s, 2);
@@ -252,11 +252,11 @@ START_TEST (mapping_type)
 
     String *bogus = make_string("bogus");
     assert_null(mapping_get(mapping(r), bogus));
-    string_free(bogus);
+    dispose_string(bogus);
 
     String *key = make_string("two");
     Node *scalar_value = mapping_get(mapping(r), key);
-    string_free(key);
+    dispose_string(key);
     assert_not_null(scalar_value);
     assert_node_kind(scalar_value, SCALAR);
 }
@@ -270,7 +270,7 @@ START_TEST (sequence_iteration)
     
     String *key = make_string("one");
     Node *s = mapping_get(mapping(r), key);
-    string_free(key);
+    dispose_string(key);
     assert_not_null(s);
     assert_node_kind(s, SEQUENCE);
     assert_node_size(s, 2);
@@ -289,7 +289,7 @@ START_TEST (fail_sequence_iteration)
     
     String *key = make_string("one");
     Node *s = mapping_get(mapping(r), key);
-    string_free(key);
+    dispose_string(key);
     assert_not_null(s);
     assert_node_kind(s, SEQUENCE);
     assert_node_size(s, 2);

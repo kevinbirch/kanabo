@@ -162,7 +162,7 @@ Vector *vector_with_all(const Vector *vector, const Vector *from)
     return result;
 }
 
-void vector_free(Vector *vector)
+void dispose_vector(Vector *vector)
 {
     if(NULL == vector)
     {
@@ -194,7 +194,7 @@ void vector_destroy(Vector *vector, vector_item_destructor destructor)
         destructor(vector->items[i]);
     }
 
-    vector_free(vector);
+    dispose_vector(vector);
 }
 
 size_t vector_length(const Vector *vector)
@@ -616,7 +616,7 @@ Vector *vector_map(const Vector *vector, vector_mapper fn, void *context)
     Vector *result = vector_map_into(vector, fn, context, target);
     if(NULL == result)
     {
-        vector_free(target);
+        dispose_vector(target);
         target = NULL;
         return NULL;
     }
