@@ -1,7 +1,3 @@
-#ifdef __linux__
-#define _POSIX_C_SOURCE 200809L
-#endif
-
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -22,7 +18,7 @@ static const char * const LEVELS[] =
     "TRACE"
 };
 
-static bool LOGGING_ENABLED = false;
+static bool LOGGING_ENABLED = true;
 static enum log_level LOG_LEVEL = LVL_ERROR;
 
 int print_prelude(enum log_level level, const char *component);

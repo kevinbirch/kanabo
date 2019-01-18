@@ -43,12 +43,12 @@ static bool apply_subscript_predicate(const Sequence *value, Evaluator *evaluato
     uint64_t abs = (uint64_t)index;
     if(abs > node_size(value))
     {
-        evaluator_trace("subscript predicate: index %lld not valid for sequence (length: %zd), dropping (%p)", index, node_size(value), value);
+        evaluator_trace("subscript predicate: index %"PRId64" not valid for sequence (length: %zd), dropping (%p)", index, node_size(value), value);
         return true;
     }
 
     Node *selected = sequence_get(value, abs);
-    evaluator_trace("subscript predicate: adding index %lld (%p) from sequence (%p) of %zd items", index, selected, value, node_size(value));
+    evaluator_trace("subscript predicate: adding index %"PRId64" (%p) from sequence (%p) of %zd items", index, selected, value, node_size(value));
     nodelist_add(target, selected);
 
     return true;
@@ -137,7 +137,7 @@ static bool apply_slice_predicate(const Sequence *seq, Evaluator *evaluator, Nod
     uint64_t from = normalize_from(slice, length);
     uint64_t to = normalize_to(slice, length);
 
-    evaluator_trace("slice predicate: normalized interval [%llu:%llu:%llu]", from, to, step);
+    evaluator_trace("slice predicate: normalized interval [%"PRIu64":%"PRIu64":%"PRIu64"]", from, to, step);
 
     if(step < 0)
     {

@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 #include "jsonpath.h"
 
 static void repr_path(const JsonPath *path, MutableString **buf);
@@ -19,7 +21,7 @@ static void repr_predicate(const Predicate *predicate, MutableString **buf)
             break;
         case SUBSCRIPT:
         {
-            snprintf(ibuf, 32, "%lld", subscript_predicate_index(predicate));
+            snprintf(ibuf, 32, "%"PRId64, subscript_predicate_index(predicate));
             mstring_append(buf, ibuf);
         }
         break;
@@ -27,19 +29,19 @@ static void repr_predicate(const Predicate *predicate, MutableString **buf)
         {
             if(slice_predicate_has_from(predicate))
             {
-                snprintf(ibuf, 32, "%lld", slice_predicate_from(predicate));
+                snprintf(ibuf, 32, "%"PRId64, slice_predicate_from(predicate));
                 mstring_append(buf, ibuf);
             }
             mstring_append(buf, ':');
             if(slice_predicate_has_to(predicate))
             {
-                snprintf(ibuf, 32, "%lld", slice_predicate_to(predicate));
+                snprintf(ibuf, 32, "%"PRId64, slice_predicate_to(predicate));
                 mstring_append(buf, ibuf);
             }
             if(slice_predicate_has_step(predicate))
             {
                 mstring_append(buf, ':');
-                snprintf(ibuf, 32, "%lld", slice_predicate_step(predicate));
+                snprintf(ibuf, 32, "%"PRId64, slice_predicate_step(predicate));
                 mstring_append(buf, ibuf);
             }
         }

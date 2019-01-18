@@ -5,7 +5,6 @@
 ## fixes
 
 * x_free to dispose_x
-* \_POSIX_C_SOURCE usage?
 * `dispose_node` should be type-generic macro
 * `node` upcast should be a type-generic macro
 * mapping
