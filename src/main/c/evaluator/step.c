@@ -63,7 +63,7 @@ static bool evaluate_step(Step* each, void *argument)
 
 Maybe(Nodelist) evaluate_steps(const DocumentSet *model, const JsonPath *path)
 {
-    evaluator_debug("beginning evaluation of %d steps", vector_length(path->steps));
+    evaluator_debug("beginning evaluation of %zu steps", vector_length(path->steps));
 
     Evaluator self;
     memset(&self, 0, sizeof(Evaluator));
@@ -81,11 +81,11 @@ Maybe(Nodelist) evaluate_steps(const DocumentSet *model, const JsonPath *path)
 
     if(!path_iterate(path, evaluate_step, &self))
     {
-        evaluator_debug("aborted, step: %d, code: %d (%s)", self.current_step, self.code, evaluator_strerror(self.code));
+        evaluator_debug("aborted, step: %zu, code: %d (%s)", self.current_step, self.code, evaluator_strerror(self.code));
         return fail(Nodelist, self.code);
     }
 
-    evaluator_debug("done, found %d matching nodes", nodelist_length(self.results));
+    evaluator_debug("done, found %zu matching nodes", nodelist_length(self.results));
 
     return just(Nodelist, self.results);
 }

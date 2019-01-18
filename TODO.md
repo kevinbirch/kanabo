@@ -4,7 +4,6 @@
 
 ## fixes
 
-* clean up logging in emitter module
 * x_free to dispose_x
 * \_POSIX_C_SOURCE usage?
 * `dispose_node` should be type-generic macro
@@ -12,7 +11,6 @@
 * mapping
   * fnv1 hash?
   * use simple array for small collections?
-* normalize uses of `%zd` to `%lld` where necessary
 * preserve input file names to use with warning lines (`loader/yaml.c:add_to_mapping`)
   * print dupe key name when scalar no
 * normalize all panic messages: `<module>: <operation>: <failure>`

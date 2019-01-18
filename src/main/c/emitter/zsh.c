@@ -1,38 +1,38 @@
 #include <stdio.h>
 
-#include "emitter/zsh.h"
 #include "emitter/shell.h"
-#include "log.h"
+#include "emitter/zsh.h"
 
-static bool emit_mapping_item(String *key, Node *value, void * context)
+#define component "zsh"
+
+static bool emit_mapping_item(String *key, Node *each, void *context)
 {
-    if(is_scalar(value))
+    if(!is_scalar(each))
     {
-        log_trace("zsh", "emitting mapping item");
-        if(!emit_quoted_string(key))
-        {
-            log_error("zsh", "uh oh! couldn't emit mapping key");
-            return false;
-        }
-        EMIT(" ");
-        if(!emit_scalar(scalar(value)))
-        {
-            log_error("zsh", "uh oh! couldn't emit mapping value");
-            return false;
-        }
-        EMIT(" ");
+        log_trace("zsh", "skipping non-scalar mapping item value: %s", node_kind_name(each));
+        return true;
     }
-    else
+
+    if(!emit_quoted_string(key))
     {
-        log_trace("zsh", "skipping mapping item");
+        return false;
     }
+    EMIT(" ");
+
+    Scalar *value = scalar(each);
+    log_trace("shell", "emitting scalar: \"%s\"", C(scalar_value(value)));
+    if(!emit_scalar(value))
+    {
+        return false;
+    }
+    EMIT(" ");
 
     return true;
 }
 
 bool emit_zsh(const Nodelist *list)
 {
-    log_debug("zsh", "emitting...");
+    log_debug("zsh", "emitting %zd items...", nodelist_length(list));
     emit_context context =
         {
             .emit_mapping_item = emit_mapping_item,

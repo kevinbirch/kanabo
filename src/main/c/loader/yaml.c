@@ -20,7 +20,7 @@ static regex_t decimal_regex;
 static regex_t integer_regex;
 static regex_t timestamp_regex;
 
-static const char * const REGEX_PANIC_MSG = "regex compilation failed: '%s': %s";
+static const char * const REGEX_PANIC_MSG = "regex compilation failed: \"%s\": %s";
 
 static const Position NO_POSITION = (Position){};
 
@@ -298,7 +298,7 @@ static void add_alias(Loader *context, const yaml_event_t *event)
 
     add_node(context, node(alias), event);
 
-    loader_trace("added alias '%s' for target (%p)", event->data.alias.anchor, target);
+    loader_trace("added alias \"%s\" for target (%p)", event->data.alias.anchor, target);
 }
 
 static bool match_decimal(const char *value)
@@ -342,35 +342,36 @@ static ScalarKind tag_to_scalar_kind(const yaml_event_t *event)
     const yaml_char_t * tag = event->data.scalar.tag;
     if(0 == memcmp(YAML_NULL_TAG, tag, strlen(YAML_NULL_TAG)))
     {
-        trace_string("found yaml null tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
+        loader_trace("found yaml null tag for scalar \"%s\"", event->data.scalar.value);
         return SCALAR_NULL;
     }
     if(0 == memcmp(YAML_BOOL_TAG, tag, strlen(YAML_BOOL_TAG)))
     {
-        trace_string("found yaml boolean tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
+        loader_trace("found yaml boolean tag for scalar \"%s\"", event->data.scalar.value);
         return SCALAR_BOOLEAN;
     }
     if(0 == memcmp(YAML_STR_TAG, tag, strlen(YAML_STR_TAG)))
     {
-        trace_string("found yaml string tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
+        loader_trace("found yaml string tag for scalar \"%s\"", event->data.scalar.value);
         return SCALAR_STRING;
     }
     if(0 == memcmp(YAML_INT_TAG, tag, strlen(YAML_INT_TAG)))
     {
-        trace_string("found yaml integer tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
+        loader_trace("found yaml integer tag for scalar \"%s\"", event->data.scalar.value);
         return SCALAR_INTEGER;
     }
     if(0 == memcmp(YAML_FLOAT_TAG, tag, strlen(YAML_FLOAT_TAG)))
     {
-        trace_string("found yaml float tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
+        loader_trace("found yaml float tag for scalar \"%s\"", event->data.scalar.value);
         return SCALAR_REAL;
     }
     if(0 == memcmp(YAML_TIMESTAMP_TAG, tag, strlen(YAML_TIMESTAMP_TAG)))
     {
-        trace_string("found yaml timestamp tag for scalar '%s'", event->data.scalar.value, event->data.scalar.length);
+        loader_trace("found yaml timestamp tag for scalar \"%s\"", event->data.scalar.value);
         return SCALAR_TIMESTAMP;
     }
-    trace_string("found non-yaml tag for scalar '%s', assuming string", event->data.scalar.value, event->data.scalar.length);
+
+    loader_trace("found non-yaml tag for scalar \"%s\", assuming string", event->data.scalar.value);
     return SCALAR_STRING;
 }
 
@@ -385,7 +386,7 @@ static ScalarKind resolve_scalar_kind(const Loader *context, const yaml_event_t 
     else if(YAML_SINGLE_QUOTED_SCALAR_STYLE == event->data.scalar.style ||
             YAML_DOUBLE_QUOTED_SCALAR_STYLE == event->data.scalar.style)
     {
-        trace_string("found scalar string '%s', len: %zu", event->data.scalar.value, event->data.scalar.length, event->data.scalar.length);
+        loader_trace("found quoted scalar string \"%s\"", event->data.scalar.value);
         kind = SCALAR_STRING;
     }
     else if(0 == memcmp("null", event->data.scalar.value, 4))
@@ -396,27 +397,27 @@ static ScalarKind resolve_scalar_kind(const Loader *context, const yaml_event_t 
     else if(0 == memcmp("true", event->data.scalar.value, 4) ||
             0 == memcmp("false", event->data.scalar.value, 5))
     {
-        trace_string("found scalar boolean '%s'", event->data.scalar.value, event->data.scalar.length);
+        loader_trace("found scalar boolean \"%s\"", event->data.scalar.value);
         kind = SCALAR_BOOLEAN;
     }
     else if(match_integer((const char *)event->data.scalar.value))
     {
-        trace_string("found scalar integer '%s'", event->data.scalar.value, event->data.scalar.length);
+        loader_trace("found scalar integer \"%s\"", event->data.scalar.value);
         kind = SCALAR_INTEGER;
     }
     else if(match_decimal((const char *)event->data.scalar.value))
     {
-        trace_string("found scalar real '%s'", event->data.scalar.value, event->data.scalar.length);
+        loader_trace("found scalar real \"%s\"", event->data.scalar.value);
         kind = SCALAR_REAL;
     }
     else if(match_timestamp((const char *)event->data.scalar.value))
     {
-        trace_string("found scalar timestamp '%s'", event->data.scalar.value, event->data.scalar.length);
+        loader_trace("found scalar timestamp \"%s\"", event->data.scalar.value);
         kind = SCALAR_TIMESTAMP;
     }
     else
     {
-        trace_string("found scalar string '%s'", event->data.scalar.value, event->data.scalar.length, event->data.scalar.length);
+        loader_trace("found scalar string \"%s\"", event->data.scalar.value);
     }
 
     return kind;

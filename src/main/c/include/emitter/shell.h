@@ -1,8 +1,11 @@
 #pragma once
 
+#include <errno.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "document.h"
+#include "emitter/emit.h"
 
 bool emit_node(Node *value, void *context);
 bool emit_scalar(const Scalar *);
@@ -16,11 +19,3 @@ struct emit_context
 };
 
 typedef struct emit_context emit_context;
-
-#define EMIT(STR) if(-1 == fprintf(stdout, (STR)))                      \
-    {                                                                   \
-        log_error("shell", "uh oh! couldn't emit literal %s", (STR));   \
-        return false;                                                   \
-    }    
-
-

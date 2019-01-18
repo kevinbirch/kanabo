@@ -63,7 +63,7 @@ static bool apply_greedy_wildcard_test(Node *each, void *argument, Nodelist *tar
             result = sequence_iterate(sequence(each), add_to_nodelist_sequence_iterator, target);
             break;
         case SCALAR:
-            evaluator_trace("wildcard test: adding scalar: '%s' (%p)", C(scalar_value(scalar(each))), each);
+            evaluator_trace("wildcard test: adding scalar: \"%s\" (%p)", C(scalar_value(scalar(each))), each);
             nodelist_add(target, each);
             break;
         case ALIAS:
@@ -94,7 +94,7 @@ static bool apply_recursive_wildcard_test(Node *each, void *argument, Nodelist *
             evaluator_trace("recurisve wildcard test: skipping sequence node (%p)", each);
             break;
         case SCALAR:
-            evaluator_trace("recurisve wildcard test: adding scalar: '%s' (%p)", C(scalar_value(scalar(each))), each);
+            evaluator_trace("recurisve wildcard test: adding scalar: \"%s\" (%p)", C(scalar_value(scalar(each))), each);
             nodelist_add(target, each);
             break;
         case ALIAS:
@@ -158,7 +158,7 @@ static bool apply_type_test(Node *each, void *argument, Nodelist *target)
     else
     {
         const char *name = is_scalar(each) ? scalar_kind_name(scalar(each)) : node_kind_name(each);
-        evaluator_trace("type test: no match (actual: %d). dropping (%p)", name, each);
+        evaluator_trace("type test: no match (actual: %s). dropping (%p)", name, each);
     }
 
     return true;
@@ -169,7 +169,7 @@ static bool apply_name_test(Node *each, void *argument, Nodelist *target)
     Evaluator *evaluator = (Evaluator *)argument;
     Step *context_step = current_step(evaluator);
 
-    evaluator_trace("name test: using key '%s'", C(name_test_step_name(context_step)));
+    evaluator_trace("name test: using key \"%s\"", C(name_test_step_name(context_step)));
 
     if(!is_mapping(each))
     {

@@ -9,7 +9,7 @@ static bool apply_wildcard_predicate(Node *value, Evaluator *evaluator, Nodelist
     switch(node_kind(value))
     {
         case SCALAR:
-            evaluator_trace("wildcard predicate: adding scalar '%s' (%p)", C(scalar_value(scalar(value))), value);
+            evaluator_trace("wildcard predicate: adding scalar \"%s\" (%p)", C(scalar_value(scalar(value))), value);
             nodelist_add(target, value);
             break;
         case MAPPING:
@@ -43,12 +43,12 @@ static bool apply_subscript_predicate(const Sequence *value, Evaluator *evaluato
     uint64_t abs = (uint64_t)index;
     if(abs > node_size(value))
     {
-        evaluator_trace("subscript predicate: index %zu not valid for sequence (length: %zd), dropping (%p)", index, node_size(value), value);
+        evaluator_trace("subscript predicate: index %lld not valid for sequence (length: %zd), dropping (%p)", index, node_size(value), value);
         return true;
     }
 
     Node *selected = sequence_get(value, abs);
-    evaluator_trace("subscript predicate: adding index %zu (%p) from sequence (%p) of %zd items", index, selected, value, node_size(value));
+    evaluator_trace("subscript predicate: adding index %lld (%p) from sequence (%p) of %zd items", index, selected, value, node_size(value));
     nodelist_add(target, selected);
 
     return true;
@@ -137,7 +137,7 @@ static bool apply_slice_predicate(const Sequence *seq, Evaluator *evaluator, Nod
     uint64_t from = normalize_from(slice, length);
     uint64_t to = normalize_to(slice, length);
 
-    evaluator_trace("slice predicate: normalized interval [%d:%d:%d]", from, to, step);
+    evaluator_trace("slice predicate: normalized interval [%llu:%llu:%llu]", from, to, step);
 
     if(step < 0)
     {
@@ -156,7 +156,7 @@ static bool apply_slice_predicate(const Sequence *seq, Evaluator *evaluator, Nod
             {
                 break;
             }
-            evaluator_trace("slice predicate: adding index: %d (%p)", i, selected);
+            evaluator_trace("slice predicate: adding index: %zu (%p)", i, selected);
             nodelist_add(target, selected);
         }
 
@@ -177,7 +177,7 @@ static bool apply_slice_predicate(const Sequence *seq, Evaluator *evaluator, Nod
         {
             break;
         }
-        evaluator_trace("slice predicate: adding index: %d (%p)", i, selected);
+        evaluator_trace("slice predicate: adding index: %zu (%p)", i, selected);
         nodelist_add(target, selected);
     }
 
