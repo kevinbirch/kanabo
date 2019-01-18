@@ -266,7 +266,7 @@ START_TEST (wildcard)
 {
     Nodelist *list = evaluate_expression("$.store.*");
 
-    NodeKind kinds[] = {MAPPING, SEQUENCE};
+    NodeKind kinds[] = {SEQUENCE, MAPPING};
     assert_node_kinds(list, kinds);
 
     nodelist_free(list);

@@ -110,7 +110,7 @@ START_TEST (bad_add)
     Nodelist *empty_list = make_nodelist();
     assert_not_null(empty_list);
 
-    fprintf(stderr, "expected panic from nodelist.add should follow...\n");
+    fprintf(stderr, "\n!!! EXPECTED PANIC from nodelist_add should follow...\n");
     nodelist_add(empty_list, NULL);
 }
 END_TEST
@@ -120,7 +120,7 @@ START_TEST (bad_set)
     Nodelist *empty_list = make_nodelist();
     assert_not_null(empty_list);
 
-    fprintf(stderr, "expected panic from nodelist.set should follow...\n");
+    fprintf(stderr, "\n!!! EXPECTED PANIC from nodelist_set should follow...\n");
     Scalar *s = make_scalar_string("foo");
     nodelist_set(empty_list, node(s), 0);
 }

@@ -351,7 +351,7 @@ END_TEST
 
 START_TEST (duplicate_warn)
 {
-    fprintf(stderr, "expected duplicate mapping key warning should follow...\n");
+    fprintf(stderr, "\n!!! EXPECTED duplicate mapping key warning should follow...\n");
     Maybe(DocumentSet) documents = load("test-resources/duplicate-key.yaml", DUPE_WARN);
     assert_just(documents);
 

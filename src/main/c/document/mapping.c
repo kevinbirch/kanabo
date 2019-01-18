@@ -49,7 +49,7 @@ static void mapping_free(Node *value)
 static hashcode scalar_hash(const void *key)
 {
     const String *value = (const String *)key;
-    return shift_add_xor_string_buffer_hash(strdta(value), strlen(value));
+    return fnv1a_string_buffer_hash(strdta(value), strlen(value));
 }
 
 static bool scalar_comparitor(const void *one, const void *two)

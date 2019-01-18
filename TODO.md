@@ -5,9 +5,6 @@
 ## fixes
 
 * x_free to dispose_x
-* mapping
-  * fnv1 hash?
-  * use simple array for small collections?
 * preserve input file names to use with warning lines (`loader/yaml.c:add_to_mapping`)
   * print dupe key name when scalar no
 * normalize all panic messages: `<module>: <operation>: <failure>`
@@ -225,6 +222,7 @@
   * can whole documents be saved and named? (`${doc-name or index}` `$index`?)
 * use `flatten` attribute on evaluator, parser core functions?
   * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
+* use simple array for small size mapping instances?
 
 ## competition
 
