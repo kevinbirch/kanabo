@@ -31,6 +31,7 @@ struct loader_error_s
 {
     LoaderErrorCode code;
     Position        position;
+    char            extra[];
 };
 
 typedef struct loader_error_s LoaderError;

@@ -212,6 +212,7 @@ static void parse_quoted_name(Parser *self, Step *step)
     Location loc = self->scanner->current.location;
     Location unquoted = 
         {
+            // N.B. - trim leading and trailing quotes
             .index = loc.index + 1,
             .line = loc.line,
             .offset = loc.offset + 1,
@@ -224,22 +225,16 @@ static void parse_quoted_name(Parser *self, Step *step)
         add_parser_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", loc.index, loc.extent);
         return;
     }
+
     if(strlen(raw) < 2)
     {
-        // N.B. - short read on token
-        goto cleanup;
+        step->test.name = raw;
+        return;
     }
 
-    // N.B. - trim leading quote
     String *cooked = unescape(self, raw);
-    if(NULL == cooked)
-    {
-        goto cleanup;
-    }
-
     step->test.name = cooked;
 
-  cleanup:
     dispose_string(raw);
 }
 

@@ -154,9 +154,13 @@ static int apply_expression(const char *expression, DocumentSet *documents, enum
 static inline bool loader_error_printer(void *each, void *context)
 {
     LoaderError *err = (LoaderError *)each;
-    const char *input_name = (const char *)context;
 
-    error("%s:%zd:%zd: error: %s", input_name, err->position.line+1, err->position.offset+1, loader_strerror(err->code));
+    const char *name = (const char *)context;
+    size_t line = err->position.line + 1;
+    size_t offset = err->position.offset + 1;
+    const char *message = loader_strerror(err->code);
+
+    error("%s:%zd:%zd: error: %s: %s", name, line, offset, message, err->extra);
 
     return true;
 }
@@ -239,7 +243,6 @@ static Maybe(DocumentSet) load_command(const char *argument, struct options *opt
     kanabo_debug("processing load command...");
     if(!argument)
     {
-        kanabo_trace("no command argument, aborting...");
         error(":load command requires an argument");
         return nothing(DocumentSet);
     }

@@ -544,7 +544,15 @@ START_TEST (quoted_empty_step)
     char *expression = "$.foo.''.bar";
     Maybe(JsonPath) maybe = parse(expression);
 
-    // xxx - assert success
+    assert_parser_success(maybe, ABSOLUTE_PATH, 4);
+    assert_root_step(from_just(maybe));
+    assert_single_name_step(from_just(maybe), 1, "foo");
+    assert_single_name_step(from_just(maybe), 2, "");
+    assert_single_name_step(from_just(maybe), 3, "bar");
+    assert_no_predicate(from_just(maybe), 1);
+    assert_no_predicate(from_just(maybe), 2);
+    assert_no_predicate(from_just(maybe), 3);
+
     dispose_maybe(maybe);
 }
 END_TEST

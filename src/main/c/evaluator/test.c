@@ -38,7 +38,7 @@ static bool add_values_to_nodelist_map_iterator(String *key, Node *value, void *
             result = add_values_to_nodelist_map_iterator(key, alias_target(alias(value)), context);
             break;
         case DOCUMENT:
-            evaluator_error("wildcard test: uh-oh! found a document node (%p), aborting...", value);
+            evaluator_error("wildcard test: uh-oh! found a document node (%p)", value);
             iterator_context->evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             result = false;
             break;
@@ -71,7 +71,7 @@ static bool apply_greedy_wildcard_test(Node *each, void *argument, Nodelist *tar
             result = apply_greedy_wildcard_test(alias_target(alias(each)), argument, target);
             break;
         case DOCUMENT:
-            evaluator_error("wildcard test: uh-oh! found a document node somehow (%p), aborting...", each);
+            evaluator_error("wildcard test: uh-oh! found a document node somehow (%p)", each);
             evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             result = false;
             break;
@@ -102,7 +102,7 @@ static bool apply_recursive_wildcard_test(Node *each, void *argument, Nodelist *
             result = apply_recursive_wildcard_test(alias_target(alias(each)), argument, target);
             break;
         case DOCUMENT:
-            evaluator_error("recurisve wildcard test: uh oh! found a document node somehow (%p), aborting...", each);
+            evaluator_error("recurisve wildcard test: uh oh! found a document node somehow (%p)", each);
             evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             result = false;
             break;
@@ -230,7 +230,7 @@ bool apply_recursive_node_test(Node *each, void *argument, Nodelist *target)
                 result = apply_recursive_node_test(alias_target(alias(each)), argument, target);
                 break;
             case DOCUMENT:
-                evaluator_error("recursive step: uh-oh! found a document node somehow (%p), aborting...", each);
+                evaluator_error("recursive step: uh-oh! found a document node somehow (%p)", each);
                 evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
                 result = false;
                 break;

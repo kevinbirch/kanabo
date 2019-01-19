@@ -84,23 +84,48 @@ static void context_init(Loader *context, DuplicateKeyStrategy strategy, const S
 
 static void interpret_yaml_error(Loader *context, yaml_parser_t *parser)
 {
+    LoaderErrorCode code = 0;
+
     switch (parser->error)
     {
-        // xxx - is there extra text error messages in yaml parser?
         case YAML_READER_ERROR:
-            add_loader_error(context->errors, position(parser->problem_mark), ERR_READER_FAILED);
+            code = ERR_READER_FAILED;
             break;
         case YAML_SCANNER_ERROR:
-            add_loader_error(context->errors, position(parser->problem_mark), ERR_SCANNER_FAILED);
+            code = ERR_SCANNER_FAILED;
             break;
         case YAML_PARSER_ERROR:
-            add_loader_error(context->errors, position(parser->problem_mark), ERR_PARSER_FAILED);
+            code = ERR_PARSER_FAILED;
             break;
         default:
-            // xxx - can the unhandled code be added as a string?
-            add_loader_error(context->errors, position(parser->problem_mark), ERR_INTERNAL_LIBYAML);
+            code = ERR_INTERNAL_LIBYAML;
             break;
     }
+
+    const char *extra = parser->problem;
+    Position pos = position(parser->problem_mark);
+
+    if(NULL != parser->context)
+    {
+        extra = parser->context;
+        pos = position(parser->context_mark);
+    }
+
+    size_t length = strlen(extra) + 1;
+    LoaderError *err = xcalloc(sizeof(LoaderError) + length);
+    err->code = code;
+    err->position = pos;
+
+    if(1 < length)
+    {
+        memcpy(err->extra, extra, length);
+    }
+    else
+    {
+        err->extra[0] = '\0';
+    }
+
+    vector_append(context->errors, err);
 }
 
 static void set_anchor(Loader *context, Node *target, uint8_t *anchor)

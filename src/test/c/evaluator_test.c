@@ -388,6 +388,49 @@ START_TEST (subscript_predicate)
 }
 END_TEST
 
+START_TEST (subscript_predicate_out_of_range)
+{
+    Maybe(JsonPath) path = parse("$.store.book[9]");
+    assert_just(path);
+
+    Maybe(Nodelist) list = evaluate(model_fixture, from_just(path));
+    assert_evaluator_failure(list, ERR_SUBSCRIPT_PREDICATE);
+
+    dispose_path(from_just(path));
+}
+END_TEST
+
+START_TEST (subscript_predicate_negative)
+{
+    Nodelist *list = evaluate_expression("$.store.book[-2]");
+
+    assert_nodelist_length(list, 1);
+
+    Node *book = nodelist_get(list, 0);
+    assert_node_kind(book, MAPPING);
+
+    String *key = make_string("author");
+    Node *author = mapping_get(mapping(book), key);
+    dispose_string(key);
+    assert_not_null(author);
+    assert_scalar_value((author), "J. R. R. Tolkien");
+
+    dispose_nodelist(list);
+}
+END_TEST
+
+START_TEST (subscript_predicate_negative_out_of_range)
+{
+    Maybe(JsonPath) path = parse("$.store.book[-8]");
+    assert_just(path);
+
+    Maybe(Nodelist) list = evaluate(model_fixture, from_just(path));
+    assert_evaluator_failure(list, ERR_SUBSCRIPT_PREDICATE);
+
+    dispose_path(from_just(path));
+}
+END_TEST
+
 START_TEST (recursive_subscript_predicate)
 {
     Nodelist *list = evaluate_expression("$..book[2]");
@@ -494,6 +537,62 @@ START_TEST (slice_predicate_negative_from)
     dispose_string(key);
     assert_not_null(author);
     assert_scalar_value((author), "夏目漱石 (NATSUME Sōseki)");
+
+    dispose_nodelist(list);
+}
+END_TEST
+
+START_TEST (slice_predicate_negative_to)
+{
+    Nodelist *list = evaluate_expression("$.store.book[:-3]");
+
+    assert_nodelist_length(list, 2);
+
+    Node *book1 = nodelist_get(list, 0);
+    assert_node_kind(book1, MAPPING);
+
+    String *key1 = make_string("author");
+    Node *author1 = mapping_get(mapping(book1), key1);
+    dispose_string(key1);
+    assert_not_null(author1);
+    assert_scalar_value((author1), "Nigel Rees");
+
+    Node *book2 = nodelist_get(list, 1);
+    assert_node_kind(book2, MAPPING);
+
+    String *key2 = make_string("author");
+    Node *author2 = mapping_get(mapping(book2), key2);
+    dispose_string(key2);
+    assert_not_null(author2);
+    assert_scalar_value((author2), "Evelyn Waugh");
+
+    dispose_nodelist(list);
+}
+END_TEST
+
+START_TEST (slice_predicate_negative_step)
+{
+    Nodelist *list = evaluate_expression("$.store.book[-1:-2:-1]");
+
+    assert_nodelist_length(list, 2);
+
+    Node *book1 = nodelist_get(list, 0);
+    assert_node_kind(book1, MAPPING);
+
+    String *key1 = make_string("author");
+    Node *author1 = mapping_get(mapping(book1), key1);
+    dispose_string(key1);
+    assert_not_null(author1);
+    assert_scalar_value((author1), "夏目漱石 (NATSUME Sōseki)");
+
+    Node *book2 = nodelist_get(list, 1);
+    assert_node_kind(book2, MAPPING);
+
+    String *key2 = make_string("author");
+    Node *author2 = mapping_get(mapping(book2), key2);
+    dispose_string(key2);
+    assert_not_null(author2);
+    assert_scalar_value((author2), "J. R. R. Tolkien");
 
     dispose_nodelist(list);
 }
@@ -672,10 +771,15 @@ Suite *evaluator_suite(void)
     tcase_add_test(predicate_case, wildcard_predicate_on_mapping);
     tcase_add_test(predicate_case, wildcard_predicate_on_scalar);
     tcase_add_test(predicate_case, subscript_predicate);
+    tcase_add_test(predicate_case, subscript_predicate_out_of_range);
+    tcase_add_test(predicate_case, subscript_predicate_negative);
+    tcase_add_test(predicate_case, subscript_predicate_negative_out_of_range);
     tcase_add_test(predicate_case, slice_predicate);
     tcase_add_test(predicate_case, subscript_predicate);
     tcase_add_test(predicate_case, slice_predicate_with_step);
     tcase_add_test(predicate_case, slice_predicate_negative_from);
+    tcase_add_test(predicate_case, slice_predicate_negative_to);
+    tcase_add_test(predicate_case, slice_predicate_negative_step);
     tcase_add_test(predicate_case, slice_predicate_copy);
     tcase_add_test(predicate_case, slice_predicate_reverse);
 

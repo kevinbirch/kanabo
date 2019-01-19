@@ -25,7 +25,7 @@ static bool apply_wildcard_predicate(Node *value, Evaluator *evaluator, Nodelist
             result = apply_wildcard_predicate(alias_target(alias(value)), evaluator, target);
             break;
         case DOCUMENT:
-            evaluator_error("wildcard predicate: uh-oh! found a document node (%p), aborting...", value);
+            evaluator_error("wildcard predicate: uh-oh! found a document node (%p)", value);
             evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             result = false;
             break;
@@ -34,21 +34,28 @@ static bool apply_wildcard_predicate(Node *value, Evaluator *evaluator, Nodelist
     return result;
 }
 
-static bool apply_subscript_predicate(const Sequence *value, Evaluator *evaluator, Nodelist *target)
+static bool apply_subscript_predicate(const Sequence *seq, Evaluator *evaluator, Nodelist *target)
 {
     Predicate *subscript = current_step(evaluator)->predicate;
     int64_t index = subscript_predicate_index(subscript);
+    size_t length = node_size(seq);
 
-    // xxx - must support negative indices here
-    uint64_t abs = (uint64_t)index;
-    if(abs > node_size(value))
+    uint64_t normal = (uint64_t)imaxabs(index);
+
+    if(normal > length)
     {
-        evaluator_trace("subscript predicate: index %"PRId64" not valid for sequence (length: %zd), dropping (%p)", index, node_size(value), value);
-        return true;
+        evaluator_error("subscript predicate: index %"PRId64" out of range for sequence (length: %zd)", index, length);
+        evaluator->code = ERR_SUBSCRIPT_PREDICATE;
+        return false;
     }
 
-    Node *selected = sequence_get(value, abs);
-    evaluator_trace("subscript predicate: adding index %"PRId64" (%p) from sequence (%p) of %zd items", index, selected, value, node_size(value));
+    if(0 > index)
+    {
+        normal = length - normal;
+    }
+
+    Node *selected = sequence_get(seq, normal);
+    evaluator_trace("subscript predicate: adding index %"PRId64" (%p) from sequence (%p) of %zd items", normal, selected, seq, length);
     nodelist_add(target, selected);
 
     return true;
@@ -127,7 +134,7 @@ static bool apply_slice_predicate(const Sequence *seq, Evaluator *evaluator, Nod
     int64_t step = slice_predicate_step(slice);
     if(0 == step)
     {
-        evaluator_error("slice predicate: step is zero, aborting...");
+        evaluator_error("slice predicate: step is zero");
         evaluator->code = ERR_SLICE_PREDICATE_ZERO_STEP;
         return false;
     }
@@ -189,7 +196,7 @@ static bool apply_join_predicate(Node *value, Evaluator *evaluator, Nodelist *ta
     evaluator_trace("join predicate: evaluating axes (_, _)");
 
     // xxx - implement me!
-    evaluator_error("join predicate: uh-oh! not implemented yet, aborting...");
+    evaluator_error("join predicate: uh-oh! not implemented yet");
     evaluator->code = ERR_UNSUPPORTED_PATH;
 
     return false;
