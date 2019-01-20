@@ -16,7 +16,7 @@ void add_parser_internal_error(Parser *self, const char *restrict filename, int 
     va_end(count_args);
 
     ParserInternalError *err;
-    if(length < 0)
+    if(0 > length)
     {
         size_t fallback_length = strlen(FALLBACK_MSG);
         err = xcalloc(sizeof(ParserInternalError) + fallback_length);
@@ -45,4 +45,9 @@ void add_parser_error(Parser *self, Position position, ParserErrorCode code)
     err->position = position;
 
     vector_append(self->errors, err);
+}
+
+void parser_dispose_errors(Vector *errors)
+{
+    vector_destroy(errors, free);
 }

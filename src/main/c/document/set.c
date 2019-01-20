@@ -1,11 +1,24 @@
 #include "conditions.h"
 #include "document.h"
+#include "panic.h"
+#include "xalloc.h"
 
-static bool freedom_iterator(void *each, void *context __attribute__((unused)))
+DocumentSet *make_document_set(void)
+{
+    DocumentSet *self = xcalloc(sizeof(DocumentSet));
+
+    self->values = make_vector_with_capacity(1);
+    if(NULL == self->values)
+    {
+        panic("document: document set: allocate document set vector failed");
+    }
+
+    return self;
+}
+
+static void freedom_iterator(void *each)
 {
     dispose_node(each);
-
-    return true;
 }
 
 void dispose_document_set(DocumentSet *self)
@@ -14,15 +27,22 @@ void dispose_document_set(DocumentSet *self)
     {
         return;
     }
-    vector_iterate(self, freedom_iterator, NULL);
-    dispose_vector(self);
+
+    dispose_string(self->input_name);
+    vector_destroy(self->values, freedom_iterator);
+    free(self);
 }
 
 Node *document_set_get_root(const DocumentSet *self, size_t index)
 {
-    Document *doc = document_set_get(self, index);
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
     Node *result = NULL;
 
+    Document *doc = document_set_get(self, index);
     if(NULL != doc)
     {
         result = document_root(doc);
@@ -35,5 +55,5 @@ bool document_set_add(DocumentSet *self, Document *doc)
 {
     ENSURE_NONNULL_ELSE_FALSE(self, doc);
 
-    return vector_add(self, doc);
+    return vector_add(self->values, doc);
 }

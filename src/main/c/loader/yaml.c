@@ -12,15 +12,13 @@
 #include "vector.h"
 #include "xalloc.h"
 
-static const char * const DECIMAL_PATTERN = "^-?(0|([1-9][[:digit:]]*))([.][[:digit:]]+)?([eE][+-]?[[:digit:]]+)?$";
-static const char * const INTEGER_PATTERN = "^-?(0|([1-9][[:digit:]]*))$";
+static const char * const INTEGER_PATTERN = "^(0|([+-]?[1-9][[:digit:]]*))$";
+static const char * const DECIMAL_PATTERN = "^(0|([+-]?[1-9][[:digit:]]*))?\\.[[:digit:]]+([eE][+-]?[[:digit:]]+)?$";
 static const char * const TIMESTAMP_PATTERN = "^[0-9][0-9][0-9][0-9]-[0-9][0-9]?-[0-9][0-9]?(([Tt]|[ \t]+)[0-9][0-9]?:[0-9][0-9](:[0-9][0-9])?([.][0-9]+)?([ \t]*(Z|([-+][0-9][0-9]?(:[0-9][0-9])?)))?)?$";
 
 static regex_t decimal_regex;
 static regex_t integer_regex;
 static regex_t timestamp_regex;
-
-static const char * const REGEX_PANIC_MSG = "loader: initialize: regex compilation failed: \"%s\": %s";
 
 static const Position NO_POSITION = (Position){};
 
@@ -39,7 +37,7 @@ struct loader_context_s
 
 typedef struct loader_context_s Loader;
 
-#define current_document(CONTEXT) vector_last((CONTEXT)->documents)
+#define current_document(CONTEXT) vector_last((CONTEXT)->documents->values)
 #define position(MARK) (Position){index: (MARK).index, line: (MARK).line, offset: (MARK).column}
 
 static void must_make_regex(regex_t *regex, const char * pattern)
@@ -50,11 +48,7 @@ static void must_make_regex(regex_t *regex, const char * pattern)
         char buf[256];
         regerror(code, regex, buf, sizeof(buf));
 
-        size_t len = (size_t)snprintf(NULL, 0, REGEX_PANIC_MSG, pattern, buf);
-        char *message = xcalloc(len);
-        snprintf(message, len, REGEX_PANIC_MSG, pattern, buf);
-
-        panic(message);
+        panicf("loader: initialize: regex compilation failed: \"%s\": %s", pattern, buf);
     }       
 }
 
@@ -102,30 +96,26 @@ static void interpret_yaml_error(Loader *context, yaml_parser_t *parser)
             break;
     }
 
-    const char *extra = parser->problem;
     Position pos = position(parser->problem_mark);
-
     if(NULL != parser->context)
     {
-        extra = parser->context;
         pos = position(parser->context_mark);
     }
 
-    size_t length = strlen(extra) + 1;
-    LoaderError *err = xcalloc(sizeof(LoaderError) + length);
-    err->code = code;
-    err->position = pos;
-
-    if(1 < length)
+    String *extra = NULL;
+    if(NULL == parser->context)
     {
-        memcpy(err->extra, extra, length);
+        extra = make_string(parser->problem);
     }
     else
     {
-        err->extra[0] = '\0';
+        extra = format("%s %s", parser->problem, parser->context);
+        if(NULL == extra)
+        {
+            extra = make_string(parser->problem);
+        }
     }
-
-    vector_append(context->errors, err);
+    add_loader_error_with_extra(context->errors, pos, code, extra);
 }
 
 static void set_anchor(Loader *context, Node *target, uint8_t *anchor)
@@ -425,15 +415,15 @@ static ScalarKind resolve_scalar_kind(const Loader *context, const yaml_event_t 
         loader_trace("found scalar boolean \"%s\"", event->data.scalar.value);
         kind = SCALAR_BOOLEAN;
     }
-    else if(match_integer((const char *)event->data.scalar.value))
-    {
-        loader_trace("found scalar integer \"%s\"", event->data.scalar.value);
-        kind = SCALAR_INTEGER;
-    }
     else if(match_decimal((const char *)event->data.scalar.value))
     {
         loader_trace("found scalar real \"%s\"", event->data.scalar.value);
         kind = SCALAR_REAL;
+    }
+    else if(match_integer((const char *)event->data.scalar.value))
+    {
+        loader_trace("found scalar integer \"%s\"", event->data.scalar.value);
+        kind = SCALAR_INTEGER;
     }
     else if(match_timestamp((const char *)event->data.scalar.value))
     {
@@ -571,12 +561,15 @@ static Maybe(DocumentSet) parse(const String *input_name, yaml_parser_t *parser,
             return fail(DocumentSet, context.errors);
         }
 
+        context.documents->input_name = string_clone(input_name);
+
         dispose_vector(context.errors);
         return just(DocumentSet, context.documents);
     }
 
     vector_destroy(context.detached, node_destroyer);
     dispose_document_set(context.documents);
+
     return fail(DocumentSet, context.errors);
 }
 

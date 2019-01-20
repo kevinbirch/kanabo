@@ -5,8 +5,8 @@
 
 #ifdef USE_LOGGING
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 enum log_level

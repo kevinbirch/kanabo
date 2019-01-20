@@ -31,14 +31,15 @@ struct loader_error_s
 {
     LoaderErrorCode code;
     Position        position;
-    char            extra[];
+    String         *extra;
 };
 
 typedef struct loader_error_s LoaderError;
 
-make_maybep_error(DocumentSet, Vector *);
+defmaybep_error(DocumentSet, Vector *);
 
 Maybe(DocumentSet) load_yaml(Input *, DuplicateKeyStrategy);
 Maybe(DocumentSet) load_yaml_from_stdin(DuplicateKeyStrategy);
 
 const char *loader_strerror(LoaderErrorCode);
+void loader_dispose_errors(Vector *errors);

@@ -15,6 +15,7 @@ typedef struct mutable_string_s MutableString;
 
 String *make_string(const char *value);
 String *make_string_with_bytestring(const uint8_t *value, size_t length);
+
 String *format(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 String *vformat(const char *format, va_list args) __attribute__ ((format (printf, 1, 0)));
 
@@ -133,6 +134,9 @@ bool mstring_append_stream(MutableString **self, const uint8_t *value, size_t le
                                              MutableString *: mstring_append_mstring, \
                                              const MutableString *: mstring_append_mstring \
                                              )(SELF, VALUE)
+
+bool mformat(MutableString **self, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+bool mvformat(MutableString **self, const char *format, va_list args) __attribute__ ((format (printf, 2, 0)));
 
 void mstring_set(MutableString *self, size_t position, uint8_t value);
 void mstring_set_range(MutableString *self, size_t position, size_t length, const uint8_t *value);

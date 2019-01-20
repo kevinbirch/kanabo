@@ -11,8 +11,6 @@ static DocumentSet *model_fixture;
 START_TEST (null_model)
 {
     assert_null(document_set_get_root(NULL, 0));
-    assert_null(document_set_get_root(NULL, 0));
-    assert_uint_eq(0, document_set_size(NULL));
 }
 END_TEST
 

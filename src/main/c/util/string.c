@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -48,6 +49,7 @@ String *make_string(const char *value)
     {
         return NULL;
     }
+
     return string_init(self, value, length);
 }
 
@@ -62,12 +64,59 @@ String *make_string_with_bytestring(const uint8_t *value, size_t length)
     return string_init_with_bytestring(self, value, length);
 }
 
+String *format(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    String *result = vformat(format, args);
+
+    va_end(args);
+
+    return result;
+}
+
+String *vformat(const char *format, va_list format_args)
+{
+    va_list count_args;
+    va_copy(count_args, format_args);
+
+    errno = 0;
+    int count = vsnprintf(NULL, 0, format, count_args);
+    va_end(count_args);
+
+    if(0 > count)
+    {
+        return NULL;
+    }
+
+    size_t length = (size_t)count;
+    String *self = string_alloc(length);
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
+    self->length = length;
+
+    errno = 0;
+    count = vsnprintf((char *)self->value, length + 1, format, format_args);  // N.B. - sizeof(self->value) == length + 1
+    if(0 > count)
+    {
+        free(self);
+        return NULL;
+    }
+
+    return self;
+}
+
 void dispose_string(String *self)
 {
     if(NULL == self)
     {
         return;
     }
+
     free(self);
 }
 
@@ -78,6 +127,7 @@ String *string_clone(const String *self)
     {
         return NULL;
     }
+
     return string_init(that, (const char *)self->value, self->length);
 }
 
@@ -102,6 +152,7 @@ bool string_equals(const String *self, const String *other)
     {
         return false;
     }
+
     return 0 == memcmp(self->value, other->value, self->length);
 }
 
@@ -111,6 +162,7 @@ bool string_equals_c_string(const String *self, const char *other)
     {
         return false;
     }
+
     return 0 == memcmp(self->value, other, self->length);
 }
 
@@ -120,6 +172,7 @@ bool string_equals_bytestring(const String *self, const uint8_t *other, size_t l
     {
         return false;
     }
+
     return 0 == memcmp(self->value, other, self->length);
 }
 
@@ -165,6 +218,7 @@ bool string_endswith(const String *self, const String *value)
     }
 
     size_t offset = self->length - value->length;
+
     return 0 == memcmp(self->value + offset, value->value, value->length);
 }
 
@@ -177,6 +231,7 @@ bool string_endswith_c_string(const String *self, const char *value)
     }
 
     size_t offset = self->length - length;
+
     return 0 == memcmp(self->value + offset, value, length);
 }
 
@@ -217,7 +272,9 @@ static inline bool mstring_realloc(MutableString **self, size_t capacity)
         *self = cache;
         return false;
     }
+
     (*self)->capacity = capacity;
+
     return true;
 }
 
@@ -225,6 +282,7 @@ static inline MutableString *mstring_init(MutableString *self, size_t capacity)
 {
     self->base.length = 0;
     self->capacity = capacity;
+
     return self;
 }
 
@@ -235,6 +293,7 @@ MutableString *make_mstring(size_t capacity)
     {
         return NULL;
     }
+
     return mstring_init(self, capacity);
 }
 
@@ -245,7 +304,9 @@ MutableString *make_mstring_with_char(const uint8_t value)
     {
         return NULL;
     }
+
     mstring_append(&self, value);
+
     return self;
 }
 
@@ -257,7 +318,9 @@ MutableString *make_mstring_with_c_str(const char *value)
     {
         return NULL;
     }
+
     mstring_append(&self, value);
+
     return self;
 }
 
@@ -268,12 +331,19 @@ MutableString *make_mstring_with_string(const String *value)
     {
         return NULL;
     }
+
     mstring_append(&self, value);
+
     return self;
 }
 
 void dispose_mstring(MutableString *self)
 {
+    if(NULL == self)
+    {
+        return;
+    }
+
     free(self);
 }
 
@@ -298,6 +368,7 @@ bool mstring_equals(const MutableString *self, const MutableString *other)
     {
         return false;
     }
+
     return 0 == memcmp(self->base.value, other->base.value, self->base.length);
 }
 
@@ -307,6 +378,7 @@ bool mstring_equals_string(const MutableString *self, const String *other)
     {
         return false;
     }
+
     return 0 == memcmp(self->base.value, other->value, self->base.length);
 }
 
@@ -316,6 +388,7 @@ bool mstring_equals_c_string(const MutableString *self, const char *other)
     {
         return false;
     }
+
     return 0 == memcmp(self->base.value, other, self->base.length);
 }
 
@@ -325,6 +398,7 @@ bool mstring_equals_bytestring(const MutableString *self, const uint8_t *other, 
     {
         return false;
     }
+
     return 0 == memcmp(self->base.value, other, self->base.length);
 }
 
@@ -380,6 +454,7 @@ MutableString *mstring_clone(const MutableString *self)
     {
         memcpy(that->base.value, self->base.value, self->capacity + 1);
     }
+
     return that;
 }
 
@@ -390,6 +465,7 @@ String *mstring_as_string(const MutableString *self)
     {
         return NULL;
     }
+
     return string_init(that, (const char *)self->base.value, self->base.length);
 }
 
@@ -430,6 +506,7 @@ static inline bool ensure_capacity(MutableString **self, size_t length)
         size_t new_capacity = calculate_new_capacity(min_capacity);
         return mstring_realloc(self, new_capacity);
     }
+
     return true;
 }
 
@@ -446,7 +523,9 @@ bool mstring_append_byte(MutableString **self, const uint8_t value)
     {
         return false;
     }
+
     append(*self, &value, 1);
+
     return true;
 }
 
@@ -456,7 +535,9 @@ bool mstring_append_char(MutableString **self, const char value)
     {
         return false;
     }
+
     append(*self, &value, 1);
+
     return true;
 }
 
@@ -467,7 +548,9 @@ bool mstring_append_c_str(MutableString **self, const char *value)
     {
         return false;
     }
+
     append(*self, value, length);
+
     return true;
 }
 
@@ -477,7 +560,9 @@ bool mstring_append_string(MutableString **self, const String *string)
     {
         return false;
     }
+
     append(*self, string->value, string->length);
+
     return true;
 }
 
@@ -487,7 +572,9 @@ bool mstring_append_mstring(MutableString **self, const MutableString *string)
     {
         return false;
     }
+
     append(*self, string->base.value, string->base.length);
+
     return true;
 }
 
@@ -497,7 +584,54 @@ bool mstring_append_stream(MutableString **self, const uint8_t *value, size_t le
     {
         return false;
     }
+
     append(*self, value, length);
+
+    return true;
+}
+
+bool mformat(MutableString **self, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    bool result = mvformat(self, format, args);
+
+    va_end(args);
+
+    return result;
+}
+
+bool mvformat(MutableString **self, const char *format, va_list format_args)
+{
+    va_list count_args;
+    va_copy(count_args, format_args);
+
+    errno = 0;
+    int count = vsnprintf(NULL, 0, format, count_args);
+    va_end(count_args);
+
+    if(0 > count)
+    {
+        return false;
+    }
+
+    size_t length = (size_t)count;
+    if(!ensure_capacity(self, length))
+    {
+        return false;
+    }
+
+    char *end = ((char *)(*self)->base.value) + (*self)->base.length;
+    errno = 0;
+    count = vsnprintf(end, length + 1, format, format_args);  // N.B. - sizeof(self->value) == length + 1
+    if(0 > count)
+    {
+        return false;
+    }
+
+    (*self)->base.length += length;
+
     return true;
 }
 
@@ -517,42 +651,4 @@ void mstring_set_range(MutableString *self, size_t position, size_t length, cons
         return;
     }
     memcpy(self->base.value, value, length);
-}
-
-String *format(const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-
-    String *result = vformat(format, args);
-
-    va_end(args);
-
-    return result;
-}
-
-String *vformat(const char *format, va_list format_args)
-{
-    va_list count_args;
-    va_copy(count_args, format_args);
-
-    int count = vsnprintf(NULL, 0, format, count_args);
-    va_end(count_args);
-
-    if(0 > count)
-    {
-        return NULL;
-    }
-
-    size_t length = (size_t)count;
-    String *self = string_alloc(length);
-    if(NULL == self)
-    {
-        return NULL;
-    }
-
-    self->length = length;
-    vsnprintf((char *)self->value, length + 1, format, format_args);  // N.B. - sizeof(self->value) == length + 1
-
-    return self;
 }

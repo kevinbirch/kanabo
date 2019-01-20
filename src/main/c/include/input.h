@@ -47,7 +47,7 @@ struct input_error_s
 
 typedef struct input_error_s InputError;
 
-make_maybep_error(Input, InputError);
+defmaybep_error(Input, InputError);
 
 // Constructors
 

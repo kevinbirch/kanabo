@@ -22,7 +22,7 @@ enum evaluator_error_e
 
 typedef enum evaluator_error_e EvaluatorErrorCode;
 
-make_maybep(Nodelist);
+defmaybep(Nodelist);
 
 Maybe(Nodelist) evaluate(const DocumentSet *model, const JsonPath *path);
 

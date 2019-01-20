@@ -4,12 +4,11 @@
 
 ## fixes
 
-* clean up error vectors in `main` and tests
+* clean up error vectors from nothings in `main` and tests
+* use `mformat` in parser
 * circle ci build
 * code coverage
 * parser
-  * must_make_regex (uses statement expr)
-  * regex's can use '{}' repetition counts
   * parse integers w/o strtoll
     * don't copy lexeme, don't paste minus and integer lexemes together
     * https://github.com/gcc-mirror/gcc/blob/master/libiberty/strtoll.c
@@ -28,12 +27,12 @@
   * update `apply_greedy_wildcard_test` sequence case to trace index and element kind
   * concrete predicate subtypes
 * loader
+  * scalars
+    * concrete subtypes, each holding reified value
+    * fully parse all scalar types
   * use `String` for anchors and tag name
   * failure in `add_node` or error from libyaml are fatal
   * add extra context string to capture scalar value *or* libyaml message
-* formatting for `String`
-  * http://www.tin.org/bin/man.cgi?section=3&topic=snprintf
-  * http://stackoverflow.com/questions/69738/c-how-to-get-fprintf-results-as-a-stdstring-w-o-sprintf/69911#69911
 * switch to structured logging
   * `log(const char *, ...)` vararg params are all subtypes of `event`
   * https://github.com/uber-go/zap

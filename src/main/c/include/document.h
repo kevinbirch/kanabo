@@ -9,7 +9,13 @@
 #include "str.h"
 #include "vector.h"
 
-typedef Vector DocumentSet;
+struct document_set_s
+{
+    String *input_name;
+    Vector *values;
+};
+
+typedef struct document_set_s DocumentSet;
 
 enum node_kind
 {
@@ -123,7 +129,7 @@ typedef struct alias_s Alias;
  * Constructors
  */
 
-#define      make_document_set() make_vector_with_capacity(1)
+DocumentSet *make_document_set(void);
 Document    *make_document_node(void);
 Sequence    *make_sequence_node(void);
 Mapping     *make_mapping_node(void);
@@ -142,8 +148,8 @@ void         dispose_node_(Node *value);
  * Document Set API
  */
 
-#define      document_set_size vector_length
-#define      document_set_get vector_get
+#define      document_set_size(SELF) (NULL == (SELF) ? (size_t)0 : vector_length((SELF)->values))
+#define      document_set_get(SELF, INDEX) (NULL == (SELF) ? NULL : vector_get((SELF)->values, (INDEX)))
 Node        *document_set_get_root(const DocumentSet *model, size_t index);
 bool         document_set_add(DocumentSet *model, Document *doc);
 

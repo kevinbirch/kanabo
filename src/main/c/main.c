@@ -69,9 +69,11 @@ static void error(const char *format, ...)
 {
     va_list rest;
     va_start(rest, format);
+
     vfprintf(stderr, format, rest);
-    va_end(rest);
     fputc('\n', stderr);
+
+    va_end(rest);
 }
 
 static emit_function get_emitter(enum emit_mode emit_mode)
@@ -126,6 +128,8 @@ static int apply_expression(const char *expression, DocumentSet *documents, enum
     {
         vector_iterate(from_nothing(path), parser_error_printer, NULL);
         result = EXIT_FAILURE;
+        parser_dispose_errors(from_nothing(path));
+
         goto end;
     }
 
@@ -139,7 +143,7 @@ static int apply_expression(const char *expression, DocumentSet *documents, enum
     emit_function emitter = get_emitter(emit_mode);
     if(!emitter(list))
     {
-        error("unable to emit results");
+        error("%s: internal error: unable to emit results", C(documents->input_name));
         result = EXIT_FAILURE;
     }
 
@@ -160,12 +164,19 @@ static inline bool loader_error_printer(void *each, void *context)
     size_t offset = err->position.offset + 1;
     const char *message = loader_strerror(err->code);
 
-    error("%s:%zd:%zd: error: %s: %s", name, line, offset, message, err->extra);
+    if(NULL == err->extra)
+    {
+        error("%s:%zd:%zd: error: %s", name, line, offset, message);
+    }
+    else
+    {
+        error("%s:%zd:%zd: error: %s: %s", name, line, offset, message, C(err->extra));
+    }
 
     return true;
 }
 
-static Maybe(DocumentSet) load_input(const char *file_name, DuplicateKeyStrategy strategy)
+static DocumentSet *load_input(const char *file_name, DuplicateKeyStrategy strategy)
 {
     const char *input_name = get_input_name(file_name);
     
@@ -180,8 +191,11 @@ static Maybe(DocumentSet) load_input(const char *file_name, DuplicateKeyStrategy
         Maybe(Input) input = make_input_from_file(file_name);
         if(is_nothing(input))
         {
-            error("error: %s: %s\n", input_strerror(input.error.code), strerror(input.error.err));
-            return nothing(DocumentSet);
+            const char *problem = input_strerror(input.error.code);
+            char *context = strerror(input.error.err);
+            error("%s: error: %s: %s", input_name, problem, context);
+
+            return NULL;
         }
 
         documents = load_yaml(from_just(input), strategy);
@@ -191,9 +205,12 @@ static Maybe(DocumentSet) load_input(const char *file_name, DuplicateKeyStrategy
     if(is_nothing(documents))
     {
         vector_iterate(from_nothing(documents), loader_error_printer, (void *)input_name);
+        loader_dispose_errors(from_nothing(documents));
+
+        return NULL;
     }
 
-    return documents;
+    return from_just(documents);
 }
 
 static void output_command(const char *argument, struct options *options)
@@ -210,7 +227,7 @@ static void output_command(const char *argument, struct options *options)
     int32_t mode = parse_emit_mode(argument);
     if(-1 == mode)
     {
-        error("unsupported output format `%s'", argument);
+        error("error: unsupported output format: `%s'", argument);
     }
 
     kanabo_debug("setting value to: %s", argument);
@@ -231,23 +248,30 @@ static void duplicate_command(const char *argument, struct options *options)
     int32_t strategy = parse_duplicate_strategy(argument);
     if(-1 == strategy)
     {
-        error("unsupported duplicate stratety `%s'", argument);
+        error("error: unsupported duplicate stratety: `%s'", argument);
     }
 
     kanabo_debug("setting value to: %s", argument);
     options->duplicate_strategy = (DuplicateKeyStrategy)strategy;
 }
 
-static Maybe(DocumentSet) load_command(const char *argument, struct options *options)
+static void load_command(const char *argument, struct options *options, DocumentSet **documents)
 {
     kanabo_debug("processing load command...");
     if(!argument)
     {
-        error(":load command requires an argument");
-        return nothing(DocumentSet);
+        error("error: `:load' command requires an argument");
+        return;
     }
 
-    return load_input(argument, options->duplicate_strategy);
+    DuplicateKeyStrategy strategy = options->duplicate_strategy;
+    DocumentSet *new_documents = load_input(argument, strategy);
+
+    if(NULL != new_documents)
+    {
+        dispose_document_set(*documents);
+        *documents = new_documents;
+    }
 }
 
 static const char *get_argument(const char *command)
@@ -291,18 +315,13 @@ static void dispatch_interactive_command(const char *command, struct options *op
     }
     else if(0 == memcmp(":load", command, 5))
     {
-        Maybe(DocumentSet) new_documents = load_command(get_argument(command), options);
-        if(is_just(new_documents))
-        {
-            dispose_document_set(*documents);
-            *documents = from_just(new_documents);
-        }
+        load_command(get_argument(command), options, documents);
     }
     else
     {
         if(NULL == *documents)
         {
-            error("no input loaded, use the `:load' command");
+            error("error: no input loaded, use the `:load' command");
             return;
         }
         apply_expression(command, *documents, options->emit_mode);
@@ -319,29 +338,26 @@ static void tty_interctive_mode(struct options *options)
     DocumentSet *documents = NULL;
     if(options->input_file_name)
     {
-        Maybe(DocumentSet) docs = load_input(options->input_file_name, options->duplicate_strategy);
-        if(is_just(docs))
-        {
-            documents = from_just(docs);
-        }
+        DuplicateKeyStrategy stratety = options->duplicate_strategy;
+        documents = load_input(options->input_file_name, stratety);
     }
 
-    char *input;
     while(true)
     {
-        input = linenoise(prompt);
+        char *input = linenoise(prompt);
         if(NULL == input)
         {
             break;
         }
         if('\0' == input[0])
         {
-            free(input);
-            continue;
+            goto reset;
         }
 
         linenoiseHistoryAdd(input);
         dispatch_interactive_command(input, options, &documents);
+
+      reset:
         free(input);
     }
     
@@ -357,11 +373,8 @@ static void pipe_interactive_mode(struct options *options)
     DocumentSet *documents = NULL;
     if(options->input_file_name)
     {
-        Maybe(DocumentSet) docs = load_input(options->input_file_name, options->duplicate_strategy);
-        if(is_just(docs))
-        {
-            documents = from_just(docs);
-        }
+        DuplicateKeyStrategy stratety = options->duplicate_strategy;
+        documents = load_input(options->input_file_name, stratety);
     }
 
     kanabo_debug("entering non-tty interative mode");
@@ -369,12 +382,17 @@ static void pipe_interactive_mode(struct options *options)
     {
         if(0 == read || '\n' == input[0])
         {
-            continue;
+            goto reset;
         }
         input[read - 1] = '\0';  // N.B. `read` should always be positive here
         dispatch_interactive_command(input, options, &documents);
+
         fputs("EOD\n", stdout);
         fflush(stdout);
+
+      reset:
+        free(input);
+        input = NULL;
     }
 
     free(input);
@@ -397,16 +415,14 @@ static int interactive_mode(struct options *options)
 
 static int expression_mode(struct options *options)
 {
-    Maybe(DocumentSet) documents = load_input(options->input_file_name, options->duplicate_strategy);
-    if(is_nothing(documents))
+    DuplicateKeyStrategy strategy = options->duplicate_strategy;
+    DocumentSet *documents = load_input(options->input_file_name, strategy);
+    if(NULL == documents)
     {
         return EXIT_FAILURE;
     }
 
-    int result = apply_expression(options->expression, from_just(documents), options->emit_mode);
-    dispose_document_set(from_just(documents));
-
-    return result;
+    return apply_expression(options->expression, documents, options->emit_mode);
 }
 
 static int execute_command(enum command cmd, struct options *options)
@@ -490,7 +506,7 @@ int main(const int argc, char * const *argv)
 {
     if(1 > argc || NULL == argv || NULL == argv[0])
     {
-        fputs("error: something is wrong, there are no program arguments\n", stderr);
+        error("error: something is wrong, there are no program arguments");
         return EXIT_FAILURE;
     }
     
