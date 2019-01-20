@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "str.h"
@@ -516,4 +517,42 @@ void mstring_set_range(MutableString *self, size_t position, size_t length, cons
         return;
     }
     memcpy(self->base.value, value, length);
+}
+
+String *format(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    String *result = vformat(format, args);
+
+    va_end(args);
+
+    return result;
+}
+
+String *vformat(const char *format, va_list format_args)
+{
+    va_list count_args;
+    va_copy(count_args, format_args);
+
+    int count = vsnprintf(NULL, 0, format, count_args);
+    va_end(count_args);
+
+    if(0 > count)
+    {
+        return NULL;
+    }
+
+    size_t length = (size_t)count;
+    String *self = string_alloc(length);
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
+    self->length = length;
+    vsnprintf((char *)self->value, length + 1, format, format_args);  // N.B. - sizeof(self->value) == length + 1
+
+    return self;
 }

@@ -1,9 +1,10 @@
 #pragma once
 
-#include <string.h>
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
+#include <string.h>
 
 // String Entities
 
@@ -14,6 +15,8 @@ typedef struct mutable_string_s MutableString;
 
 String *make_string(const char *value);
 String *make_string_with_bytestring(const uint8_t *value, size_t length);
+String *format(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+String *vformat(const char *format, va_list args) __attribute__ ((format (printf, 1, 0)));
 
 #define S(VALUE) make_string((VALUE))
 
