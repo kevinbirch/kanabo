@@ -139,12 +139,7 @@ slice
     ;
 
 join
-    = join expression, ",", join expression, { ",", join expression }
-    ;
-
-join expression
-    = signed integer
-    | relative path
+    = jsonpath, ",", jsonpath, { ",", jsonpath }
     ;
 
 or expr
@@ -246,10 +241,6 @@ escape
     | "\U", 8 * hex digit
     ;
 
-hex digit
-    = 2 * ( digit |  hex lower | hex upper )
-    ;
-
 boolean
     = "true"
     | "false"
@@ -273,6 +264,10 @@ digit one to nine
 
 digit
     = "0" | digit one to nine
+    ;
+
+hex digit
+    = digit |  hex lower | hex upper
     ;
 
 hex lower
