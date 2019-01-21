@@ -4,10 +4,23 @@
 
 ## fixes
 
-* clean up error vectors from nothings in `main` and tests
+* prettify `str.h`
+* reorder args of evaluator funcs so self is first
+* clean up error vectors from nothings in tests
 * use `mformat` in parser
 * circle ci build
 * code coverage
+* mv spacecadet,linenose,yaml,check stuff to vendor
+  * build `src/vendor/*` as libs
+    * per-vendor optional `CFLAGS`, `LDFLAGS`, `CC`, language, file extension
+    * also `src/test-vendor`
+    * mv stuff from util to vendor, remainder in lib
+  * implement package goal
+    * add package hooks, including goal override hook
+    * add `$(GENERATED_SOURCE_DIR)` to sources to compile
+    * add `$(GENERATED_TEST_SOURCE_DIR)` to sources to compile
+  * fix `install` goal to install resources
+    * add install hooks, including goal override hook
 * parser
   * parse integers w/o strtoll
     * don't copy lexeme, don't paste minus and integer lexemes together
@@ -44,6 +57,16 @@
 * jsonpath model dumper w/ secret command line option, nice tree-like layout
   * `--output=ast`
 * switch weather example to yaml config file
+* build security
+  * flags all builds: `-Werror=format-security -fstack-protector`
+  * flags for debug: `-D_FORTIFY_SOURCE=1 -O1`
+  * flags for release: `-D_FORTIFY_SOURCE=2 -pie -fPIE -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
+  * https://blog.erratasec.com/2018/12/notes-on-build-hardening.html
+    If you are building code using gcc on Linux, here are the options/flags you should use:
+    `-Wall -Wformat -Wformat-security -Werror=format-security -fstack-protector -pie -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
+    If you are more paranoid, these options would be:
+    `-Wall -Wformat -Wformat-security -Wstack-protector -Werror -pedantic -fstack-protector-all --param ssp-buffer-size=1 -pie -fPIE -D_FORTIFY_SOURCE=2 -O1 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
+  * https://blog.quarkslab.com/clang-hardening-cheat-sheet.html
 * memory leaks
   * use memory sanitizer on linux w clang
     * `debug_CFLAGS := $(debug_CFLAGS) -sanitize=memory`
@@ -53,11 +76,11 @@
   * move changes back
   * add maybe, xcalloc, others?
   * print stack trace on xcalloc failure
-  * mv spacecadet,linenose,yaml,check stuff to vendor
 
 ## new features
 
 1. join
+   * support only paths, not indices
 1. anchor selector
 1. tag selector
 1. new scalar types (timestamp, etc)
@@ -101,6 +124,8 @@
   * http://www.reddit.com/r/programming/comments/1u660a/the_lost_art_of_c_structure_packing/
   * http://linux.die.net/man/1/pahole
   * https://github.com/arvidn/struct_layout
+* try fbinfer: http://fbinfer.com/
+* try qsym: https://github.com/sslab-gatech/qsym
 * https://code.google.com/p/american-fuzzy-lop/
 * cmbc - http://www.cprover.org/cbmc/
 * https://gitorious.org/linted/linted/source/8a9b2c7744af0e2d42419d0fea45c7b37b76930b:
@@ -108,25 +133,9 @@
 * fuzz testing: https://en.wikipedia.org/wiki/API_Sanity_Checker
 * find undefined behavior code
   * http://css.csail.mit.edu/stack/
+* function tracing? https://github.com/namhyung/uftrace
 
 ## evolution
-
-* jit compiler for evaluator?
-  * http://eli.thegreenplace.net/2013/10/17/getting-started-with-libjit-part-1/
-  * http://www.stephendiehl.com/llvm/
-* streaming mode
-  * https://github.com/fizx/sit
-  * http://stackoverflow.com/questions/13083491/looking-for-big-sample-dummy-json-data-file
-  * https://github.com/udp/json-parser
-  * https://github.com/zeMirco/sf-city-lots-json
-  * https://github.com/seductiveapps/largeJSON
-* function tracing? https://github.com/namhyung/uftrace
-* support in-place document patching
-  * should there be a stack of edits atop of loaded tree (immutable loads?)
-  * can whole documents be saved and named? (`${doc-name or index}` `$index`?)
-* use `flatten` attribute on evaluator, parser core functions?
-  * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
-* various getopt alternatvies: https://news.ycombinator.com/item?id=10687375
 
 ### loader
 
@@ -144,10 +153,23 @@
   * runtime enable disable
 * computed goto dispatch table?
   * http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables
-* refactor iteration methods to use filter, tranform, fold
 * add safe arithmetic functions
   * http://lists.nongnu.org/archive/html/qemu-devel/2013-01/msg05387.html
   * https://sourceware.org/ml/libc-alpha/2013-12/msg00098.html
+* jit compiler?
+  * http://eli.thegreenplace.net/2013/10/17/getting-started-with-libjit-part-1/
+  * http://www.stephendiehl.com/llvm/
+* streaming mode
+  * https://github.com/fizx/sit
+  * http://stackoverflow.com/questions/13083491/looking-for-big-sample-dummy-json-data-file
+  * https://github.com/udp/json-parser
+  * https://github.com/zeMirco/sf-city-lots-json
+  * https://github.com/seductiveapps/largeJSON
+* support in-place document patching
+  * should there be a stack of edits atop of loaded tree (immutable loads?)
+  * can whole documents be saved and named? (`${doc-name or index}` `$index`?)
+* use `flatten` attribute on evaluator, parser core functions?
+  * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
 
 ### unit testing
 
@@ -167,57 +189,15 @@
 ### build
 
 * pkg-config - http://www.freedesktop.org/wiki/Software/pkg-config/
-* http://code.google.com/p/qi-make/
-* http://google-engtools.blogspot.fr/2011/08/build-in-cloud-how-build-system-works.html
-* http://facebook.github.io/buck/
-* http://aosabook.org/en/posa/ninja.html
-* http://www.reddit.com/r/programming/comments/204pau/what_are_your_gcc_flags/
-* https://bazel.build/
-* gnu make 4.0
-  * try --trace to check out rule ordering
-* define, eval to create dynamic rules and shell?
-* CI - http://about.travis-ci.org/docs/user/build-configuration/
 * release step
   * https://github.com/manuelbua/gitver
 * record build command
   * https://news.ycombinator.com/item?id=11228515
   * $(builddir)/compiler_flags: force mkdir -p $(builddir) echo '$(CPPFLAGS) $(CFLAGS)' | cmp -s - $@ || echo '$(CPPFLAGS) $(CFLAGS)' > $@
   * $(LIBOBJECTS) $(RTLLIBOBJECTS) $(OPTLIBOBJECTS) $(TESTOBJECTS) $(builddir)/init_qt_workdir: $(builddir)/compiler_flags
-* meson - http://mesonbuild.com/
-* https://bitbucket.org/scons/scons/wiki/SconsVsOtherBuildTools
-* add project level language var: `C`, `C++` or `Objective-C`
-  * eliminate language name directories under src
-  * project level source file extension var
-* build `src/vendor/*` as libs
-  * per-vendor optional `CFLAGS`, `LDFLAGS`, `CC`, language, file extension
-  * also `src/test-vendor`
 * support multiple artifacts, fallback to assuming 1 and find main func
   * built in `main_ARTIFACT_TYPE ?= $(artifact)`, `ARTIFACTS ?= main_ARTIFACT`
-* multi target projects
-  * assume 1
-  * list per module
-* multi module projects
-  * assume 1
-* per module lang
-* per lang compiler, linker 
-* vendor deps as modules
-* vendor dir 
-* customizable include dirs w default
-* make secondary expansion?
-  * https://www.gnu.org/software/make/manual/html_node/Secondary-Expansion.html
-* try fbinfer: http://fbinfer.com/
-* try qsym: https://github.com/sslab-gatech/qsym
-* enable warning for redundant warning flags
-* build security
-  * flags all builds: `-Werror=format-security -fstack-protector`
-  * flags for debug: `-D_FORTIFY_SOURCE=1 -O1`
-  * flags for release: `-D_FORTIFY_SOURCE=2 -pie -fPIE -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
-  * https://blog.erratasec.com/2018/12/notes-on-build-hardening.html
-    If you are building code using gcc on Linux, here are the options/flags you should use:
-    `-Wall -Wformat -Wformat-security -Werror=format-security -fstack-protector -pie -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
-    If you are more paranoid, these options would be:
-    `-Wall -Wformat -Wformat-security -Wstack-protector -Werror -pedantic -fstack-protector-all --param ssp-buffer-size=1 -pie -fPIE -D_FORTIFY_SOURCE=2 -O1 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
-  * https://blog.quarkslab.com/clang-hardening-cheat-sheet.html
+* support version check for dependency libs?
 
 ## competition
 
