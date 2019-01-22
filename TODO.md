@@ -4,9 +4,8 @@
 
 ## fixes
 
-* prettify `str.h`
 * reorder args of evaluator funcs so self is first
-* clean up error vectors from nothings in tests
+* clean up parser/loader error vectors from nothings in tests
 * use `mformat` in parser
 * circle ci build
 * code coverage
@@ -21,6 +20,13 @@
     * add `$(GENERATED_TEST_SOURCE_DIR)` to sources to compile
   * fix `install` goal to install resources
     * add install hooks, including goal override hook
+* loader
+  * scalars
+    * concrete subtypes, each holding reified value
+    * fully parse all scalar types
+  * use `String` for anchors and tag name
+  * failure in `add_node` or error from libyaml are fatal
+  * add extra context string to capture scalar value *or* libyaml message
 * parser
   * parse integers w/o strtoll
     * don't copy lexeme, don't paste minus and integer lexemes together
@@ -39,13 +45,6 @@
   * update `add_values_to_nodelist_map_iterator` trace with key name
   * update `apply_greedy_wildcard_test` sequence case to trace index and element kind
   * concrete predicate subtypes
-* loader
-  * scalars
-    * concrete subtypes, each holding reified value
-    * fully parse all scalar types
-  * use `String` for anchors and tag name
-  * failure in `add_node` or error from libyaml are fatal
-  * add extra context string to capture scalar value *or* libyaml message
 * switch to structured logging
   * `log(const char *, ...)` vararg params are all subtypes of `event`
   * https://github.com/uber-go/zap
