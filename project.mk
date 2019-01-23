@@ -24,8 +24,8 @@ TEST_LDLIBS := $(LDLIBS) -pthread -lrt -lsubunit
 TEST_ENV := CK_FORK=no ASAN_OPTIONS=detect_leaks=1
 AR = ar rcs
 ifeq ($(is_clang),true)
-debug_CFLAGS := $(debug_CFLAGS) -sanitize=memory
-debug_LDFLAGS := $(debug_LDFLAGS) -sanitize=memory
+debug_CFLAGS := $(debug_CFLAGS) -fsanitize=memory
+debug_LDFLAGS := $(debug_LDFLAGS) -fsanitize=memory
 endif
 else ifeq ($(system),Darwin)
 AR := libtool -static -o
