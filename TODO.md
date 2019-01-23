@@ -5,7 +5,6 @@
 ## fixes
 
 * makefile
-  * flags for all builds: `-Werror=format-security -fstack-protector`
   * flags for debug: `-D_FORTIFY_SOURCE=1 -O1`
   * flags for release: `-D_FORTIFY_SOURCE=2 -pie -fPIE -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
   * https://blog.erratasec.com/2018/12/notes-on-build-hardening.html
