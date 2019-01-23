@@ -5,14 +5,11 @@
 ## fixes
 
 * makefile
-  * flags for debug: `-D_FORTIFY_SOURCE=1 -O1`
-  * flags for release: `-D_FORTIFY_SOURCE=2 -pie -fPIE -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
-  * https://blog.erratasec.com/2018/12/notes-on-build-hardening.html
-    If you are building code using gcc on Linux, here are the options/flags you should use:
-    `-Wall -Wformat -Wformat-security -Werror=format-security -fstack-protector -pie -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
-    If you are more paranoid, these options would be:
-    `-Wall -Wformat -Wformat-security -Wstack-protector -Werror -pedantic -fstack-protector-all --param ssp-buffer-size=1 -pie -fPIE -D_FORTIFY_SOURCE=2 -O1 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
-  * https://blog.quarkslab.com/clang-hardening-cheat-sheet.html
+  * fix bogus warnings from `cd` on clean build
+  * fix bogus warnings for `target/resources` `cd` on clean build
+    * target/generated-test-sources
+    * target/generated-sources
+    * target/resources
   * use memory sanitizer on linux w clang
     * `debug_CFLAGS := $(debug_CFLAGS) -sanitize=memory`
     * `debug_LDFLAGS := $(debug_LDFLAGS) -sanitize=memory`

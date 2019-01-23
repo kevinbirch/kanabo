@@ -10,10 +10,10 @@ DEPENDENCIES = yaml
 TEST_DEPENDENCIES = check yaml
 
 CFLAGS += -std=c11 -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-gnu -Wno-microsoft -Wno-unused-parameter -fstrict-aliasing -fms-extensions -fstack-protector
-debug_CFLAGS = -DUSE_LOGGING -g -fno-omit-frame-pointer -fsanitize=address,undefined
-release_CFLAGS = -DUSE_LOGGING -O3 -fno-omit-frame-pointer
+debug_CFLAGS = -DUSE_LOGGING -g -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -O1 -fno-omit-frame-pointer -fsanitize=address,undefined
+release_CFLAGS = -DUSE_LOGGING -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -pie -fPIE
 debug_LDFLAGS = -fstack-protector -fno-omit-frame-pointer -fsanitize=address,undefined
-release_LDFLAGS = -fstack-protector -fno-omit-frame-pointer -flto
+release_LDFLAGS = -fstack-protector -fno-omit-frame-pointer -flto -pie -fPIE -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
 
 system = $(shell uname -s)
 
