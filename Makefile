@@ -614,7 +614,7 @@ test: test-target test-hooks
 	@cd $(TARGET_DIR); $(TEST_ENV) ./$(TEST_PROGRAM)
 else
 test: test-target
-	@$(info $(call announce_section_detail_message,Skipping tests))
+	@$(info $(call announce_section_message,Skipping tests))
 	@:
 endif
 

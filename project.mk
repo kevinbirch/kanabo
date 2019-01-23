@@ -2,7 +2,7 @@
 
 owner = io.node6
 package = kanabo
-version = 0.4.0-SNAPSHOT
+version = 0.5.0-SNAPSHOT
 artifact = program
 build = debug
 
