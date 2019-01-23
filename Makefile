@@ -1,5 +1,7 @@
 # -*- mode: Makefile-gmake -*-
 
+export SHELL = /usr/bin/env bash
+
 # Compatibility target
 all: help
 

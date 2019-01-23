@@ -10,9 +10,9 @@ DEPENDENCIES = yaml
 TEST_DEPENDENCIES = check yaml
 
 CFLAGS += -std=c11 -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-gnu -Wno-microsoft -Wno-unused-parameter -fstrict-aliasing -fms-extensions -fstack-protector
-debug_CFLAGS := -DUSE_LOGGING -g -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -O1 -fno-omit-frame-pointer -fsanitize=address,undefined
+debug_CFLAGS := -DUSE_LOGGING -g -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -O1 -fno-omit-frame-pointer -fsanitize=undefined
 release_CFLAGS := -DUSE_LOGGING -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -pie -fPIE
-debug_LDFLAGS := -fstack-protector -fno-omit-frame-pointer -fsanitize=address,undefined
+debug_LDFLAGS := -fstack-protector -fno-omit-frame-pointer -fsanitize=undefined
 release_LDFLAGS := -fstack-protector -fno-omit-frame-pointer -flto -pie -fPIE -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
 
 system := $(shell uname -s)
@@ -21,14 +21,16 @@ is_clang := $(shell vers=`cc --version`; if [[ $vers == *clang* ]]; then echo "t
 ifeq ($(system),Linux)
 LDLIBS := -lm
 TEST_LDLIBS := $(LDLIBS) -pthread -lrt -lsubunit
-TEST_ENV := CK_FORK=no ASAN_OPTIONS=detect_leaks=1
 AR = ar rcs
 ifeq ($(is_clang),true)
+TEST_ENV := CK_FORK=no ASAN_OPTIONS=detect_leaks=1
 debug_CFLAGS := $(debug_CFLAGS) -fsanitize=memory
 debug_LDFLAGS := $(debug_LDFLAGS) -fsanitize=memory
 endif
 else ifeq ($(system),Darwin)
 AR := libtool -static -o
+debug_CFLAGS := $(debug_CFLAGS) -fsanitize=address
+debug_LDFLAGS := $(debug_LDFLAGS) -fsanitize=address
 endif
 
 VERSION_H = $(GENERATED_HEADERS_DIR)/version.h
