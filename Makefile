@@ -163,10 +163,10 @@ pdfdir := $(docdir)
 psdir := $(docdir)
 
 ## Dependency handling
-DEPENDENCY_VALIDATIONS := $(addprefix dependency/,$(DEPENDENCIES))
+DEPENDENCY_RESOLVERS := $(addprefix dependency/,$(DEPENDENCIES))
 DEPENDENCY_INCLUDES ?=
 DEPENDENCY_LDFLAGS ?=
-TEST_DEPENDENCY_VALIDATIONS := $(addprefix test-dependency/,$(TEST_DEPENDENCIES))
+TEST_DEPENDENCY_RESOLVERS := $(addprefix test-dependency/,$(TEST_DEPENDENCIES))
 TEST_DEPENDENCY_INCLUDES ?= $(DEPENDENCY_INCLUDES)
 TEST_DEPENDENCY_LDFLAGS ?= $(DEPENDENCY_LDFLAGS)
 
@@ -191,8 +191,8 @@ TEST_ENV ?=
 source_to_target = $(foreach s, $(1), $(2)/$(basename $(s)).$(3))
 source_to_object = $(call source_to_target,$(1),$(2),o)
 source_to_depend = $(call source_to_target,$(1),$(2),d)
-find_files = $(shell cd $(1) && $(FIND) . -type f | sed 's|\./||')
-find_source_files = $(shell cd $(1) && $(FIND) . -type f \( -name '*.c' -or -name '*.C' \) | sed 's|\./||')
+find_files = $(shell if [ -d $(1) ]; then cd $(1); $(FIND) . -type f | sed 's|\./||'; fi)
+find_source_files = $(shell if [ -d $(1) ]; then cd $(1); $(FIND) . -type f \( -name '*.c' -or -name '*.C' \) | sed 's|\./||'; fi)
 find_resources = $(foreach r, $(wildcard $(1)/*), $(subst $(1),$(2),$(r)))
 
 ## Project source file locations
@@ -373,7 +373,7 @@ endef
 
 ifeq ($(strip $(DEPENDENCY_CHECK_OVERRIDE)),)
 define dependency_test_canned_recipe =
-@$(info resolving depencency: $(@F))
+@$(info resolving: $(@F))
 @$(eval $(define_dependency_variables))
 @$(file > $(dependency_$(@F)_infile),$(dependency_test_template))
 @$(CC) $($(dependency_prefix)DEPENDENCY_$(@F)_INCLUDES) $(dependency_$(@F)_infile) $($(dependency_prefix)DEPENDENCY_$(@F)_LDFLAGS) -l$($(dependency_prefix)DEPENDENCY_$(@F)_LIB) -o $(dependency_$(@F)_outfile); \
@@ -464,9 +464,9 @@ clean:
 
 validate:
 ifeq ($(strip $(owner)),)
-	$(error "Please set a value for 'owner' in project.mk")
+	$(error Please set a value for 'owner' in $(PROJECT_CONFIG_FILE))
 else ifeq ($(strip $(package)),)
-	$(error "Please set a value for 'package' in project.mk")
+	$(error Please set a value for 'package' in $(PROJECT_CONFIG_FILE))
 endif
 
 announce-build:
@@ -490,65 +490,109 @@ create-build-directories: announce-create-build-directories
 	mkdir -p $(GENERATED_TEST_DEPEND_DIR)
 	mkdir -p $(TEST_RESOURCES_TARGET_DIR)
 
-announce-initialize-hooks:
-ifneq ($(strip $(INITIALIZE_PHASE_HOOKS)),)
+announce-initialize-phase-hooks:
 	@$(info $(call announce_section_detail_message,Hooks,Invoking $(words $(INITIALIZE_PHASE_HOOKS)) hooks))
+
+ifeq ($(strip $(INITIALIZE_PHASE_HOOKS)),)
+invoke-initialize-phase-hooks:
+	@:
+else
+invoke-initialize-phase-hooks: announce-initialize-phase-hooks $(INITIALIZE_PHASE_HOOKS)
 endif
 
-initialize-hooks: announce-initialize-hooks $(INITIALIZE_PHASE_HOOKS)
+initialize-internal: validate announce-build announce-initialize-phase create-build-directories
 
-initialize: validate announce-build announce-initialize-phase create-build-directories initialize-hooks
+initialize: initialize-internal invoke-initialize-phase-hooks
 
 announce-build-phase:
 	@$(info $(call announce_phase_message,Build))
 
-announce-ensure-dependencies:
-ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
-	@$(info $(call announce_section_detail_message,Finding dependencies,Resolving $(words $(DEPENDENCY_VALIDATIONS)) dependencies))
+announce-resolve-dependencies:
+	@$(info $(call announce_section_detail_message,Resolving system dependencies,Resolving $(words $(DEPENDENCY_RESOLVERS)) system dependencies))
+
+ifeq ($(strip $(DEPENDENCY_RESOLVERS)),)
+resolve-dependencies:
+	@:
+else
+resolve-dependencies: announce-resolve-dependencies $(DEPENDENCY_RESOLVERS)
 endif
 
-ensure-dependencies: initialize announce-build-phase announce-ensure-dependencies $(DEPENDENCY_VALIDATIONS)
+ensure-dependencies: initialize announce-build-phase resolve-dependencies
 
-announce-generate-sources:
-ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
+announce-generate-sources-hooks:
 	@$(info $(call announce_section_detail_message,Generating sources,Invoking $(words $(GENERATE_SOURCES_HOOKS)) hooks))
+
+ifeq ($(strip $(GENERATE_SOURCES_HOOKS)),)
+invoke-generate-source-hooks:
+	@:
+else
+invoke-generate-source-hooks: announce-generate-sources-hooks $(GENERATE_SOURCES_HOOKS)
 endif
 
 announce-generate-source-dependencies:
-	$(info $(call announce_section_detail_message,Generating source dependencies,Evaluating $(words $(DEPENDS)) source files))
+	$(info $(call announce_section_message,Generating source dependencies))
 
 generate-source-dependencies: announce-generate-source-dependencies $(DEPENDS)
 
-generate-sources: ensure-dependencies announce-generate-sources $(GENERATE_SOURCES_HOOKS) generate-source-dependencies
+generate-sources: ensure-dependencies invoke-generate-source-hooks generate-source-dependencies
 
-process-sources: generate-sources $(PROCESS_SOURCES_HOOKS)
+announce-process-sources-hooks:
+	@$(info $(call announce_section_detail_message,Processing sources,Invoking $(words $(PROCESS_SOURCES_HOOKS)) hooks))
 
-announce-generate-resources:
-ifneq ($(strip $(GENERATE_RESOURCES_HOOKS)),)
+ifeq ($(strip $(PROCESS_SOURCES_HOOKS)),)
+invoke-process-sources-hooks:
+	@:
+else
+invoke-process-sources-hooks: announce-process-sources-hooks $(PROCESS_SOURCES_HOOKS)
+endif
+
+process-sources: generate-sources invoke-process-sources-hooks
+
+announce-generate-resources-hooks:
 	@$(info $(call announce_section_detail_message,Generating resources,Invoking $(words $(GENERATE_RESOURCES_HOOKS)) hooks))
+
+ifeq ($(strip $(GENERATE_RESOURCES_HOOKS)),)
+invoke-generate-resources-hooks:
+	@:
+else
+invoke-generate-resources-hooks: announce-generate-resources-hooks $(GENERATE_RESOURCES_HOOKS)
 endif
 
-generate-resources: process-sources announce-generate-resources $(GENERATE_RESOURCES_HOOKS)
+generate-resources: process-sources invoke-generate-resources-hooks
 
-announce-process-resources: count = $(shell if [ -d $(RESOURCES_DIR) ]; then ls $(RESOURCES_DIR) | wc -l; fi)
+announce-process-resources-hooks:
+	@$(info $(call announce_section_detail_message,Processing resources,Invoking $(words $(PROCESS_RESOURCES_HOOKS)) hooks))
+
+ifeq ($(strip $(PROCESS_RESOURCES_HOOKS)),)
+invoke-process-resources-hooks:
+	@:
+else
+invoke-process-resources-hooks: announce-process-resources-hooks $(PROCESS_RESOURCES_HOOKS)
+endif
+
 announce-process-resources:
-ifeq ($(shell if [ -d $(RESOURCES_DIR) ]; then echo "true"; fi),true)
-	@$(info $(call announce_section_detail_message,Copying resources,Evaluating $(strip $(count)) files))
+ifeq ($(shell if [ -n "`find $(RESOURCES_DIR) -type f -maxdepth 1 2>/dev/null`" ]; then echo "true"; fi),true)
+	@$(info $(call announce_section_detail_message,Copying resources,Evaluating $(strip $(shell ls $(RESOURCES_DIR) | wc -l)) files))
 endif
 
-process-resources: generate-resources $(PROCESS_RESOURCES_HOOKS) announce-process-resources $(RESOURCES)
+process-resources: generate-resources invoke-process-resources-hooks announce-process-resources $(RESOURCES)
 
 announce-compile-sources:
-	@$(info $(call announce_section_detail_message,Compiling sources,Evaluating $(words $(OBJECTS)) source files))
+	@$(info $(call announce_section_detail_message,Compiling sources,Evaluating $(words $(OBJECTS)) files))
 
-announce-build-hooks:
-ifneq ($(strip $(BUILD_PHASE_HOOKS)),)
+announce-build-phase-hooks:
 	@$(info $(call announce_section_detail_message,Hooks,Invoking $(words $(BUILD_PHASE_HOOKS)) hooks))
+
+ifeq ($(strip $(BUILD_PHASE_HOOKS)),)
+invoke-build-phase-hooks:
+	@:
+else
+invoke-build-phase-hooks: announce-build-phase-hooks $(BUILD_PHASE_HOOKS)
 endif
 
-build-hooks: announce-build-hooks $(BUILD_PHASE_HOOKS)
+compile-internal: process-resources announce-compile-sources $(OBJECTS)
 
-compile: process-resources announce-compile-sources $(OBJECTS) build-hooks
+compile: compile-internal invoke-build-phase-hooks
 
 process-objects: compile
 
@@ -559,41 +603,75 @@ target: library $(TARGET)
 announce-test-phase:
 	@$(info $(call announce_phase_message,Test))
 
-announce-ensure-test-dependencies:
-ifneq ($(strip $(DEPENDENCY_VALIDATIONS)),)
-	@$(info $(call announce_section_detail_message,Finding test dependencies,Resolving $(words $(TEST_DEPENDENCY_VALIDATIONS)) dependencies))
+announce-resolve-test-dependencies:
+	@$(info $(call announce_section_detail_message,Resolving system test dependencies,Resolving $(words $(TEST_DEPENDENCY_RESOLVERS)) system dependencies))
+
+ifeq ($(strip $(TEST_DEPENDENCY_RESOLVERS)),)
+resolve-test-dependencies:
+	@:
+else
+resolve-test-dependencies: announce-resolve-test-dependencies $(TEST_DEPENDENCY_RESOLVERS)
 endif
 
-ensure-test-dependencies: target announce-test-phase announce-ensure-test-dependencies $(TEST_DEPENDENCY_VALIDATIONS)
+ensure-test-dependencies: target announce-test-phase resolve-test-dependencies
 
-announce-generate-test-sources:
-ifneq ($(strip $(GENERATE_TEST_SOURCES_HOOKS)),)
+announce-generate-test-sources-hooks:
 	@$(info $(call announce_section_detail_message,Generating test sources,Invoking $(words $(GENERATE_TEST_SOURCES_HOOKS)) hooks))
+
+ifeq ($(strip $(GENERATE_TEST_SOURCES_HOOKS)),)
+invoke-generate-test-source-hooks:
+	@:
+else
+invoke-generate-test-source-hooks: announce-generate-test-sources-hooks $(GENERATE_TEST_SOURCES_HOOKS)
 endif
 
-announce-test-generate-source-dependencies:
-	$(info $(call announce_section_detail_message,Generating test source dependencies,Evaluating $(words $(TEST_DEPENDS)) source files))
+announce-generate-test-source-dependencies:
+	$(info $(call announce_section_message,Generating test source dependencies))
 
-generate-test-source-dependencies: announce-test-generate-source-dependencies $(TEST_DEPENDS)
+generate-test-source-dependencies: announce-generate-test-source-dependencies $(TEST_DEPENDS)
 
-generate-test-sources: ensure-test-dependencies announce-generate-test-sources $(GENERATE_TEST_SOURCES_HOOKS) announce-test-generate-source-dependencies
+generate-test-sources: ensure-test-dependencies invoke-generate-test-source-hooks generate-test-source-dependencies
 
-process-test-sources: generate-test-sources $(PROCESS_TEST_SOURCES_HOOKS)
+announce-process-test-sources-hooks:
+	@$(info $(call announce_section_detail_message,Processing test sources,Invoking $(words $(PROCESS_TEST_SOURCES_HOOKS)) hooks))
 
-announce-generate-test-resources:
-ifneq ($(strip $(GENERATE_TEST_RESOURCES_HOOKS)),)
+ifeq ($(strip $(PROCESS_TEST_SOURCES_HOOKS)),)
+invoke-process-test-sources-hooks:
+	@:
+else
+invoke-process-test-sources-hooks: announce-process-test-sources-hooks $(PROCESS_TEST_SOURCES_HOOKS)
+endif
+
+process-test-sources: generate-test-sources invoke-process-test-sources-hooks
+
+announce-generate-test-resources-hooks:
 	@$(info $(call announce_section_detail_message,Generating test resources,Invoking $(words $(GENERATE_TEST_RESOURCES_HOOKS)) hooks))
+
+ifeq ($(strip $(GENERATE_TEST_RESOURCES_HOOKS)),)
+invoke-generate-test-resources-hooks:
+	@:
+else
+invoke-generate-test-resources-hooks: announce-generate-test-resources-hooks $(GENERATE_TEST_RESOURCES_HOOKS)
 endif
 
-generate-test-resources: process-test-sources announce-generate-test-sources $(GENERATE_TEST_RESOURCES_HOOKS)
+generate-test-resources: process-test-sources invoke-generate-test-resources-hooks
 
-announce-process-test-resources: count = $(shell if [ -d $(TEST_RESOURCES_DIR) ]; then ls $(TEST_RESOURCES_DIR) | wc -l; fi)
+announce-process-test-resources-hooks:
+	@$(info $(call announce_section_detail_message,Processing test resources,Invoking $(words $(PROCESS_TEST_RESOURCES_HOOKS)) hooks))
+
+ifeq ($(strip $(PROCESS_TEST_RESOURCES_HOOKS)),)
+invoke-process-test-resources-hooks:
+	@:
+else
+invoke-process-test-resources-hooks: announce-process-test-resources-hooks $(PROCESS_TEST_RESOURCES_HOOKS)
+endif
+
 announce-process-test-resources:
-ifeq ($(shell if [ -d $(TEST_RESOURCES_DIR) ]; then echo "true"; fi),true)
-	@$(info $(call announce_section_detail_message,Copying test resources,Evaluating $(strip $(count)) files))
+ifeq ($(shell if [ -n "`find $(TEST_RESOURCES_DIR) -type f -maxdepth 1 2>/dev/null`" ]; then echo "true"; fi),true)
+	@$(info $(call announce_section_detail_message,Copying test resources,Evaluating $(strip $(shell ls $(TEST_RESOURCES_DIR) | wc -l)) files))
 endif
 
-process-test-resources: generate-test-resources $(PROCESS_TEST_RESOURCES_HOOKS) announce-process-test-resources $(TEST_RESOURCES)
+process-test-resources: generate-test-resources invoke-process-test-resources-hooks announce-process-test-resources $(TEST_RESOURCES)
 
 announce-compile-test-sources:
 	@$(info $(call announce_section_detail_message,Compiling test sources,Evaluating $(words $(TEST_OBJECTS)) source files))
@@ -604,19 +682,22 @@ process-test-objects: test-compile
 
 test-target: library process-test-objects $(TEST_PROGRAM_TARGET)
 
-announce-test-hooks:
-ifneq ($(strip $(TEST_PHASE_HOOKS)),)
+announce-test-phase-hooks:
 	@$(info $(call announce_section_detail_message,Hooks,Invoking $(words $(TEST_PHASE_HOOKS)) hooks))
-endif
 
-test-hooks: announce-test-hooks $(TEST_PHASE_HOOKS)
+ifeq ($(strip $(TEST_PHASE_HOOKS)),)
+invoke-test-phase-hooks:
+	@:
+else
+invoke-test-phase-hooks: announce-test-phase-hooks $(TEST_PHASE_HOOKS)
+endif
 
 ifeq ($(strip $(skip_tests)),)
 test-internal: test-target
 	@$(info $(call announce_section_detail_message,Executing test harness,$(TEST_ENV) ./$(TARGET_DIR)/$(TEST_PROGRAM)))
 	@cd $(TARGET_DIR); $(TEST_ENV) ./$(TEST_PROGRAM)
 
-test: test-internal test-hooks
+test: test-internal invoke-test-phase-hooks
 else
 test: test-target
 	@$(info $(call announce_section_message,Skipping tests))
@@ -631,10 +712,9 @@ prepare-package: announce-package-phase
 $(PACKAGE_TARGET_DIR):
 	@mkdir -p $@
 
-announce-package-assemble-resources: count = $(shell if [ -d $(RESOURCES_TARGET_DIR) ]; then ls $(RESOURCES_TARGET_DIR) | wc -l; fi)
 announce-package-assemble-resources:
-ifeq ($(shell if [ -d $(RESOURCES_TARGET_DIR) ]; then echo "true"; fi),true)
-	@$(info $(call announce_section_detail_message,Assembling resources,Evaluating $(strip $(count)) files))
+ifeq ($(shell if [ -n "`find $(RESOURCES_TARGET_DIR) -type f -maxdepth 1 2>/dev/null`" ]; then echo "true"; fi),true)
+	@$(info $(call announce_section_detail_message,Assembling resources,Evaluating $(strip $(shell ls $(RESOURCES_TARGET_DIR) | wc -l)) files))
 endif
 
 $(RESOURCES_TARGET_DIR):
@@ -654,22 +734,25 @@ package-assemble-artifact: announce-package-assemble-artifact
 announce-package-build-package:
 	@$(info $(call announce_section_detail_message,Building package,$(PACKAGE_TARGET)))
 
-announce-package-hooks:
-ifneq ($(strip $(PACKAGE_PHASE_HOOKS)),)
+announce-package-phase-hooks:
 	@$(info $(call announce_section_detail_message,Hooks,Invoking $(words $(PACKAGE_PHASE_HOOKS)) hooks))
-endif
 
-package-hooks: announce-package-hooks $(PACKAGE_PHASE_HOOKS)
+ifeq ($(strip $(PACKAGE_PHASE_HOOKS)),)
+invoke-package-phase-hooks:
+	@:
+else
+invoke-package-phase-hooks: announce-package-phase-hooks $(PACKAGE_PHASE_HOOKS)
+endif
 
 ifeq ($(strip $(PACKAGE_PHASE_OVERRIDE)),)
 package-internal: test prepare-package $(PACKAGE_TARGET_DIR) package-assemble-resources package-assemble-artifact announce-package-build-package
 	$(PACKAGE) $(PACKAGE_TARGET) $(PACKAGE_TARGET_DIR)
 
-package: package-internal package-hooks
+package: package-internal invoke-package-phase-hooks
 else
 package: test announce-package-phase
 	@$(info invoking package phase override: $(PACKAGE_PHASE_OVERRIDE))
-	@$(PACKAGE_PHASE_OVERRIDE)
+	@$(PACKAGE_PHASE_OVERRIDE) $(PACKAGE_TARGET)
 endif
 
 announce-verify-phase:
@@ -677,14 +760,21 @@ announce-verify-phase:
 
 prepare-verify: announce-verify-phase
 
-announce-verify-hooks:
+announce-verify-phase-hooks:
 	@$(info $(call announce_section_detail_message,Hooks,Invoking $(words $(VERIFY_PHASE_HOOKS)) hooks))
 
-verify-hooks: announce-verify-hooks $(VERIFY_PHASE_HOOKS)
+ifeq ($(strip $(VERIFY_PHASE_HOOKS)),)
+invoke-verify-phase-hooks:
+	@:
+else
+invoke-verify-phase-hooks: announce-verify-phase-hooks $(VERIFY_PHASE_HOOKS)
+endif
 
-verify: package prepare-verify verify-hooks
+verify-internal: package prepare-verify
 ifeq ($(strip $(VERIFY_PHASE_HOOKS)),)
 	@$(info Verification completed)
 endif
 
-.PHONY: all check help check-syntax clean validate announce-initialize-phase announce-ensure-dependencies announce-create-build-directories create-buid-directories announce-build ensure-dependencies initialize announce-build-phase announce-generate-sources announce-generate-source-dependencies generate-source-dependencies generate-sources process-sources announce-generate-resources generate-resources process-resources announce-compile-sources compile process-objects library target ensure-test-dependencies announce-test-phase announce-generate-test-sources announce-generate-test-source-dependencies generate-test-source-dependencies generate-test-sources process-test-sources announce-generate-test-resources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package process-package-resources announce-package-assemble-resources package-assemble-resources announce-package-assemble-artifact package-assemble-artifact announce-package-build-package package announce-package-hooks package-hooks $(PACKAGE_PHASE_HOOKS) $(PACKAGE_PHASE_OVERRIDE) announce-verify-phase prepare-verify announce-verify-hooks verify-hooks $(VERIFY_PHASE_HOOKS) verify $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_RESOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_RESOURCES_HOOKS) announce-initialize-hooks initialize-hooks $(INITIALIZE_PHASE_HOOKS) $(DEPENDENCY_CHECK_OVERRIDE) $(TEST_DEPENDENCY_CHECK_OVERRIDE) announce-build-hooks build-hooks $(BUILD_PHASE_HOOKS) announce-test-hooks test-hooks $(TEST_PHASE_HOOKS)
+verify: verify-internal invoke-verify-phase-hooks
+
+.PHONY: all check help check-syntax clean validate announce-initialize-phase announce-ensure-dependencies announce-create-build-directories create-buid-directories announce-build resolve-dependencies announce-resolve-dependencies resolve-dependencies ensure-dependencies announce-initialize-phase-hooks invoke-initialize-phase-hooks initialize-internal initialize announce-build-phase announce-generate-sources announce-generate-source-dependencies generate-source-dependencies invoke-generate-source-hooks generate-sources process-sources announce-generate-resources generate-resources process-resources announce-compile-sources compile-internal compile process-objects library target ensure-test-dependencies announce-test-phase announce-generate-test-sources announce-generate-test-source-dependencies generate-test-source-dependencies generate-test-sources process-test-sources announce-generate-test-resources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test-internal test announce-package-phase prepare-package process-package-resources announce-package-assemble-resources package-assemble-resources announce-package-assemble-artifact package-assemble-artifact announce-package-build-package package-internal package announce-package-hooks package-hooks $(PACKAGE_PHASE_HOOKS) announce-verify-phase prepare-verify announce-verify-hooks verify-hooks $(VERIFY_PHASE_HOOKS) verify-internal verify $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_RESOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_RESOURCES_HOOKS) announce-initialize-hooks initialize-hooks $(INITIALIZE_PHASE_HOOKS) announce-build-hooks build-hooks $(BUILD_PHASE_HOOKS) announce-test-hooks test-hooks $(TEST_PHASE_HOOKS) announce-generate-sources-hooks invoke-generate-source-hooks announce-process-sources-hooks invoke-process-sources-hooks announce-generate-resources-hooks invoke-generate-resources-hooks announce-process-resources-hooks invoke-process-resources-hooks announce-build-phase-hooks invoke-build-phase-hooks announce-resolve-test-dependencies resolve-test-dependencies announce-generate-test-sources-hooks invoke-generate-test-source-hooks announce-generate-test-source-dependencies generate-test-source-dependencies generate-test-sources announce-process-test-sources-hooks invoke-process-test-sources-hooks process-test-sources announce-generate-test-resources-hooks invoke-generate-test-resources-hooks announce-process-test-resources-hooks invoke-process-test-resources-hooks announce-test-phase-hooks invoke-test-phase-hooks announce-package-phase-hooks invoke-package-phase-hooks announce-verify-phase-hooks invoke-verify-phase-hooks

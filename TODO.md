@@ -4,11 +4,6 @@
 
 ## fixes
 
-* makefile
-  * fix bogus warnings from `cd` on clean build
-    * target/generated-test-sources
-    * target/generated-sources
-    * target/resources
 * reorder args of evaluator funcs so self is first
 * clean up parser/loader error vectors from nothings in tests
 * use `mformat` in parser
