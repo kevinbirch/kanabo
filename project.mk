@@ -45,3 +45,8 @@ $(CONFIG_H): $(GENERATED_HEADERS_DIR)
 generate-version-header: $(VERSION_H)
 generate-config-header: $(CONFIG_H)
 GENERATE_SOURCES_HOOKS = generate-version-header generate-config-header
+
+hash-package:
+	sha512sum $(PACKAGE_TARGET) > $(TARGET_DIR)/$(PACKAGE_TARGET_BASE).sha512
+
+VERIFY_PHASE_HOOKS = hash-package
