@@ -16,12 +16,17 @@ debug_LDFLAGS = -fstack-protector -fno-omit-frame-pointer -fsanitize=address,und
 release_LDFLAGS = -fstack-protector -fno-omit-frame-pointer -flto -pie -fPIE -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
 
 system = $(shell uname -s)
+is_clang = $(shell vers=`cc --version`; if [[ $vers == *clang* ]]; then echo "true"; fi)
 
 ifeq ($(system),Linux)
 LDLIBS := -lm
 TEST_LDLIBS := $(LDLIBS) -pthread -lrt -lsubunit
 TEST_ENV := CK_FORK=no ASAN_OPTIONS=detect_leaks=1
 AR = ar rcs
+ifeq ($(is_clang),true)
+debug_CFLAGS := $(debug_CFLAGS) -sanitize=memory
+debug_LDFLAGS := $(debug_LDFLAGS) -sanitize=memory
+endif
 else ifeq ($(system),Darwin)
 AR := libtool -static -o
 endif

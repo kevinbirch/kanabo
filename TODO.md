@@ -9,9 +9,6 @@
     * target/generated-test-sources
     * target/generated-sources
     * target/resources
-  * use memory sanitizer on linux w clang
-    * `debug_CFLAGS := $(debug_CFLAGS) -sanitize=memory`
-    * `debug_LDFLAGS := $(debug_LDFLAGS) -sanitize=memory`
 * reorder args of evaluator funcs so self is first
 * clean up parser/loader error vectors from nothings in tests
 * use `mformat` in parser
