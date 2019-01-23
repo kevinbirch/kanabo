@@ -381,7 +381,7 @@ define dependency_test_canned_recipe =
 endef
 else
 define dependency_test_canned_recipe =
-@$(info invoking depencency hook: $(DEPENDENCY_CHECK_OVERRIDE))
+@$(info invoking depencency check overide: $(DEPENDENCY_CHECK_OVERRIDE))
 @$(DEPENDENCY_CHECK_OVERRIDE) $(@F)
 endef
 endif
@@ -660,7 +660,9 @@ ifeq ($(strip $(PACKAGE_PHASE_OVERRIDE)),)
 package: test prepare-package $(PACKAGE_TARGET_DIR) package-assemble-resources package-assemble-artifact announce-package-build-package package-hooks
 	$(PACKAGE) $(PACKAGE_TARGET) $(PACKAGE_TARGET_DIR)
 else
-package: test prepare-package $(PACKAGE_PHASE_OVERRIDE)
+package: test announce-package-phase
+	@$(info invoking package phase override: $(PACKAGE_PHASE_OVERRIDE))
+	@$(PACKAGE_PHASE_OVERRIDE)
 endif
 
 announce-verify-phase:
@@ -676,4 +678,4 @@ verify-hooks: announce-verify-hooks $(VERIFY_PHASE_HOOKS)
 verify: package prepare-verify verify-hooks
 	@$(info Verification completed)
 
-.PHONY: all check help check-syntax clean validate announce-initialize-phase announce-ensure-dependencies announce-create-build-directories create-buid-directories announce-build ensure-dependencies initialize announce-build-phase announce-generate-sources announce-generate-source-dependencies generate-source-dependencies generate-sources process-sources announce-generate-resources generate-resources process-resources announce-compile-sources compile process-objects library target ensure-test-dependencies announce-test-phase announce-generate-test-sources announce-generate-test-source-dependencies generate-test-source-dependencies generate-test-sources process-test-sources announce-generate-test-resources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package process-package-resources announce-package-assemble-resources package-assemble-resources announce-package-assemble-artifact package-assemble-artifact announce-package-build-package package package-hooks $(PACKAGE_PHASE_HOOKS) $(PACKAGE_PHASE_OVERRIDE) announce-verify-phase prepare-verify announce-verify-hooks verify-hooks $(VERIFY_PHASE_HOOKS) verify $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_RESOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_RESOURCES_HOOKS) $(INITIALIZE_PHASE_HOOKS) $(DEPENDENCY_CHECK_OVERRIDE) $(TEST_DEPENDENCY_CHECK_OVERRIDE) $(BUILD_PHASE_HOOKS) $(TEST_PHASE_HOOKS)
+.PHONY: all check help check-syntax clean validate announce-initialize-phase announce-ensure-dependencies announce-create-build-directories create-buid-directories announce-build ensure-dependencies initialize announce-build-phase announce-generate-sources announce-generate-source-dependencies generate-source-dependencies generate-sources process-sources announce-generate-resources generate-resources process-resources announce-compile-sources compile process-objects library target ensure-test-dependencies announce-test-phase announce-generate-test-sources announce-generate-test-source-dependencies generate-test-source-dependencies generate-test-sources process-test-sources announce-generate-test-resources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package process-package-resources announce-package-assemble-resources package-assemble-resources announce-package-assemble-artifact package-assemble-artifact announce-package-build-package package announce-package-hooks package-hooks $(PACKAGE_PHASE_HOOKS) $(PACKAGE_PHASE_OVERRIDE) announce-verify-phase prepare-verify announce-verify-hooks verify-hooks $(VERIFY_PHASE_HOOKS) verify $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_RESOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_RESOURCES_HOOKS) announce-initialize-hooks initialize-hooks $(INITIALIZE_PHASE_HOOKS) $(DEPENDENCY_CHECK_OVERRIDE) $(TEST_DEPENDENCY_CHECK_OVERRIDE) announce-build-hooks build-hooks $(BUILD_PHASE_HOOKS) announce-test-hooks test-hooks $(TEST_PHASE_HOOKS)
