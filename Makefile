@@ -26,6 +26,8 @@ DEPENDENCIES ?=
 TEST_DEPENDENCIES ?=
 
 ## Defaults for lifecycle hooks
+INITIALIZE_PHASE_HOOKS ?=
+DEPENDENCY_HOOK ?=
 GENERATE_SOURCES_HOOKS ?=
 PROCESS_SOURCES_HOOKS ?=
 GENERATE_RESOURCES_HOOKS ?=
@@ -34,10 +36,12 @@ GENERATE_TEST_SOURCES_HOOKS ?=
 PROCESS_TEST_SOURCES_HOOKS ?=
 GENERATE_TEST_RESOURCES_HOOKS ?=
 PROCESS_TEST_RESOURCES_HOOKS ?=
-DEPENDENCY_HOOK ?=
+BUILD_PHASE_HOOKS ?=
 TEST_DEPENDENCY_HOOK ?= $(DEPENDENCY_HOOK)
-PACKAGE_OVERRIDE ?=
-PACKAGE_HOOKS ?=
+TEST_PHASE_HOOKS ?=
+PACKAGE_PHASE_OVERRIDE ?=
+PACKAGE_PHASE_HOOKS ?=
+VERIFY_PHASE_HOOKS ?=
 
 ## Defaults for project source directories
 SOURCE_DIR ?= src
@@ -296,48 +300,53 @@ help:
 
 env:
 	@echo "--- environment settings for build ---"; \
-	echo -n "system: "; uname -a; \
-	echo "identifier: $(owner):$(package):$(version)"; \
-	echo "artifact: $(artifact)"; \
-	echo "build type: $(build)"; \
-	echo "dependencies: $(DEPENDENCIES)"; \
-	echo "test dependencies: $(TEST_DEPENDENCIES)"; \
-	echo "compiler:"; \
-	$(CC) --version; \
-	echo "compiler command:"; \
-	echo "$(CC) $(CFLAGS) $(CDEFS) -c <in> -o <out>"; \
+	echo "* project:"; \
+	echo "    identifier: $(owner):$(package):$(version)"; \
+	echo "    artifact: $(artifact)"; \
+	echo "    build type: $(build)"; \
+	echo "    dependencies: $(DEPENDENCIES)"; \
+	echo "    test dependencies: $(TEST_DEPENDENCIES)"; \
+	echo "    command: $(CC) $(CFLAGS) $(INCLUDES) -c <in> -o <out>"; \
 	echo "* hooks:"; \
-	echo "generate sources: $(GENERATE_SOURCES_HOOKS)"; \
-	echo "process sources: $(PROCESS_SOURCES_HOOKS)"; \
-	echo "generate resources: $(GENERATE_RESOURCES_HOOKS)"; \
-	echo "process resources: $(PROCESS_RESOURCES_HOOKS)"; \
-	echo "generate test sources: $(GENERATE_TEST_SOURCES_HOOKS)"; \
-	echo "process test sources: $(PROCESS_TEST_SOURCES_HOOKS)"; \
-	echo "generate test resources: $(GENERATE_TEST_RESOURCES_HOOKS)"; \
-	echo "process test resources: $(PROCESS_TEST_RESOURCES_HOOKS)"; \
-	echo "package override: $(PACKAGE_OVERRIDE)"; \
+	echo "    initialize phase: $(INITIALIZE_PHASE_HOOKS)"; \
+	echo "    dependency: $(DEPENDENCY_HOOK)"; \
+	echo "    generate sources: $(GENERATE_SOURCES_HOOKS)"; \
+	echo "    process sources: $(PROCESS_SOURCES_HOOKS)"; \
+	echo "    generate resources: $(GENERATE_RESOURCES_HOOKS)"; \
+	echo "    process resources: $(PROCESS_RESOURCES_HOOKS)"; \
+	echo "    test dependency: $(TEST_DEPENDENCY_HOOK)"; \
+	echo "    generate test sources: $(GENERATE_TEST_SOURCES_HOOKS)"; \
+	echo "    process test sources: $(PROCESS_TEST_SOURCES_HOOKS)"; \
+	echo "    generate test resources: $(GENERATE_TEST_RESOURCES_HOOKS)"; \
+	echo "    process test resources: $(PROCESS_TEST_RESOURCES_HOOKS)"; \
+	echo "    build phase: $(BUILD_PHASE_HOOKS)"; \
+	echo "    test phase: $(TEST_PHASE_HOOKS)"; \
+	echo "    package override: $(PACKAGE_PHASE_OVERRIDE)"; \
+	echo "    package phase: $(PACKAGE_PHASE_HOOKS)"; \
+	echo "    verify phase: $(VERIFY_PHASE_HOOKS)"; \
 	echo "* directories:"; \
-	echo "sources: $(SOURCE_DIR)"; \
-	echo "include: $(INCLUDE_DIR)"; \
-	echo "resources: $(RESOURCE_DIR)"; \
-	echo "test sources: $(TEST_SOURCE_DIR)"; \
-	echo "test include: $(TEST_INCLUDE_DIR)"; \
-	echo "test resources: $(TEST_RESOURCE_DIR)"; \
-	echo "target: $(TARGET_DIR)"; \
-	echo "objects: $(OBJECT_DIR)"; \
-	echo "test objects: $(TEST_OBJECT_DIR)"; \
-	echo "generated sources: $(GENERATED_SOURCES_DIR)"; \
-	echo "generated headers: $(GENERATED_HEADERS_DIR)"; \
-	echo "generated depend: $(GENERATED_DEPEND_DIR)"; \
-	echo "generated test sources: $(GENERATED_TEST_SOURCES_DIR)"; \
-	echo "generated test depend: $(GENERATED_TEST_DEPEND_DIR)"; \
+	echo "    sources: $(SOURCES_DIR)"; \
+	echo "    include: $(INCLUDE_DIR)"; \
+	echo "    resources: $(RESOURCES_DIR)"; \
+	echo "    test sources: $(TEST_SOURCES_DIR)"; \
+	echo "    test include: $(TEST_INCLUDE_DIR)"; \
+	echo "    test resources: $(TEST_RESOURCES_DIR)"; \
+	echo "    target: $(TARGET_DIR)"; \
+	echo "    object: $(OBJECT_DIR)"; \
+	echo "    test object: $(TEST_OBJECT_DIR)"; \
+	echo "    generated sources: $(GENERATED_SOURCES_DIR)"; \
+	echo "    generated headers: $(GENERATED_HEADERS_DIR)"; \
+	echo "    generated depend: $(GENERATED_DEPEND_DIR)"; \
+	echo "    generated test sources: $(GENERATED_TEST_SOURCES_DIR)"; \
+	echo "    generated test headers: $(GENERATED_TEST_HEADERS_DIR)"; \
+	echo "    generated test depend: $(GENERATED_TEST_DEPEND_DIR)"; \
 	echo "* artifacts:"; \
-	echo "program: $(PROGRAM_NAME)"; \
-	echo "program target: $(PROGRAM_TARGET)"; \
-	echo "library: $(LIBRARY_NAME)"; \
-	echo "library target: $(LIBRARY_TARGET)"; \
-	echo "test program: $(TEST_PROGRAM)"; \
-	echo "test program target: $(TEST_PROGRAM_TARGET)"; \
+	echo "    program: $(PROGRAM_NAME)"; \
+	echo "    program target: $(PROGRAM_TARGET)"; \
+	echo "    library: $(LIBRARY_NAME)"; \
+	echo "    library target: $(LIBRARY_TARGET)"; \
+	echo "    test program: $(TEST_PROGRAM)"; \
+	echo "    test program target: $(TEST_PROGRAM_TARGET)"; \
 
 
 ## Suport Emacs flymake syntax checker
@@ -478,7 +487,14 @@ create-build-directories: announce-create-build-directories
 	mkdir -p $(GENERATED_TEST_DEPEND_DIR)
 	mkdir -p $(TEST_RESOURCES_TARGET_DIR)
 
-initialize: validate announce-build announce-initialize-phase create-build-directories
+announce-initialize-hooks:
+ifneq ($(strip $(INITIALIZE_PHASE_HOOKS)),)
+	@$(info $(call announce_section_detail_message,Invoking verification hooks,Executing $(words $(INITIALIZE_PHASE_HOOKS)) verification hooks))
+endif
+
+initialize-hooks: announce-initialize-hooks $(INITIALIZE_PHASE_HOOKS)
+
+initialize: validate announce-build announce-initialize-phase create-build-directories initialize-hooks
 
 announce-build-phase:
 	@$(info $(call announce_phase_message,Build))
@@ -522,7 +538,14 @@ process-resources: generate-resources $(PROCESS_RESOURCES_HOOKS) announce-proces
 announce-compile-sources:
 	@$(info $(call announce_section_detail_message,Compiling sources,Evaluating $(words $(OBJECTS)) source files))
 
-compile: process-resources announce-compile-sources $(OBJECTS) $(call source_to_object,$(call find_source_files,$(GENERATED_SOURCES_DIR)),$(OBJECT_DIR))
+announce-build-hooks:
+ifneq ($(strip $(BUILD_PHASE_HOOKS)),)
+	@$(info $(call announce_section_detail_message,Invoking verification hooks,Executing $(words $(BUILD_PHASE_HOOKS)) verification hooks))
+endif
+
+build-hooks: announce-build-hooks $(BUILD_PHASE_HOOKS)
+
+compile: process-resources announce-compile-sources $(OBJECTS) build-hooks
 
 process-objects: compile
 
@@ -578,11 +601,19 @@ process-test-objects: test-compile
 
 test-target: library process-test-objects $(TEST_PROGRAM_TARGET)
 
-test: test-target
+announce-test-hooks:
+ifneq ($(strip $(TEST_PHASE_HOOKS)),)
+	@$(info $(call announce_section_detail_message,Invoking verification hooks,Executing $(words $(TEST_PHASE_HOOKS)) verification hooks))
+endif
+
+test-hooks: announce-test-hooks $(TEST_PHASE_HOOKS)
+
 ifeq ($(strip $(skip_tests)),)
+test: test-target test-hooks
 	@$(info $(call announce_section_detail_message,Executing test harness,$(TEST_ENV) ./$(TARGET_DIR)/$(TEST_PROGRAM)))
 	@cd $(TARGET_DIR); $(TEST_ENV) ./$(TEST_PROGRAM)
 else
+test: test-target
 	@$(info $(call announce_section_detail_message,Skipping tests))
 	@:
 endif
@@ -619,17 +650,17 @@ announce-package-build-package:
 	@$(info $(call announce_section_detail_message,Building package,$(PACKAGE_TARGET)))
 
 announce-package-hooks:
-ifneq ($(strip $(PACKAGE_HOOKS)),)
-	@$(info $(call announce_section_detail_message,Invoking package hooks,Executing $(words $(PACKAGE_HOOKS)) package hooks)))
+ifneq ($(strip $(PACKAGE_PHASE_HOOKS)),)
+	@$(info $(call announce_section_detail_message,Invoking package hooks,Executing $(words $(PACKAGE_PHASE_HOOKS)) package hooks)))
 endif
 
-package-hooks: announce-package-hooks $(PACKAGE_HOOKS)
+package-hooks: announce-package-hooks $(PACKAGE_PHASE_HOOKS)
 
-ifeq ($(strip $(PACKAGE_OVERRIDE)),)
+ifeq ($(strip $(PACKAGE_PHASE_OVERRIDE)),)
 package: test prepare-package $(PACKAGE_TARGET_DIR) package-assemble-resources package-assemble-artifact announce-package-build-package package-hooks
 	$(PACKAGE) $(PACKAGE_TARGET) $(PACKAGE_TARGET_DIR)
 else
-package: test prepare-package $(PACKAGE_OVERRIDE)
+package: test prepare-package $(PACKAGE_PHASE_OVERRIDE)
 endif
 
 announce-verify-phase:
@@ -638,11 +669,11 @@ announce-verify-phase:
 prepare-verify: announce-verify-phase
 
 announce-verify-hooks:
-	@$(info $(call announce_section_detail_message,Invoking verification hooks,Executing $(words $(VERIFY_HOOKS)) verification hooks))
+	@$(info $(call announce_section_detail_message,Invoking verification hooks,Executing $(words $(VERIFY_PHASE_HOOKS)) verification hooks))
 
-verify-hooks: announce-verify-hooks $(VERIFY_HOOKS)
+verify-hooks: announce-verify-hooks $(VERIFY_PHASE_HOOKS)
 
 verify: package prepare-verify verify-hooks
 	@$(info Verification completed)
 
-.PHONY: all check help check-syntax clean validate announce-initialize-phase announce-ensure-dependencies announce-create-build-directories create-buid-directories announce-build ensure-dependencies initialize announce-build-phase announce-generate-sources announce-generate-source-dependencies generate-source-dependencies generate-sources process-sources announce-generate-resources generate-resources process-resources announce-compile-sources compile process-objects library target ensure-test-dependencies announce-test-phase announce-generate-test-sources announce-generate-test-source-dependencies generate-test-source-dependencies generate-test-sources process-test-sources announce-generate-test-resources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package process-package-resources announce-package-assemble-resources package-assemble-resources announce-package-assemble-artifact package-assemble-artifact announce-package-build-package package package-hooks $(PACKAGE_HOOKS) $(PACKAGE_OVERRIDE) announce-verify-phase prepare-verify announce-verify-hooks verify-hooks $(VERIFY_HOOKS) verify $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS)
+.PHONY: all check help check-syntax clean validate announce-initialize-phase announce-ensure-dependencies announce-create-build-directories create-buid-directories announce-build ensure-dependencies initialize announce-build-phase announce-generate-sources announce-generate-source-dependencies generate-source-dependencies generate-sources process-sources announce-generate-resources generate-resources process-resources announce-compile-sources compile process-objects library target ensure-test-dependencies announce-test-phase announce-generate-test-sources announce-generate-test-source-dependencies generate-test-source-dependencies generate-test-sources process-test-sources announce-generate-test-resources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package process-package-resources announce-package-assemble-resources package-assemble-resources announce-package-assemble-artifact package-assemble-artifact announce-package-build-package package package-hooks $(PACKAGE_PHASE_HOOKS) $(PACKAGE_PHASE_OVERRIDE) announce-verify-phase prepare-verify announce-verify-hooks verify-hooks $(VERIFY_PHASE_HOOKS) verify $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_RESOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_RESOURCES_HOOKS) $(INITIALIZE_PHASE_HOOKS) $(DEPENDENCY_HOOK) $(TEST_DEPENDENCY_HOOK) $(BUILD_PHASE_HOOKS) $(TEST_PHASE_HOOKS)
