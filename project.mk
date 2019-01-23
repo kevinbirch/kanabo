@@ -42,9 +42,14 @@ generate-config-header: $(GENERATED_HEADERS_DIR)
 	@$(info Generating $(CONFIG_H))
 	@build/generate_config_header.sh $(CONFIG_H) PREFX=$(prefix) LIBEXECDIR=$(package_libexecdir) DATADIR=$(package_datadir) LOGDIR=$(package_logdir) RUNDIR=$(package_rundir) MANDIR=$(man1dir) HTMLDIR=$(htmldir) INFODIR=$(infodir)
 
-GENERATE_SOURCES_HOOKS = generate-version-header generate-config-header
+GENERATE_SOURCES_HOOKS := generate-version-header generate-config-header
 
 hash-package:
 	sha512sum $(PACKAGE_TARGET) > $(TARGET_DIR)/$(PACKAGE_TARGET_BASE).sha512
 
-VERIFY_PHASE_HOOKS = hash-package
+PACKAGE_PHASE_HOOKS := hash-package
+
+verify-package:
+	@sha512sum -c $(TARGET_DIR)/$(PACKAGE_TARGET_BASE).sha512
+
+VERIFY_PHASE_HOOKS := verify-package
