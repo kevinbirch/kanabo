@@ -51,9 +51,9 @@ TEST_INCLUDE_DIR ?= $(TEST_SOURCES_DIR)/include
 TEST_RESOURCES_DIR ?= $(TEST_DIR)/resources
 
 ## Defaults for project output directories
-TARGET_DIR  ?= target
-OBJECT_DIR  ?= $(TARGET_DIR)/objects
-TEST_OBJECT_DIR  ?= $(TARGET_DIR)/test-objects
+TARGET_DIR ?= target
+OBJECT_DIR ?= $(TARGET_DIR)/objects
+TEST_OBJECT_DIR ?= $(TARGET_DIR)/test-objects
 GENERATED_SOURCES_DIR ?= $(TARGET_DIR)/generated-sources
 GENERATED_HEADERS_DIR ?= $(GENERATED_SOURCES_DIR)/include
 GENERATED_DEPEND_DIR ?= $(GENERATED_SOURCES_DIR)/depend
@@ -77,6 +77,8 @@ TEST_PROGRAM = $(package)_test
 TEST_PROGRAM_TARGET = $(TARGET_DIR)/$(TEST_PROGRAM)
 PACKAGE_TARGET_DIR ?= $(TARGET_DIR)/$(ARTIFACT_BASE_NAME)_$(version)
 PACKAGE_TARGET ?= $(TARGET_DIR)/$(ARTIFACT_BASE_NAME)_$(version).tar.gz
+
+COMPILATION_LOG := $(TARGET_DIR)/compiler_log.txt
 
 ## Build mode
 ## Set this to the CFLAGS to be used in release build mode
@@ -422,6 +424,7 @@ $(TEST_OBJECT_DIR):
 $(OBJECT_DIR)/%.o: %.c | $(OBJECT_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	@echo "`date +%Y-%m-%dT%H:%M:%S%:z` $< $(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@" >> $(COMPILATION_LOG)
 
 $(TEST_OBJECT_DIR)/%.o: %.c | $(TEST_OBJECT_DIR)
 	@mkdir -p $(dir $@)
@@ -475,9 +478,15 @@ announce-create-build-directories:
 
 create-build-directories: announce-create-build-directories
 	mkdir -p $(OBJECT_DIR)
-	mkdir -p $(TEST_OBJECT_DIR)
+	mkdir -p $(GENERATED_SOURCES_DIR)
+	mkdir -p $(GENERATED_HEADERS_DIR)
 	mkdir -p $(GENERATED_DEPEND_DIR)
+	mkdir -p $(RESOURCES_TARGET_DIR)
+	mkdir -p $(TEST_OBJECT_DIR)
+	mkdir -p $(GENERATED_TEST_SOURCES_DIR)
+	mkdir -p $(GENERATED_TEST_HEADERS_DIR)
 	mkdir -p $(GENERATED_TEST_DEPEND_DIR)
+	mkdir -p $(TEST_RESOURCES_TARGET_DIR)
 
 initialize: validate announce-build announce-initialize-phase create-build-directories
 

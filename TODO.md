@@ -6,20 +6,12 @@
 
 * makefile
   * fix bogus warnings from `cd` on clean build
-  * fix bogus warnings for `target/resources` `cd` on clean build
     * target/generated-test-sources
     * target/generated-sources
     * target/resources
   * use memory sanitizer on linux w clang
     * `debug_CFLAGS := $(debug_CFLAGS) -sanitize=memory`
     * `debug_LDFLAGS := $(debug_LDFLAGS) -sanitize=memory`
-  * record build command
-    * https://news.ycombinator.com/item?id=11228515
-    * $(builddir)/compiler_flags: force mkdir -p $(builddir) echo '$(CPPFLAGS) $(CFLAGS)' | cmp -s - $@ || echo '$(CPPFLAGS) $(CFLAGS)' > $@
-    * $(LIBOBJECTS) $(RTLLIBOBJECTS) $(OPTLIBOBJECTS) $(TESTOBJECTS) $(builddir)/init_qt_workdir: $(builddir)/compiler_flags
-    * build command hook to record it to flat file
-    * post compile step to convert flat to json
-    * move genfile sources to `src/main/template/x.in` files?
 * reorder args of evaluator funcs so self is first
 * clean up parser/loader error vectors from nothings in tests
 * use `mformat` in parser
@@ -193,6 +185,11 @@ start: 0.8-alpha, end: 0.9-beta
 ### build
 
 * pkg-config - http://www.freedesktop.org/wiki/Software/pkg-config/
+* compilation database?
+  * all files stored into target, make clean to reset
+  * post compile step 1 dedupes compilation log with raw compilation db
+  * post compile step 2 converts raw compilation db to json
+  * pre/post-compile/build hooks?
 
 ## competition
 
