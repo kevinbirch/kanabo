@@ -259,6 +259,7 @@ usage: make <goal>
 
 The value of <goal> can be one of:
 
+env      - print the build environment settings and finish
 clean    - remove all build artifacts
 compile  - build object files
 target   - build the target library or program
@@ -309,7 +310,6 @@ env:
 	echo "    command: $(CC) $(CFLAGS) $(INCLUDES) -c <in> -o <out>"; \
 	echo "* hooks:"; \
 	echo "    initialize phase: $(INITIALIZE_PHASE_HOOKS)"; \
-	echo "    dependency check override: $(DEPENDENCY_CHECK_OVERRIDE)"; \
 	echo "    generate sources: $(GENERATE_SOURCES_HOOKS)"; \
 	echo "    process sources: $(PROCESS_SOURCES_HOOKS)"; \
 	echo "    generate resources: $(GENERATE_RESOURCES_HOOKS)"; \
@@ -321,9 +321,11 @@ env:
 	echo "    process test resources: $(PROCESS_TEST_RESOURCES_HOOKS)"; \
 	echo "    build phase: $(BUILD_PHASE_HOOKS)"; \
 	echo "    test phase: $(TEST_PHASE_HOOKS)"; \
-	echo "    package override: $(PACKAGE_PHASE_OVERRIDE)"; \
 	echo "    package phase: $(PACKAGE_PHASE_HOOKS)"; \
 	echo "    verify phase: $(VERIFY_PHASE_HOOKS)"; \
+	echo "* overrides:"; \
+	echo "    dependency check: $(DEPENDENCY_CHECK_OVERRIDE)"; \
+	echo "    package phase: $(PACKAGE_PHASE_OVERRIDE)"; \
 	echo "* directories:"; \
 	echo "    sources: $(SOURCES_DIR)"; \
 	echo "    include: $(INCLUDE_DIR)"; \
