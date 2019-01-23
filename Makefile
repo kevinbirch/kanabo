@@ -492,7 +492,7 @@ create-build-directories: announce-create-build-directories
 
 announce-initialize-hooks:
 ifneq ($(strip $(INITIALIZE_PHASE_HOOKS)),)
-	@$(info $(call announce_section_detail_message,Invoking verification hooks,Executing $(words $(INITIALIZE_PHASE_HOOKS)) verification hooks))
+	@$(info $(call announce_section_detail_message,Hooks,Invoking $(words $(INITIALIZE_PHASE_HOOKS)) hooks))
 endif
 
 initialize-hooks: announce-initialize-hooks $(INITIALIZE_PHASE_HOOKS)
@@ -511,7 +511,7 @@ ensure-dependencies: initialize announce-build-phase announce-ensure-dependencie
 
 announce-generate-sources:
 ifneq ($(strip $(GENERATE_SOURCES_HOOKS)),)
-	@$(info $(call announce_section_detail_message,Generating sources,Executing $(words $(GENERATE_SOURCES_HOOKS)) source hooks))
+	@$(info $(call announce_section_detail_message,Generating sources,Invoking $(words $(GENERATE_SOURCES_HOOKS)) hooks))
 endif
 
 announce-generate-source-dependencies:
@@ -525,7 +525,7 @@ process-sources: generate-sources $(PROCESS_SOURCES_HOOKS)
 
 announce-generate-resources:
 ifneq ($(strip $(GENERATE_RESOURCES_HOOKS)),)
-	@$(info $(call announce_section_detail_message,Generating resources,Executing $(words $(GENERATE_RESOURCES_HOOKS)) resource hooks))
+	@$(info $(call announce_section_detail_message,Generating resources,Invoking $(words $(GENERATE_RESOURCES_HOOKS)) hooks))
 endif
 
 generate-resources: process-sources announce-generate-resources $(GENERATE_RESOURCES_HOOKS)
@@ -543,7 +543,7 @@ announce-compile-sources:
 
 announce-build-hooks:
 ifneq ($(strip $(BUILD_PHASE_HOOKS)),)
-	@$(info $(call announce_section_detail_message,Invoking verification hooks,Executing $(words $(BUILD_PHASE_HOOKS)) verification hooks))
+	@$(info $(call announce_section_detail_message,Hooks,Invoking $(words $(BUILD_PHASE_HOOKS)) hooks))
 endif
 
 build-hooks: announce-build-hooks $(BUILD_PHASE_HOOKS)
@@ -568,7 +568,7 @@ ensure-test-dependencies: target announce-test-phase announce-ensure-test-depend
 
 announce-generate-test-sources:
 ifneq ($(strip $(GENERATE_TEST_SOURCES_HOOKS)),)
-	@$(info $(call announce_section_detail_message,Generating test sources,Executing $(words $(GENERATE_TEST_SOURCES_HOOKS)) test source hooks))
+	@$(info $(call announce_section_detail_message,Generating test sources,Invoking $(words $(GENERATE_TEST_SOURCES_HOOKS)) hooks))
 endif
 
 announce-test-generate-source-dependencies:
@@ -582,7 +582,7 @@ process-test-sources: generate-test-sources $(PROCESS_TEST_SOURCES_HOOKS)
 
 announce-generate-test-resources:
 ifneq ($(strip $(GENERATE_TEST_RESOURCES_HOOKS)),)
-	@$(info $(call announce_section_detail_message,Generating test resources,Executing $(words $(GENERATE_TEST_RESOURCES_HOOKS)) test resource hooks))
+	@$(info $(call announce_section_detail_message,Generating test resources,Invoking $(words $(GENERATE_TEST_RESOURCES_HOOKS)) hooks))
 endif
 
 generate-test-resources: process-test-sources announce-generate-test-sources $(GENERATE_TEST_RESOURCES_HOOKS)
@@ -606,15 +606,17 @@ test-target: library process-test-objects $(TEST_PROGRAM_TARGET)
 
 announce-test-hooks:
 ifneq ($(strip $(TEST_PHASE_HOOKS)),)
-	@$(info $(call announce_section_detail_message,Invoking verification hooks,Executing $(words $(TEST_PHASE_HOOKS)) verification hooks))
+	@$(info $(call announce_section_detail_message,Hooks,Invoking $(words $(TEST_PHASE_HOOKS)) hooks))
 endif
 
 test-hooks: announce-test-hooks $(TEST_PHASE_HOOKS)
 
 ifeq ($(strip $(skip_tests)),)
-test: test-target test-hooks
+test-internal: test-target
 	@$(info $(call announce_section_detail_message,Executing test harness,$(TEST_ENV) ./$(TARGET_DIR)/$(TEST_PROGRAM)))
 	@cd $(TARGET_DIR); $(TEST_ENV) ./$(TEST_PROGRAM)
+
+test: test-internal test-hooks
 else
 test: test-target
 	@$(info $(call announce_section_message,Skipping tests))
@@ -654,14 +656,16 @@ announce-package-build-package:
 
 announce-package-hooks:
 ifneq ($(strip $(PACKAGE_PHASE_HOOKS)),)
-	@$(info $(call announce_section_detail_message,Invoking package hooks,Executing $(words $(PACKAGE_PHASE_HOOKS)) package hooks)))
+	@$(info $(call announce_section_detail_message,Hooks,Invoking $(words $(PACKAGE_PHASE_HOOKS)) hooks))
 endif
 
 package-hooks: announce-package-hooks $(PACKAGE_PHASE_HOOKS)
 
 ifeq ($(strip $(PACKAGE_PHASE_OVERRIDE)),)
-package: test prepare-package $(PACKAGE_TARGET_DIR) package-assemble-resources package-assemble-artifact announce-package-build-package package-hooks
+package-internal: test prepare-package $(PACKAGE_TARGET_DIR) package-assemble-resources package-assemble-artifact announce-package-build-package
 	$(PACKAGE) $(PACKAGE_TARGET) $(PACKAGE_TARGET_DIR)
+
+package: package-internal package-hooks
 else
 package: test announce-package-phase
 	@$(info invoking package phase override: $(PACKAGE_PHASE_OVERRIDE))
@@ -674,7 +678,7 @@ announce-verify-phase:
 prepare-verify: announce-verify-phase
 
 announce-verify-hooks:
-	@$(info $(call announce_section_detail_message,Invoking verification hooks,Executing $(words $(VERIFY_PHASE_HOOKS)) verification hooks))
+	@$(info $(call announce_section_detail_message,Hooks,Invoking $(words $(VERIFY_PHASE_HOOKS)) hooks))
 
 verify-hooks: announce-verify-hooks $(VERIFY_PHASE_HOOKS)
 
