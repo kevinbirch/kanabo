@@ -27,14 +27,16 @@
 static const char * const DEFAULT_PROGRAM_NAME = "kanabo";
 
 static const char * const HELP =
-    "usage: kanabo [-o <format>] [-d <strategy>] [ [-q <jsonpath>] (<file> | '-') ]\n"
+    "Usage:\n"
+    "    kanabo [-o <format>] [-d <strategy>] [ [-q <jsonpath>] (<file> | '-') ]\n"
+    "    kanabo [Standalone Options]\n"
     "\n"
-    "OPTIONS:\n"
+    "Options:\n"
     "-q, --query <jsonpath>      Specify a single JSONPath query to execute against the input document and exit.\n"
     "-o, --output <format>       Specify the output format (`bash', `zsh', `json' (default) or `yaml').\n"
     "-d, --duplicate <strategy>  Specify how to handle duplicate mapping keys (`clobber' (default), `warn' or `fail').\n"
     "\n"
-    "STANDALONE OPTIONS:\n"
+    "Standalone Options:\n"
     "-v, --version               Print the version information and exit.\n"
     "-w, --no-warranty           Print the no-warranty information and exit.\n"
     "-h, --help                  Print the usage summary and exit.\n";

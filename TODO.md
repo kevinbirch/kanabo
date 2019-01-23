@@ -6,7 +6,7 @@
 
 * reorder args of evaluator funcs so self is first
 * clean up parser/loader error vectors from nothings in tests
-* use `mformat` in parser
+* use `mformat` instead of `(v)snprintf`
 * circle ci build
 * code coverage
 * mv spacecadet,linenose,yaml,check stuff to vendor
