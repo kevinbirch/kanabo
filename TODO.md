@@ -4,6 +4,26 @@
 
 ## fixes
 
+* makefile
+  * flags for all builds: `-Werror=format-security -fstack-protector`
+  * flags for debug: `-D_FORTIFY_SOURCE=1 -O1`
+  * flags for release: `-D_FORTIFY_SOURCE=2 -pie -fPIE -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
+  * https://blog.erratasec.com/2018/12/notes-on-build-hardening.html
+    If you are building code using gcc on Linux, here are the options/flags you should use:
+    `-Wall -Wformat -Wformat-security -Werror=format-security -fstack-protector -pie -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
+    If you are more paranoid, these options would be:
+    `-Wall -Wformat -Wformat-security -Wstack-protector -Werror -pedantic -fstack-protector-all --param ssp-buffer-size=1 -pie -fPIE -D_FORTIFY_SOURCE=2 -O1 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
+  * https://blog.quarkslab.com/clang-hardening-cheat-sheet.html
+  * use memory sanitizer on linux w clang
+    * `debug_CFLAGS := $(debug_CFLAGS) -sanitize=memory`
+    * `debug_LDFLAGS := $(debug_LDFLAGS) -sanitize=memory`
+  * record build command
+    * https://news.ycombinator.com/item?id=11228515
+    * $(builddir)/compiler_flags: force mkdir -p $(builddir) echo '$(CPPFLAGS) $(CFLAGS)' | cmp -s - $@ || echo '$(CPPFLAGS) $(CFLAGS)' > $@
+    * $(LIBOBJECTS) $(RTLLIBOBJECTS) $(OPTLIBOBJECTS) $(TESTOBJECTS) $(builddir)/init_qt_workdir: $(builddir)/compiler_flags
+    * build command hook to record it to flat file
+    * post compile step to convert flat to json
+    * move genfile sources to `src/main/template/x.in` files?
 * reorder args of evaluator funcs so self is first
 * clean up parser/loader error vectors from nothings in tests
 * use `mformat` in parser
@@ -14,12 +34,6 @@
     * per-vendor optional `CFLAGS`, `LDFLAGS`, `CC`, language, file extension
     * also `src/test-vendor`
     * mv stuff from util to vendor, remainder in lib
-  * implement package goal
-    * add package hooks, including goal override hook
-    * add `$(GENERATED_SOURCE_DIR)` to sources to compile
-    * add `$(GENERATED_TEST_SOURCE_DIR)` to sources to compile
-  * fix `install` goal to install resources
-    * add install hooks, including goal override hook
 * loader
   * scalars
     * concrete subtypes, each holding reified value
@@ -39,9 +53,7 @@
 * evaluator
   * track path of all loaded document nodes, use in error reports
   * add json path to diagnostic
-  * try to reuse parsers instead of creating new every time
   * track fragment of original query for each added result node
-  * update evaluator err msgs to specify which are internal errors
   * update `add_values_to_nodelist_map_iterator` trace with key name
   * update `apply_greedy_wildcard_test` sequence case to trace index and element kind
   * concrete predicate subtypes
@@ -51,36 +63,22 @@
   * https://www.structlog.org/en/stable/getting-started.html
   * rework log.h to assume `component_name` is defined before import
   * eliminate all uses of `trace_string`
-* libbacktrace instead of execinfo?
-  * panic backtrace looks like crap on Linux?
 * jsonpath model dumper w/ secret command line option, nice tree-like layout
   * `--output=ast`
 * switch weather example to yaml config file
-* build security
-  * flags all builds: `-Werror=format-security -fstack-protector`
-  * flags for debug: `-D_FORTIFY_SOURCE=1 -O1`
-  * flags for release: `-D_FORTIFY_SOURCE=2 -pie -fPIE -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
-  * https://blog.erratasec.com/2018/12/notes-on-build-hardening.html
-    If you are building code using gcc on Linux, here are the options/flags you should use:
-    `-Wall -Wformat -Wformat-security -Werror=format-security -fstack-protector -pie -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
-    If you are more paranoid, these options would be:
-    `-Wall -Wformat -Wformat-security -Wstack-protector -Werror -pedantic -fstack-protector-all --param ssp-buffer-size=1 -pie -fPIE -D_FORTIFY_SOURCE=2 -O1 -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack`
-  * https://blog.quarkslab.com/clang-hardening-cheat-sheet.html
 * memory leaks
-  * use memory sanitizer on linux w clang
-    * `debug_CFLAGS := $(debug_CFLAGS) -sanitize=memory`
-    * `debug_LDFLAGS := $(debug_LDFLAGS) -sanitize=memory`
   * (should be fixed) ignored keys and values are leaked
+  * smoke test on linux w/ leak check enabled
 * update spacecadet
   * move changes back
   * add maybe, xcalloc, others?
-  * print stack trace on xcalloc failure
 
 ## new features
 
+start: 0.8-alpha, end: 0.9-beta
+
 1. join
    * support only paths, not indices
-1. anchor selector
 1. tag selector
 1. new scalar types (timestamp, etc)
 1. filter
@@ -88,12 +86,13 @@
    * http://effbot.org/zone/simple-top-down-parsing.htm
    * http://www.oilshell.org/blog/2017/03/31.html
 1. transformer
-   * transfomer built-in functions
+   * built-in functions?
+1. anchor selector
+   * when does it even make sense to use this? only in transformer?
 1. `set` command to save variables
-1. setting for end-of-ouput sentinel
-1. pretty output in tty mode, simple output in pipe mode
 1. response ouput: `+OK <line count>` `-ERR <code> <location> "explanation"`
-1. add completions for currently loaded model to linenoise
+1. setting for end-of-ouput sentinel? use `+OK`/`-ERR` instead?
+1. pretty output in tty mode, simple output in pipe mode
 
 ## documentation
 
@@ -136,6 +135,15 @@
 
 ## evolution
 
+### global
+
+* libbacktrace instead of execinfo?
+  * panic backtrace looks like crap on Linux?
+
+### parser
+
+* try to reuse parsers instead of creating new every time
+
 ### loader
 
 * can we mmap the input file and build a no-copy tree that points to strings by byte ranges?
@@ -169,6 +177,7 @@
   * can whole documents be saved and named? (`${doc-name or index}` `$index`?)
 * use `flatten` attribute on evaluator, parser core functions?
   * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
+*. add completions for currently loaded model to linenoise
 
 ### unit testing
 
@@ -188,15 +197,6 @@
 ### build
 
 * pkg-config - http://www.freedesktop.org/wiki/Software/pkg-config/
-* release step
-  * https://github.com/manuelbua/gitver
-* record build command
-  * https://news.ycombinator.com/item?id=11228515
-  * $(builddir)/compiler_flags: force mkdir -p $(builddir) echo '$(CPPFLAGS) $(CFLAGS)' | cmp -s - $@ || echo '$(CPPFLAGS) $(CFLAGS)' > $@
-  * $(LIBOBJECTS) $(RTLLIBOBJECTS) $(OPTLIBOBJECTS) $(TESTOBJECTS) $(builddir)/init_qt_workdir: $(builddir)/compiler_flags
-* support multiple artifacts, fallback to assuming 1 and find main func
-  * built in `main_ARTIFACT_TYPE ?= $(artifact)`, `ARTIFACTS ?= main_ARTIFACT`
-* support version check for dependency libs?
 
 ## competition
 

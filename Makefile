@@ -14,8 +14,9 @@ RM ?= rm -f
 DIFF ?= diff
 TAR ?= tar
 FIND ?= find
-INSTALL ?= install
+INSTALL ?= install -D -t
 MKTEMP ?= mktemp
+PACKAGE ?= $(TAR) cf
 
 ## Defaults for project settings
 version ?= 1.0.0-SNAPSHOT
@@ -33,36 +34,31 @@ GENERATE_TEST_SOURCES_HOOKS ?=
 PROCESS_TEST_SOURCES_HOOKS ?=
 GENERATE_TEST_RESOURCES_HOOKS ?=
 PROCESS_TEST_RESOURCES_HOOKS ?=
+PACKAGE_OVERRIDE ?=
+PACKAGE_HOOKS ?=
 
 ## Defaults for project source directories
 SOURCE_DIR ?= src
 MAIN_DIR ?= $(SOURCE_DIR)/main
-C_SOURCES_DIR ?= $(MAIN_DIR)/c
-CC_SOURCES_DIR ?= $(MAIN_DIR)/c++
-M_SOURCES_DIR ?= $(MAIN_DIR)/m
-C_INCLUDE_DIR ?= $(C_SOURCES_DIR)/include
-CC_INCLUDE_DIR ?= $(CC_SOURCES_DIR)/include
-M_INCLUDE_DIR ?= $(M_SOURCES_DIR)/include
+SOURCES_DIR ?= $(MAIN_DIR)/c
+INCLUDE_DIR ?= $(SOURCES_DIR)/include
 RESOURCES_DIR ?= $(MAIN_DIR)/resources
 
 ## Defaults for project test source directories
 TEST_DIR ?= $(SOURCE_DIR)/test
-C_TEST_SOURCES_DIR ?= $(TEST_DIR)/c
-CC_TEST_SOURCES_DIR ?= $(TEST_DIR)/c++
-M_TEST_SOURCES_DIR ?= $(TEST_DIR)/m
-C_TEST_INCLUDE_DIR ?= $(C_TEST_SOURCES_DIR)/include
-CC_TEST_INCLUDE_DIR ?= $(CC_TEST_SOURCES_DIR)/include
-M_TEST_INCLUDE_DIR ?= $(M_TEST_SOURCES_DIR)/include
+TEST_SOURCES_DIR ?= $(TEST_DIR)/c
+TEST_INCLUDE_DIR ?= $(TEST_SOURCES_DIR)/include
 TEST_RESOURCES_DIR ?= $(TEST_DIR)/resources
 
 ## Defaults for project output directories
 TARGET_DIR  ?= target
 OBJECT_DIR  ?= $(TARGET_DIR)/objects
 TEST_OBJECT_DIR  ?= $(TARGET_DIR)/test-objects
-GENERATED_SOURCE_DIR ?= $(TARGET_DIR)/generated-sources
-GENERATED_HEADERS_DIR ?= $(GENERATED_SOURCE_DIR)/include
-GENERATED_DEPEND_DIR ?= $(GENERATED_SOURCE_DIR)/depend
-GENERATED_TEST_SOURCE_DIR ?= $(TARGET_DIR)/generated-test-sources
+GENERATED_SOURCES_DIR ?= $(TARGET_DIR)/generated-sources
+GENERATED_HEADERS_DIR ?= $(GENERATED_SOURCES_DIR)/include
+GENERATED_DEPEND_DIR ?= $(GENERATED_SOURCES_DIR)/depend
+GENERATED_TEST_SOURCES_DIR ?= $(TARGET_DIR)/generated-test-sources
+GENERATED_TEST_HEADERS_DIR ?= $(GENERATED_TEST_SOURCES_DIR)/include
 GENERATED_TEST_DEPEND_DIR ?= $(TARGET_DIR)/generated-test-sources/depend
 RESOURCES_TARGET_DIR ?= $(TARGET_DIR)/resources
 TEST_RESOURCES_TARGET_DIR ?= $(TARGET_DIR)/test-resources
@@ -71,13 +67,16 @@ TEST_RESOURCES_TARGET_DIR ?= $(TARGET_DIR)/test-resources
 skip_tests ?=
 
 ## Project target artifact settings
-PROGRAM_NAME ?= $(package)
+ARTIFACT_BASE_NAME = $(package)
+PROGRAM_NAME ?= $(ARTIFACT_BASE_NAME)
 PROGRAM_TARGET = $(TARGET_DIR)/$(PROGRAM_NAME)
-LIBRARY_NAME_BASE ?= $(package)
-LIBRARY_NAME ?= lib$(LIBRARY_NAME_BASE).a
+LIBRARY_BASE_NAME ?= $(ARTIFACT_BASE_NAME)
+LIBRARY_NAME ?= lib$(LIBRARY_BASE_NAME).a
 LIBRARY_TARGET = $(TARGET_DIR)/$(LIBRARY_NAME)
 TEST_PROGRAM = $(package)_test
 TEST_PROGRAM_TARGET = $(TARGET_DIR)/$(TEST_PROGRAM)
+PACKAGE_TARGET_DIR ?= $(TARGET_DIR)/$(ARTIFACT_BASE_NAME)_$(version)
+PACKAGE_TARGET ?= $(TARGET_DIR)/$(ARTIFACT_BASE_NAME)_$(version).tar.gz
 
 ## Build mode
 ## Set this to the CFLAGS to be used in release build mode
@@ -175,14 +174,14 @@ TEST_DEPENDENCY_INCLUDES ?= $(DEPENDENCY_INCLUDES)
 TEST_DEPENDENCY_LDFLAGS ?= $(DEPENDENCY_LDFLAGS)
 
 ## Project compiler settings
-INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR) -I$(C_INCLUDE_DIR) $($(build)_INCLUDES)
+INCLUDES := $(INCLUDES) -I$(GENERATED_HEADERS_DIR) -I$(INCLUDE_DIR) $($(build)_INCLUDES)
 CFLAGS := $(CFLAGS) $($(build)_CFLAGS)
 LDFLAGS := $(LDFLAGS) $($(build)_LDFLAGS)
 LDLIBS := $(LDLIBS) $($(build)_LDLIBS)
 
 ## Project test compiler settings
 TEST_INCLUDES ?= $(INCLUDES)
-TEST_INCLUDES := $(TEST_INCLUDES) -I$(C_TEST_INCLUDE_DIR)
+TEST_INCLUDES := $(TEST_INCLUDES) -I$(TEST_INCLUDE_DIR)
 TEST_CFLAGS ?= $(CFLAGS)
 TEST_CFLAGS := $(TEST_CFLAGS)
 TEST_LDFLAGS ?= $(LDFLAGS)
@@ -195,42 +194,52 @@ TEST_ENV ?=
 source_to_target = $(foreach s, $(1), $(2)/$(basename $(s)).$(3))
 source_to_object = $(call source_to_target,$(1),$(2),o)
 source_to_depend = $(call source_to_target,$(1),$(2),d)
+find_files = $(shell cd $(1) && $(FIND) . -type f | sed 's|\./||')
 find_source_files = $(shell cd $(1) && $(FIND) . -type f \( -name '*.c' -or -name '*.C' \) | sed 's|\./||')
+find_resources = $(foreach r, $(wildcard $(1)/*), $(subst $(1),$(2),$(r)))
 
 ## Project source file locations
-SOURCES := $(call find_source_files,$(C_SOURCES_DIR))
-OBJECTS := $(call source_to_object,$(SOURCES),$(OBJECT_DIR))
-PROGRAM_SOURCES ?= $(shell grep -l -E '(int|void)\s+main' $(addprefix $(C_SOURCES_DIR)/,$(SOURCES)) | sed 's|$(C_SOURCES_DIR)/||')
-PROGRAM_OBJECTS := $(call source_to_object,$(PROGRAM_SOURCES),$(OBJECT_DIR))
-LIBRARY_OBJECTS := $(filter-out $(PROGRAM_OBJECTS),$(OBJECTS))
-vpath %.c $(C_SOURCES_DIR)
-vpath %.h $(C_INCLUDE_DIR)
-DEPENDS := $(call source_to_depend,$(SOURCES),$(GENERATED_DEPEND_DIR))
-find_resources = $(foreach r, $(wildcard $(1)/*), $(subst $(1),$(2),$(r)))
+SOURCES = $(call find_source_files,$(SOURCES_DIR))
+ALL_SOURCES = $(SOURCES) $(call find_source_files,$(GENERATED_SOURCES_DIR))
+OBJECTS = $(call source_to_object,$(ALL_SOURCES),$(OBJECT_DIR))
+PROGRAM_SOURCES ?= $(shell grep -l -E '(int|void)\s+main' $(addprefix $(SOURCES_DIR)/,$(SOURCES)) | sed 's|$(SOURCES_DIR)/||')
+PROGRAM_OBJECTS = $(call source_to_object,$(PROGRAM_SOURCES),$(OBJECT_DIR))
+LIBRARY_OBJECTS = $(filter-out $(PROGRAM_OBJECTS),$(OBJECTS))
+vpath %.c $(SOURCES_DIR) $(GENERATED_SOURCES_DIR)
+vpath %.h $(INCLUDE_DIR) $(GENERATED_HEADERS_DIR)
+DEPENDS = $(call source_to_depend,$(ALL_SOURCES),$(GENERATED_DEPEND_DIR))
 RESOURCES := $(call find_resources,$(RESOURCES_DIR),$(RESOURCES_TARGET_DIR))
 
+ifeq ($(artifact),program)
 ifneq (1,$(words $(PROGRAM_SOURCES)))
 $(warning "Multiple sources containing `main' detected: $(PROGRAM_SOURCES)")
 endif
+endif
 
 ## Project test source file locations
-TEST_SOURCES := $(call find_source_files,$(C_TEST_SOURCES_DIR))
+TEST_SOURCES := $(call find_source_files,$(TEST_SOURCES_DIR)) $(call find_source_files,$(GENERATED_TEST_SOURCES_DIR))
 TEST_OBJECTS := $(call source_to_object,$(TEST_SOURCES),$(TEST_OBJECT_DIR))
-vpath %.c $(C_TEST_SOURCES_DIR)
-vpath %.h $(C_TEST_INCLUDE_DIR)
+vpath %.c $(TEST_SOURCES_DIR) $(GENERATED_TEST_SOURCES_DIR)
+vpath %.h $(TEST_INCLUDE_DIR) $(GENERATED_TEST_HEADERS_DIR)
 TEST_DEPENDS := $(call source_to_depend,$(TEST_SOURCES),$(GENERATED_TEST_DEPEND_DIR))
 TEST_RESOURCES := $(call find_resources,$(TEST_RESOURCES_DIR),$(TEST_RESOURCES_TARGET_DIR))
 
 vpath %.a $(TARGET_DIR)
 
-## Define the build target type
+## Configure the build target type
 ifeq ($(artifact),program)
+ARTIFACT_NAME = $(PROGRAM_NAME)
 TARGET = $(PROGRAM_TARGET)
+PACKAGE_ARTIFACT_TARGET_DIR = $(PACKAGE_TARGET_DIR)/bin
 else ifeq ($(artifact),library)
+ARTIFACT_NAME = $(LIBRARY_NAME)
 TARGET = $(LIBRARY_TARGET)
+PACKAGE_ARTIFACT_TARGET_DIR = $(PACKAGE_TARGET_DIR)/lib
 else
 $(error "Unsupported value of 'artifact': $(artifact)")
 endif
+
+PACKAGE_ARTIFACT_TARGET = $(PACKAGE_ARTIFACT_TARGET_DIR)/$(ARTIFACT_NAME)
 
 ## Include generated dependency rules
 # N.B. - the dependency makefiles should not be implicity generated on the first run
@@ -259,7 +268,7 @@ compile  - build object files
 target   - build the target library or program
 test     - build and run the test harness
 package  - collect the target artifacts info a distributable bundle
-install  - install the target artifacts onto the local system
+verify   - validate the distributable bundle
 endef
 
 define build_message =
@@ -270,7 +279,7 @@ endef
 define announce_phase_message =
 
 ------------------------------------------------------------------------
- $(1) phase
+ $(1) Phase
 ------------------------------------------------------------------------
 endef
 
@@ -314,6 +323,7 @@ env:
 	echo "process test sources: $(PROCESS_TEST_SOURCES_HOOKS)"; \
 	echo "generate test resources: $(GENERATE_TEST_RESOURCES_HOOKS)"; \
 	echo "process test resources: $(PROCESS_TEST_RESOURCES_HOOKS)"; \
+	echo "package override: $(PACKAGE_OVERRIDE)"; \
 	echo "* directories:"; \
 	echo "sources: $(SOURCE_DIR)"; \
 	echo "include: $(INCLUDE_DIR)"; \
@@ -324,10 +334,10 @@ env:
 	echo "target: $(TARGET_DIR)"; \
 	echo "objects: $(OBJECT_DIR)"; \
 	echo "test objects: $(TEST_OBJECT_DIR)"; \
-	echo "generated sources: $(GENERATED_SOURCE_DIR)"; \
+	echo "generated sources: $(GENERATED_SOURCES_DIR)"; \
 	echo "generated headers: $(GENERATED_HEADERS_DIR)"; \
 	echo "generated depend: $(GENERATED_DEPEND_DIR)"; \
-	echo "generated test sources: $(GENERATED_TEST_SOURCE_DIR)"; \
+	echo "generated test sources: $(GENERATED_TEST_SOURCES_DIR)"; \
 	echo "generated test depend: $(GENERATED_TEST_DEPEND_DIR)"; \
 	echo "* artifacts:"; \
 	echo "program: $(PROGRAM_NAME)"; \
@@ -433,13 +443,13 @@ $(LIBRARY_NAME): $(LIBRARY_TARGET)
 
 $(PROGRAM_TARGET): $(LIBRARY_TARGET) $(PROGRAM_OBJECTS)
 	@$(info $(call announce_section_detail_message,Building program,Creating $(PROGRAM_TARGET)))
-	$(CC) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_NAME_BASE) $(LDFLAGS) $(LDLIBS) -o $(PROGRAM_TARGET)
+	$(CC) -L$(TARGET_DIR) $(PROGRAM_OBJECTS) -l$(LIBRARY_BASE_NAME) $(LDFLAGS) $(LDLIBS) -o $(PROGRAM_TARGET)
 
 $(PROGRAM_NAME): $(PROGRAM_TARGET)
 
 $(TEST_PROGRAM_TARGET): $(LIBRARY_TARGET) $(TEST_OBJECTS)
 	@$(info $(call announce_section_detail_message,Building test harness,Creating $(TEST_PROGRAM_TARGET)))
-	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_NAME_BASE) $(TEST_LDFLAGS) $(TEST_LDLIBS) -o $(TEST_PROGRAM_TARGET)
+	$(CC) -L$(TARGET_DIR) $(TEST_OBJECTS) -l$(LIBRARY_BASE_NAME) $(TEST_LDFLAGS) $(TEST_LDLIBS) -o $(TEST_PROGRAM_TARGET)
 
 $(TEST_PROGRAM): $(TEST_PROGRAM_TARGET)
 
@@ -513,7 +523,7 @@ process-resources: generate-resources $(PROCESS_RESOURCES_HOOKS) announce-proces
 announce-compile-sources:
 	@$(info $(call announce_section_detail_message,Compiling sources,Evaluating $(words $(OBJECTS)) source files))
 
-compile: process-resources announce-compile-sources $(OBJECTS)
+compile: process-resources announce-compile-sources $(OBJECTS) $(call source_to_object,$(call find_source_files,$(GENERATED_SOURCES_DIR)),$(OBJECT_DIR))
 
 process-objects: compile
 
@@ -581,17 +591,59 @@ endif
 announce-package-phase:
 	@$(info $(call announce_phase_message,Package))
 
-prepare-package: test announce-package-phase
+prepare-package: announce-package-phase
 
-package: prepare-package target
+$(PACKAGE_TARGET_DIR):
+	@mkdir -p $@
 
-announce-install-phase:
-	@$(info $(call announce_phase_message,Install))
+announce-package-assemble-resources: count = $(shell if [ -d $(RESOURCES_TARGET_DIR) ]; then ls $(RESOURCES_TARGET_DIR) | wc -l; fi)
+announce-package-assemble-resources:
+ifeq ($(shell if [ -d $(RESOURCES_TARGET_DIR) ]; then echo "true"; fi),true)
+	@$(info $(call announce_section_detail_message,Assembling resources,Evaluating $(strip $(count)) files))
+endif
 
-verify: package announce-install-phase
+$(RESOURCES_TARGET_DIR):
+	@mkdir -p $@
 
-install: verify
-	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
-	$(INSTALL) $(TARGET) $(DESTDIR)$(bindir)
+$(PACKAGE_TARGET_DIR)/%: $(RESOURCES_TARGET_DIR)/%
+	$(INSTALL) $(PACKAGE_TARGET_DIR)$(subst $(RESOURCES_TARGET_DIR),,$(<D)) $<
 
-.PHONY: all check help check-syntax clean validate announce-initialize-phase announce-ensure-dependencies announce-create-build-directories create-buid-directories announce-build ensure-dependencies initialize announce-build-phase announce-generate-sources announce-generate-source-dependencies generate-source-dependencies generate-sources process-sources announce-generate-resources generate-resources process-resources announce-compile-sources compile process-objects library target ensure-test-dependencies announce-test-phase announce-generate-test-sources announce-generate-test-source-dependencies generate-test-source-dependencies generate-test-sources process-test-sources announce-generate-test-resources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package package verify announce-install-phase install $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS)
+package-assemble-resources: announce-package-assemble-resources $(RESOURCES_TARGET_DIR) $(addprefix $(PACKAGE_TARGET_DIR)/,$(call find_files,$(RESOURCES_TARGET_DIR)))
+
+announce-package-assemble-artifact:
+	@$(info $(call announce_section_detail_message,Assemble artifact,$(TARGET)))
+
+package-assemble-artifact: announce-package-assemble-artifact
+	$(INSTALL) $(PACKAGE_ARTIFACT_TARGET_DIR) $(TARGET)
+
+announce-package-build-package:
+	@$(info $(call announce_section_detail_message,Building package,$(PACKAGE_TARGET)))
+
+announce-package-hooks:
+ifneq ($(strip $(PACKAGE_HOOKS)),)
+	@$(info $(call announce_section_detail_message,Invoking package hooks,Executing $(words $(PACKAGE_HOOKS)) package hooks)))
+endif
+
+package-hooks: announce-package-hooks $(PACKAGE_HOOKS)
+
+ifeq ($(strip $(PACKAGE_OVERRIDE)),)
+package: test prepare-package $(PACKAGE_TARGET_DIR) package-assemble-resources package-assemble-artifact announce-package-build-package package-hooks
+	$(PACKAGE) $(PACKAGE_TARGET) $(PACKAGE_TARGET_DIR)
+else
+package: test prepare-package $(PACKAGE_OVERRIDE)
+endif
+
+announce-verify-phase:
+	@$(info $(call announce_phase_message,Verify))
+
+prepare-verify: announce-verify-phase
+
+announce-verify-hooks:
+	@$(info $(call announce_section_detail_message,Invoking verification hooks,Executing $(words $(VERIFY_HOOKS)) verification hooks))
+
+verify-hooks: announce-verify-hooks $(VERIFY_HOOKS)
+
+verify: package prepare-verify verify-hooks
+	@$(info Verification completed)
+
+.PHONY: all check help check-syntax clean validate announce-initialize-phase announce-ensure-dependencies announce-create-build-directories create-buid-directories announce-build ensure-dependencies initialize announce-build-phase announce-generate-sources announce-generate-source-dependencies generate-source-dependencies generate-sources process-sources announce-generate-resources generate-resources process-resources announce-compile-sources compile process-objects library target ensure-test-dependencies announce-test-phase announce-generate-test-sources announce-generate-test-source-dependencies generate-test-source-dependencies generate-test-sources process-test-sources announce-generate-test-resources generate-test-resources process-test-resources announce-compile-test-sources test-compile process-test-objects test-target test announce-package-phase prepare-package process-package-resources announce-package-assemble-resources package-assemble-resources announce-package-assemble-artifact package-assemble-artifact announce-package-build-package package package-hooks $(PACKAGE_HOOKS) $(PACKAGE_OVERRIDE) announce-verify-phase prepare-verify announce-verify-hooks verify-hooks $(VERIFY_HOOKS) verify $(PROGRAM_NAME) $(LIBRARY_NAME) $(TEST_PROGRAM) $(GENERATE_SOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_RESOURCES_HOOKS) $(PROCESS_SOURCES_HOOKS) $(GENERATE_TEST_SOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS) $(GENERATE_TEST_RESOURCES_HOOKS) $(PROCESS_TEST_SOURCES_HOOKS)
