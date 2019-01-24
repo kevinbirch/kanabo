@@ -1,4 +1,4 @@
-# [金棒][home] (kanabō)
+# 金棒 (kanabō)
 
 <img src="http://kevinbirch.github.com/kanabo/img/kanabo.jpg" alt="Tokugawa Samurai with kanabo" align="right"/>
 
@@ -29,10 +29,7 @@ it under the terms described in the [LICENSE file][license].
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-LICENSE file for more details.
+[LICENSE file][license] for more details.
 
-
-[home]: https://github.com/kevinbirch/kanabo "project home"
 [wiki]: http://en.wikipedia.org/wiki/Kanabō "Wikipedia entry for kanabō"
-[mit]: http://www.opensource.org/licenses/ncsa
 [license]: https://github.com/kevinbirch/kanabo/blob/master/LICENSE.md "license file"
