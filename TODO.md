@@ -93,7 +93,6 @@ start: 0.8-alpha, end: 0.9-beta
 ## static analysis
 
 * valgrind
-* frama-c
 * memory optimizations
   * http://blog.libtorrent.org/2013/12/memory-cache-optimizations/
   * http://www.reddit.com/r/programming/comments/1u660a/the_lost_art_of_c_structure_packing/
