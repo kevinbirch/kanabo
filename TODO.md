@@ -38,7 +38,7 @@
   * https://www.structlog.org/en/stable/getting-started.html
   * rework log.h to assume `component_name` is defined before import
   * eliminate all uses of `trace_string`
-* jsonpath model dumper w/ secret command line option, nice tree-like layout
+* jsonpath model dumper secret command line option, nice tree-like layout
   * `-d, --dump <jsonpath>`
 * switch weather example to yaml config file
 * memory leaks
@@ -99,8 +99,8 @@ start: 0.8-alpha, end: 0.9-beta
   * http://www.reddit.com/r/programming/comments/1u660a/the_lost_art_of_c_structure_packing/
   * http://linux.die.net/man/1/pahole
   * https://github.com/arvidn/struct_layout
-* try fbinfer: http://fbinfer.com/
-* try qsym: https://github.com/sslab-gatech/qsym
+* http://fbinfer.com/
+* https://github.com/sslab-gatech/qsym
 * https://code.google.com/p/american-fuzzy-lop/
 * cmbc - http://www.cprover.org/cbmc/
 * https://gitorious.org/linted/linted/source/8a9b2c7744af0e2d42419d0fea45c7b37b76930b:
@@ -115,7 +115,7 @@ start: 0.8-alpha, end: 0.9-beta
 ### global
 
 * libbacktrace instead of execinfo?
-  * panic backtrace looks like crap on Linux?
+  * panic backtrace looks like crap on Linux
 
 ### parser
 
@@ -129,32 +129,32 @@ start: 0.8-alpha, end: 0.9-beta
 
 ### evaluator
 
-* use simple array for small size mapping instances?
+* simple array for small size mapping instances?
 * replace memcmp with hash compare?
 * store hashcode with entry in bucket chain?
-* interning for string module
+* interning for string module?
   * diable macro
   * runtime enable disable
 * computed goto dispatch table?
   * http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables
-* add safe arithmetic functions
+* safe arithmetic functions?
   * http://lists.nongnu.org/archive/html/qemu-devel/2013-01/msg05387.html
   * https://sourceware.org/ml/libc-alpha/2013-12/msg00098.html
 * jit compiler?
   * http://eli.thegreenplace.net/2013/10/17/getting-started-with-libjit-part-1/
   * http://www.stephendiehl.com/llvm/
-* streaming mode
+* streaming mode?
   * https://github.com/fizx/sit
   * http://stackoverflow.com/questions/13083491/looking-for-big-sample-dummy-json-data-file
   * https://github.com/udp/json-parser
   * https://github.com/zeMirco/sf-city-lots-json
   * https://github.com/seductiveapps/largeJSON
-* support in-place document patching
+* support in-place document patching?
   * should there be a stack of edits atop of loaded tree (immutable loads?)
   * can whole documents be saved and named? (`${doc-name or index}` `$index`?)
 * use `flatten` attribute on evaluator, parser core functions?
   * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
-*. add completions for currently loaded model to linenoise
+* add completions for currently loaded model to linenoise
 
 ### unit testing
 
@@ -175,6 +175,7 @@ start: 0.8-alpha, end: 0.9-beta
 
 * pkg-config - http://www.freedesktop.org/wiki/Software/pkg-config/
 * compilation database?
+  * use guile?
   * all files stored into target, make clean to reset
   * post compile step 1 dedupes compilation log with raw compilation db
   * post compile step 2 converts raw compilation db to json
