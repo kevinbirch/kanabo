@@ -4,6 +4,7 @@
 
 ## fixes
 
+* dispose resouces in one shot mode
 * put back recursive wildcard select all nodes behavior
 * clean up parser/loader error vectors from nothings in tests
 * use `mformat` instead of `(v)snprintf`
