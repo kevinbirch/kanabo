@@ -4,6 +4,7 @@
 
 ## fixes
 
+* put back recursive wildcard select all nodes behavior
 * clean up parser/loader error vectors from nothings in tests
 * use `mformat` instead of `(v)snprintf`
 * circle ci build
@@ -51,6 +52,8 @@
 
 start: 0.8-alpha, end: 0.9-beta
 
+1. add `scalar()` selector
+1. add `parent()` selector
 1. join
    * support only paths, not indices
 1. tag selector
