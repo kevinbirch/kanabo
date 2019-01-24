@@ -9,11 +9,6 @@
 * use `mformat` instead of `(v)snprintf`
 * circle ci build
 * code coverage
-* mv spacecadet,linenose,yaml,check stuff to vendor
-  * build `src/vendor/*` as libs
-    * per-vendor optional `CFLAGS`, `LDFLAGS`, `CC`, language, file extension
-    * also `src/test-vendor`
-    * mv stuff from util to vendor, remainder in lib
 * loader
   * scalars
     * concrete subtypes, each holding reified value
