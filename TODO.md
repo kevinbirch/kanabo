@@ -38,7 +38,7 @@
   * rework log.h to assume `component_name` is defined before import
   * eliminate all uses of `trace_string`
 * jsonpath model dumper w/ secret command line option, nice tree-like layout
-  * `--output=ast`
+  * `-d, --dump <jsonpath>`
 * switch weather example to yaml config file
 * memory leaks
   * (should be fixed) ignored keys and values are leaked
