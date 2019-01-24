@@ -18,10 +18,7 @@
   * failure in `add_node` or error from libyaml are fatal
   * add extra context string to capture scalar value *or* libyaml message
 * parser
-  * parse integers w/o strtoll
-    * don't copy lexeme, don't paste minus and integer lexemes together
-    * https://github.com/gcc-mirror/gcc/blob/master/libiberty/strtoll.c
-    * https://sourceware.org/git/?p=glibc.git;a=blob;f=stdlib/strtol_l.c;h=28ea4bced19cae66440901257d3681985fec220b;hb=HEAD
+  * don't copy lexeme, don't paste minus and integer lexemes together
   * eliminate possible error in lexeme extraction (then we don't need the internal error?)
   * don't use callback between scanner and parser for errors, track error vector in each
     * use single add_parser_error function
