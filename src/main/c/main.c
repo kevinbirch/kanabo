@@ -424,11 +424,18 @@ static int expression_mode(struct options *options)
         return EXIT_FAILURE;
     }
 
-    return apply_expression(options->expression, documents, options->emit_mode);
+    int result =  apply_expression(options->expression, documents, options->emit_mode);
+    dispose_document_set(documents);
+
+    return result;
 }
 
-static int execute_command(enum command cmd, struct options *options)
+static int run(const int argc, char * const *argv)
 {
+    struct options options;
+    memset(&options, 0, sizeof(struct options));
+    enum command cmd = process_options(argc, argv, &options);
+
     int result = EXIT_SUCCESS;
 
     switch(cmd)
@@ -443,23 +450,14 @@ static int execute_command(enum command cmd, struct options *options)
             fputs(NO_WARRANTY, stdout);
             break;
         case INTERACTIVE_MODE:
-            result = interactive_mode(options);
+            result = interactive_mode(&options);
             break;
         case EXPRESSION_MODE:
-            result = expression_mode(options);
+            result = expression_mode(&options);
             break;
     }
 
     return result;
-}
-
-static int run(const int argc, char * const *argv)
-{
-    struct options options;
-    memset(&options, 0, sizeof(struct options));
-    enum command cmd = process_options(argc, argv, &options);
-
-    return execute_command(cmd, &options);
 }
 
 static void handle_signal(int sigval)
