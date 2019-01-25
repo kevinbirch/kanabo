@@ -132,34 +132,31 @@ String *unescape(Parser *self, const String *lexeme)
                 mstring_append(&cooked, "\xe2\x80\xa9");
                 break;
             case 'x':
-                i++;
                 uint8_t c;
-                sscanf(C(lexeme) + i, "%2"SCNx8, &c);
+                sscanf(C(lexeme) + i + 1, "%2"SCNx8, &c);
                 mstring_append(&cooked, c);
-                i++;
+                i += 2;
                 break;
             case 'u':
             {
-                i++;
                 uint32_t ucs4;
-                sscanf(C(lexeme) + i, "%4"SCNx32, &ucs4);
+                sscanf(C(lexeme) + i + 1, "%4"SCNx32, &ucs4);
                 if(!unescape_unicode(self, ucs4, &cooked))
                 {
                     goto cleanup;
                 }
-                i += 3;
+                i += 4;
                 break;
             }
             case 'U':
             {
-                i++;
                 uint32_t ucs4;
-                sscanf(C(lexeme) + i, "%8"SCNx32, &ucs4);
+                sscanf(C(lexeme) + i + 1, "%8"SCNx32, &ucs4);
                 if(!unescape_unicode(self, ucs4, &cooked))
                 {
                     goto cleanup;
                 }
-                i += 7;
+                i += 8;
                 break;
             }
             default:

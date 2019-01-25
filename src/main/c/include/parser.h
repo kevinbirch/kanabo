@@ -1,9 +1,9 @@
 #pragma once
 
-#include "maybe.h"
-
 #include "jsonpath.h"
+#include "maybe.h"
 #include "position.h"
+#include "str.h"
 
 enum parser_error_e
 {
@@ -44,7 +44,7 @@ struct internal_error_s
     };
     const char *filename;
     int         line;
-    char        message[];
+    String     *message;
 };
 
 typedef struct internal_error_s ParserInternalError;

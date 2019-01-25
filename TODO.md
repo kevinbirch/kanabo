@@ -4,8 +4,6 @@
 
 ## fixes
 
-* how to select an item of a seq of seq?
-* use `mformat` instead of `(v)snprintf`
 * circle ci build
 * code coverage
 * loader
@@ -48,6 +46,7 @@
 
 start: 0.8-alpha, end: 0.9-beta
 
+1. how to select an item of a seq of seq?
 1. add `scalar()` selector
 1. add `parent()` selector
 1. join

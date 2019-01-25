@@ -6,8 +6,6 @@ static void repr_path(const JsonPath *path, MutableString **buf);
 
 static void repr_predicate(const Predicate *predicate, MutableString **buf)
 {
-    char ibuf[32];
-
     if(NULL == predicate)
     {
         return;
@@ -21,28 +19,24 @@ static void repr_predicate(const Predicate *predicate, MutableString **buf)
             break;
         case SUBSCRIPT:
         {
-            snprintf(ibuf, 32, "%"PRId64, subscript_predicate_index(predicate));
-            mstring_append(buf, ibuf);
+            mformat(buf, "%"PRId64, subscript_predicate_index(predicate));
         }
         break;
         case SLICE:
         {
             if(slice_predicate_has_from(predicate))
             {
-                snprintf(ibuf, 32, "%"PRId64, slice_predicate_from(predicate));
-                mstring_append(buf, ibuf);
+                mformat(buf, "%"PRId64, slice_predicate_from(predicate));
             }
             mstring_append(buf, ':');
             if(slice_predicate_has_to(predicate))
             {
-                snprintf(ibuf, 32, "%"PRId64, slice_predicate_to(predicate));
-                mstring_append(buf, ibuf);
+                mformat(buf, "%"PRId64, slice_predicate_to(predicate));
             }
             if(slice_predicate_has_step(predicate))
             {
                 mstring_append(buf, ':');
-                snprintf(ibuf, 32, "%"PRId64, slice_predicate_step(predicate));
-                mstring_append(buf, ibuf);
+                mformat(buf, "%"PRId64, slice_predicate_step(predicate));
             }
         }
         break;
