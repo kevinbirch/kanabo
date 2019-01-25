@@ -88,10 +88,12 @@ static bool apply_recursive_wildcard_test(Node *each, void *argument, Nodelist *
     switch(node_kind(each))
     {
         case MAPPING:
-            evaluator_trace("recurisve wildcard test: skipping mapping node (%p)", each);
+            evaluator_trace("recurisve wildcard test: adding mapping node (%p)", each);
+            nodelist_add(target, each);
             break;
         case SEQUENCE:
-            evaluator_trace("recurisve wildcard test: skipping sequence node (%p)", each);
+            evaluator_trace("recurisve wildcard test: adding sequence node (%p)", each);
+            nodelist_add(target, each);
             break;
         case SCALAR:
             evaluator_trace("recurisve wildcard test: adding scalar: \"%s\" (%p)", C(scalar_value(scalar(each))), each);

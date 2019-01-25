@@ -368,6 +368,8 @@ static void tty_interctive_mode(struct options *options)
 
 static void pipe_interactive_mode(struct options *options)
 {
+    kanabo_debug("entering non-tty interative mode");
+
     char *input = NULL;
     size_t len = 0;
     ssize_t read;
@@ -379,7 +381,6 @@ static void pipe_interactive_mode(struct options *options)
         documents = load_input(options->input_file_name, stratety);
     }
 
-    kanabo_debug("entering non-tty interative mode");
     while((read = getline(&input, &len, stdin)) != -1)
     {
         if(0 == read || '\n' == input[0])

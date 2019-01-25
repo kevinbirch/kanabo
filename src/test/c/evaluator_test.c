@@ -277,12 +277,7 @@ START_TEST (recursive_wildcard)
 {
     Nodelist *list = evaluate_expression("$..*");
 
-    assert_nodelist_length(list, 25);
-    for(size_t i = 0; i < 25; i++)
-    {
-        assert_node_kind(nodelist_get(list, i), SCALAR);
-    }
-
+    assert_nodelist_length(list, 34);
     dispose_nodelist(list);
 }
 END_TEST
@@ -735,12 +730,7 @@ START_TEST (recursive_wildcard_alias)
 {
     Nodelist *list = evaluate_expression("$.shipments[0].items..*");
 
-    assert_nodelist_length(list, 12);
-    for(size_t i = 0; i < 12; i++)
-    {
-        assert_node_kind(nodelist_get(list, i), SCALAR);
-    }
-
+    assert_nodelist_length(list, 15);
     dispose_nodelist(list);
 }
 END_TEST
