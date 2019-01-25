@@ -99,7 +99,7 @@ static inline void dispose_maybe(Maybe(JsonPath) maybe)
 {
     if(is_nothing(maybe))
     {
-        vector_destroy(from_nothing(maybe), free);
+        parser_dispose_errors(from_nothing(maybe));
     }
     else
     {

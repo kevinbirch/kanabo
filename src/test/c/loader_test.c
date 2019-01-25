@@ -84,10 +84,23 @@ static void loader_teardown(void)
     model_fixture = NULL;
 }
 
+static inline void dispose_maybe(Maybe(DocumentSet) maybe)
+{
+    if(is_nothing(maybe))
+    {
+        loader_dispose_errors(from_nothing(maybe));
+    }
+    else
+    {
+        dispose_document_set(from_just(maybe));
+    }
+}
+
 START_TEST (non_scalar_key)
 {
     Maybe(DocumentSet) documents = load("test-resources/non-scalar-key.yaml", DUPE_FAIL);
     assert_loader_failure(documents, ERR_NON_SCALAR_KEY);
+    dispose_maybe(documents);
 }
 END_TEST
 
@@ -95,6 +108,7 @@ START_TEST (alias_loop)
 {
     Maybe(DocumentSet) documents = load("test-resources/alias-loop.yaml", DUPE_FAIL);
     assert_loader_failure(documents, ERR_ALIAS_LOOP);
+    dispose_maybe(documents);
 }
 END_TEST
 
@@ -102,6 +116,7 @@ START_TEST (missing_anchor)
 {
     Maybe(DocumentSet) documents = load("test-resources/missing-anchor.yaml", DUPE_FAIL);
     assert_loader_failure(documents, ERR_NO_ANCHOR_FOR_ALIAS);
+    dispose_maybe(documents);
 }
 END_TEST
 
@@ -195,7 +210,7 @@ START_TEST (load_from_file)
 
     assert_model_state(from_just(documents));
 
-    dispose_document_set(from_just(documents));
+    dispose_maybe(documents);
 }
 END_TEST
 
@@ -345,7 +360,9 @@ START_TEST (duplicate_clobber)
     assert_node_kind(one, SCALAR);
     assert_scalar_value(one, "bar");
     assert_scalar_kind(one, SCALAR_STRING);
+
     dispose_string(key);
+    dispose_maybe(documents);
 }
 END_TEST
 
@@ -365,7 +382,9 @@ START_TEST (duplicate_warn)
     assert_node_kind(one, SCALAR);
     assert_scalar_value(one, "bar");
     assert_scalar_kind(one, SCALAR_STRING);
+
     dispose_string(key);
+    dispose_maybe(documents);
 }
 END_TEST
 
@@ -373,6 +392,7 @@ START_TEST (duplicate_fail)
 {
     Maybe(DocumentSet) documents = load("test-resources/duplicate-key.yaml", DUPE_FAIL);
     assert_loader_failure(documents, ERR_DUPLICATE_KEY);
+    dispose_maybe(documents);
 }
 END_TEST
 

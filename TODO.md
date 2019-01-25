@@ -5,7 +5,6 @@
 ## fixes
 
 * how to select an item of a seq of seq?
-* clean up parser/loader error vectors from nothings in tests
 * use `mformat` instead of `(v)snprintf`
 * circle ci build
 * code coverage
