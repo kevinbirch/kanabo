@@ -9,6 +9,8 @@
 
 #include "panic.h"
 
+#define BACKTRACE_MAX_DEPTH 20
+
 static const char * const PANIC_MESSAGE = "panic - ";
 
 static void print_prelude(const char * restrict location)
@@ -27,10 +29,8 @@ void _panic_at(const char * restrict location, const char * restrict message)
     fputs(message, stderr);
     fputs("\n", stderr);
 
-    void *stack[20];
-    int depth;
-
-    depth = backtrace(stack, 20);
+    void *stack[BACKTRACE_MAX_DEPTH];
+    int depth = backtrace(stack, BACKTRACE_MAX_DEPTH);
     fputs("Backtrace follows (most recent first):\n", stderr);
     backtrace_symbols_fd(stack, depth, fileno(stderr));
 
@@ -47,8 +47,8 @@ void _panicf_at(const char * restrict location, const char * restrict format, ..
     va_end(args);
     fputs("\n", stderr);
 
-    void *stack[20];
-    int depth = backtrace(stack, 20);
+    void *stack[BACKTRACE_MAX_DEPTH];
+    int depth = backtrace(stack, BACKTRACE_MAX_DEPTH);
     fputs("Backtrace follows (most recent first):\n", stderr);
     backtrace_symbols_fd(stack, depth, fileno(stderr));
 
