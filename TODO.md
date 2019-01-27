@@ -6,6 +6,7 @@
 
 * circle ci build
 * code coverage
+* bug printing path query results causes next command parse to crash
 * loader
   * scalars
     * concrete subtypes, each holding reified value
