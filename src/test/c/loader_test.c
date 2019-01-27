@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "loader.h"
 #include "test.h"
+#include "loader.h"
 #include "test_document.h"
 
 static DocumentSet *model_fixture = NULL;

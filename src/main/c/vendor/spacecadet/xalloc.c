@@ -13,7 +13,7 @@ void set_oom_handler(OOMErrorHandler handler)
     custom_handler = handler;
 }
 
-void *_xcalloc_at(const char * restrict file, int line, size_t size)
+void *_xcalloc_at(const char * restrict location, size_t size)
 {
     void *obj = calloc(1, size);
     if(NULL != obj)
@@ -25,9 +25,9 @@ void *_xcalloc_at(const char * restrict file, int line, size_t size)
     snprintf(buf, 58, "%s%zu", NOMEM_MESSAGE, size);
     if(NULL != custom_handler)
     {
-        custom_handler(file, line, size);
+        custom_handler(location, size);
         return NULL;
     }
 
-    _panic_at(file, line, buf);
+    _panic_at(location, buf);
 }

@@ -11,23 +11,19 @@
 
 static const char * const PANIC_MESSAGE = "panic - ";
 
-static void print_prelude(const char * restrict file, int line)
+static void print_prelude(const char * restrict location)
 {
-    if(NULL != file)
+    if(NULL != location)
     {
-        fputs(file, stderr);
-        fputs(":", stderr);
-        char buf[21];  // len(decimal 64-bit int) + 1
-        int len = snprintf(buf, 21, "%d", line);
-        fwrite(buf, (size_t)len, 1, stderr);
+        fputs(location, stderr);
         fputs(": ", stderr);
     }
     fputs(PANIC_MESSAGE, stderr);
 }
 
-void _panic_at(const char * restrict file, int line, const char * restrict message)
+void _panic_at(const char * restrict location, const char * restrict message)
 {
-    print_prelude(file, line);
+    print_prelude(location);
     fputs(message, stderr);
     fputs("\n", stderr);
 
@@ -41,9 +37,9 @@ void _panic_at(const char * restrict file, int line, const char * restrict messa
     exit(EXIT_FAILURE);
 }
 
-void _panicf_at(const char * restrict file, int line, const char * restrict format, ...)
+void _panicf_at(const char * restrict location, const char * restrict format, ...)
 {
-    print_prelude(file, line);
+    print_prelude(location);
 
     va_list args;
     va_start(args, format);
