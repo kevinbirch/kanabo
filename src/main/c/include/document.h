@@ -32,9 +32,9 @@ typedef struct node_s Node;
 
 struct vtable_s
 {
-    void (*free)(Node *);
-    size_t (*size)(const Node *);
-    bool (*equals)(const Node *, const Node *);
+    void   (*free)   (Node *);
+    size_t (*size)   (const Node *);
+    bool   (*equals) (const Node *, const Node *);
 };
 
 struct node_s
@@ -45,7 +45,7 @@ struct node_s
         uint8_t  *name;
     } tag;
 
-    Position              position;
+    Position               position;
     const struct vtable_s *vtable;
     struct node_s         *parent;
     uint8_t               *anchor;
