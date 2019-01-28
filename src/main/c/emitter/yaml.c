@@ -231,6 +231,7 @@ bool emit_yaml(const Nodelist *list)
 
   end:
     yaml_emitter_delete(&emitter);
+    fflush(stdout);
 
     return result;
 }

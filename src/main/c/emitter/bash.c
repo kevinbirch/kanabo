@@ -37,5 +37,8 @@ bool emit_bash(const Nodelist *list)
             .wrap_collections = true
     };
 
-    return nodelist_iterate(list, emit_node, &context);
+    bool result = nodelist_iterate(list, emit_node, &context);
+    fflush(stdout);
+
+    return result;
 }

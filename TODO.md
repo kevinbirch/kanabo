@@ -151,6 +151,10 @@ start: 0.8-alpha, end: 0.9-beta
   * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
 * add completions for currently loaded model to linenoise
 
+### emitters
+
+* check return status value of all calls to output funtions?
+
 ### unit testing
 
 * http://code.google.com/p/cmockery/ ?

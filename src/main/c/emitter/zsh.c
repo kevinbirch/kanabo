@@ -39,5 +39,8 @@ bool emit_zsh(const Nodelist *list)
             .wrap_collections = false
         };
 
-    return nodelist_iterate(list, emit_node, &context);
+    bool result = nodelist_iterate(list, emit_node, &context);
+    fflush(stdout);
+
+    return result;
 }

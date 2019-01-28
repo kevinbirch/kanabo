@@ -105,6 +105,7 @@ bool emit_json(const Nodelist *list)
     EMIT("[");
     bool result = nodelist_iterate(list, emit_sequence_item, &count);
     EMIT("]\n");
+    fflush(stdout);
 
     return result;
 }
