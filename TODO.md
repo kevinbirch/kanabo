@@ -111,6 +111,7 @@ start: 0.8-alpha, end: 0.9-beta
 
 * libbacktrace instead of execinfo?
   * panic backtrace looks like crap on Linux
+* https://gcc.gnu.org/onlinedocs/gcc-6.1.0/gcc/Integer-Overflow-Builtins.html#Integer-Overflow-Builtins
 
 ### parser
 
