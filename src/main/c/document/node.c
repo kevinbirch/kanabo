@@ -16,7 +16,7 @@ static const char * const NODE_KINDS [] =
     "alias"
 };
 
-const char *node_kind_name_(const Node *self)
+const char *(node_kind_name)(const Node *self)
 {
     return NODE_KINDS[self->tag.kind];
 }
@@ -51,7 +51,7 @@ void node_init(Node *self, NodeKind kind, const struct vtable_s *vtable)
     }
 }
 
-void dispose_node_(Node *value)
+void (dispose_node)(Node *value)
 {
     if(NULL == value)
     {
@@ -63,7 +63,7 @@ void dispose_node_(Node *value)
     free(value);
 }
 
-void node_set_tag_(Node *self, const uint8_t *value, size_t length)
+void (node_set_tag)(Node *self, const uint8_t *value, size_t length)
 {
     ENSURE_NONNULL_ELSE_VOID(self, value);
     self->tag.name = xcalloc(length + 1);
@@ -71,7 +71,7 @@ void node_set_tag_(Node *self, const uint8_t *value, size_t length)
     self->tag.name[length] = '\0';
 }
 
-void node_set_anchor_(Node *self, const uint8_t *value, size_t length)
+void (node_set_anchor)(Node *self, const uint8_t *value, size_t length)
 {
     ENSURE_NONNULL_ELSE_VOID(self, value);
     self->anchor = xcalloc(length + 1);
@@ -94,7 +94,7 @@ static bool tag_equals(const uint8_t *one, const uint8_t *two)
     return memcmp(one, two, n1 > n2 ? n2 : n1) == 0;
 }
 
-bool node_equals_(const Node *one, const Node *two)
+bool (node_equals)(const Node *one, const Node *two)
 {
     if(one == two)
     {

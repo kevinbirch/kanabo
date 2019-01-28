@@ -23,7 +23,7 @@ static void print_prelude(const char * restrict location)
     fputs(PANIC_MESSAGE, stderr);
 }
 
-void _panic_at(const char * restrict location, const char * restrict message)
+void (panic)(const char * restrict location, const char * restrict message)
 {
     print_prelude(location);
     fputs(message, stderr);
@@ -37,7 +37,7 @@ void _panic_at(const char * restrict location, const char * restrict message)
     exit(EXIT_FAILURE);
 }
 
-void _panicf_at(const char * restrict location, const char * restrict format, ...)
+void (panicf)(const char * restrict location, const char * restrict format, ...)
 {
     print_prelude(location);
 

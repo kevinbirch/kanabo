@@ -141,8 +141,8 @@ Alias       *make_alias_node(Node *target);
  */
 
 void         dispose_document_set(DocumentSet *value);
-void         dispose_node_(Node *value);
-#define      dispose_node(SELF) dispose_node_(node((SELF)))
+void         (dispose_node)(Node *value);
+#define      dispose_node(SELF) dispose_node(node((SELF)))
 
 /*
  * Document Set API
@@ -191,22 +191,22 @@ const Node  *const_node_narrow(const Node *instance, NodeKind kind, const char *
                                        )
 
 #define      node_position(SELF) (SELF).position
-const char  *node_kind_name_(const Node *value);
-#define      node_kind_name(SELF) node_kind_name_(const_node((SELF)))
+const char  *(node_kind_name)(const Node *value);
+#define      node_kind_name(SELF) node_kind_name(const_node((SELF)))
 
 #define      node_kind(SELF) (SELF)->tag.kind
 #define      node_name(SELF) (SELF)->tag.name
 #define      node_parent(SELF) (SELF)->parent
 #define      node_size(SELF) (SELF)->vtable->size(const_node(SELF))
 
-bool         node_equals_(const Node *one, const Node *two);
-#define      node_equals(one, two) node_equals_(const_node((one)), const_node((two)))
+bool         (node_equals)(const Node *one, const Node *two);
+#define      node_equals(one, two) node_equals(const_node((one)), const_node((two)))
 bool         node_comparitor(const void *one, const void *two);
 
-void         node_set_tag_(Node *target, const uint8_t *value, size_t length);
-#define      node_set_tag(SELF, value, length) node_set_tag_(node((SELF)), (value), (length))
-void         node_set_anchor_(Node *target, const uint8_t *value, size_t length);
-#define      node_set_anchor(SELF, value, length) node_set_anchor_(node((SELF)), (value), (length))
+void         (node_set_tag)(Node *target, const uint8_t *value, size_t length);
+#define      node_set_tag(SELF, value, length) node_set_tag(node((SELF)), (value), (length))
+void         (node_set_anchor)(Node *target, const uint8_t *value, size_t length);
+#define      node_set_anchor(SELF, value, length) node_set_anchor(node((SELF)), (value), (length))
 
 /*
  * Document API

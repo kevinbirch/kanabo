@@ -29,5 +29,5 @@ void *_xcalloc_at(const char * restrict location, size_t size)
         return NULL;
     }
 
-    _panic_at(location, buf);
+    (panic)(location, buf);
 }
