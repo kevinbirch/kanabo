@@ -42,6 +42,8 @@
 * update spacecadet
   * move changes back
   * add maybe, xcalloc, others?
+* try lgtm
+  * https://lgtm.com/dashboard
 
 ## new features
 
@@ -180,6 +182,7 @@ start: 0.8-alpha, end: 0.9-beta
   * post compile step 1 dedupes compilation log with raw compilation db
   * post compile step 2 converts raw compilation db to json
   * pre/post-compile/build hooks?
+* https://snapcraft.io/ ?
 
 ## competition
 
