@@ -1,3 +1,16 @@
 version: 2
 jobs:
-  
+  gcc-linux-amd64:
+    docker:
+      - image: gcc:8
+
+    steps:
+      - apt-get install -y --no-install-recommends libyaml-dev check
+      - checkout
+      - run make test
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - gcc-linux-amd64
