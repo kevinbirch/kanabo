@@ -8,17 +8,8 @@ jobs:
       - checkout
       - run: make test
 
-  llvm-macos-amd64:
-    macos:
-      xcode: "10.0"
-    steps:
-      - run: brew install libyaml check
-      - checkout
-      - run: make test
-
 workflows:
   version: 2
   test:
     jobs:
       - gcc-linux-amd64
-      - llvm-macos-amd64
