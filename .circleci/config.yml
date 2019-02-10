@@ -5,7 +5,7 @@ jobs:
       - image: gcc:8
 
     steps:
-      - run: apt-get install -y --no-install-recommends libyaml-dev check
+      - run: apt-get update; apt-get install -y --no-install-recommends libyaml-dev check
       - checkout
       - run: make test
 
