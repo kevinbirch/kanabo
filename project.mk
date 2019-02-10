@@ -11,7 +11,7 @@ TEST_DEPENDENCIES = check yaml
 
 INCLUDES = -I$(SOURCES_DIR)/vendor/linenoise -I$(SOURCES_DIR)/vendor/spacecadet
 
-CFLAGS += -std=c11 -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-gnu -Wno-microsoft -Wno-unused-parameter -fstrict-aliasing -fms-extensions -fstack-protector
+CFLAGS += -std=c11 -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-unused-parameter -fstrict-aliasing -fms-extensions -fstack-protector
 debug_CFLAGS := -DUSE_LOGGING -g -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -O1 -fno-omit-frame-pointer -fsanitize=undefined
 release_CFLAGS := -DUSE_LOGGING -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -pie -fPIE
 debug_LDFLAGS := -fstack-protector -fno-omit-frame-pointer -fsanitize=undefined
@@ -19,6 +19,10 @@ release_LDFLAGS := -fstack-protector -fno-omit-frame-pointer -flto -pie -fPIE -W
 
 system := $(shell uname -s)
 is_clang := $(shell vers=`cc --version`; if [[ $vers == *clang* ]]; then echo "true"; fi)
+
+ifeq ($(is_clang),true)
+CFLAGS += -Wno-gnu -Wno-microsoft
+endif
 
 ifeq ($(system),Linux)
 LDLIBS := -lm

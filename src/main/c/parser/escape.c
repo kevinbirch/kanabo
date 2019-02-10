@@ -132,11 +132,13 @@ String *unescape(Parser *self, const String *lexeme)
                 mstring_append(&cooked, "\xe2\x80\xa9");
                 break;
             case 'x':
+            {
                 uint8_t c;
                 sscanf(C(lexeme) + i + 1, "%2"SCNx8, &c);
                 mstring_append(&cooked, c);
                 i += 2;
                 break;
+            }
             case 'u':
             {
                 uint32_t ucs4;
