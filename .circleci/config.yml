@@ -3,9 +3,16 @@ jobs:
   gcc-linux-amd64:
     docker:
       - image: gcc:8
-
     steps:
       - run: apt-get update; apt-get install -y --no-install-recommends libyaml-dev check
+      - checkout
+      - run: make test
+
+  llvm-macos-amd64:
+    macos:
+      xcode: "10.0"
+    steps:
+      - run: brew install libyaml check
       - checkout
       - run: make test
 
@@ -14,3 +21,4 @@ workflows:
   test:
     jobs:
       - gcc-linux-amd64
+      - llvm-macos-amd64
