@@ -40,7 +40,7 @@ CONFIG_H = $(GENERATED_HEADERS_DIR)/config.h
 
 generate-version-header: $(GENERATED_HEADERS_DIR)
 	@$(info Generating $(VERSION_H))
-	@build/generate_version_header.sh $(version) $(VERSION_H)
+	@CC=$(CC) build/generate_version_header.sh $(version) $(VERSION_H)
 
 generate-config-header: $(GENERATED_HEADERS_DIR)
 	@$(info Generating $(CONFIG_H))
