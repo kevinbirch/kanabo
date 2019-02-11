@@ -8,8 +8,16 @@ jobs:
       - checkout
       - run: make test
 
+  clang-linux-amd64:
+    docker:
+      - image: kevinbirch/ci-clang-linux-amd64:latest
+    steps:
+      - checkout
+      - run: make test
+
 workflows:
   version: 2
   test:
     jobs:
       - gcc-linux-amd64
+      - clang-linux-amd64

@@ -90,21 +90,19 @@ start: 0.8-alpha, end: 0.9-beta
 
 ## static analysis
 
-* valgrind
-* memory optimizations
-  * http://blog.libtorrent.org/2013/12/memory-cache-optimizations/
-  * http://www.reddit.com/r/programming/comments/1u660a/the_lost_art_of_c_structure_packing/
-  * http://linux.die.net/man/1/pahole
-  * https://github.com/arvidn/struct_layout
 * http://fbinfer.com/
 * https://github.com/sslab-gatech/qsym
 * https://code.google.com/p/american-fuzzy-lop/
 * cmbc - http://www.cprover.org/cbmc/
 * https://gitorious.org/linted/linted/source/8a9b2c7744af0e2d42419d0fea45c7b37b76930b:
-* performance co-pilot? http://oss.sgi.com/projects/pcp/
-* fuzz testing: https://en.wikipedia.org/wiki/API_Sanity_Checker
-* find undefined behavior code
-  * http://css.csail.mit.edu/stack/
+* clang memory sanitizer
+  * requires libyaml and check to be built with msan
+  * alternative: valgrind
+* memory optimizations
+  * http://blog.libtorrent.org/2013/12/memory-cache-optimizations/
+  * http://www.reddit.com/r/programming/comments/1u660a/the_lost_art_of_c_structure_packing/
+  * http://linux.die.net/man/1/pahole
+  * https://github.com/arvidn/struct_layout
 * function tracing? https://github.com/namhyung/uftrace
 
 ## evolution
@@ -114,10 +112,6 @@ start: 0.8-alpha, end: 0.9-beta
 * libbacktrace instead of execinfo?
   * panic backtrace looks like crap on Linux
 * https://gcc.gnu.org/onlinedocs/gcc-6.1.0/gcc/Integer-Overflow-Builtins.html#Integer-Overflow-Builtins
-
-### parser
-
-* try to reuse parsers instead of creating new every time
 
 ### loader
 
