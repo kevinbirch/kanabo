@@ -178,6 +178,10 @@ start: 0.8-alpha, end: 0.9-beta
   * pre/post-compile/build hooks?
 * https://snapcraft.io/ ?
 
+## known bugs
+
+* `-9223372036854775808` (`INT64_MIN`) is not accepted as an index value
+
 ## competition
 
 * http://jmespath.org/
