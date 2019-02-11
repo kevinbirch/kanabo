@@ -63,6 +63,7 @@ selector
     = tag selector
     | anchor selector
     | type selector
+    | index selector
     | name selector
     ;
 
@@ -93,6 +94,11 @@ type
 name selector
     = wildcard
     | name
+    ;
+
+index selector
+    = "[?", filter expression "]"
+    | "[", selector expression "]"
     ;
 
 wildcard
