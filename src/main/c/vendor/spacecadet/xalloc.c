@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>  // for calloc
+#include <stdnoreturn.h>
+#include <string.h>
 
 #include "panic.h"
 #include "xalloc.h"
 
-static const char * const NOMEM_MESSAGE = "out of memory! attempted allocation: ";
+#define MSG_BUFSZ 64
+#define NOMEM_FMT "out of memory! attempted allocation: %zu bytes"
 
 static OOMErrorHandler custom_handler = NULL;
 
@@ -13,7 +16,21 @@ void set_oom_handler(OOMErrorHandler handler)
     custom_handler = handler;
 }
 
-void *_xcalloc_at(const char * restrict location, size_t size)
+static inline void handle_oom(const char * restrict location, size_t size)
+{
+    if(NULL != custom_handler)
+    {
+        custom_handler(location, size);
+        return;
+    }
+
+    char buf[MSG_BUFSZ];
+    snprintf(buf, MSG_BUFSZ, NOMEM_FMT, size);
+
+    (panic)(location, buf);
+}
+
+void *(xcalloc)(const char * restrict location, size_t size)
 {
     void *obj = calloc(1, size);
     if(NULL != obj)
@@ -21,13 +38,18 @@ void *_xcalloc_at(const char * restrict location, size_t size)
         return obj;
     }
 
-    char buf[58];   // len(NOMEM_MESSAGE) + len(decimal 64-bit int) + 1
-    snprintf(buf, 58, "%s%zu", NOMEM_MESSAGE, size);
-    if(NULL != custom_handler)
+    handle_oom(location, size);
+    return NULL;
+}
+
+void *(xrealloc)(const char * restrict location, void *ptr, size_t new_size)
+{
+    void *obj = realloc(ptr, new_size);
+    if(NULL != obj)
     {
-        custom_handler(location, size);
-        return NULL;
+        return obj;
     }
 
-    (panic)(location, buf);
+    handle_oom(location, new_size);
+    return NULL;
 }
