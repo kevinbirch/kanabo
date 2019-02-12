@@ -76,16 +76,11 @@ bool sequence_iterate(const Sequence *self, sequence_iterator iterator, void *co
     return vector_iterate(self->values, sequence_iterator_adpater, &adapter);
 }
 
-bool sequence_add(Sequence *self, Node *item)
+void sequence_add(Sequence *self, Node *item)
 {
-    ENSURE_NONNULL_ELSE_FALSE(self, item);
+    ENSURE_NONNULL_ELSE_VOID(self, item);
 
-    bool result = vector_add(self->values, item);
-    if(result)
-    {
-        item->parent = node(self);
-    }
-
-    return result;
+    vector_add(self->values, item);
+    item->parent = node(self);
 }
 

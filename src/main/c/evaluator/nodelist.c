@@ -2,7 +2,6 @@
 
 #include "conditions.h"
 #include "evaluator.h"
-#include "panic.h"
 
 struct context_adapter_s
 {
@@ -18,25 +17,6 @@ typedef struct context_adapter_s context_adapter;
 
 static bool nodelist_iterator_adpater(void *each, void *context);
 static bool nodelist_map_adpater(void *each, void *context, Vector *target);
-
-void nodelist_add(Nodelist *list, Node *value)
-{
-    if(!vector_add(list, value))
-    {
-        panic("nodelist: add: vector_add failed");
-    }
-}
-
-void nodelist_set(Nodelist *list, Node *value, size_t index)
-{
-    errno = 0;
-    vector_set(list, value, index);
-
-    if(0 != errno)
-    {
-        panic("nodelist: set: vector_set failed");
-    }
-}
 
 static bool nodelist_iterator_adpater(void *each, void *context)
 {

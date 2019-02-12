@@ -50,10 +50,3 @@ Node *document_set_get_root(const DocumentSet *self, size_t index)
 
     return result;
 }
-
-bool document_set_add(DocumentSet *self, Document *doc)
-{
-    ENSURE_NONNULL_ELSE_FALSE(self, doc);
-
-    return vector_add(self->values, doc);
-}

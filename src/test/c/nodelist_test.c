@@ -105,27 +105,6 @@ START_TEST (bad_get)
 }
 END_TEST
 
-START_TEST (bad_add)
-{
-    Nodelist *empty_list = make_nodelist();
-    assert_not_null(empty_list);
-
-    fprintf(stderr, "\n!!! EXPECTED PANIC from nodelist_add should follow...\n");
-    nodelist_add(empty_list, NULL);
-}
-END_TEST
-
-START_TEST (bad_set)
-{
-    Nodelist *empty_list = make_nodelist();
-    assert_not_null(empty_list);
-
-    fprintf(stderr, "\n!!! EXPECTED PANIC from nodelist_set should follow...\n");
-    Scalar *s = make_scalar_string("foo");
-    nodelist_set(empty_list, node(s), 0);
-}
-END_TEST
-
 START_TEST (bad_iterate)
 {
     Nodelist *empty_list = make_nodelist();
@@ -255,8 +234,6 @@ Suite *nodelist_suite(void)
     TCase *bad_input_case = tcase_create("bad input");
     tcase_add_test(bad_input_case, bad_length);
     tcase_add_test(bad_input_case, bad_get);
-    tcase_add_exit_test(bad_input_case, bad_add, EXIT_FAILURE);
-    tcase_add_exit_test(bad_input_case, bad_set, EXIT_FAILURE);
     tcase_add_test(bad_input_case, bad_iterate);
     tcase_add_test(bad_input_case, bad_map);
     tcase_add_test(bad_input_case, bad_map_into);

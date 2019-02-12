@@ -30,8 +30,8 @@ typedef Vector Nodelist;
  */
 
 #define      nodelist_get vector_get
-void         nodelist_add(Nodelist *list, Node *value);
-void         nodelist_set(Nodelist *list, Node *value, size_t index);
+#define      nodelist_add vector_add
+#define      nodelist_set vector_set
 
 /*
  * Iteration

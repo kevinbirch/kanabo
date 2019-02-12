@@ -151,7 +151,7 @@ void         (dispose_node)(Node *value);
 #define      document_set_size(SELF) (NULL == (SELF) ? (size_t)0 : vector_length((SELF)->values))
 #define      document_set_get(SELF, INDEX) (NULL == (SELF) ? NULL : vector_get((SELF)->values, (INDEX)))
 Node        *document_set_get_root(const DocumentSet *model, size_t index);
-bool         document_set_add(DocumentSet *model, Document *doc);
+#define      document_set_add(SELF, DOC) (NULL == (SELF) ?  : vector_add((SELF)->values, (DOC)))
 
 /*
  * Node API
@@ -263,7 +263,7 @@ const char  *scalar_kind_name(const Scalar *value);
  */
 
 #define      sequence_get(SELF, INDEX) vector_get((SELF)->values, (INDEX))
-bool         sequence_add(Sequence *seq, Node *item);
+void         sequence_add(Sequence *seq, Node *item);
 
 typedef bool (*sequence_iterator)(Node *each, void *context);
 bool         sequence_iterate(const Sequence *seq, sequence_iterator iterator, void *context);
