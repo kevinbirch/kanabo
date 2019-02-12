@@ -5,6 +5,7 @@
 ## fixes
 
 * circle ci build
+  * asan flags: strict_string_checks=true, check_initialization_order=true
 * code coverage
 * bug printing path query results causes next command parse to crash
 * loader
