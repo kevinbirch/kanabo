@@ -3,7 +3,9 @@
 #include <string.h>
 #include <errno.h>
 
+#include "panic.h"
 #include "vector.h"
+#include "xalloc.h"
 
 static const size_t DEFAULT_CAPACITY = 4;
 
@@ -19,27 +21,19 @@ static inline size_t calculate_new_capacity(size_t capacity)
     return (capacity * 3) / 2 + 1;
 }
 
-static inline bool reallocate(Vector *vector, size_t capacity)
+static inline void reallocate(Vector *vector, size_t capacity)
 {
-    uint8_t **cache = vector->items;
-    vector->items = realloc(vector->items, sizeof(uint8_t *) * capacity);
-    if(NULL == vector->items)
-    {
-        vector->items = cache;
-        return false;
-    }
+    vector->items = xrealloc(vector->items, sizeof(uint8_t *) * capacity);
     vector->capacity = capacity;
-    return true;
 }
 
-static inline bool ensure_capacity(Vector *vector, size_t min_capacity)
+static inline void ensure_capacity(Vector *vector, size_t min_capacity)
 {
     if(vector->capacity < min_capacity)
     {
         size_t new_capacity = calculate_new_capacity(min_capacity);
         return reallocate(vector, new_capacity);
     }
-    return true;
 }
 
 Vector *make_vector(void)
@@ -54,19 +48,9 @@ Vector *make_vector_with_capacity(size_t capacity)
         errno = EINVAL;
         return NULL;
     }
-    Vector *result = (Vector *)calloc(1, sizeof(Vector));
-    if(NULL == result)
-    {
-        return NULL;
-    }
 
-    result->items = (uint8_t **)calloc(1, sizeof(uint8_t *) * capacity);
-    if(NULL == result->items)
-    {
-        free(result);
-        return NULL;
-    }
-
+    Vector *result = (Vector *)xcalloc(sizeof(Vector));
+    result->items = (uint8_t **)xcalloc(sizeof(uint8_t *) * capacity);
     result->length = 0;
     result->capacity = capacity;
 
@@ -82,10 +66,6 @@ Vector *make_vector_of(size_t count, ...)
     }
 
     Vector *result = make_vector_with_capacity(count);
-    if(NULL == result)
-    {
-        return NULL;
-    }
 
     va_list rest;
     va_start(rest, count);
@@ -114,10 +94,6 @@ Vector *vector_copy(const Vector *vector)
     }
 
     Vector *result = make_vector_with_capacity(vector->length);
-    if(NULL == result)
-    {
-        return NULL;
-    }
     memcpy(result->items, vector->items, sizeof(uint8_t *) * vector->length);
     result->length = vector->length;
 
@@ -152,11 +128,6 @@ Vector *vector_with_all(const Vector *vector, const Vector *from)
     }
 
     Vector *result = vector_copy(vector);
-    if(NULL == result)
-    {
-        return NULL;
-    }
-
     vector_add_all(result, from);
 
     return result;
@@ -257,28 +228,23 @@ void *vector_last(const Vector *vector)
     return vector_get(vector, vector->length - 1);
 }
 
-bool vector_add(Vector *vector, void *value)
+void vector_add(Vector *vector, void *value)
 {
     if(NULL == vector || NULL == value)
     {
         errno = EINVAL;
-        return false;
     }
 
-    if(!ensure_capacity(vector, vector->length + 1))
-    {
-        return false;
-    }
+    ensure_capacity(vector, vector->length + 1);
     vector->items[vector->length++] = (void *)value;
-
-    return true;
 }
 
 static bool add_to_vector_iterator(void *each, void *context)
 {
     Vector *vector = (Vector *)context;
 
-    return vector_add(vector, each);
+    vector_add(vector, each);
+    return true;
 }
 
 bool vector_add_all(Vector *vector, const Vector *from)
@@ -286,39 +252,30 @@ bool vector_add_all(Vector *vector, const Vector *from)
     if(NULL == vector || NULL == from)
     {
         errno = EINVAL;
-        return false;
     }
 
-    if(!ensure_capacity(vector, vector->length + from->length))
-    {
-        return false;
-    }
-
+    ensure_capacity(vector, vector->length + from->length);
     return vector_iterate(from, add_to_vector_iterator, vector);
 }
 
-bool vector_insert(Vector *vector, void *value, size_t index)
+void vector_insert(Vector *vector, void *value, size_t index)
 {
     if(NULL == vector || NULL == value || index > vector->length)
     {
         errno = EINVAL;
-        return NULL;
+        return;
     }
 
     if(vector->length == index)
     {
-        return vector_add(vector, value);
+        vector_add(vector, value);
     }
 
     uint8_t **target = vector->items;
     if(vector->capacity < vector->length + 1)
     {
         size_t new_capacity = calculate_new_capacity(vector->capacity);
-        target = calloc(1, sizeof(uint8_t *) * new_capacity);
-        if(NULL == vector->items)
-        {
-            return false;
-        }
+        target = xcalloc(sizeof(uint8_t *) * new_capacity);
         vector->capacity = new_capacity;
     }
 
@@ -344,8 +301,6 @@ bool vector_insert(Vector *vector, void *value, size_t index)
         vector->items = target;
     }
     vector->length++;
-
-    return true;
 }
 
 void *vector_set(Vector *vector, void *value, size_t index)
@@ -419,7 +374,7 @@ bool vector_trim(Vector *vector)
     if(NULL == vector || 0 == vector->length)
     {
         errno = EINVAL;
-        return NULL;
+        return false;
     }
 
     if(vector->length == vector->capacity)
@@ -427,7 +382,8 @@ bool vector_trim(Vector *vector)
         return false;
     }
 
-    return reallocate(vector, vector->length);
+    reallocate(vector, vector->length);
+    return true;
 }
 
 void *vector_find(const Vector *vector, vector_iterator iterator, void *context)
