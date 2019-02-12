@@ -1,7 +1,9 @@
 #pragma once
 
-void (panic)(const char * restrict location, const char * restrict message) __attribute__((noreturn));
-void (panicf)(const char * restrict location, const char * restrict format, ...) __attribute__((noreturn, format (printf, 2, 3)));
+#include <stdnoreturn.h>
+
+noreturn void (panic)(const char * restrict location, const char * restrict message);
+noreturn void (panicf)(const char * restrict location, const char * restrict format, ...) __attribute__((format (printf, 2, 3)));
 
 #define VAL(x) #x
 #define STR(x) VAL(x)
