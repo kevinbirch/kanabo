@@ -10,10 +10,14 @@ Node *sequence_builder(Node *one, ...)
 
     va_list items;
     va_start(items, one);
-    for(Node *each = va_arg(items, Node *); NULL != each; each = va_arg(items, Node *))
+
+    Node *each = va_arg(items, Node *);
+    while(NULL != each)
     {
         sequence_add(sequence, each);
+        each = va_arg(items, Node *);
     }
+
     va_end(items);
 
     return node(sequence);
@@ -33,6 +37,8 @@ Node *mapping_builder(const char *key1_repr, Node *value1, ...)
         String *key_n = make_string(key_n_repr);
         Node *value_n = va_arg(values, Node *);
         mapping_put(mapping, key_n, value_n);
+
+        key_n_repr = va_arg(values, char *);
     }
     va_end(values);
 
