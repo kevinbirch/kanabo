@@ -109,11 +109,6 @@ Vector *vector_with(const Vector *vector, void *value)
     }
 
     Vector *result = vector_copy(vector);
-    if(NULL == result)
-    {
-        return NULL;
-    }
-
     vector_add(result, value);
 
     return result;
@@ -233,6 +228,7 @@ void vector_add(Vector *vector, void *value)
     if(NULL == vector || NULL == value)
     {
         errno = EINVAL;
+        return;
     }
 
     ensure_capacity(vector, vector->length + 1);
@@ -252,6 +248,7 @@ bool vector_add_all(Vector *vector, const Vector *from)
     if(NULL == vector || NULL == from)
     {
         errno = EINVAL;
+        return false;
     }
 
     ensure_capacity(vector, vector->length + from->length);
@@ -565,22 +562,12 @@ Vector *vector_map(const Vector *vector, vector_mapper fn, void *context)
     }
 
     Vector *target = make_vector_with_capacity(vector->length);
-    if(NULL == target)
-    {
-        return NULL;
-    }
-    Vector *result = vector_map_into(vector, fn, context, target);
-    if(NULL == result)
-    {
-        dispose_vector(target);
-        target = NULL;
-        return NULL;
-    }
+    vector_map_into(vector, fn, context, target);
 
     return target;
 }
 
-Vector *vector_map_into(const Vector *vector, vector_mapper fn, void *context, Vector *target)
+bool vector_map_into(const Vector *vector, vector_mapper fn, void *context, Vector *target)
 {
     if(NULL == vector || NULL == fn || NULL == target)
     {
@@ -592,11 +579,11 @@ Vector *vector_map_into(const Vector *vector, vector_mapper fn, void *context, V
     {
         if(!fn(vector->items[i], context, target))
         {
-            return NULL;
+            return false;
         }
     }
 
-    return target;
+    return true;
 }
 
 void *vector_reduce(const Vector *vector, vector_reducer fn, void *context)
@@ -635,11 +622,6 @@ Vector *vector_filter(const Vector *vector, vector_iterator fn, void *context)
     }
 
     Vector *result = make_vector_with_capacity(vector->length);
-    if(NULL == result)
-    {
-        return NULL;
-    }
-
     for(size_t i = 0; i < vector->length; i++)
     {
         if(fn(vector->items[i], context))
@@ -665,10 +647,6 @@ Vector *vector_filter_not(const Vector *vector, vector_iterator fn, void *contex
     }
 
     Vector *result = make_vector_with_capacity(vector->length);
-    if(NULL == result)
-    {
-        return NULL;
-    }
     for(size_t i = 0; i < vector->length; i++)
     {
         if(!fn(vector->items[i], context))
