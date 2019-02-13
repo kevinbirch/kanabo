@@ -9,30 +9,34 @@ build = debug
 DEPENDENCIES = yaml
 TEST_DEPENDENCIES = check yaml
 
+system := $(shell uname -s)
+is_clang := $(shell if [[ `${CC} --version` == *clang* ]]; then echo "true"; fi)
+
 INCLUDES = -I$(SOURCES_DIR)/vendor/linenoise -I$(SOURCES_DIR)/vendor/spacecadet
 
 CFLAGS += -std=c11 -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-unused-parameter -fstrict-aliasing -fms-extensions -fstack-protector
-debug_CFLAGS := -DUSE_LOGGING -g -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -O1 -fno-omit-frame-pointer -fsanitize=undefined -fsanitize=address
+debug_CFLAGS := -DUSE_LOGGING -g -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -O1 -fno-omit-frame-pointer -fno-common -fsanitize=undefined -fsanitize=address
 release_CFLAGS := -DUSE_LOGGING -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -pie -fPIE
-debug_LDFLAGS := -fstack-protector -fno-omit-frame-pointer -fsanitize=undefined -fsanitize=address
-release_LDFLAGS := -fstack-protector -fno-omit-frame-pointer -flto -pie -fPIE -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
-
-system := $(shell uname -s)
-is_clang := $(shell if [[ `${CC} --version` == *clang* ]]; then echo "true"; fi)
 
 ifeq ($(is_clang),true)
 CFLAGS += -Wno-gnu -Wno-microsoft
 endif
+
+debug_LDFLAGS := -fstack-protector -fno-omit-frame-pointer -fno-common -fsanitize=undefined -fsanitize=address
+release_LDFLAGS := -fstack-protector -fno-omit-frame-pointer -flto -pie -fPIE -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
 
 ifeq ($(system),Linux)
 LDLIBS := -lm
 TEST_LDLIBS := $(LDLIBS) -pthread -lrt -lsubunit
 AR := ar rcs
 ifeq ($(is_clang),true)
-TEST_ENV := CK_FORK=no ASAN_OPTIONS=detect_leaks=1
+TEST_ENV := CK_FORK=no ASAN_OPTIONS=detect_leaks=true:check_initialization_order=true:symbolize_inline_frames=true
 endif
 else ifeq ($(system),Darwin)
 AR := libtool -static -o
+ifeq ($(is_clang),true)
+TEST_ENV := CK_FORK=no ASAN_OPTIONS=detect_leaks=true:check_initialization_order=true:symbolize_inline_frames=true
+endif
 endif
 
 VERSION_H = $(GENERATED_HEADERS_DIR)/version.h
