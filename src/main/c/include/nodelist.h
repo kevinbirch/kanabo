@@ -17,6 +17,7 @@ typedef Vector Nodelist;
  */
 
 #define      dispose_nodelist dispose_vector
+void         nodelist_destroy(Nodelist *self);
 
 /*
  * Property Access
@@ -38,9 +39,8 @@ typedef Vector Nodelist;
  */
 
 typedef bool (*nodelist_iterator)(Node *each, void *context);
-bool         nodelist_iterate(const Nodelist *list, nodelist_iterator iterator, void *context);
+bool         nodelist_iterate(const Nodelist *self, nodelist_iterator iterator, void *context);
 
 typedef bool (*nodelist_map_function)(Node *each, void *context, Nodelist *target);
 
-Nodelist    *nodelist_map(const Nodelist *list, nodelist_map_function function, void *context);
-Nodelist    *nodelist_map_into(const Nodelist *list, nodelist_map_function function, void *context, Nodelist *target);
+Nodelist    *nodelist_map(const Nodelist *self, nodelist_map_function function, void *context);

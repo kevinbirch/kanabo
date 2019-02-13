@@ -13,6 +13,16 @@ struct context_adapter_s
     void *context;
 };
 
+static void freedom_iterator(void *each)
+{
+    dispose_node(node(each));
+}
+
+void nodelist_destroy(Nodelist *self)
+{
+    vector_destroy(self, freedom_iterator);
+}
+
 typedef struct context_adapter_s context_adapter;
 
 static bool nodelist_iterator_adpater(void *each, void *context);
@@ -40,10 +50,4 @@ Nodelist *nodelist_map(const Nodelist *list, nodelist_map_function function, voi
 {
     ENSURE_NONNULL_ELSE_NULL(list, function);
     return vector_map(list, nodelist_map_adpater, &(context_adapter){.iterator.map=function, context});
-}
-
-Nodelist *nodelist_map_into(const Nodelist *list, nodelist_map_function function, void *context, Nodelist *target)
-{
-    ENSURE_NONNULL_ELSE_NULL(list, function, target);
-    return vector_map_into(list, nodelist_map_adpater, &(context_adapter){.iterator.map=function, context}, target);
 }
