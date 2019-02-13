@@ -2,7 +2,7 @@
 
 #include <check.h>
 
-#include "document.h"
+#include "builders.h"
 #include "test.h"
 #include "test_document.h"
 
@@ -32,33 +32,17 @@ static void model_setup(void)
       three: false
       four: true
      */
-    model_fixture = make_document_set();
-
-    Mapping *root = make_mapping_node();
-
-    Scalar *foo1 = make_scalar_string("foo1");
-    Scalar *one_point_five = make_scalar_real("1.5");
-    Sequence *one_value = make_sequence_node();
-    sequence_add(one_value, node(foo1));
-    sequence_add(one_value, node(one_point_five));
-
-    String *one = make_string("one");
-    mapping_put(root, one, node(one_value));
-
-    String *two = make_string("two");
-    Scalar *two_value = make_scalar_string("foo2");
-    mapping_put(root, two, node(two_value));
-
-    String *three = make_string("three");
-    Scalar *three_value = make_scalar_string("false");
-    mapping_put(root, three, node(three_value));
-
-    String *four = make_string("four");
-    Scalar *four_value = make_scalar_string("true");
-    mapping_put(root, four, node(four_value));
-
+    Node *root = map(
+        "one", seq(string("foo1"), real("1.5")),
+        "two", string("foo2"),
+        "three", string("false"),
+        "four", string("true")
+                     );
+    
     Document *doc = make_document_node();
-    document_set_root(doc, node(root));
+    document_set_root(doc, root);
+
+    model_fixture = make_document_set();
     document_set_add(model_fixture, doc);
 }
 
@@ -116,7 +100,7 @@ static bool fail_mapping(String *key, Node *value, void *context)
 
 START_TEST (constructors)
 {
-    Scalar *s = make_scalar_string("foo");
+    Scalar *s = make_scalar_node(make_string("foo"), SCALAR_STRING);
     assert_not_null(s);
     
     Document *d = make_document_node();
@@ -221,11 +205,11 @@ START_TEST (sequence_type)
     assert_not_null(one);
     assert_node_kind(one, SCALAR);
 
-    Scalar *x = make_scalar_string("x");
+    Scalar *x = make_scalar_node(make_string("x"), SCALAR_STRING);
     assert_not_null(x);
-    Scalar *y = make_scalar_string("y");
+    Scalar *y = make_scalar_node(make_string("y"), SCALAR_STRING);
     assert_not_null(y);
-    Scalar *z = make_scalar_string("z");
+    Scalar *z = make_scalar_node(make_string("z"), SCALAR_STRING);
     assert_not_null(z);
     Sequence *xyz = make_sequence_node();
     assert_not_null(xyz);
