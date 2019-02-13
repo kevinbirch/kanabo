@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "str.h"
-
+#include "xalloc.h"
 
 struct string_s
 {
@@ -20,7 +20,7 @@ struct mutable_string_s
 
 static inline String *string_alloc(size_t length)
 {
-    return calloc(1, sizeof(String) + length + 1);
+    return xcalloc(sizeof(String) + length + 1);
 }
 
 static inline String *string_init(String *self, const char *value, size_t length)
@@ -260,7 +260,7 @@ static inline size_t calculate_allocation_size(size_t capacity)
 
 static inline MutableString *mstring_alloc(const size_t capacity)
 {
-    return calloc(1, calculate_allocation_size(capacity));
+    return xcalloc(calculate_allocation_size(capacity));
 }
 
 static inline bool mstring_realloc(MutableString **self, size_t capacity)
@@ -481,7 +481,7 @@ const char *mstring_as_c_str(const MutableString *self)
 
 char *mstring_copy(const MutableString *self)
 {
-    char *result = calloc(1, self->base.length + 1);
+    char *result = xcalloc(self->base.length + 1);
     if(NULL == result)
     {
         return NULL;
