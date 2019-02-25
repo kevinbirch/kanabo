@@ -144,6 +144,7 @@ static inline size_t normalize_capacity(size_t hint)
         // ensure that capacity is a power of 2
         capacity = 1ULL << (size_t)(log2((float)(capacity - 1)) + 1);
     }
+
     return capacity;
 }
 
@@ -276,6 +277,7 @@ static bool contains_key_value(void *key, void *value, void *context)
     {
         return false;
     }
+
     return adapter->compare(value, other_value);
 }
 
@@ -299,6 +301,7 @@ bool hashtable_equals(const Hashtable *one, const Hashtable *two, compare_functi
     {
         return false;
     }
+
     return hashtable_iterate(one, contains_key_value, &(equality_adapter){two, comparitor});
 }
 
@@ -319,13 +322,13 @@ bool hashtable_contains(const Hashtable *hashtable, const void *key)
     uint8_t *cur = hashtable->entries[index];
     if(NULL != cur)
     {
-        if(CHAINED_KEY != cur && hashtable->compare(key, cur))
-        {
-            return true;
-        }
         if(CHAINED_KEY == cur)
         {
             return chained_contains(hashtable, index, key);
+        }
+        if(hashtable->compare(key, cur))
+        {
+            return true;
         }
     }
 
@@ -346,6 +349,7 @@ static bool chained_contains(const Hashtable *hashtable, size_t index, const voi
             return true;
         }
     }
+
     return false;
 }
 
@@ -366,14 +370,13 @@ void *hashtable_get(const Hashtable *hashtable, const void *key)
     uint8_t *cur = hashtable->entries[index];
     if(NULL != cur)
     {
-        if(CHAINED_KEY != cur && hashtable->compare(key, cur))
-        {
-            void *result = hashtable->entries[index + 1];
-            return result;
-        }
         if(CHAINED_KEY == cur)
         {
             return chained_get(hashtable, index, key);
+        }
+        if(hashtable->compare(key, cur))
+        {
+            return hashtable->entries[index + 1];
         }
     }
 
@@ -405,6 +408,7 @@ static void *chained_get(const Hashtable *hashtable, size_t index, const void *k
             return result;
         }
     }
+
     return NULL;
 }
 
@@ -431,6 +435,7 @@ void *hashtable_get_if_absent(Hashtable *hashtable, void *key, void *value)
     {
         return value;
     }
+
     return result;
 }
 
@@ -467,6 +472,7 @@ void *hashtable_get_if_absent_put(Hashtable *hashtable, void *key, void *value)
         }
         return value;
     }
+
     return result;
 }
 
@@ -500,6 +506,7 @@ void *hashtable_put(Hashtable *hashtable, void *key, void *value)
     {
         return add_to_chain(hashtable, index, key, value);
     }
+
     return chained_put(hashtable, index, key, value);
 }
 
@@ -574,6 +581,7 @@ static void *chained_put(Hashtable *hashtable, size_t index, void *key, void *va
     {
         rehash(hashtable);
     }
+
     return NULL;
 }
 
@@ -582,6 +590,7 @@ static bool map_into(void *key, void *value, void *context)
     Hashtable *hashtable = (Hashtable *)context;
     errno = 0;
     hashtable_put(hashtable, key, value);
+
     return 0 == errno;
 }
 
@@ -612,6 +621,7 @@ Hashtable *hashtable_copy(const Hashtable *hashtable)
     Hashtable *result = make_hashtable_with_capacity_factor_function(
         hashtable->compare, hashtable->capacity, hashtable->load_factor, hashtable->hash);
     hashtable_put_all(result, hashtable);
+
     return result;
 }
 
@@ -691,6 +701,7 @@ static void *chained_remove(Hashtable *hashtable, size_t index, void *key)
             return previous;
         }
     }
+
     return NULL;
 }
 

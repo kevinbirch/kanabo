@@ -27,7 +27,7 @@ static size_t mapping_size(const Node *self)
 
 static bool mapping_freedom_iterator(void *key, void *value, void *context __attribute__((unused)))
 {
-    dispose_string((String *)key);
+    dispose_node(key);
     dispose_node(value);
 
     return true;
@@ -48,13 +48,8 @@ static void mapping_free(Node *value)
 
 static hashcode scalar_hash(const void *key)
 {
-    const String *value = (const String *)key;
+    const String *value = scalar_value(key);
     return fnv1a_string_buffer_hash(strdta(value), strlen(value));
-}
-
-static bool scalar_comparitor(const void *one, const void *two)
-{
-    return string_equals((const String *)one, (const String *)two);
 }
 
 static const struct vtable_s mapping_vtable = 
@@ -68,7 +63,7 @@ Mapping *make_mapping_node(void)
 {
     Mapping *self = xcalloc(sizeof(Mapping));
     node_init(node(self), MAPPING, &mapping_vtable);
-    self->values = make_hashtable_with_function(scalar_comparitor, scalar_hash);
+    self->values = make_hashtable_with_function(node_comparitor, scalar_hash);
     if(NULL == self->values)
     {
         panic("document: mapping: allocate mapping hashtable failed");
@@ -77,24 +72,38 @@ Mapping *make_mapping_node(void)
     return self;
 }
 
-Node *mapping_get(const Mapping *self, String *key)
+Node *mapping_get(const Mapping *self, String *value)
 {
-    ENSURE_NONNULL_ELSE_NULL(self, key);
+    ENSURE_NONNULL_ELSE_NULL(self, value);
 
-    return hashtable_get(self->values, key);
+    Scalar *key = make_scalar_node(value, SCALAR_STRING);
+
+    Node *result = hashtable_get(self->values, key);
+
+    key->value = NULL;
+    dispose_node(key);
+
+    return result;
 }
 
-bool mapping_contains(const Mapping *self, String *key)
+bool mapping_contains(const Mapping *self, String *value)
 {
-    ENSURE_NONNULL_ELSE_FALSE(self, key);
+    ENSURE_NONNULL_ELSE_FALSE(self, value);
 
-    return hashtable_contains(self->values, key);
+    Scalar *key = make_scalar_node(value, SCALAR_STRING);
+
+    bool result = hashtable_contains(self->values, key);
+
+    key->value = NULL;
+    dispose_node(key);
+
+    return result;
 }
 
 static bool mapping_iterator_adpater(void *key, void *value, void *context)
 {
     context_adapter *adapter = (context_adapter *)context;
-    return adapter->iterator(key, node(value), adapter->context);
+    return adapter->iterator(scalar_value(key), node(value), adapter->context);
 }
 
 bool mapping_iterate(const Mapping *self, mapping_iterator iterator, void *context)
@@ -105,7 +114,7 @@ bool mapping_iterate(const Mapping *self, mapping_iterator iterator, void *conte
     return hashtable_iterate(self->values, mapping_iterator_adpater, &adapter);
 }
 
-bool mapping_put(Mapping *self, String *key, Node *value)
+bool mapping_put(Mapping *self, Scalar *key, Node *value)
 {
     ENSURE_NONNULL_ELSE_FALSE(self, key, value);
 
@@ -113,6 +122,7 @@ bool mapping_put(Mapping *self, String *key, Node *value)
     hashtable_put(self->values, key, value);
     if(0 == errno)
     {
+        key->parent = node(self);
         value->parent = node(self);
     }
 

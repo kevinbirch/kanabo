@@ -21,15 +21,10 @@ const char *scalar_kind_name(const Scalar *self)
 
 static bool scalar_equals(const Node *one, const Node *two)
 {
-    size_t n1 = node_size(one);
-    size_t n2 = node_size(two);
+    const Scalar *s1 = (const Scalar *)one;
+    const Scalar *s2 = (const Scalar *)two;
 
-    if(n1 != n2)
-    {
-        return false;
-    }
-    return 0 == memcmp(scalar_value((const Scalar *)one),
-                       scalar_value((const Scalar *)two), n1);
+    return string_equals(s1->value, s2->value);
 }
 
 static size_t scalar_size(const Node *self)

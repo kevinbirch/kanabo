@@ -33,4 +33,4 @@ RUN set -ex; \
 		lld-$llvmver \
 		libc++-$llvmver-dev \
 		libc++abi-$llvmver-dev \
-		libomp-$llvmver-dev		
+		libomp-$llvmver-dev

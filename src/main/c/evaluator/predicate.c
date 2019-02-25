@@ -9,7 +9,7 @@ static bool apply_wildcard_predicate(Node *value, Evaluator *evaluator, Nodelist
     switch(node_kind(value))
     {
         case SCALAR:
-            evaluator_trace("wildcard predicate: adding scalar \"%s\" (%p)", C(scalar_value(scalar(value))), value);
+            evaluator_trace("wildcard predicate: adding scalar \"%s\" (%p)", C(scalar_value(value)), value);
             nodelist_add(target, value);
             break;
         case MAPPING:
@@ -22,7 +22,7 @@ static bool apply_wildcard_predicate(Node *value, Evaluator *evaluator, Nodelist
             break;
         case ALIAS:
             evaluator_trace("wildcard predicate: resolving alias (%p)", value);
-            result = apply_wildcard_predicate(alias_target(alias(value)), evaluator, target);
+            result = apply_wildcard_predicate(alias_target(value), evaluator, target);
             break;
         case DOCUMENT:
             evaluator_error("wildcard predicate: uh-oh! found a document node (%p)", value);

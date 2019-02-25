@@ -387,7 +387,7 @@ static void pipe_interactive_mode(struct options *options)
         {
             goto reset;
         }
-        input[read - 1] = '\0';  // N.B. `read` should always be positive here
+        input[read - 1] = '\0';  // N.B. - `read` should always be positive here
         dispatch_interactive_command(input, options, &documents);
 
         fputs("EOD\n", stdout);

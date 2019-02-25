@@ -26,7 +26,7 @@ Node *sequence_builder(Node *one, ...)
 Node *mapping_builder(const char *key1_repr, Node *value1, ...)
 {
     Mapping *mapping = make_mapping_node();
-    String *key_1 = make_string(key1_repr);
+    Scalar *key_1 = make_scalar_node(make_string(key1_repr), SCALAR_STRING);
     mapping_put(mapping, key_1, value1);
     
     va_list values;
@@ -34,7 +34,7 @@ Node *mapping_builder(const char *key1_repr, Node *value1, ...)
     char *key_n_repr = va_arg(values, char *);
     while(NULL != key_n_repr)
     {
-        String *key_n = make_string(key_n_repr);
+        Scalar *key_n = make_scalar_node(make_string(key_n_repr), SCALAR_STRING);
         Node *value_n = va_arg(values, Node *);
         mapping_put(mapping, key_n, value_n);
 

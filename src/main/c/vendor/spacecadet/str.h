@@ -112,12 +112,12 @@ char          *mstring_copy(const MutableString *self);
 
 // Mutable String Update API
 
-bool           mstring_append_byte(MutableString **self, const uint8_t value);
-bool           mstring_append_char(MutableString **self, const char value);
-bool           mstring_append_c_str(MutableString **self, const char *value);
-bool           mstring_append_string(MutableString **self, const String *value);
-bool           mstring_append_mstring(MutableString **self, const MutableString *value);
-bool           mstring_append_stream(MutableString **self, const uint8_t *value, size_t length);
+void           mstring_append_byte(MutableString **self, const uint8_t value);
+void           mstring_append_char(MutableString **self, const char value);
+void           mstring_append_c_str(MutableString **self, const char *value);
+void           mstring_append_string(MutableString **self, const String *value);
+void           mstring_append_mstring(MutableString **self, const MutableString *value);
+void           mstring_append_stream(MutableString **self, const uint8_t *value, size_t length);
 
 #define        mstring_append(SELF, VALUE) _Generic((VALUE),                   \
                                                     char *: mstring_append_c_str, \

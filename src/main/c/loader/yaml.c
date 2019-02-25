@@ -55,25 +55,16 @@ static void must_make_regex(regex_t *regex, const char * pattern)
 static void context_init(Loader *context, DuplicateKeyStrategy strategy, const String *input_name)
 {
     context->errors = make_vector_with_capacity(1);
-    if(NULL == context->errors)
-    {
-        panic("loader: initialize: allocate error list");
-    }
-
     context->detached = make_vector_with_capacity(1);
-    if(NULL == context->detached)
-    {
-        panic("loader: initialize: allocate detached node list");
-    }
-
     context->documents = make_document_set();
-    if(NULL == context->documents)
-    {
-        panic("loader: initialize: allocate document set");
-    }
-
     context->strategy = strategy;
     context->input_name = input_name;
+}
+
+static inline void detach(Loader *context, Node *node)
+{
+    loader_trace("detaching node (%p)", node);
+    vector_append(context->detached, node);
 }
 
 static void interpret_yaml_error(Loader *context, yaml_parser_t *parser)
@@ -118,35 +109,26 @@ static void interpret_yaml_error(Loader *context, yaml_parser_t *parser)
     add_loader_error_with_extra(context->errors, pos, code, extra);
 }
 
-static void set_anchor(Loader *context, Node *target, uint8_t *anchor)
+static void set_anchor(Loader *context, Node *target, uint8_t *value)
 {
-    if(NULL == anchor)
+    if(NULL == value)
     {
         return;
     }
 
-    Document *document = current_document(context);
-    if(NULL == document->anchors)
-    {
-        document->anchors = make_hashtable_with_function(string_comparitor, fnv1a_string_hash);
-        if(NULL == document->anchors)
-        {
-            panic("loader: initialize: allocate anchor hashtable");
-        }
-    }
-
-    node_set_anchor(target, anchor, strlen((char *)anchor));
-    hashtable_put(document->anchors, anchor, target);
+    document_track_anchor(current_document(context), value, target);
 }
 
 static void add_to_mapping(Loader *context, Node *node)
 {
-    if(NULL == context->key_cache)
+    node->parent = context->current;  // N.B. - all nodes need a parent since they may be a container
+
+    if(NULL == context->key_cache)  // N.B. - node is a mapping key
     {
         loader_trace("caching node (%p) as key for mapping context (%p)", node, context->current);
         context->key_cache = node;
 
-        goto done;
+        return;
     }
 
     if(!is_scalar(context->key_cache))
@@ -154,42 +136,46 @@ static void add_to_mapping(Loader *context, Node *node)
         loader_debug("uh oh! found a non scalar mapping key");
         add_loader_error(context->errors, context->key_cache->position, ERR_NON_SCALAR_KEY);
 
-        vector_append(context->detached, node);
-        
+        loader_trace("detaching value for non-scalar key");
+        detach(context, context->key_cache);  // N.B. - key is not needed, mapping is abandoned
+        detach(context, node);  // N.B. - value not needed, mapping is abandoned
+
         goto cleanup;
     }
 
-    Scalar *scalar = scalar(context->key_cache);
-    String *key = scalar_value(scalar);
-    scalar->value = NULL;  // N.B. - ownership of value transferred to mapping
+    Scalar *key = scalar(context->key_cache);
 
     Mapping *mapping = mapping(context->current);
-    bool duplicate = mapping_contains(mapping, key);
+    Node *previous = mapping_get(mapping, scalar_value(key));
 
-    if(duplicate && DUPE_FAIL == context->strategy)
+    if(NULL != previous)
     {
-        loader_debug("uh oh! a duplicate key found");
-        add_loader_error(context->errors, scalar->position, ERR_DUPLICATE_KEY);
+        loader_debug("uh oh! found a duplicate key");
+        detach(context, context->key_cache);  // N.B. - key is not needed, already exists
 
-        vector_append(context->detached, node);
-        
-        goto cleanup;
-    }
-    else if(duplicate && DUPE_WARN == context->strategy)
-    {
-        const char *name = C(context->input_name);
-        size_t line = scalar->position.line + 1;
-        size_t offset  = scalar->position.offset + 1;
-        fprintf(stderr, "%s:%zu:%zu: warning: duplicate mapping key \"%s\"\n", name, line, offset, C(key));
+        if(DUPE_FAIL == context->strategy)
+        {
+            add_loader_error(context->errors, key->position, ERR_DUPLICATE_KEY);
+            detach(context, node);  // N.B. - value not needed, mapping is abandoned
+
+            goto cleanup;
+        }
+        else if(DUPE_WARN == context->strategy)
+        {
+            const char *name = C(context->input_name);
+            size_t line = key->position.line + 1;
+            size_t offset  = key->position.offset + 1;
+            const char *value = C(scalar_value(key));
+            fprintf(stderr, "%s:%zu:%zu: warning: duplicate mapping key \"%s\"\n", name, line, offset, value);
+        }
+
+        detach(context, previous);  // N.B. - previous value is not needed, it will be replaced
     }
 
     mapping_put(mapping, key, node);
 
   cleanup:
-    dispose_node(context->key_cache);
     context->key_cache = NULL;
-  done:
-    node->parent = context->current;
 }
 
 static void add_node(Loader *context, Node *node, const yaml_event_t *event)
@@ -209,9 +195,10 @@ static void add_node(Loader *context, Node *node, const yaml_event_t *event)
             add_to_mapping(context, node);
             break;
         default:
-            loader_debug("uh oh! an unsupported node kind has become the context node");
+            loader_debug("uh oh! an unsupported node kind has become the context node: %s", node_kind_name(context->current));
             add_loader_error(context->errors, position(event->start_mark), ERR_INTERNAL_CTX_NODE);
-            vector_append(context->detached, node);
+            loader_trace("detaching unsupported context node");
+            detach(context, node);
             break;
     }
 }
@@ -289,8 +276,7 @@ static void end_mapping(Loader *context)
 
 static void add_alias(Loader *context, const yaml_event_t *event)
 {
-    Document *document = current_document(context);
-    Node *target = hashtable_get(document->anchors, event->data.alias.anchor);
+    Node *target = document_resolve_anchor(current_document(context), event->data.alias.anchor);
     if(NULL == target)
     {
         loader_debug("uh oh! alias anchor is not known");
@@ -396,6 +382,7 @@ static ScalarKind resolve_scalar_kind(const Loader *context, const yaml_event_t 
 
     if(NULL != event->data.scalar.tag)
     {
+        loader_debug("found event tag resolving scalar");
         kind = tag_to_scalar_kind(event);
     }
     else if(YAML_SINGLE_QUOTED_SCALAR_STYLE == event->data.scalar.style ||
@@ -447,6 +434,7 @@ static void add_scalar(Loader *context, const yaml_event_t *event)
 
     if(NULL != event->data.scalar.tag)
     {
+        loader_debug("found event tag adding scalar");
         node_set_tag(scalar, event->data.scalar.tag, strlen((char *)event->data.scalar.tag));
     }
     set_anchor(context, node(scalar), event->data.scalar.anchor);
@@ -514,20 +502,22 @@ static bool dispatch_event(Loader *context, yaml_event_t *event)
             break;
     }
 
+    yaml_event_delete(event);
+
     return true;
 }
 
 static void event_loop(Loader *context, yaml_parser_t *parser)
 {
     yaml_event_t event;
-    memset(&event, 0, sizeof(event));
 
     while(1)
     {
         if(!yaml_parser_parse(parser, &event))
         {
+            yaml_event_delete(&event);
             interpret_yaml_error(context, parser);
-            return;
+            break;
         }
         if(!dispatch_event(context, &event))
         {
@@ -550,26 +540,32 @@ static Maybe(DocumentSet) parse(const String *input_name, yaml_parser_t *parser,
 
     event_loop(&context, parser);
 
+    if(NULL != context.key_cache)  // N.B. if the final mapping value is rejected...
+    {
+        loader_trace("detaching unused cached mapping key");
+        detach(&context, context.key_cache);
+        context.key_cache = NULL;
+    }
+
+    vector_destroy(context.detached, node_destroyer);
+
     if(vector_is_empty(context.errors))
     {
         loader_debug("found %zu documents.", document_set_size(context.documents));
 
         if(0 == document_set_size(context.documents))
         {
-            dispose_document_set(context.documents);
             add_loader_error(context.errors, NO_POSITION, ERR_NO_DOCUMENTS_FOUND);
-            return fail(DocumentSet, context.errors);
+            goto failure;
         }
 
-        context.documents->input_name = string_clone(input_name);
-
         dispose_vector(context.errors);
+        context.documents->input_name = string_clone(input_name);
         return just(DocumentSet, context.documents);
     }
 
-    vector_destroy(context.detached, node_destroyer);
+  failure:
     dispose_document_set(context.documents);
-
     return fail(DocumentSet, context.errors);
 }
 

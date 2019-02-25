@@ -48,7 +48,7 @@ struct node_s
     Position               position;
     const struct vtable_s *vtable;
     struct node_s         *parent;
-    uint8_t               *anchor;
+    String                *anchor;
 };
 
 struct document_s
@@ -83,8 +83,8 @@ struct scalar_s
         Node base;
         struct node_s;
     };
-    ScalarKind    kind;
-    String       *value;
+    ScalarKind  kind;
+    String     *value;
 };
 
 typedef struct scalar_s Scalar;
@@ -96,7 +96,7 @@ struct sequence_s
         Node base;
         struct node_s;
     };
-    Vector       *values;
+    Vector *values;
 };
 
 typedef struct sequence_s Sequence;
@@ -108,7 +108,7 @@ struct mapping_s
         Node base;
         struct node_s;
     };
-    Hashtable    *values;
+    Hashtable *values;
 };
 
 typedef struct mapping_s Mapping;
@@ -161,70 +161,54 @@ void         node_init(Node *self, NodeKind kind, const struct vtable_s *vtable)
 
 Node        *node_narrow(Node *instance, NodeKind kind, const char * restrict file, int line);
 const Node  *const_node_narrow(const Node *instance, NodeKind kind, const char * restrict file, int line);
-#define      CHECKED_CAST(OBJ, KIND, TYPE) (TYPE *)node_narrow((OBJ), (KIND), __FILE__, __LINE__)
-#define      CONST_CHECKED_CAST(OBJ, KIND, TYPE) (const TYPE *)const_node_narrow((OBJ), (KIND), __FILE__, __LINE__)
+#define      CHECKED_CAST(OBJ, KIND, TYPE) (TYPE *)node_narrow((Node *)(OBJ), (KIND), __FILE__, __LINE__)
+#define      CONST_CHECKED_CAST(OBJ, KIND, TYPE) (const TYPE *)const_node_narrow((const Node *)(OBJ), (KIND), __FILE__, __LINE__)
 
 #define      node(SELF) _Generic((SELF),                        \
-                                 Document *: ((Node *)(SELF)),  \
-                                 Mapping *: ((Node *)(SELF)),   \
-                                 Sequence *: ((Node *)(SELF)),  \
-                                 Scalar *: ((Node *)(SELF)),    \
-                                 Alias *: ((Node *)(SELF)),     \
                                  Node *: (SELF),                \
-                                 void *: ((Node *)(SELF))       \
+                                 default: ((Node *)(SELF))      \
                                  )
 #define      const_node(SELF) _Generic((SELF),                          \
-                                       Document *: ((const Node *)(SELF)), \
-                                       Mapping *: ((const Node *)(SELF)), \
-                                       Sequence *: ((const Node *)(SELF)), \
-                                       Scalar *: ((const Node *)(SELF)), \
-                                       Alias *: ((const Node *)(SELF)), \
-                                       Node *: ((const Node *)(SELF)),  \
-                                       void *: ((const Node *)(SELF)),        \
-                                       const Document *: ((const Node *)(SELF)), \
-                                       const Mapping *: ((const Node *)(SELF)), \
-                                       const Sequence *: ((const Node *)(SELF)), \
-                                       const Scalar *: ((const Node *)(SELF)), \
-                                       const Alias *: ((const Node *)(SELF)), \
                                        const Node *: (SELF),            \
-                                       const void *: ((const Node *)(SELF)) \
+                                       default: ((const Node *)(SELF))  \
                                        )
 
-#define      node_position(SELF) (SELF).position
+#define      node_position(SELF) node((SELF)).position
 const char  *(node_kind_name)(const Node *value);
 #define      node_kind_name(SELF) node_kind_name(const_node((SELF)))
 
-#define      node_kind(SELF) (SELF)->tag.kind
-#define      node_name(SELF) (SELF)->tag.name
-#define      node_parent(SELF) (SELF)->parent
-#define      node_size(SELF) (SELF)->vtable->size(const_node(SELF))
+#define      node_kind(SELF) const_node((SELF))->tag.kind
+#define      node_name(SELF) const_node((SELF))->tag.name
+#define      node_parent(SELF) const_node((SELF))->parent
+#define      node_size(SELF) const_node((SELF))->vtable->size(const_node(SELF))
 
 bool         (node_equals)(const Node *one, const Node *two);
 #define      node_equals(one, two) node_equals(const_node((one)), const_node((two)))
 bool         node_comparitor(const void *one, const void *two);
 
 void         (node_set_tag)(Node *target, const uint8_t *value, size_t length);
-#define      node_set_tag(SELF, value, length) node_set_tag(node((SELF)), (value), (length))
-void         (node_set_anchor)(Node *target, const uint8_t *value, size_t length);
-#define      node_set_anchor(SELF, value, length) node_set_anchor(node((SELF)), (value), (length))
+#define      node_set_tag(SELF, VALUE, LENGTH) node_set_tag(node((SELF)), (VALUE), (LENGTH))
+void         (node_set_anchor)(Node *target, String *value);
+#define      node_set_anchor(SELF, VALUE) node_set_anchor(node((SELF)), (VALUE))
 
 /*
  * Document API
  */
 
-#define      document_root(SELF) (SELF)->root
+#define      document_root(SELF) document((SELF))->root
 void         document_set_root(Document *doc, Node *root);
+void         document_track_anchor(Document *self, uint8_t *value, Node *target);
+Node        *document_resolve_anchor(Document *self, uint8_t *value);
 
 #define      document(SELF) _Generic((SELF),\
-                                  Node *: (CHECKED_CAST((SELF), DOCUMENT, Document)), \
-                                  void *: (CHECKED_CAST((SELF), DOCUMENT, Document)) \
-                                  )
+                                     Document *: (SELF),                \
+                                     default: (CHECKED_CAST((SELF), DOCUMENT, Document)) \
+                                     )
 #define      const_document(SELF) _Generic((SELF),\
-                                        Node *: (CONST_CHECKED_CAST((SELF), DOCUMENT, Document)), \
-                                        void *: (CONST_CHECKED_CAST((SELF), DOCUMENT, Document)), \
-                                        const Node *: (CONST_CHECKED_CAST((SELF), DOCUMENT, Document)), \
-                                        const void *: (CONST_CHECKED_CAST((SELF), DOCUMENT, Document)) \
-                                        )
+                                           const Document *: (SELF),    \
+                                           Document *: (const Document *)(SELF), \
+                                           default: (CONST_CHECKED_CAST((SELF), DOCUMENT, Document)) \
+                                           )
 #define      is_document(SELF) (DOCUMENT == node_kind(node((SELF))))
 
 /*
@@ -233,21 +217,20 @@ void         document_set_root(Document *doc, Node *root);
 
 const char  *scalar_kind_name(const Scalar *value);
 
-#define      scalar_value(SELF) (SELF)->value
-#define      scalar_kind(SELF) (SELF)->kind
-#define      scalar_boolean_is_true(SELF) (0 == memcmp("true", strdta((SELF)->value), 4))
-#define      scalar_boolean_is_false(SELF) (0 == memcmp("false", strdta((SELF)->value), 5))
+#define      scalar_value(SELF) scalar((SELF))->value
+#define      scalar_kind(SELF) scalar((SELF))->kind
+#define      scalar_boolean_is_true(SELF) (0 == memcmp("true", strdta(scalar((SELF))->value), 4))
+#define      scalar_boolean_is_false(SELF) (0 == memcmp("false", strdta(scalar((SELF))->value), 5))
 
 #define      scalar(SELF) _Generic((SELF),                              \
-                                   Node *: CHECKED_CAST((SELF), SCALAR, Scalar), \
-                                   void *: CHECKED_CAST((SELF), SCALAR, Scalar) \
+                                   Scalar *: (SELF),                    \
+                                   default: CHECKED_CAST((SELF), SCALAR, Scalar) \
                                    )
 #define      const_scalar(SELF) _Generic((SELF),                        \
-                                         Node *: CONST_CHECKED_CAST((SELF), SCALAR, Scalar), \
-                                         void *: CONST_CHECKED_CAST((SELF), SCALAR, Scalar), \
-                                         const Node *: CONST_CHECKED_CAST((SELF), SCALAR, Scalar), \
-                                         const void *: CONST_CHECKED_CAST((SELF), SCALAR, Scalar) \
-                                   )
+                                         const Scalar *: (SELF),        \
+                                         Scalar *: (const Scalar *)(SELF), \
+                                         default: CONST_CHECKED_CAST((SELF), SCALAR, Scalar) \
+                                         )
 
 #define      is_scalar(SELF) (SCALAR == node_kind(node((SELF))))
 #define      is_string(SELF) (is_scalar((SELF)) && SCALAR_STRING == scalar_kind(scalar((SELF))))
@@ -262,23 +245,22 @@ const char  *scalar_kind_name(const Scalar *value);
  * Sequence API
  */
 
-#define      sequence_get(SELF, INDEX) vector_get((SELF)->values, (INDEX))
+#define      sequence_get(SELF, INDEX) vector_get(const_sequence((SELF))->values, (INDEX))
 void         sequence_add(Sequence *seq, Node *item);
 
 typedef bool (*sequence_iterator)(Node *each, void *context);
 bool         sequence_iterate(const Sequence *seq, sequence_iterator iterator, void *context);
 
 #define      sequence(SELF) _Generic((SELF),\
-                                     Node *: CHECKED_CAST((SELF), SEQUENCE, Sequence), \
-                                     void *:CHECKED_CAST((SELF), SEQUENCE, Sequence) \
+                                     Sequence *: (SELF),                \
+                                     default: CHECKED_CAST((SELF), SEQUENCE, Sequence) \
                                      )
 #define      const_sequence(SELF) _Generic((SELF),\
-                                           Node *: (CONST_CHECKED_CAST((SELF), SEQUENCE, Sequence)), \
-                                           void *:(CONST_CHECKED_CAST((SELF), SEQUENCE, Sequence)), \
-                                           const Node *: (CONST_CHECKED_CAST((SELF), SEQUENCE, Sequence)), \
-                                           const void *: (CONST_CHECKED_CAST((SELF), SEQUENCE, Sequence)) \
+                                           const Sequence *: (SELF),    \
+                                           Sequence *: (const Sequence *)(SELF), \
+                                           default: (CONST_CHECKED_CAST((SELF), SEQUENCE, Sequence)) \
                                            )
-#define      is_sequence(SELF) (SEQUENCE == node_kind(node((SELF))))
+#define      is_sequence(SELF) (SEQUENCE == node_kind((SELF)))
 
 /*
  * Mapping API
@@ -286,37 +268,35 @@ bool         sequence_iterate(const Sequence *seq, sequence_iterator iterator, v
 
 Node        *mapping_get(const Mapping *map, String *key);
 bool         mapping_contains(const Mapping *map, String *key);
-bool         mapping_put(Mapping *self, String *key, Node *value);
+bool         mapping_put(Mapping *self, Scalar *key, Node *value);
 
 typedef bool (*mapping_iterator)(String *key, Node *value, void *context);
 bool         mapping_iterate(const Mapping *map, mapping_iterator iterator, void *context);
 
 #define      mapping(SELF) _Generic((SELF),\
-                                    Node *: CHECKED_CAST((SELF), MAPPING, Mapping), \
-                                    void *: CHECKED_CAST((SELF), MAPPING, Mapping) \
+                                    Mapping *: (SELF),                  \
+                                    default: CHECKED_CAST((SELF), MAPPING, Mapping) \
                                     )
 #define      const_mapping(SELF) _Generic((SELF),\
-                                          Node *:CONST_CHECKED_CAST((SELF), MAPPING, Mapping), \
-                                          void *: CONST_CHECKED_CAST((SELF), MAPPING, Mapping), \
-                                          const Node *: CONST_CHECKED_CAST((SELF), MAPPING, Mapping), \
-                                          const void *: CONST_CHECKED_CAST((SELF), MAPPING, Mapping) \
+                                          const Mapping *: (SELF),      \
+                                          Mapping *: (const Mapping *)(SELF), \
+                                          default: CONST_CHECKED_CAST((SELF), MAPPING, Mapping), \
                                           )
-#define      is_mapping(SELF) (MAPPING == node_kind(node((SELF))))
+#define      is_mapping(SELF) (MAPPING == node_kind((SELF)))
 
 /*
  * Alias API
  */
 
-#define      alias_target(SELF) (SELF)->target
+#define      alias_target(SELF) alias((SELF))->target
 
 #define      alias(SELF) _Generic((SELF),\
-                                  Node *: (CHECKED_CAST((SELF), ALIAS, Alias)), \
-                                  void *: (CHECKED_CAST((SELF), ALIAS, Alias)) \
+                                  Alias *: (SELF),                      \
+                                  default: (CHECKED_CAST((SELF), ALIAS, Alias)) \
                                   )
 #define      const_alias(SELF) _Generic((SELF),\
-                                        Node *: (CONST_CHECKED_CAST((SELF), ALIAS, Alias)), \
-                                        void *: (CONST_CHECKED_CAST((SELF), ALIAS, Alias)), \
-                                        const Node *: (CONST_CHECKED_CAST((SELF), ALIAS, Alias)), \
-                                        const void *: (CONST_CHECKED_CAST((SELF), ALIAS, Alias)) \
+                                        const Alias *: (SELF),          \
+                                        Alias *: (const Alias *)(SELF), \
+                                        default: (CONST_CHECKED_CAST((SELF), ALIAS, Alias)) \
                                         )
-#define      is_alias(SELF) (ALIAS == node_kind(node((SELF))))
+#define      is_alias(SELF) (ALIAS == node_kind((SELF)))

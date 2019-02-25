@@ -49,21 +49,19 @@ int main(int argc, char **argv)
     srunner_add_suite(runner, model_suite());
     srunner_add_suite(runner, nodelist_suite());
     srunner_add_suite(runner, loader_suite());
-    srunner_add_suite(runner, evaluator_suite());
+    /* srunner_add_suite(runner, evaluator_suite()); */
 
     switch(argc)
     {
         case 1:
             srunner_run_all(runner, CK_NORMAL);
             break;
-#ifndef CHECK_0_9_8
         case 2:
             srunner_run(runner, argv[1], NULL, CK_NORMAL);
             break;
         case 3:
             srunner_run(runner, argv[1], argv[2], CK_NORMAL);
             break;
-#endif
     }
 
     int failures = srunner_ntests_failed(runner);

@@ -57,9 +57,11 @@ void (dispose_node)(Node *value)
     {
         return;
     }
+
     value->vtable->free(value);
     free(value->tag.name);
-    free(value->anchor);
+    dispose_string(value->anchor);
+
     free(value);
 }
 
@@ -71,12 +73,11 @@ void (node_set_tag)(Node *self, const uint8_t *value, size_t length)
     self->tag.name[length] = '\0';
 }
 
-void (node_set_anchor)(Node *self, const uint8_t *value, size_t length)
+void (node_set_anchor)(Node *self, String *value)
 {
     ENSURE_NONNULL_ELSE_VOID(self, value);
-    self->anchor = xcalloc(length + 1);
-    memcpy(self->anchor, value, length);
-    self->anchor[length] = '\0';
+
+    self->anchor = value;
 }
 
 static bool tag_equals(const uint8_t *one, const uint8_t *two)
@@ -115,10 +116,11 @@ bool (node_equals)(const Node *one, const Node *two)
     {
         return false;
     }
+
     return one->vtable->equals(one, two);
 }
 
 bool node_comparitor(const void *one, const void *two)
- {
-     return node_equals(one, two);
- }
+{
+    return node_equals(one, two);
+}

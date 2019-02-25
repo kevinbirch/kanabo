@@ -7,6 +7,9 @@
 
 static DocumentSet *model_fixture = NULL;
 
+
+
+
 #define assert_loader_failure(CONTEXT, EXPECTED_RESULT)                 \
     do                                                                  \
     {                                                                   \
@@ -15,6 +18,18 @@ static DocumentSet *model_fixture = NULL;
         LoaderError *e = vector_last((CONTEXT).error);                  \
         assert_uint_eq((EXPECTED_RESULT), e->code);                     \
     } while(0)
+
+static inline void dispose_maybe(Maybe(DocumentSet) maybe)
+{
+    if(is_nothing(maybe))
+    {
+        loader_dispose_errors(from_nothing(maybe));
+    }
+    else
+    {
+        dispose_document_set(from_just(maybe));
+    }
+}
 
 static Maybe(DocumentSet) load(const char *filename, DuplicateKeyStrategy strategy)
 {
@@ -27,27 +42,33 @@ static Maybe(DocumentSet) load(const char *filename, DuplicateKeyStrategy strate
     }
     assert_just(input);
 
-    return load_yaml(from_just(input), strategy);
+    Maybe(DocumentSet) documents = load_yaml(from_just(input), strategy);
+    
+    dispose_input(from_just(input));
+
+    return documents;
 }
 
-static DocumentSet *must_load(const char *filename)
+static DocumentSet *must_load(const char *filename, DuplicateKeyStrategy strategy)
 {
     assert_not_null(filename);
     Maybe(Input) input = make_input_from_file(filename);
     assert_just(input);
 
-    Maybe(DocumentSet) yaml = load_yaml(from_just(input), DUPE_FAIL);
+    Maybe(DocumentSet) yaml = load_yaml(from_just(input), strategy);
     assert_just(yaml);
 
     DocumentSet *documents = from_just(yaml);
     assert_uint_eq(1, document_set_size(documents));
+
+    dispose_input(from_just(input));
 
     return documents;
 }
 
 static void tagged_yaml_setup(void)
 {
-    model_fixture = must_load("test-resources/tagged.yaml");
+    model_fixture = must_load("test-resources/tagged.yaml", DUPE_FAIL);
 
     Node *root = document_set_get_root(model_fixture, 0);
     assert_not_null(root);
@@ -58,7 +79,7 @@ static void tagged_yaml_setup(void)
 
 static void anchor_yaml_setup(void)
 {
-    model_fixture = must_load("test-resources/anchor.yaml");
+    model_fixture = must_load("test-resources/anchor.yaml", DUPE_FAIL);
 
     Node *root = document_set_get_root(model_fixture, 0);
     assert_not_null(root);
@@ -69,7 +90,7 @@ static void anchor_yaml_setup(void)
 
 static void key_anchor_yaml_setup(void)
 {
-    model_fixture = must_load("test-resources/key-anchor.yaml");
+    model_fixture = must_load("test-resources/key-anchor.yaml", DUPE_FAIL);
 
     Node *root = document_set_get_root(model_fixture, 0);
     assert_not_null(root);
@@ -84,30 +105,18 @@ static void loader_teardown(void)
     model_fixture = NULL;
 }
 
-static inline void dispose_maybe(Maybe(DocumentSet) maybe)
+START_TEST (alias_loop)
 {
-    if(is_nothing(maybe))
-    {
-        loader_dispose_errors(from_nothing(maybe));
-    }
-    else
-    {
-        dispose_document_set(from_just(maybe));
-    }
+    Maybe(DocumentSet) documents = load("test-resources/alias-loop.yaml", DUPE_FAIL);
+    assert_loader_failure(documents, ERR_ALIAS_LOOP);
+    dispose_maybe(documents);
 }
+END_TEST
 
 START_TEST (non_scalar_key)
 {
     Maybe(DocumentSet) documents = load("test-resources/non-scalar-key.yaml", DUPE_FAIL);
     assert_loader_failure(documents, ERR_NON_SCALAR_KEY);
-    dispose_maybe(documents);
-}
-END_TEST
-
-START_TEST (alias_loop)
-{
-    Maybe(DocumentSet) documents = load("test-resources/alias-loop.yaml", DUPE_FAIL);
-    assert_loader_failure(documents, ERR_ALIAS_LOOP);
     dispose_maybe(documents);
 }
 END_TEST
@@ -205,12 +214,10 @@ static void assert_model_state(DocumentSet *model)
 
 START_TEST (load_from_file)
 {
-    Maybe(DocumentSet) documents = load("test-resources/loader-fixture.yaml", DUPE_FAIL);
-    assert_just(documents);
+    DocumentSet *documents = must_load("test-resources/loader-fixture.yaml", DUPE_FAIL);
+    assert_model_state(documents);
 
-    assert_model_state(from_just(documents));
-
-    dispose_maybe(documents);
+    dispose_document_set(documents);
 }
 END_TEST
 
@@ -347,10 +354,9 @@ END_TEST
 
 START_TEST (duplicate_clobber)
 {
-    Maybe(DocumentSet) documents = load("test-resources/duplicate-key.yaml", DUPE_CLOBBER);
-    assert_just(documents);
+    DocumentSet *documents = must_load("test-resources/duplicate-key.yaml", DUPE_CLOBBER);
 
-    Node *root = document_set_get_root(from_just(documents), 0);
+    Node *root = document_set_get_root(documents, 0);
     assert_node_kind(root, MAPPING);
     assert_node_size(root, 3);
 
@@ -358,21 +364,20 @@ START_TEST (duplicate_clobber)
     Node *one = mapping_get(mapping(root), key);
     assert_not_null(one);
     assert_node_kind(one, SCALAR);
-    assert_scalar_value(one, "bar");
+    assert_scalar_value(one, "bar2");
     assert_scalar_kind(one, SCALAR_STRING);
 
     dispose_string(key);
-    dispose_maybe(documents);
+    dispose_document_set(documents);
 }
 END_TEST
 
 START_TEST (duplicate_warn)
 {
     fprintf(stderr, "\n!!! EXPECTED duplicate mapping key warning should follow...\n");
-    Maybe(DocumentSet) documents = load("test-resources/duplicate-key.yaml", DUPE_WARN);
-    assert_just(documents);
+    DocumentSet *documents = must_load("test-resources/duplicate-key.yaml", DUPE_WARN);
 
-    Node *root = document_set_get_root(from_just(documents), 0);
+    Node *root = document_set_get_root(documents, 0);
     assert_node_kind(root, MAPPING);
     assert_node_size(root, 3);
 
@@ -380,11 +385,11 @@ START_TEST (duplicate_warn)
     Node *one = mapping_get(mapping(root), key);
     assert_not_null(one);
     assert_node_kind(one, SCALAR);
-    assert_scalar_value(one, "bar");
+    assert_scalar_value(one, "bar2");
     assert_scalar_kind(one, SCALAR_STRING);
 
     dispose_string(key);
-    dispose_maybe(documents);
+    dispose_document_set(documents);
 }
 END_TEST
 
@@ -392,6 +397,7 @@ START_TEST (duplicate_fail)
 {
     Maybe(DocumentSet) documents = load("test-resources/duplicate-key.yaml", DUPE_FAIL);
     assert_loader_failure(documents, ERR_DUPLICATE_KEY);
+
     dispose_maybe(documents);
 }
 END_TEST
@@ -399,8 +405,8 @@ END_TEST
 Suite *loader_suite(void)
 {
     TCase *bad_input_case = tcase_create("bad input");
-    tcase_add_test(bad_input_case, non_scalar_key);
     tcase_add_test(bad_input_case, alias_loop);
+    tcase_add_test(bad_input_case, non_scalar_key);
     tcase_add_test(bad_input_case, missing_anchor);
 
     TCase *file_case = tcase_create("file");
@@ -429,6 +435,7 @@ Suite *loader_suite(void)
     suite_add_tcase(loader, file_case);
     suite_add_tcase(loader, tag_case);
     suite_add_tcase(loader, anchor_case);
+    suite_add_tcase(loader, key_anchor_case);
     suite_add_tcase(loader, duplicate_case);
 
     return loader;

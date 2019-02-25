@@ -1,6 +1,6 @@
-one: foo
+one: foo1
 two:
-  - foo
-  - bar
-one: bar
-three: baz
+  - foo2
+  - bar1
+one: bar2
+three: baz1

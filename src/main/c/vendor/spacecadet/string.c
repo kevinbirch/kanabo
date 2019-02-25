@@ -45,10 +45,6 @@ String *make_string(const char *value)
 {
     size_t length = strlen(value);
     String *self = string_alloc(length);
-    if(NULL == self)
-    {
-        return NULL;
-    }
 
     return string_init(self, value, length);
 }
@@ -56,10 +52,6 @@ String *make_string(const char *value)
 String *make_string_with_bytestring(const uint8_t *value, size_t length)
 {
     String *self = string_alloc(length);
-    if(NULL == self)
-    {
-        return NULL;
-    }
 
     return string_init_with_bytestring(self, value, length);
 }
@@ -92,11 +84,6 @@ String *vformat(const char *format, va_list format_args)
 
     size_t length = (size_t)count;
     String *self = string_alloc(length);
-    if(NULL == self)
-    {
-        return NULL;
-    }
-
     self->length = length;
 
     errno = 0;
@@ -123,11 +110,6 @@ void dispose_string(String *self)
 String *string_clone(const String *self)
 {
     String *that = string_alloc(self->length);
-    if(NULL == that)
-    {
-        return NULL;
-    }
-
     return string_init(that, (const char *)self->value, self->length);
 }
 
@@ -263,19 +245,10 @@ static inline MutableString *mstring_alloc(const size_t capacity)
     return xcalloc(calculate_allocation_size(capacity));
 }
 
-static inline bool mstring_realloc(MutableString **self, size_t capacity)
+static inline void mstring_realloc(MutableString **self, size_t capacity)
 {
-    MutableString *cache = *self;
-    *self = realloc(*self, calculate_allocation_size(capacity));
-    if(NULL == *self)
-    {
-        *self = cache;
-        return false;
-    }
-
+    *self = xrealloc(*self, calculate_allocation_size(capacity));
     (*self)->capacity = capacity;
-
-    return true;
 }
 
 static inline MutableString *mstring_init(MutableString *self, size_t capacity)
@@ -289,22 +262,12 @@ static inline MutableString *mstring_init(MutableString *self, size_t capacity)
 MutableString *make_mstring(size_t capacity)
 {
     MutableString *self = mstring_alloc(capacity);
-    if(NULL == self)
-    {
-        return NULL;
-    }
-
     return mstring_init(self, capacity);
 }
 
 MutableString *make_mstring_with_char(const uint8_t value)
 {
     MutableString *self = make_mstring(1);
-    if(NULL == self)
-    {
-        return NULL;
-    }
-
     mstring_append(&self, value);
 
     return self;
@@ -314,11 +277,6 @@ MutableString *make_mstring_with_c_str(const char *value)
 {
     size_t length = strlen(value);
     MutableString *self = make_mstring(length);
-    if(NULL == self)
-    {
-        return NULL;
-    }
-
     mstring_append(&self, value);
 
     return self;
@@ -327,11 +285,6 @@ MutableString *make_mstring_with_c_str(const char *value)
 MutableString *make_mstring_with_string(const String *value)
 {
     MutableString *self = make_mstring(value->length);
-    if(NULL == self)
-    {
-        return NULL;
-    }
-
     mstring_append(&self, value);
 
     return self;
@@ -445,10 +398,6 @@ bool mstring_has_capacity(const MutableString *self, size_t length)
 MutableString *mstring_clone(const MutableString *self)
 {
     MutableString *that = mstring_alloc(self->capacity);
-    if(NULL == that)
-    {
-        return NULL;
-    }
     mstring_init(that, self->capacity);
     if(self->base.length)
     {
@@ -461,11 +410,6 @@ MutableString *mstring_clone(const MutableString *self)
 String *mstring_as_string(const MutableString *self)
 {
     String *that = string_alloc(self->base.length);
-    if(NULL == self)
-    {
-        return NULL;
-    }
-
     return string_init(that, (const char *)self->base.value, self->base.length);
 }
 
@@ -482,11 +426,6 @@ const char *mstring_as_c_str(const MutableString *self)
 char *mstring_copy(const MutableString *self)
 {
     char *result = xcalloc(self->base.length + 1);
-    if(NULL == result)
-    {
-        return NULL;
-    }
-
     memcpy(result, self->base.value, self->base.length);
     result[self->base.length] = '\0';
 
@@ -498,16 +437,14 @@ static inline size_t calculate_new_capacity(size_t capacity)
     return (capacity * 3) / 2 + 1;
 }
 
-static inline bool ensure_capacity(MutableString **self, size_t length)
+static inline void ensure_capacity(MutableString **self, size_t length)
 {
     if(!mstring_has_capacity(*self, length))
     {
         size_t min_capacity = (*self)->base.length + length;
         size_t new_capacity = calculate_new_capacity(min_capacity);
-        return mstring_realloc(self, new_capacity);
+        mstring_realloc(self, new_capacity);
     }
-
-    return true;
 }
 
 static inline void append(MutableString *self, const void *data, size_t length)
@@ -517,77 +454,41 @@ static inline void append(MutableString *self, const void *data, size_t length)
     self->base.value[self->base.length] = '\0';
 }
 
-bool mstring_append_byte(MutableString **self, const uint8_t value)
+void mstring_append_byte(MutableString **self, const uint8_t value)
 {
-    if(!ensure_capacity(self, 1))
-    {
-        return false;
-    }
-
+    ensure_capacity(self, 1);
     append(*self, &value, 1);
-
-    return true;
 }
 
-bool mstring_append_char(MutableString **self, const char value)
+void mstring_append_char(MutableString **self, const char value)
 {
-    if(!ensure_capacity(self, 1))
-    {
-        return false;
-    }
-
+    ensure_capacity(self, 1);
     append(*self, &value, 1);
-
-    return true;
 }
 
-bool mstring_append_c_str(MutableString **self, const char *value)
+void mstring_append_c_str(MutableString **self, const char *value)
 {
     size_t length = strlen(value);
-    if(!ensure_capacity(self, length))
-    {
-        return false;
-    }
-
+    ensure_capacity(self, length);
     append(*self, value, length);
-
-    return true;
 }
 
-bool mstring_append_string(MutableString **self, const String *string)
+void mstring_append_string(MutableString **self, const String *string)
 {
-    if(!ensure_capacity(self, string->length))
-    {
-        return false;
-    }
-
+    ensure_capacity(self, string->length);
     append(*self, string->value, string->length);
-
-    return true;
 }
 
-bool mstring_append_mstring(MutableString **self, const MutableString *string)
+void mstring_append_mstring(MutableString **self, const MutableString *string)
 {
-    if(!ensure_capacity(self, string->base.length))
-    {
-        return false;
-    }
-
+    ensure_capacity(self, string->base.length);
     append(*self, string->base.value, string->base.length);
-
-    return true;
 }
 
-bool mstring_append_stream(MutableString **self, const uint8_t *value, size_t length)
+void mstring_append_stream(MutableString **self, const uint8_t *value, size_t length)
 {
-    if(!ensure_capacity(self, length))
-    {
-        return false;
-    }
-
+    ensure_capacity(self, length);
     append(*self, value, length);
-
-    return true;
 }
 
 bool mformat(MutableString **self, const char *format, ...)
@@ -617,11 +518,8 @@ bool mvformat(MutableString **self, const char *format, va_list format_args)
     }
 
     size_t length = (size_t)count;
-    if(!ensure_capacity(self, length))
-    {
-        return false;
-    }
-
+    ensure_capacity(self, length);
+    
     char *end = ((char *)(*self)->base.value) + (*self)->base.length;
     errno = 0;
     count = vsnprintf(end, length + 1, format, format_args);  // N.B. - sizeof(self->value) == length + 1
