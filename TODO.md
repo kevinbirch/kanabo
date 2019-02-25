@@ -4,8 +4,12 @@
 
 ## fixes
 
+* use String for node name
+* don't print dupe warning in loader, add to result and print in main logic
 * circle ci build
   * asan flags: strict_string_checks=true
+* use xalloc in hashtable
+  * eliminate unnecessary calls to panic
 * code coverage
 * bug printing path query results causes next command parse to crash
 * loader
