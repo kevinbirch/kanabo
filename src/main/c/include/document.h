@@ -42,7 +42,7 @@ struct node_s
     struct
     {
         NodeKind  kind;
-        uint8_t  *name;
+        String   *name;
     } tag;
 
     Position               position;
@@ -186,8 +186,8 @@ bool         (node_equals)(const Node *one, const Node *two);
 #define      node_equals(one, two) node_equals(const_node((one)), const_node((two)))
 bool         node_comparitor(const void *one, const void *two);
 
-void         (node_set_tag)(Node *target, const uint8_t *value, size_t length);
-#define      node_set_tag(SELF, VALUE, LENGTH) node_set_tag(node((SELF)), (VALUE), (LENGTH))
+void         (node_set_tag)(Node *target, String *value);
+#define      node_set_tag(SELF, VALUE) node_set_tag(node((SELF)), (VALUE))
 void         (node_set_anchor)(Node *target, String *value);
 #define      node_set_anchor(SELF, VALUE) node_set_anchor(node((SELF)), (VALUE))
 
@@ -209,7 +209,7 @@ Node        *document_resolve_anchor(Document *self, uint8_t *value);
                                            Document *: (const Document *)(SELF), \
                                            default: (CONST_CHECKED_CAST((SELF), DOCUMENT, Document)) \
                                            )
-#define      is_document(SELF) (DOCUMENT == node_kind(node((SELF))))
+#define      is_document(SELF) (DOCUMENT == node_kind((SELF)))
 
 /*
  * Scalar API
@@ -232,7 +232,7 @@ const char  *scalar_kind_name(const Scalar *value);
                                          default: CONST_CHECKED_CAST((SELF), SCALAR, Scalar) \
                                          )
 
-#define      is_scalar(SELF) (SCALAR == node_kind(node((SELF))))
+#define      is_scalar(SELF) (SCALAR == node_kind((SELF)))
 #define      is_string(SELF) (is_scalar((SELF)) && SCALAR_STRING == scalar_kind(scalar((SELF))))
 #define      is_integer(SELF) (is_scalar((SELF)) && SCALAR_INTEGER == scalar_kind(scalar((SELF))))
 #define      is_real(SELF) (is_scalar((SELF)) && SCALAR_REAL == scalar_kind(scalar((SELF))))

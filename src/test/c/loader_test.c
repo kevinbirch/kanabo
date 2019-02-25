@@ -7,9 +7,6 @@
 
 static DocumentSet *model_fixture = NULL;
 
-
-
-
 #define assert_loader_failure(CONTEXT, EXPECTED_RESULT)                 \
     do                                                                  \
     {                                                                   \

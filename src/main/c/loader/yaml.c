@@ -228,8 +228,8 @@ static void start_sequence(Loader *context, const yaml_event_t *event)
 
     if(NULL != event->data.sequence_start.tag)
     {
-        size_t len = strlen((char *)event->data.sequence_start.tag);
-        node_set_tag(sequence, event->data.sequence_start.tag, len);
+        loader_debug("found event tag adding sequence");
+        node_set_tag(sequence, make_string((const char *)event->data.sequence_start.tag));
     }
     set_anchor(context, node(sequence), event->data.sequence_start.anchor);
 
@@ -255,8 +255,8 @@ static void start_mapping(Loader *context, const yaml_event_t *event)
 
     if(NULL != event->data.mapping_start.tag)
     {
-        size_t length = strlen((char *)event->data.mapping_start.tag);
-        node_set_tag(mapping, event->data.mapping_start.tag, length);
+        loader_debug("found event tag adding mapping");
+        node_set_tag(mapping, make_string((const char *)event->data.mapping_start.tag));
     }
     set_anchor(context, node(mapping), event->data.mapping_start.anchor);
 
@@ -435,7 +435,7 @@ static void add_scalar(Loader *context, const yaml_event_t *event)
     if(NULL != event->data.scalar.tag)
     {
         loader_debug("found event tag adding scalar");
-        node_set_tag(scalar, event->data.scalar.tag, strlen((char *)event->data.scalar.tag));
+        node_set_tag(scalar, make_string((const char *)event->data.scalar.tag));
     }
     set_anchor(context, node(scalar), event->data.scalar.anchor);
 

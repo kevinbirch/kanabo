@@ -130,6 +130,11 @@ uint8_t string_get(const String *self, size_t index)
 
 bool string_equals(const String *self, const String *other)
 {
+    if(NULL == self || NULL == other)
+    {
+        return false;
+    }
+
     if(self->length != other->length)
     {
         return false;

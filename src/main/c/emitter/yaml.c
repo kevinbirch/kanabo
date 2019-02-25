@@ -26,7 +26,7 @@ static bool emit_scalar(const Scalar *each, void *context)
 {
     yaml_char_t *tag = NULL;
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
-    uint8_t *name = node_name(each);
+    yaml_char_t *name = (yaml_char_t *)strdta(node_name(each));
 
     switch(scalar_kind(each))
     {
@@ -64,8 +64,8 @@ static bool emit_sequence(Sequence *value, void *context)
     yaml_emitter_t *emitter = (yaml_emitter_t *)context;
     yaml_event_t event;
 
-    uint8_t *name = node_name(value);
-    yaml_char_t *tag = NULL == name ? (yaml_char_t *)YAML_DEFAULT_SEQUENCE_TAG : (yaml_char_t *)name;
+    yaml_char_t *name = (yaml_char_t *)strdta(node_name(value));
+    yaml_char_t *tag = NULL == name ? (yaml_char_t *)YAML_DEFAULT_SEQUENCE_TAG : name;
 
     yaml_sequence_start_event_initialize(&event, NULL, tag, NULL == name, YAML_BLOCK_SEQUENCE_STYLE);
     if (!yaml_emitter_emit(emitter, &event))
@@ -102,8 +102,8 @@ static bool emit_mapping(Mapping *value, void *context)
     yaml_emitter_t *emitter = (yaml_emitter_t *)context;
     yaml_event_t event;
 
-    uint8_t *name = node_name(value);
-    yaml_char_t *tag = NULL == name ? (yaml_char_t *)YAML_DEFAULT_MAPPING_TAG : (yaml_char_t *)name;
+    yaml_char_t *name = (yaml_char_t *)strdta(node_name(value));
+    yaml_char_t *tag = NULL == name ? (yaml_char_t *)YAML_DEFAULT_MAPPING_TAG : name;
 
     yaml_mapping_start_event_initialize(&event, NULL, tag, NULL == name, YAML_BLOCK_MAPPING_STYLE);
     if (!yaml_emitter_emit(emitter, &event))

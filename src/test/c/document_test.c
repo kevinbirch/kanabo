@@ -137,7 +137,7 @@ START_TEST (nodes)
     assert_not_null(r);
     assert_node_kind(r, MAPPING);
 
-    unsigned char *n = node_name(r);
+    String *n = node_name(r);
     assert_null(n);
 
     size_t s = node_size(r);
@@ -154,6 +154,7 @@ START_TEST (scalar_type)
     String *key = make_string("two");
     Node *s = mapping_get(mapping(r), key);
     dispose_string(key);
+
     assert_not_null(s);
     assert_node_kind(s, SCALAR);
     assert_scalar_value((s), "foo2");

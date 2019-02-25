@@ -65,12 +65,10 @@ void (dispose_node)(Node *value)
     free(value);
 }
 
-void (node_set_tag)(Node *self, const uint8_t *value, size_t length)
+void (node_set_tag)(Node *self, String *value)
 {
     ENSURE_NONNULL_ELSE_VOID(self, value);
-    self->tag.name = xcalloc(length + 1);
-    memcpy(self->tag.name, value, length);
-    self->tag.name[length] = '\0';
+    self->tag.name = value;
 }
 
 void (node_set_anchor)(Node *self, String *value)
@@ -78,21 +76,6 @@ void (node_set_anchor)(Node *self, String *value)
     ENSURE_NONNULL_ELSE_VOID(self, value);
 
     self->anchor = value;
-}
-
-static bool tag_equals(const uint8_t *one, const uint8_t *two)
-{
-    if(NULL == one && NULL == two)
-    {
-        return true;
-    }
-    if((NULL == one && NULL != two) || (NULL != one && NULL == two))
-    {
-        return false;
-    }
-    size_t n1 = strlen((char *)one);
-    size_t n2 = strlen((char *)two);
-    return memcmp(one, two, n1 > n2 ? n2 : n1) == 0;
 }
 
 bool (node_equals)(const Node *one, const Node *two)
@@ -107,8 +90,12 @@ bool (node_equals)(const Node *one, const Node *two)
         return false;
     }
 
-    if(!(one->tag.kind == two->tag.kind &&
-       tag_equals(one->tag.name, two->tag.name)))
+    if(one->tag.kind != two->tag.kind)
+    {
+        return false;
+    }
+    if((NULL != one->tag.name || NULL != two->tag.name) &&
+       !string_equals(one->tag.name, two->tag.name))
     {
         return false;
     }
