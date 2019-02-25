@@ -22,7 +22,6 @@ enum command
 enum duplicate_key_strategy
 {
     DUPE_CLOBBER,
-    DUPE_WARN,
     DUPE_FAIL
 };
 

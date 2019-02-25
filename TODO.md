@@ -4,7 +4,6 @@
 
 ## fixes
 
-* don't print dupe warning in loader, add to result and print in main logic
 * circle ci build
   * asan flags: strict_string_checks=true
 * use xalloc in hashtable

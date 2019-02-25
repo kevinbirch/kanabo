@@ -160,14 +160,6 @@ static void add_to_mapping(Loader *context, Node *node)
 
             goto cleanup;
         }
-        else if(DUPE_WARN == context->strategy)
-        {
-            const char *name = C(context->input_name);
-            size_t line = key->position.line + 1;
-            size_t offset  = key->position.offset + 1;
-            const char *value = C(scalar_value(key));
-            fprintf(stderr, "%s:%zu:%zu: warning: duplicate mapping key \"%s\"\n", name, line, offset, value);
-        }
 
         detach(context, previous);  // N.B. - previous value is not needed, it will be replaced
     }

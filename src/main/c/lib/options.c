@@ -20,7 +20,6 @@ static const char * const EMIT_MODES [] =
 static const char * const DUPLICATE_STRATEGIES[] =
 {
     [DUPE_CLOBBER] = "clobber",
-    [DUPE_WARN] = "warn",
     [DUPE_FAIL] = "fail"
 };
 
@@ -80,10 +79,6 @@ int32_t parse_duplicate_strategy(const char *value)
     if(0 == strncmp("clobber", value, 7ul))
     {
         return DUPE_CLOBBER;
-    }
-    else if(0 == strncmp("warn", value, 4ul))
-    {
-        return DUPE_WARN;
     }
     else if(0 == strncmp("fail", value, 4ul))
     {

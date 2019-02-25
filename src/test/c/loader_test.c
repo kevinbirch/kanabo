@@ -369,27 +369,6 @@ START_TEST (duplicate_clobber)
 }
 END_TEST
 
-START_TEST (duplicate_warn)
-{
-    fprintf(stderr, "\n!!! EXPECTED duplicate mapping key warning should follow...\n");
-    DocumentSet *documents = must_load("test-resources/duplicate-key.yaml", DUPE_WARN);
-
-    Node *root = document_set_get_root(documents, 0);
-    assert_node_kind(root, MAPPING);
-    assert_node_size(root, 3);
-
-    String *key = make_string("one");
-    Node *one = mapping_get(mapping(root), key);
-    assert_not_null(one);
-    assert_node_kind(one, SCALAR);
-    assert_scalar_value(one, "bar2");
-    assert_scalar_kind(one, SCALAR_STRING);
-
-    dispose_string(key);
-    dispose_document_set(documents);
-}
-END_TEST
-
 START_TEST (duplicate_fail)
 {
     Maybe(DocumentSet) documents = load("test-resources/duplicate-key.yaml", DUPE_FAIL);
@@ -424,7 +403,6 @@ Suite *loader_suite(void)
 
     TCase *duplicate_case = tcase_create("duplicate");
     tcase_add_test(duplicate_case, duplicate_clobber);
-    tcase_add_test(duplicate_case, duplicate_warn);
     tcase_add_test(duplicate_case, duplicate_fail);
 
     Suite *loader = suite_create("Loader");
