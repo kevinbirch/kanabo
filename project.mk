@@ -35,7 +35,7 @@ endif
 else ifeq ($(system),Darwin)
 AR := libtool -static -o
 ifeq ($(is_clang),true)
-TEST_ENV := CK_FORK=no ASAN_OPTIONS=detect_leaks=true:check_initialization_order=true:symbolize_inline_frames=true
+TEST_ENV := CK_LOG_FILE_NAME=- CK_FORK=no UBSAN_OPTIONS=print_stacktrace=true ASAN_OPTIONS=check_initialization_order=true:symbolize_inline_frames=true
 endif
 endif
 
