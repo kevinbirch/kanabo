@@ -151,7 +151,7 @@ void         (dispose_node)(Node *value);
 #define      document_set_size(SELF) (NULL == (SELF) ? (size_t)0 : vector_length((SELF)->values))
 #define      document_set_get(SELF, INDEX) (NULL == (SELF) ? NULL : vector_get((SELF)->values, (INDEX)))
 Node        *document_set_get_root(const DocumentSet *model, size_t index);
-#define      document_set_add(SELF, DOC) (NULL == (SELF) ?  : vector_add((SELF)->values, (DOC)))
+#define      document_set_add(SELF, DOC) if(NULL != (SELF)) {vector_add((SELF)->values, (DOC));}
 
 /*
  * Node API

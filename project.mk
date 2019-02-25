@@ -29,9 +29,7 @@ ifeq ($(system),Linux)
 LDLIBS := -lm
 TEST_LDLIBS := $(LDLIBS) -pthread -lrt -lsubunit
 AR := ar rcs
-ifeq ($(is_clang),true)
 TEST_ENV := CK_LOG_FILE_NAME=- CK_FORK=no LSAN_OPTIONS=report_objects=1 UBSAN_OPTIONS=print_stacktrace=true ASAN_OPTIONS=detect_leaks=true:check_initialization_order=true:symbolize_inline_frames=true
-endif
 else ifeq ($(system),Darwin)
 AR := libtool -static -o
 ifeq ($(is_clang),true)

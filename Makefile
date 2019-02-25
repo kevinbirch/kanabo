@@ -363,7 +363,7 @@ define define_dependency_variables =
  $(dependency_prefix)DEPENDENCY_$$(@F)_LDFLAGS ?= $$($$(dependency_prefix)DEPENDENCY_LDFLAGS)
  $(dependency_prefix)DEPENDENCY_$$(@F)_HEADER ?= $(@F).h
  $(dependency_prefix)DEPENDENCY_$$(@F)_LIB ?= $(@F)
- $(dependency_prefix)LDLIBS += -l$$($(dependency_prefix)DEPENDENCY_$(@F)_LIB)
+ $(dependency_prefix)LDLIBS := -l$$($(dependency_prefix)DEPENDENCY_$(@F)_LIB) $($(dependency_prefix)LDLIBS)
  dependency_$$(@F)_infile := $$(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.c)
  dependency_$$(@F)_outfile := $$(shell $(MKTEMP) -t dependency_$(@F)_XXXXXX.o)
 endef
