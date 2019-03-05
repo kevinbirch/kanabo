@@ -69,11 +69,6 @@ Maybe(Nodelist) evaluate_steps(const DocumentSet *model, const JsonPath *path)
     memset(&self, 0, sizeof(Evaluator));
 
     self.results = make_nodelist();
-    if(NULL == self.results)
-    {
-        panic("evaluator: evaluate steps: allocate result nodelist failed");
-    }
-
     self.model = model;
     self.path = path;
 
@@ -82,6 +77,7 @@ Maybe(Nodelist) evaluate_steps(const DocumentSet *model, const JsonPath *path)
     if(!path_iterate(path, evaluate_step, &self))
     {
         evaluator_debug("aborted, step: %zu, code: %d (%s)", self.current_step, self.code, evaluator_strerror(self.code));
+        dispose_nodelist(self.results);
         return fail(Nodelist, self.code);
     }
 

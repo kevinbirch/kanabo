@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     srunner_add_suite(runner, model_suite());
     srunner_add_suite(runner, nodelist_suite());
     srunner_add_suite(runner, loader_suite());
-    /* srunner_add_suite(runner, evaluator_suite()); */
+    srunner_add_suite(runner, evaluator_suite());
 
     switch(argc)
     {

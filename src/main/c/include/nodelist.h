@@ -10,6 +10,7 @@ typedef Vector Nodelist;
  */
 
 #define      make_nodelist make_vector
+#define      make_nodelist_with_capacity make_vector_with_capacity
 #define      make_nodelist_of make_vector_of
 
 /*

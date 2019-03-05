@@ -48,14 +48,12 @@ static bool transform(Node *each, void *context, Nodelist *target)
 
 static bool fail_transform(Node *each, void *context, Nodelist *target)
 {
-    size_t *count = (size_t *)context;
-    if(0 < *count)
+    Scalar *scalar = scalar(each);
+    if(!strequ(scalar_value(scalar), "foo"))
     {
         return false;
     }
-
-    (*count)++;
-    nodelist_add(target, string("munky"));
+    nodelist_add(target, each);
 
     return true;
 }
@@ -189,13 +187,10 @@ END_TEST
 START_TEST (fail_map)
 {
     Nodelist *fixture = make_nodelist_of(2, string("foo"), string("bar"));
-    size_t count = 0;
 
-    Nodelist *result = nodelist_map(fixture, fail_transform, &count);
-    assert_not_null(result);
-    assert_uint_eq(1, count);
+    Nodelist *result = nodelist_map(fixture, fail_transform, NULL);
+    assert_null(result);
 
-    nodelist_destroy(result);
     nodelist_destroy(fixture);
 }
 END_TEST

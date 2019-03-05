@@ -5,7 +5,7 @@
 #include "evaluator.h"
 #include "parser.h"
 #include "loader.h"
-
+#include "xalloc.h"
 
 static DocumentSet *model_fixture = NULL;
 
@@ -57,6 +57,8 @@ static DocumentSet *must_load(const char *filename)
 
     Maybe(DocumentSet) yaml = load_yaml(from_just(input), DUPE_FAIL);
     assert_just(yaml);
+
+    dispose_input(from_just(input));
 
     return from_just(yaml);
 }
@@ -141,7 +143,7 @@ END_TEST
 
 START_TEST (empty_path)
 {
-    JsonPath *path = (JsonPath *)calloc(1, sizeof(JsonPath));
+    JsonPath *path = (JsonPath *)xcalloc(sizeof(JsonPath));
     assert_not_null(path);
     path->kind = ABSOLUTE_PATH;
     path->steps = NULL;
@@ -190,6 +192,7 @@ START_TEST (relative_path)
     assert_just(list);
     assert_nodelist_length(from_just(list), 0);
 
+    dispose_nodelist(from_just(list));
     dispose_document_set(documents);
     dispose_path(from_just(path));
 }
@@ -630,6 +633,7 @@ START_TEST (slice_predicate_copy)
     value = mapping_get(nodelist_get(list, 3), key);
     assert_scalar_value((value), "J. R. R. Tolkien");
 
+    dispose_string(key);
     dispose_nodelist(list);
 }
 END_TEST

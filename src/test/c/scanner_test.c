@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "vector.h"
+#include "xalloc.h"
 
 #include "test.h"
 
@@ -55,7 +56,7 @@ static void teardown(void)
 
 static void record_error(Position position, ParserErrorCode code, void * parameter)
 {
-    ParserError *err = calloc(1, sizeof(ParserError));
+    ParserError *err = xcalloc(sizeof(ParserError));
     err->code = code;
     err->position = position;
     vector_append(errors, err);

@@ -4,6 +4,7 @@
 
 ## fixes
 
+* clean up `evaluate_nodelist` (should be function?)
 * circle ci build
   * asan flags: strict_string_checks=true
 * use xalloc in hashtable
