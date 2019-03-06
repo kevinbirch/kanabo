@@ -14,7 +14,7 @@ enum evaluator_error_e
     ERR_NO_ROOT_IN_DOCUMENT,        // no root node was found in the document
     ERR_UNEXPECTED_DOCUMENT_NODE,   // a document node was found embedded inside another document tree
     ERR_PATH_IS_EMPTY,              // the jsonpath given is empty
-    ERR_SUBSCRIPT_PREDICATE,        // the subscript is too large for sequence
+    ERR_SUBSCRIPT_PREDICATE,        // the subscript is out of range for sequence
     ERR_SLICE_PREDICATE_DIRECTION,  // for [a:b:c] -> (c > 0 && a > b) || (c < 0 && a < b)
     ERR_SLICE_PREDICATE_ZERO_STEP,  // for [a:b:c] -> c == 0
     ERR_UNSUPPORTED_PATH,           // the jsonpath provided is not supported

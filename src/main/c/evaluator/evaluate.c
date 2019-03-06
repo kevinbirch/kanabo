@@ -10,11 +10,5 @@ Maybe(Nodelist) evaluate(const DocumentSet *documents, const JsonPath *path)
     ENSURE_NONNULL_ELSE_FAIL(Nodelist, ERR_NO_ROOT_IN_DOCUMENT, document_set_get_root(documents, 0));
     ENSURE_ELSE_FAIL(Nodelist, ERR_PATH_IS_EMPTY, 0 != vector_length(path->steps));
 
-    String *repr = path_repr(path);
-    evaluator_debug("evaluating path \"%s\"", C(repr));
-    dispose_string(repr);
-
-    Maybe(Nodelist) results = evaluate_steps(documents, path);
-
-    return results;
+    return evaluate_steps(documents, path);
 }

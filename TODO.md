@@ -4,10 +4,8 @@
 
 ## fixes
 
-* error message printed in evaluator tests
 * clang-linux-amd64 build
   * ssh and/or git mising 
-* clean up `evaluate_nodelist` (should be function?)
 * circle ci build
   * asan flags: strict_string_checks=true
 * use xalloc in hashtable
@@ -57,6 +55,7 @@
 start: 0.8-alpha, end: 0.9-beta
 
 1. how to select an item of a seq of seq?
+   * clean up `evaluate_nodelist` (should be function?)
 1. add `scalar()` selector
 1. add `parent()` selector
 1. join
@@ -67,6 +66,8 @@ start: 0.8-alpha, end: 0.9-beta
    * pratt parser for expressions
    * http://effbot.org/zone/simple-top-down-parsing.htm
    * http://www.oilshell.org/blog/2017/03/31.html
+* clean up `evaluate_nodelist` (should be function?)
+* clean up `evaluate_nodelist` (should be function?)
 1. transformer
    * built-in functions?
 1. anchor selector

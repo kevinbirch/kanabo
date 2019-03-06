@@ -25,7 +25,7 @@ static bool apply_wildcard_predicate(Node *value, Evaluator *evaluator, Nodelist
             result = apply_wildcard_predicate(alias_target(value), evaluator, target);
             break;
         case DOCUMENT:
-            evaluator_error("wildcard predicate: uh-oh! found a document node (%p)", value);
+            evaluator_debug("wildcard predicate: uh-oh! found a document node (%p)", value);
             evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             result = false;
             break;
@@ -44,7 +44,7 @@ static bool apply_subscript_predicate(const Sequence *seq, Evaluator *evaluator,
 
     if(normal > length)
     {
-        evaluator_error("subscript predicate: index %"PRId64" out of range for sequence (length: %zd)", index, length);
+        evaluator_debug("subscript predicate: index %"PRId64" out of range for sequence (length: %zd)", index, length);
         evaluator->code = ERR_SUBSCRIPT_PREDICATE;
         return false;
     }
@@ -134,7 +134,7 @@ static bool apply_slice_predicate(const Sequence *seq, Evaluator *evaluator, Nod
     int64_t step = slice_predicate_step(slice);
     if(0 == step)
     {
-        evaluator_error("slice predicate: step is zero");
+        evaluator_debug("slice predicate: step is zero");
         evaluator->code = ERR_SLICE_PREDICATE_ZERO_STEP;
         return false;
     }
@@ -150,7 +150,7 @@ static bool apply_slice_predicate(const Sequence *seq, Evaluator *evaluator, Nod
     {
         if(from < to)
         {
-            evaluator_error("step < 0 && from < to, aboring...");
+            evaluator_debug("step < 0 && from < to, aboring...");
             evaluator->code = ERR_SLICE_PREDICATE_DIRECTION;
             return false;
         }
@@ -172,7 +172,7 @@ static bool apply_slice_predicate(const Sequence *seq, Evaluator *evaluator, Nod
 
     if(from > to)
     {
-        evaluator_error("step > 0 && from > to, aboring...");
+        evaluator_debug("step > 0 && from > to, aboring...");
         evaluator->code = ERR_SLICE_PREDICATE_DIRECTION;
         return false;
     }
@@ -196,7 +196,6 @@ static bool apply_join_predicate(Node *value, Evaluator *evaluator, Nodelist *ta
     evaluator_trace("join predicate: evaluating axes (_, _)");
 
     // xxx - implement me!
-    evaluator_error("join predicate: uh-oh! not implemented yet");
     evaluator->code = ERR_UNSUPPORTED_PATH;
 
     return false;
