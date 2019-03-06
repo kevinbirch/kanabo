@@ -4,6 +4,9 @@
 
 ## fixes
 
+* error message printed in evaluator tests
+* clang-linux-amd64 build
+  * ssh and/or git mising 
 * clean up `evaluate_nodelist` (should be function?)
 * circle ci build
   * asan flags: strict_string_checks=true
