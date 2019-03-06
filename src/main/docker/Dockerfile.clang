@@ -1,15 +1,6 @@
-FROM ubuntu:cosmic
-ARG llvmver=9
+FROM buildpack-deps:bionic-scm
 
-RUN set -ex; \
-	if ! command -v gpg > /dev/null; then \
-		apt-get update; \
-		apt-get install -y --no-install-recommends \
-			gnupg \
-			dirmngr \
-		; \
-		rm -rf /var/lib/apt/lists/*; \
-	fi
+ARG llvmver=9
 
 # rsa4096/0x15CF4D18AF4F7421 2013-03-11 Sylvestre Ledru - Debian LLVM packages <sylvestre@debian.org>
 RUN set -ex; \
@@ -20,10 +11,7 @@ RUN set -ex; \
 RUN set -ex; \
 	apt-get update; \
     apt-get install -y --no-install-recommends \
-		ca-certificates \
 		build-essential \
-		libyaml-dev \
-		check \
 		clang-$llvmver \
 		clang-tools-$llvmver \
 		clang-format-$llvmver \
