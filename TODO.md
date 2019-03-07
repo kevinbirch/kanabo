@@ -4,10 +4,6 @@
 
 ## fixes
 
-* clang-linux-amd64 build
-  * ssh and/or git mising 
-* circle ci build
-  * asan flags: strict_string_checks=true
 * use xalloc in hashtable
   * eliminate unnecessary calls to panic
 * code coverage
