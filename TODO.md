@@ -27,7 +27,6 @@
   * track fragment of original query for each added result node
   * update `add_values_to_nodelist_map_iterator` trace with key name
   * update `apply_greedy_wildcard_test` sequence case to trace index and element kind
-  * concrete predicate subtypes
 * switch to structured logging
   * `log(const char *, ...)` vararg params are all subtypes of `event`
   * https://github.com/uber-go/zap
@@ -36,15 +35,7 @@
   * eliminate all uses of `trace_string`
 * jsonpath model dumper secret command line option, nice tree-like layout
   * `-d, --dump <jsonpath>`
-* switch weather example to yaml config file
-* memory leaks
-  * (should be fixed) ignored keys and values are leaked
-  * smoke test on linux w/ leak check enabled
-* update spacecadet
-  * move changes back
-  * add maybe, xcalloc, others?
-* try lgtm
-  * https://lgtm.com/dashboard
+* update spacecadet with local changes
 
 ## new features
 
@@ -62,8 +53,6 @@ start: 0.8-alpha, end: 0.9-beta
    * pratt parser for expressions
    * http://effbot.org/zone/simple-top-down-parsing.htm
    * http://www.oilshell.org/blog/2017/03/31.html
-* clean up `evaluate_nodelist` (should be function?)
-* clean up `evaluate_nodelist` (should be function?)
 1. transformer
    * built-in functions?
 1. anchor selector
@@ -76,7 +65,10 @@ start: 0.8-alpha, end: 0.9-beta
 ## documentation
 
 * man page
-  * mandoc - https://manpages.bsd.lv/mdoc.html
+  * mandoc
+    * https://manpages.bsd.lv/mdoc.html 
+    * https://linux.die.net/man/7/groff_mdoc
+    * https://linux.die.net/man/7/mdoc.samples
   * more jsonpath details
   * interactive mode
   * pandoc?
@@ -94,6 +86,7 @@ start: 0.8-alpha, end: 0.9-beta
 
 ## static analysis
 
+* https://lgtm.com/dashboard
 * http://fbinfer.com/
 * https://github.com/sslab-gatech/qsym
 * https://code.google.com/p/american-fuzzy-lop/
