@@ -1,6 +1,5 @@
 #include <string.h>
 
-#include "panic.h"
 #include "evaluator/predicate.h"
 #include "evaluator/step.h"
 #include "evaluator/test.h"

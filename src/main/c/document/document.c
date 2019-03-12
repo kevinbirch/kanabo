@@ -1,6 +1,5 @@
 #include "conditions.h"
 #include "document.h"
-#include "panic.h"
 #include "xalloc.h"
 
 static bool document_equals(const Node *one, const Node *two)
@@ -65,10 +64,6 @@ void document_track_anchor(Document *self, uint8_t *value, Node *target)
     if(NULL == self->anchors)
     {
         self->anchors = make_hashtable_with_function(anchor_comparitor, anchor_hash);
-        if(NULL == self->anchors)
-        {
-            panic("document: initialize: allocate anchor hashtable");
-        }
     }
 
     String *anchor = make_string_with_bytestring(value, strlen((char *)value));

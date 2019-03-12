@@ -3,7 +3,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include "panic.h"
 #include "vector.h"
 #include "xalloc.h"
 

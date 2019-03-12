@@ -4,8 +4,6 @@
 
 ## fixes
 
-* use xalloc in hashtable
-  * eliminate unnecessary calls to panic
 * code coverage
 * bug printing path query results causes next command parse to crash
 * loader
@@ -86,6 +84,7 @@ start: 0.8-alpha, end: 0.9-beta
 
 ## static analysis
 
+* https://scan.coverity.com/projects/kevinbirch-kanabo/builds/new
 * https://lgtm.com/dashboard
 * http://fbinfer.com/
 * https://github.com/sslab-gatech/qsym
@@ -122,8 +121,9 @@ start: 0.8-alpha, end: 0.9-beta
 * replace memcmp with hash compare?
 * store hashcode with entry in bucket chain?
 * interning for string module?
-  * diable macro
-  * runtime enable disable
+  * could greatly reduce memory use for large redundant files
+  * diable macro?
+  * runtime enable disable?
 * computed goto dispatch table?
   * http://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables
 * safe arithmetic functions?

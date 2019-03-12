@@ -1,6 +1,5 @@
 #include "conditions.h"
 #include "document.h"
-#include "panic.h"
 #include "xalloc.h"
 
 struct context_adapter_s
@@ -54,10 +53,6 @@ Sequence *make_sequence_node(void)
     Sequence *self = xcalloc(sizeof(Sequence));
     node_init(&self->base, SEQUENCE, &sequence_vtable);
     self->values = make_vector();
-    if(NULL == self->values)
-    {
-        panic("document: sequence: allocate sequence vector failed");
-    }
 
     return self;
 }

@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "hashtable.h"
+#include "xalloc.h"
 
 static const float  DEFAULT_LOAD_FACTOR = 0.75f;
 static const size_t DEFAULT_CAPACITY = 8ul;
@@ -123,10 +124,7 @@ Hashtable *make_hashtable_with_capacity_factor_function(compare_function compari
 
     size_t capacity = normalize_capacity(capacity_hint);
     Hashtable *result = alloc(capacity);
-    if(NULL == result)
-    {
-        return NULL;
-    }
+
     init(result, comparitor, capacity, load_factor, function);
 
     return result;
@@ -150,18 +148,8 @@ static inline size_t normalize_capacity(size_t hint)
 
 static Hashtable *alloc(size_t capacity)
 {
-    Hashtable *result = (Hashtable *)calloc(1, sizeof(Hashtable));
-    if(NULL == result)
-    {
-        return NULL;
-    }
-
+    Hashtable *result = (Hashtable *)xcalloc(sizeof(Hashtable));
     alloc_table(result, capacity);
-    if(NULL == result->entries)
-    {
-        free(result);
-        return NULL;
-    }
 
     return result;
 }
@@ -169,7 +157,7 @@ static Hashtable *alloc(size_t capacity)
 static inline void alloc_table(Hashtable *hashtable, size_t capacity)
 {
     // the number of table cells allocated is 2x capacity to hold both keys and values
-    hashtable->entries = calloc(capacity << 1, sizeof(uint8_t *));
+    hashtable->entries = xcalloc(sizeof(uint8_t *) * (capacity << 1));
 }
 
 static void init(Hashtable *hashtable,
@@ -545,11 +533,8 @@ static void *add_to_chain(Hashtable *hashtable, size_t index, void *key, void *v
 static void expand_chain(Hashtable *hashtable, size_t index, void *key, void *value)
 {
     Chain *chain = (Chain *)hashtable->entries[index + 1];
-    Chain *expansion = calloc(1, sizeof(Chain) + (sizeof(uint8_t *) * (chain->length + 2)));
-    if(NULL == expansion)
-    {
-        return;
-    }
+    Chain *expansion = xcalloc(sizeof(Chain) + (sizeof(uint8_t *) * (chain->length + 2)));
+
     expansion->length = chain->length + 2;
     memcpy(expansion->entries + 2, chain->entries, sizeof(uint8_t *) * chain->length);
     expansion->entries[0] = key;
@@ -564,11 +549,8 @@ static void expand_chain(Hashtable *hashtable, size_t index, void *key, void *va
 
 static void *chained_put(Hashtable *hashtable, size_t index, void *key, void *value)
 {
-    Chain *chain = malloc(sizeof(Chain) + sizeof(uint8_t *) * 4);
-    if(NULL == chain)
-    {
-        return NULL;
-    }
+    Chain *chain = xcalloc(sizeof(Chain) + sizeof(uint8_t *) * 4);
+
     chain->length = 4;
     // N.B. - last in is moved to the front
     chain->entries[0] = key;
@@ -771,8 +753,10 @@ static void rehash(Hashtable *hashtable)
     size_t capacity = normalize_capacity((hashtable->length >> 1) + 1);
     uint8_t **table = hashtable->entries;
     size_t length = hashtable->length;
+
     alloc_table(hashtable, capacity);
     init(hashtable, hashtable->compare, capacity, hashtable->load_factor, hashtable->hash);
+
     for(size_t i = 0; i < length; i += 2)
     {
         if(CHAINED_KEY == table[i])
@@ -795,6 +779,7 @@ static void rehash(Hashtable *hashtable)
             hashtable_put(hashtable, table[i], table[i + 1]);
         }
     }
+
     free(table);
 }
 

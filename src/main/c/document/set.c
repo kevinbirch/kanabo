@@ -1,17 +1,11 @@
 #include "conditions.h"
 #include "document.h"
-#include "panic.h"
 #include "xalloc.h"
 
 DocumentSet *make_document_set(void)
 {
     DocumentSet *self = xcalloc(sizeof(DocumentSet));
-
     self->values = make_vector_with_capacity(1);
-    if(NULL == self->values)
-    {
-        panic("document: document set: allocate document set vector failed");
-    }
 
     return self;
 }

@@ -2,7 +2,6 @@
 
 #include "conditions.h"
 #include "document.h"
-#include "panic.h"
 #include "xalloc.h"
 
 struct context_adapter_s
@@ -64,10 +63,6 @@ Mapping *make_mapping_node(void)
     Mapping *self = xcalloc(sizeof(Mapping));
     node_init(node(self), MAPPING, &mapping_vtable);
     self->values = make_hashtable_with_function(node_comparitor, scalar_hash);
-    if(NULL == self->values)
-    {
-        panic("document: mapping: allocate mapping hashtable failed");
-    }
 
     return self;
 }
