@@ -9,31 +9,43 @@ build = debug
 DEPENDENCIES = yaml
 TEST_DEPENDENCIES = check yaml
 
+GCC_COV ?= gcov
+LLVM_COV ?= llvm-profdata
+
 system := $(shell uname -s)
 is_clang := $(shell if [[ `${CC} --version` == *clang* ]]; then echo "true"; fi)
 
 INCLUDES = -I$(SOURCES_DIR)/vendor/linenoise -I$(SOURCES_DIR)/vendor/spacecadet
 
-CFLAGS += -std=c11 -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-unused-parameter -fstrict-aliasing -fms-extensions -fstack-protector
-debug_CFLAGS := -DUSE_LOGGING -g -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -O1 -fno-omit-frame-pointer -fno-common -fsanitize=undefined -fsanitize=address
-release_CFLAGS := -DUSE_LOGGING -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -pie -fPIE
+CFLAGS = -std=c11 -Wall -Wextra -Werror -Wformat -Wformat-security -Wformat-y2k -Winit-self -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wconversion -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Wunreachable-code -Wno-switch-default -Wno-unknown-pragmas -Wno-unused-parameter -fstrict-aliasing -fms-extensions -fstack-protector
+debug_CFLAGS = -DUSE_LOGGING -g -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 -O1 -fno-omit-frame-pointer -fno-common -fsanitize=undefined -fsanitize=address
+release_CFLAGS = -DUSE_LOGGING -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -pie -fPIE
+
+debug_LDFLAGS = -fstack-protector -fno-omit-frame-pointer -fno-common -fsanitize=undefined -fsanitize=address
+release_LDFLAGS = -fstack-protector -fno-omit-frame-pointer -flto -pie -fPIE -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
 
 ifeq ($(is_clang),true)
 CFLAGS += -Wno-gnu -Wno-microsoft
+TEST_CFLAGS := $(CFLAGS) $($(build)_CFLAGS)
+debug_CFLAGS += -fprofile-instr-generate -fcoverage-mapping
+debug_LDLAGS += -fprofile-instr-generate
+TEST_ENV += LLVM_PROFILE_FILE=target/coverage/llvm/kanabo.profraw
+else
+# N.B. capture current values of CFLAGS so test code is not profiled for coverage
+TEST_CFLAGS := $(CFLAGS) $($(build)_CFLAGS)
+debug_CFLAGS += --coverage
+debug_LDFLAGS += --coverage
 endif
 
-debug_LDFLAGS := -fstack-protector -fno-omit-frame-pointer -fno-common -fsanitize=undefined -fsanitize=address
-release_LDFLAGS := -fstack-protector -fno-omit-frame-pointer -flto -pie -fPIE -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
-
 ifeq ($(system),Linux)
-LDLIBS := -lm
-TEST_LDLIBS := $(LDLIBS) -pthread -lrt -lsubunit
+LDLIBS = -lm
+TEST_LDLIBS = $(LDLIBS) -pthread -lrt -lsubunit
 AR := ar rcs
-TEST_ENV := CK_LOG_FILE_NAME=- CK_FORK=no LSAN_OPTIONS=report_objects=1 UBSAN_OPTIONS=print_stacktrace=true ASAN_OPTIONS=detect_leaks=true:check_initialization_order=true:symbolize_inline_frames=true:strict_string_checks=true
+TEST_ENV += CK_LOG_FILE_NAME=- CK_FORK=no LSAN_OPTIONS=report_objects=1 UBSAN_OPTIONS=print_stacktrace=true ASAN_OPTIONS=detect_leaks=true:check_initialization_order=true:symbolize_inline_frames=true:strict_string_checks=true
 else ifeq ($(system),Darwin)
 AR := libtool -static -o
 ifeq ($(is_clang),true)
-TEST_ENV := CK_LOG_FILE_NAME=- CK_FORK=no UBSAN_OPTIONS=print_stacktrace=true ASAN_OPTIONS=check_initialization_order=true:symbolize_inline_frames=true
+TEST_ENV += CK_LOG_FILE_NAME=- CK_FORK=no UBSAN_OPTIONS=print_stacktrace=true ASAN_OPTIONS=check_initialization_order=true:symbolize_inline_frames=true
 endif
 endif
 
@@ -59,3 +71,13 @@ verify-package:
 	@sha512sum -c $(TARGET_DIR)/$(PACKAGE_TARGET_BASE).sha512
 
 VERIFY_PHASE_HOOKS := verify-package
+
+gcc-coverage:
+	$(GCC_COV) --branch-probabilities --branch-counts --preserve-paths --unconditional-branches $(LIBRARY_OBJECTS)
+	mkdir -p target/coverage/gcov
+	mv *.gcov target/coverage/gcov
+
+llvm-coverage:
+	$(LLVM_COV) merge -sparse target/coverage/llvm/kanabo.profraw -o target/coverage/llvm/kanabo.profdata
+
+.PHONY: gcov

@@ -4,10 +4,6 @@
 
 ## fixes
 
-* code coverage
-  * https://libcheck.github.io/check/doc/check_html/check_4.html#Determining-Test-Coverage-1
-  * https://gcc.gnu.org/onlinedocs/gcc/Gcov-Intro.html#Gcov-Intro
-  * https://clang.llvm.org/docs/SourceBasedCodeCoverage.html
 * bug printing path query results causes next command parse to crash
 * loader
   * scalars

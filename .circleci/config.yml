@@ -7,6 +7,8 @@ jobs:
       - run: apt-get update; apt-get install -y --no-install-recommends libyaml-dev check
       - checkout
       - run: make test
+      - run: make gcc-coverage
+      - run: build/codecov.sh
 
   clang-linux-amd64:
     docker:
