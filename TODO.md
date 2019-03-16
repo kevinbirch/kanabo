@@ -4,7 +4,7 @@
 
 ## fixes
 
-* bug printing path query results causes next command parse to crash
+  * `say(str, ...)` tty only prompts helpful?
 * loader
   * scalars
     * concrete subtypes, each holding reified value

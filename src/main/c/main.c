@@ -303,19 +303,20 @@ static const char *get_argument(const char *command)
 
 static void dispatch_interactive_command(const char *command, struct options *options, DocumentSet **documents)
 {
-    if(0 == memcmp("?", command, 1) || 0 == memcmp(":help", command, 5))
+    size_t clen = strlen(command);
+    if(0 == memcmp("?", command, 1) || 0 == memcmp(":help", command, (5 > clen ? clen : 5)))
     {
         fwrite(INTERACTIVE_HELP, strlen(INTERACTIVE_HELP), 1, stdout);
     }
-    else if(0 == memcmp(":output", command, 7))
+    else if(0 == memcmp(":output", command, (7 > clen ? clen : 7)))
     {
         output_command(get_argument(command), options);
     }
-    else if(0 == memcmp(":duplicate", command, 10))
+    else if(0 == memcmp(":duplicate", command, (10 > clen ? clen : 10)))
     {
         duplicate_command(get_argument(command), options);
     }
-    else if(0 == memcmp(":load", command, 5))
+    else if(0 == memcmp(":load", command, (5 > clen ? clen : 5)))
     {
         load_command(get_argument(command), options, documents);
     }
