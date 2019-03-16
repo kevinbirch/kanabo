@@ -2,6 +2,7 @@
 
 #include "emitter/yaml.h"
 #include "log.h"
+#include "panic.h"
 
 #define component "yaml"
 
@@ -26,7 +27,12 @@ static bool emit_scalar(const Scalar *each, void *context)
 {
     yaml_char_t *tag = NULL;
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
-    yaml_char_t *name = (yaml_char_t *)strdta(node_name(each));
+    yaml_char_t *name = NULL;
+
+    if(NULL != node_name(each))
+    {
+        name = (yaml_char_t *)strdta(node_name(each));
+    }
 
     switch(scalar_kind(each))
     {
@@ -49,6 +55,8 @@ static bool emit_scalar(const Scalar *each, void *context)
         case SCALAR_NULL:
             tag = NULL == name ? (yaml_char_t *)YAML_NULL_TAG : name;
             break;
+        default:
+            panicf("unknown scalar kind: %d", scalar_kind(each));
     }
 
     return emit_tagged_scalar(scalar_value(each), tag, style, NULL == name, context);
