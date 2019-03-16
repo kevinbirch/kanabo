@@ -9,11 +9,12 @@ build = debug
 DEPENDENCIES = yaml
 TEST_DEPENDENCIES = check yaml
 
+CC ?= cc
 GCC_COV ?= gcov
 LLVM_COV ?= llvm-profdata
 
 system := $(shell uname -s)
-is_clang := $(shell if [[ `${CC} --version` == *clang* ]]; then echo "true"; fi)
+is_clang := $(shell if [[ `$(CC) --version` =~ (clang|LLVM) ]]; then echo "true"; fi)
 
 INCLUDES = -I$(SOURCES_DIR)/vendor/linenoise -I$(SOURCES_DIR)/vendor/spacecadet
 
@@ -28,7 +29,7 @@ ifeq ($(is_clang),true)
 CFLAGS += -Wno-gnu -Wno-microsoft
 TEST_CFLAGS := $(CFLAGS) $($(build)_CFLAGS)
 debug_CFLAGS += -fprofile-instr-generate -fcoverage-mapping
-debug_LDLAGS += -fprofile-instr-generate
+debug_LDFLAGS += -fprofile-instr-generate
 TEST_ENV += LLVM_PROFILE_FILE=target/coverage/llvm/kanabo.profraw
 else
 # N.B. capture current values of CFLAGS so test code is not profiled for coverage
