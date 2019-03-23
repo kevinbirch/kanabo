@@ -40,7 +40,7 @@ static argument arguments[] =
 #define ENSURE_COMMAND_ORTHOGONALITY(test) \
     if((test))                             \
     {                                      \
-        command = SHOW_HELP;     \
+        options->mode = SHOW_HELP;     \
         done = true;                       \
         break;                             \
     }
@@ -95,11 +95,10 @@ const char * duplicate_strategy_name(DuplicateKeyStrategy value)
     return DUPLICATE_STRATEGIES[value];
 }
 
-enum command process_options(const int argc, char * const *argv, struct options *options)
+void process_options(const int argc, char * const *argv, struct options *options)
 {
     int opt;
     bool done = false;
-    enum command command = INTERACTIVE_MODE;
 
     options->emit_mode = JSON;
     options->duplicate_strategy = DUPE_CLOBBER;
@@ -112,21 +111,21 @@ enum command process_options(const int argc, char * const *argv, struct options 
         {
             case 'v':
                 ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
-                command = SHOW_VERSION;
+                options->mode = SHOW_VERSION;
                 done = true;
                 break;
             case 'h':
                 ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
-                command = SHOW_HELP;
+                options->mode = SHOW_HELP;
                 done = true;
                 break;
             case 'w':
                 ENSURE_COMMAND_ORTHOGONALITY(2 < argc);
-                command = SHOW_WARRANTY;
+                options->mode = SHOW_WARRANTY;
                 done = true;
                 break;
             case 'q':
-                command = EXPRESSION_MODE;
+                options->mode = EXPRESSION_MODE;
                 options->expression = optarg;
                 options->mode = EXPRESSION_MODE;
                 break;
@@ -136,7 +135,7 @@ enum command process_options(const int argc, char * const *argv, struct options 
                 if(-1 == mode)
                 {
                     fprintf(stderr, "error: %s: unsupported output format `%s'\n", argv[0], optarg);
-                    command = SHOW_HELP;
+                    options->mode = SHOW_HELP;
                     done = true;
                     break;
                 }
@@ -149,7 +148,7 @@ enum command process_options(const int argc, char * const *argv, struct options 
                 if(-1 == strategy)
                 {
                     fprintf(stderr, "error: %s: unsupported duplicate strategy `%s'\n", argv[0], optarg);
-                    command = SHOW_HELP;
+                    options->mode = SHOW_HELP;
                     done = true;
                     break;
                 }
@@ -159,7 +158,7 @@ enum command process_options(const int argc, char * const *argv, struct options 
             case ':':
             case '?':
             default:
-                command = SHOW_HELP;
+                options->mode = SHOW_HELP;
                 done = true;
                 break;
         }
@@ -167,8 +166,9 @@ enum command process_options(const int argc, char * const *argv, struct options 
 
     if(optind > argc)
     {
-        fputs("uh oh! something went wrong handing arguments!\n", stderr);
-        return SHOW_HELP;
+        fputs("error: some command line options were not processed\n", stderr);
+        options->mode = SHOW_HELP;
+        return;
     }
 
     if(argc - optind)
@@ -177,17 +177,16 @@ enum command process_options(const int argc, char * const *argv, struct options 
     }
 
     if(INTERACTIVE_MODE == options->mode &&
-       options->input_file_name &&
-       0 == memcmp("-", options->input_file_name, 1))
+       NULL != options->input_file_name &&
+       1 == strlen(options->input_file_name) &&
+       '-' == options->input_file_name[0])
     {
         fputs("error: the standard input shortcut `-' can't be used with interactive evaluation\n", stderr);
-        command = SHOW_HELP;
+        options->mode = SHOW_HELP;
     }
     else if(EXPRESSION_MODE == options->mode && NULL == options->input_file_name)
     {
         fputs("error: an input filename (or '-') must be provided for single expression evaluation\n", stderr);
-        command = SHOW_HELP;
+        options->mode = SHOW_HELP;
     }
-
-    return command;
 }

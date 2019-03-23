@@ -36,7 +36,7 @@ struct options
     DuplicateKeyStrategy duplicate_strategy;
 };
 
-enum command process_options(const int argc, char * const *argv, struct options *options);
+void process_options(const int argc, char * const *argv, struct options *options);
 
 int32_t     parse_duplicate_strategy(const char *value);
 const char *duplicate_strategy_name(DuplicateKeyStrategy value);

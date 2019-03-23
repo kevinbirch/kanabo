@@ -17,7 +17,7 @@ typedef enum maybe_tag_e MaybeTag;
     
 #define Maybe(TYPE) Maybe_ ## TYPE ## _s
 
-#define defmaybe(TYPE)                        \
+#define defmaybe(TYPE)                          \
     typedef struct                              \
     {                                           \
         MaybeTag tag;                           \
@@ -28,7 +28,7 @@ typedef enum maybe_tag_e MaybeTag;
         };                                      \
     } Maybe(TYPE)
 
-#define defmaybep(TYPE)                        \
+#define defmaybep(TYPE)                          \
     typedef struct                               \
     {                                            \
         MaybeTag tag;                            \
@@ -39,7 +39,7 @@ typedef enum maybe_tag_e MaybeTag;
         };                                       \
     } Maybe(TYPE)
 
-#define defmaybe_error(TYPE, ETYPE)             \
+#define defmaybe_error(TYPE, ETYPE)               \
     typedef struct                                \
     {                                             \
         MaybeTag tag;                             \
@@ -50,7 +50,7 @@ typedef enum maybe_tag_e MaybeTag;
         };                                        \
     } Maybe(TYPE)
 
-#define defmaybep_error(TYPE, ETYPE)             \
+#define defmaybep_error(TYPE, ETYPE)               \
     typedef struct                                 \
     {                                              \
         MaybeTag tag;                              \

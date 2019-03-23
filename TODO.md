@@ -4,21 +4,22 @@
 
 ## fixes
 
-  * `say(str, ...)` tty only prompts helpful?
 * loader
   * scalars
     * concrete subtypes, each holding reified value
     * fully parse all scalar types
-  * use `String` for anchors and tag name
   * failure in `add_node` or error from libyaml are fatal
   * add extra context string to capture scalar value *or* libyaml message
 * parser
+  * detect ERR_SLICE_PREDICATE_DIRECTION early (`for [a:b:c] -> (c > 0 && a > b) || (c < 0 && a < b)`)
+  * anootate json path with positions of structural elements from original expression
   * don't copy lexeme, don't paste minus and integer lexemes together
   * eliminate possible error in lexeme extraction (then we don't need the internal error?)
   * don't use callback between scanner and parser for errors, track error vector in each
     * use single add_parser_error function
     * why are postion macros different for parser and scanner?
 * evaluator
+  * track path error location and provide with error type
   * track path of all loaded document nodes, use in error reports
   * add json path to diagnostic
   * track fragment of original query for each added result node
@@ -33,7 +34,9 @@
 * jsonpath model dumper secret command line option, nice tree-like layout
   * `-d, --dump <jsonpath>`
 * update spacecadet with local changes
-
+* emitter
+  * return error object with underlying failure
+  * remove all uses of `log_error`
 ## new features
 
 start: 0.8-alpha, end: 0.9-beta
@@ -54,9 +57,6 @@ start: 0.8-alpha, end: 0.9-beta
    * built-in functions?
 1. anchor selector
    * when does it even make sense to use this? only in transformer?
-1. `set` command to save variables
-1. response ouput: `+OK <line count>` `-ERR <code> <location> "explanation"`
-1. setting for end-of-ouput sentinel? use `+OK`/`-ERR` instead?
 1. pretty output in tty mode, simple output in pipe mode
 
 ## documentation
