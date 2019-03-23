@@ -49,7 +49,7 @@ static const unsigned long BUILD_TIMESTAMP_c = BUILD_TIMESTAMP;
 static const char * const BUILD_HOSTNAME_c = BUILD_HOSTNAME;
 #define BUILD_HOST_ARCHITECHTURE "$(uname -m)"
 static const char * const BUILD_HOST_ARCHITECHTURE_c = BUILD_HOST_ARCHITECHTURE;
-#define BUILD_HOST_OS "$(uname -s)"
+#define BUILD_HOST_OS "$(uname -o)"
 static const char * const BUILD_HOST_OS_c = BUILD_HOST_OS;
 #define BUILD_HOST_OS_VERSION "$(uname -r)"
 static const char * const BUILD_HOST_OS_VERSION_c = BUILD_HOST_OS_VERSION;
