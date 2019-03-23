@@ -35,7 +35,7 @@ static Maybe(DocumentSet) load(const char *filename, DuplicateKeyStrategy strate
     if(is_nothing(input))
     {
         InputError err = from_nothing(input);
-        printf("%s: %s: %s\n", filename, input_strerror(err.code), strerror(err.err));
+        printf("%s: %s: %s\n", filename, input_strerror(err.code), strerror(err.errno_val));
     }
     assert_just(input);
 

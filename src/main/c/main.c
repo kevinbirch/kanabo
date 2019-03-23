@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <unistd.h>
-#include <errno.h>
 #include <string.h>
 #include <ctype.h>
 #include <signal.h>
@@ -194,8 +193,7 @@ static DocumentSet *load_input(const char *file_name, DuplicateKeyStrategy strat
         if(is_nothing(input))
         {
             const char *problem = input_strerror(input.error.code);
-            char *context = strerror(input.error.err);
-            error("%s: error: %s: %s", input_name, problem, context);
+            err(options, "%s: %s: %s", input_name, problem, strerror(input.error.errno_val));
 
             return NULL;
         }

@@ -42,7 +42,7 @@ typedef enum input_error_e InputErrorCode;
 struct input_error_s
 {
     InputErrorCode code;
-    int            err;
+    int            errno_val;
 };
 
 typedef struct input_error_s InputError;
