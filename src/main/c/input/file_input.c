@@ -31,14 +31,14 @@ Maybe(Input) make_input_from_file(const char *filename)
 
     errno = 0;
     FILE *file = fopen(filename, "r");
-    ENSURE_NONNULL_ELSE_FAIL(Input, ((InputError){.code=OPEN_FAILED, .err=errno}), file);
+    ENSURE_NONNULL_ELSE_FAIL(Input, ((InputError){.code=OPEN_FAILED, .errno_val=errno}), file);
 
     Maybe(Input) result;
 
     off_t size = file_size(file);
     if(0 > size)
     {
-        result = fail(Input, ((InputError){.code=EMPTY_FILE, .err=errno}));
+        result = fail(Input, ((InputError){.code=EMPTY_FILE, .errno_val=errno}));
         goto cleanup;
     }
 
@@ -49,7 +49,7 @@ Maybe(Input) make_input_from_file(const char *filename)
     size_t count = fread(self->source.buffer, (size_t)size, 1, file);
     if(1 != count || ferror(file))
     {
-        result = fail(Input, ((InputError){.code=READ_ERROR, .err=errno}));
+        result = fail(Input, ((InputError){.code=READ_ERROR, .errno_val=errno}));
         dispose_input(self);
         self = NULL;
         goto cleanup;
