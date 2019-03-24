@@ -69,6 +69,11 @@ static bool emit_sequence_item(Node *each, void *context)
 
 static bool emit_sequence(Sequence *value, void *context)
 {
+    if(sequence_is_empty(value))
+    {
+        return true;
+    }
+
     yaml_emitter_t *emitter = (yaml_emitter_t *)context;
     yaml_event_t event;
 
@@ -107,6 +112,11 @@ static bool emit_mapping_item(String *key, Node *value, void *context)
 
 static bool emit_mapping(Mapping *value, void *context)
 {
+    if(mapping_is_empty(value))
+    {
+        return true;
+    }
+
     yaml_emitter_t *emitter = (yaml_emitter_t *)context;
     yaml_event_t event;
 

@@ -247,6 +247,7 @@ const char  *scalar_kind_name(const Scalar *value);
 
 #define      sequence_get(SELF, INDEX) vector_get(const_sequence((SELF))->values, (INDEX))
 void         sequence_add(Sequence *seq, Node *item);
+#define      sequence_is_empty(SELF) vector_is_empty(const_sequence((SELF))->values)
 
 typedef bool (*sequence_iterator)(Node *each, void *context);
 bool         sequence_iterate(const Sequence *seq, sequence_iterator iterator, void *context);
@@ -269,6 +270,7 @@ bool         sequence_iterate(const Sequence *seq, sequence_iterator iterator, v
 Node        *mapping_get(const Mapping *map, String *key);
 bool         mapping_contains(const Mapping *map, String *key);
 bool         mapping_put(Mapping *self, Scalar *key, Node *value);
+#define      mapping_is_empty(SELF) hashtable_is_empty(const_mapping((SELF))->values)
 
 typedef bool (*mapping_iterator)(String *key, Node *value, void *context);
 bool         mapping_iterate(const Mapping *map, mapping_iterator iterator, void *context);
@@ -280,7 +282,7 @@ bool         mapping_iterate(const Mapping *map, mapping_iterator iterator, void
 #define      const_mapping(SELF) _Generic((SELF),\
                                           const Mapping *: (SELF),      \
                                           Mapping *: (const Mapping *)(SELF), \
-                                          default: CONST_CHECKED_CAST((SELF), MAPPING, Mapping), \
+                                          default: CONST_CHECKED_CAST((SELF), MAPPING, Mapping) \
                                           )
 #define      is_mapping(SELF) (MAPPING == node_kind((SELF)))
 
