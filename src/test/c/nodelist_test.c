@@ -38,7 +38,7 @@ static bool transform(Node *each, void *context, Nodelist *target)
     (*count)++;
 
     char buffer[32];
-    int result = snprintf(buffer, 32, "%zd", *count);
+    int result = snprintf(buffer, 32, "%zu", *count);
     assert_int_ne(-1, result);
 
     nodelist_add(target, integer(buffer));

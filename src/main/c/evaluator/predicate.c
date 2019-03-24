@@ -44,7 +44,7 @@ static bool apply_subscript_predicate(const Sequence *seq, Evaluator *evaluator,
 
     if(normal > length)
     {
-        evaluator_debug("subscript predicate: index %"PRId64" out of range for sequence (length: %zd)", index, length);
+        evaluator_debug("subscript predicate: index %"PRId64" out of range for sequence (length: %zu)", index, length);
         evaluator->code = ERR_SUBSCRIPT_PREDICATE;
         return false;
     }
@@ -55,7 +55,7 @@ static bool apply_subscript_predicate(const Sequence *seq, Evaluator *evaluator,
     }
 
     Node *selected = sequence_get(seq, normal);
-    evaluator_trace("subscript predicate: adding index %"PRId64" (%p) from sequence (%p) of %zd items", normal, selected, seq, length);
+    evaluator_trace("subscript predicate: adding index %"PRId64" (%p) from sequence (%p) of %zu items", normal, selected, seq, length);
     nodelist_add(target, selected);
 
     return true;

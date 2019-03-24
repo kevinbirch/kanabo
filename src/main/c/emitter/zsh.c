@@ -32,7 +32,7 @@ static bool emit_mapping_item(String *key, Node *each, void *context)
 
 bool emit_zsh(const Nodelist *list)
 {
-    log_debug("zsh", "emitting %zd items...", nodelist_length(list));
+    log_debug("zsh", "emitting %zu items...", nodelist_length(list));
     emit_context context =
         {
             .emit_mapping_item = emit_mapping_item,

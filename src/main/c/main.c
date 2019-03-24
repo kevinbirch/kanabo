@@ -215,11 +215,11 @@ static inline bool loader_error_printer(void *each, void *context)
 
     if(NULL == error->extra)
     {
-        err(options, "%s:%zd:%zd: %s", name, line, offset, message);
+        err(options, "%s:%zu:%zu: %s", name, line, offset, message);
     }
     else
     {
-        err(options, "%s:%zd:%zd: %s: %s", name, line, offset, message, C(error->extra));
+        err(options, "%s:%zu:%zu: %s: %s", name, line, offset, message, C(error->extra));
     }
 
     return true;

@@ -94,7 +94,7 @@ static bool emit_node(Node *each, void *context __attribute__((unused)))
 
 bool emit_json(const Nodelist *list)
 {
-    log_debug(component, "emitting %zd items...", nodelist_length(list));
+    log_debug(component, "emitting %zu items...", nodelist_length(list));
     size_t count = 0;
 
     if(1 == nodelist_length(list))

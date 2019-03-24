@@ -31,7 +31,7 @@ static bool emit_mapping_item(String *key, Node *each, void *context)
 
 bool emit_bash(const Nodelist *list)
 {
-    log_debug(component, "emitting %zd items...", nodelist_length(list));
+    log_debug(component, "emitting %zu items...", nodelist_length(list));
     emit_context context = {
             .emit_mapping_item = emit_mapping_item,
             .wrap_collections = true
