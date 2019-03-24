@@ -24,7 +24,7 @@ const char *(node_kind_name)(const Node *self)
 #define assert_kind(EXPECTED, ACTUAL, FILE, LINE)                       \
     if((ACTUAL) != (EXPECTED))                                          \
     {                                                                   \
-        panicf("invalid cast from `%s` to `%s`",                        \
+        panicf("invalid cast from \"%s\" to \"%s\"",                    \
                NODE_KINDS[(ACTUAL)], NODE_KINDS[(EXPECTED)]);           \
     }
 

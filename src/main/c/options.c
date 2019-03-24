@@ -134,7 +134,7 @@ void process_options(const int argc, char * const *argv, struct options *options
                 int32_t mode = parse_emit_mode(optarg);
                 if(-1 == mode)
                 {
-                    fprintf(stderr, "error: %s: unsupported output format `%s'\n", argv[0], optarg);
+                    fprintf(stderr, "error: unsupported output format \"%s\"\n", optarg);
                     options->mode = SHOW_HELP;
                     done = true;
                     break;
@@ -147,7 +147,7 @@ void process_options(const int argc, char * const *argv, struct options *options
                 int32_t strategy = parse_duplicate_strategy(optarg);
                 if(-1 == strategy)
                 {
-                    fprintf(stderr, "error: %s: unsupported duplicate strategy `%s'\n", argv[0], optarg);
+                    fprintf(stderr, "error: unsupported duplicate strategy \"%s\"\n", optarg);
                     options->mode = SHOW_HELP;
                     done = true;
                     break;
@@ -181,12 +181,12 @@ void process_options(const int argc, char * const *argv, struct options *options
        1 == strlen(options->input_file_name) &&
        '-' == options->input_file_name[0])
     {
-        fputs("error: the standard input shortcut `-' can't be used with interactive evaluation\n", stderr);
+        fputs("error: the standard input shortcut "-" can't be used with interactive evaluation\n", stderr);
         options->mode = SHOW_HELP;
     }
     else if(EXPRESSION_MODE == options->mode && NULL == options->input_file_name)
     {
-        fputs("error: an input filename (or '-') must be provided for single expression evaluation\n", stderr);
+        fputs("error: an input filename (or "-") must be provided for single expression evaluation\n", stderr);
         options->mode = SHOW_HELP;
     }
 }
