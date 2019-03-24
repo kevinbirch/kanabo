@@ -33,10 +33,11 @@
   * eliminate all uses of `trace_string`
 * jsonpath model dumper secret command line option, nice tree-like layout
   * `-d, --dump <jsonpath>`
+  * yaml format?
 * update spacecadet with local changes
 * emitter
   * return error object with underlying failure
-  * remove all uses of `log_error`
+
 ## new features
 
 start: 0.8-alpha, end: 0.9-beta

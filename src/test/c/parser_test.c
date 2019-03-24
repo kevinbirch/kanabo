@@ -88,13 +88,6 @@
     assert_slice_to(path_get((PATH), (PATH_INDEX))->predicate, (TO_VALUE)); \
     assert_slice_step(path_get((PATH), (PATH_INDEX))->predicate, (STEP_VALUE))
 
-#define print_steps(MAYBE)                                              \
-    for(size_t i = 0; i < vector_length(from_just(MAYBE).steps); i++)   \
-    {                                                                   \
-        Step *step = (Step *)vector_get(from_just(MAYBE).steps, i);     \
-        log_error(tcase_name(), "step %zu: %s", i, step_kind_name(step->kind)); \
-    }
-
 static inline void dispose_maybe(Maybe(JsonPath) maybe)
 {
     if(is_nothing(maybe))

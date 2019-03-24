@@ -15,7 +15,6 @@ bool emit_raw_string(const String *value);
         errno = 0;                                                      \
         if(EOF == fputs((STR), stdout))                                 \
         {                                                               \
-            log_error(component, "uh oh! couldn't emit literal \"%s\": %s", (STR), strerror(errno)); \
             return false;                                               \
         }                                                               \
     } while(0)
@@ -26,7 +25,6 @@ bool emit_raw_string(const String *value);
         errno = 0;                                                      \
         if(1 != fwrite(strdta(VALUE), strlen(VALUE), 1, stdout))        \
         {                                                               \
-            log_error(component, "uh oh! couldn't emit scalar \"%s\": %s", C((VALUE)), strerror(errno)); \
             success = false;                                            \
         }                                                               \
         success;                                                        \
