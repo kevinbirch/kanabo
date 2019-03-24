@@ -181,12 +181,12 @@ void process_options(const int argc, char * const *argv, struct options *options
        1 == strlen(options->input_file_name) &&
        '-' == options->input_file_name[0])
     {
-        fputs("error: the standard input shortcut "-" can't be used with interactive evaluation\n", stderr);
+        fputs("error: the standard input shortcut \"-\" can't be used with interactive evaluation\n", stderr);
         options->mode = SHOW_HELP;
     }
     else if(EXPRESSION_MODE == options->mode && NULL == options->input_file_name)
     {
-        fputs("error: an input filename (or "-") must be provided for single expression evaluation\n", stderr);
+        fputs("error: an input filename (or \"-\") must be provided for single expression evaluation\n", stderr);
         options->mode = SHOW_HELP;
     }
 }
