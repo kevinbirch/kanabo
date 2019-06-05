@@ -7,9 +7,14 @@
 * loader
   * scalars
     * concrete subtypes, each holding reified value
-    * fully parse all scalar types
+    * does libyaml recognize scalar subtypes by value pattern without a tag?
+    * does libyaml validate scalars with built-in tags that have bogus values? (e.g. not timestamp fmt)
+  * track depth of all nodes, from 0
+  * track jsonpath step literal for each node
   * failure in `add_node` or error from libyaml are fatal
   * add extra context string to capture scalar value *or* libyaml message
+  * save input scalar quote style and use for yaml output (e.g. strings are optionally quoted with singe ordouble)
+    * quote numeric scalars only if they were explicity quoted
 * parser
   * detect ERR_SLICE_PREDICATE_DIRECTION early (`for [a:b:c] -> (c > 0 && a > b) || (c < 0 && a < b)`)
   * anootate json path with positions of structural elements from original expression
@@ -37,6 +42,7 @@
 * update spacecadet with local changes
 * emitter
   * return error object with underlying failure
+* read default output, duplicate settings from env vars
 
 ## new features
 
