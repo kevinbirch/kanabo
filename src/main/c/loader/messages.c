@@ -14,6 +14,8 @@ static const char * const MESSAGES[] =
     [ERR_NO_ANCHOR_FOR_ALIAS] = "no matching anchor found for alias",
     [ERR_ALIAS_LOOP] = "alias refers to an anchor that is an ancestor",
     [ERR_DUPLICATE_KEY] = "duplicate mapping key",    
+    [ERR_NUMBER_OUT_OF_RANGE] = "number literal cannot be represented",
+    [ERR_BAD_TIMESTAMP] = "timestamp literal cannot be parsed",
 };
 
 const char *loader_strerror(LoaderErrorCode code)

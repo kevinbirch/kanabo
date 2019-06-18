@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <time.h>
 
 #include "hashtable.h"
 #include "position.h"
@@ -85,6 +86,14 @@ struct scalar_s
     };
     ScalarKind  kind;
     String     *value;
+
+    union
+    {
+        int64_t integer;
+        double  real;
+        time_t  timestamp;  // time_t instead of timespec b/c strptime has only 1 second granularity
+        bool    boolean;
+    };
 };
 
 typedef struct scalar_s Scalar;

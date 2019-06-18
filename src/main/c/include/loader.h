@@ -13,8 +13,8 @@ enum loader_error_code_e
 {
     ERR_INTERNAL_CTX_NODE,   // internal error - non-complex context node
     ERR_INTERNAL_LIBYAML,    // internal error - unknown libyaml error
-    ERR_INPUT_IS_NULL,       // the input argument given was NULL
-    ERR_INPUT_SIZE_IS_ZERO,  // input length was 0
+    ERR_INPUT_IS_NULL,       // internal error - the input argument given was NULL
+    ERR_INPUT_SIZE_IS_ZERO,  // internal error - input length was 0
     ERR_NO_DOCUMENTS_FOUND,  // no documents in input stream
     ERR_READER_FAILED,       // unable to read from the input
     ERR_SCANNER_FAILED,      // unable to lexically analyze the input
@@ -23,6 +23,8 @@ enum loader_error_code_e
     ERR_NO_ANCHOR_FOR_ALIAS, // no anchor referenced by alias
     ERR_ALIAS_LOOP,          // the alias references an ancestor
     ERR_DUPLICATE_KEY,       // a duplicate mapping key was detected
+    ERR_NUMBER_OUT_OF_RANGE, // a number literal cannot be represented
+    ERR_BAD_TIMESTAMP,       // a timestamp literal cannot be parsed
 };
 
 typedef enum loader_error_code_e LoaderErrorCode;

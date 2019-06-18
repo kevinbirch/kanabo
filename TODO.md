@@ -9,6 +9,8 @@
     * concrete subtypes, each holding reified value
     * does libyaml recognize scalar subtypes by value pattern without a tag?
     * does libyaml validate scalars with built-in tags that have bogus values? (e.g. not timestamp fmt)
+    * what should we do if tag and value disagree?
+    * assign yaml tag by detected value?
   * track depth of all nodes, from 0
   * track jsonpath step literal for each node
   * failure in `add_node` or error from libyaml are fatal
