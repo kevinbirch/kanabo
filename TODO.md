@@ -11,6 +11,9 @@
     * does libyaml validate scalars with built-in tags that have bogus values? (e.g. not timestamp fmt)
     * what should we do if tag and value disagree?
     * assign yaml tag by detected value?
+  * move input name from doc set to source position? lots of redundant strings?
+    * repr can use this when printing position
+    * string interning?
   * track depth of all nodes, from 0
   * track jsonpath step literal for each node
   * failure in `add_node` or error from libyaml are fatal
@@ -58,6 +61,7 @@ start: 0.8-alpha, end: 0.9-beta
    * support only paths, not indices
 1. tag selector
 1. new scalar types (timestamp, etc)
+   * should unparseable, yet tagged timestamps be marked so they are ignored for comparisons?
 1. filter
    * pratt parser for expressions
    * http://effbot.org/zone/simple-top-down-parsing.htm
@@ -186,6 +190,10 @@ start: 0.8-alpha, end: 0.9-beta
 ## known bugs
 
 * `-9223372036854775808` (`INT64_MIN`) is not accepted as an index value
+* timestamps:
+  * assume UTC time zone
+  * single second granulartiy, sub-second parts ignored
+  * only accepts "YYYY-mm-ddTHH:MM:SS" format
 
 ## competition
 
