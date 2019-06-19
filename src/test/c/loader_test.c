@@ -212,6 +212,8 @@ static void assert_model_state(DocumentSet *model)
 START_TEST (load_from_file)
 {
     DocumentSet *documents = must_load("test-resources/loader-fixture.yaml", DUPE_FAIL);
+    document_set_dump(documents);
+
     assert_model_state(documents);
 
     dispose_document_set(documents);

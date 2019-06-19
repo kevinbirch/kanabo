@@ -23,17 +23,42 @@ static size_t document_size(const Node *self)
     return NULL == ((Document *)self)->root ? 0 : 1;
 }
 
+static String *document_repr(const Node *value)
+{
+    Document *self = (Document *)value;
+
+    const char *name = "NULL";
+    if(NULL != self->root)
+    {
+        name = node_kind_name(self->root);
+    }
+
+    return format("<Document root: %s, pos: %zd:%zd>", name, self->position.line, self->position.offset);
+}
+
+static void document_dump(const Node *value, bool pad)
+{
+    String *repr = document_repr(value);
+    fprintf(stdout, "%s\n", C(repr));
+    dispose_string(repr);
+
+    node_dump(document(value)->root, true);
+}
+
 static const struct vtable_s document_vtable = 
 {
     document_free,
     document_size,
-    document_equals
+    document_equals,
+    document_repr,
+    document_dump
 };
 
 Document *make_document_node(void)
 {
     Document *self = xcalloc(sizeof(Document));
     node_init(node(self), DOCUMENT, &document_vtable);
+    self->depth = 0;
 
     return self;
 }
@@ -44,6 +69,7 @@ void document_set_root(Document *self, Node *root)
 
     self->root = root;
     root->parent = node(self);
+    root->depth = 0;
 }
 
 static bool anchor_comparitor(const void *key1, const void *key2)

@@ -18,11 +18,39 @@ static size_t alias_size(const Node *self)
     return 0;
 }
 
+static String *alias_repr(const Node *value)
+{
+    Alias *self = (Alias *)value;
+    size_t line = self->position.line;
+    size_t offset = self->position.offset;
+    const char *name = "NULL";
+    if(NULL != self->target)
+    {
+        name = node_kind_name(self->target);
+    }
+
+    return format("<Alias target: %s, depth: %zd, pos: %zd:%zd>", name, self->depth, line, offset);
+}
+
+static void alias_dump(const Node *value, bool pad)
+{
+    int padding = pad ? ((int)value->depth + 1) * INDENT : 0;
+    String *repr = alias_repr(value);
+    fprintf(stdout, "%*c%s\n", padding, ' ', C(repr));
+    dispose_string(repr);
+
+    repr = node_repr(alias(value)->target);
+    fprintf(stdout, "%*c%s\n", padding + INDENT, ' ', C(repr));
+    dispose_string(repr);
+}
+
 static const struct vtable_s alias_vtable = 
 {
     alias_free,
     alias_size,
-    alias_equals
+    alias_equals,
+    alias_repr,
+    alias_dump
 };
 
 Alias *make_alias_node(Node *target)

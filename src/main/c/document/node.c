@@ -40,6 +40,26 @@ const Node *const_node_narrow(const Node *instance, NodeKind kind, const char * 
     return instance;
 }
 
+String *node_repr(const Node *self)
+{
+    if(NULL == self || NULL == self->vtable->repr)
+    {
+        return NULL;
+    }
+
+    return self->vtable->repr(self);
+}
+
+void node_dump(const Node *self, bool pad)
+{
+    if(NULL == self || NULL == self->vtable->repr)
+    {
+        return;
+    }
+
+    self->vtable->dump(self, pad);
+}
+
 void node_init(Node *self, NodeKind kind, const struct vtable_s *vtable)
 {
     if(NULL != self)

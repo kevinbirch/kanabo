@@ -44,3 +44,16 @@ Node *document_set_get_root(const DocumentSet *self, size_t index)
 
     return result;
 }
+
+static bool docset_dumper(void *each, void *context)
+{
+    fprintf(stdout, "--\n");
+    node_dump(each, true);
+
+    return true;
+}
+
+void document_set_dump(const DocumentSet *model)
+{
+    vector_iterate(model->values, docset_dumper, NULL);
+}

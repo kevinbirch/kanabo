@@ -10,6 +10,8 @@
 #include "str.h"
 #include "vector.h"
 
+#define INDENT 4
+
 struct document_set_s
 {
     String *input_name;
@@ -33,9 +35,11 @@ typedef struct node_s Node;
 
 struct vtable_s
 {
-    void   (*free)   (Node *);
-    size_t (*size)   (const Node *);
-    bool   (*equals) (const Node *, const Node *);
+    void    (*free)   (Node *);
+    size_t  (*size)   (const Node *);
+    bool    (*equals) (const Node *, const Node *);
+    String *(*repr)   (const Node *);
+    void    (*dump)   (const Node *, bool);
 };
 
 struct node_s
@@ -162,6 +166,7 @@ void         (dispose_node)(Node *value);
 #define      document_set_get(SELF, INDEX) (NULL == (SELF) ? NULL : vector_get((SELF)->values, (INDEX)))
 Node        *document_set_get_root(const DocumentSet *model, size_t index);
 #define      document_set_add(SELF, DOC) if(NULL != (SELF)) {vector_add((SELF)->values, (DOC));}
+void         document_set_dump(const DocumentSet *model);
 
 /*
  * Node API
@@ -195,6 +200,9 @@ const char  *(node_kind_name)(const Node *value);
 bool         (node_equals)(const Node *one, const Node *two);
 #define      node_equals(one, two) node_equals(const_node((one)), const_node((two)))
 bool         node_comparitor(const void *one, const void *two);
+
+String *     node_repr(const Node *self);
+void         node_dump(const Node *self, bool pad);
 
 void         (node_set_tag)(Node *target, String *value);
 #define      node_set_tag(SELF, VALUE) node_set_tag(node((SELF)), (VALUE))

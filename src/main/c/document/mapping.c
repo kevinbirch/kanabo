@@ -45,18 +45,50 @@ static void mapping_free(Node *value)
     map->values = NULL;
 }
 
-static hashcode scalar_hash(const void *key)
+static String *mapping_repr(const Node *value)
 {
-    const String *value = scalar_value(key);
-    return fnv1a_string_buffer_hash(strdta(value), strlen(value));
+    Mapping *self = (Mapping *)value;
+    size_t len = hashtable_size(self->values);
+    size_t line = self->position.line;
+    size_t offset = self->position.offset;
+
+    return format("<Mapping len: %zd, depth: %zd, pos: %zd:%zd>", len, self->depth, line, offset);
+}
+
+static bool map_dumper(String *key, Node *value, void *context)
+{
+    int padding = ((int)value->depth + 1) * INDENT;
+    fprintf(stdout, "%*c\"%s\" -> ", padding, ' ', C(key));
+
+    node_dump(value, false);
+
+    return true;
+}
+
+static void mapping_dump(const Node *value, bool pad)
+{
+    int padding = pad ? ((int)value->depth + 1) * INDENT : 0;
+    String *repr = node_repr(value);
+    fprintf(stdout, "%*c%s\n", padding, ' ', C(repr));
+    dispose_string(repr);
+
+    mapping_iterate(mapping(value), map_dumper, NULL);
 }
 
 static const struct vtable_s mapping_vtable = 
 {
     mapping_free,
     mapping_size,
-    mapping_equals
+    mapping_equals,
+    mapping_repr,
+    mapping_dump
 };
+
+static hashcode scalar_hash(const void *key)
+{
+    const String *value = scalar_value(key);
+    return fnv1a_string_buffer_hash(strdta(value), strlen(value));
+}
 
 Mapping *make_mapping_node(void)
 {

@@ -41,11 +41,40 @@ static void sequence_free(Node *value)
     self->values = NULL;
 }
 
+static String *sequence_repr(const Node *value)
+{
+    Sequence *self = (Sequence *)value;
+    size_t len = vector_length(self->values);
+    size_t line = self->position.line;
+    size_t offset = self->position.offset;
+
+    return format("<Sequence len: %zd, depth: %zd, pos: %zd:%zd>", len, self->depth, line, offset);
+}
+
+static bool seq_dumper(Node *each, void *context)
+{
+    node_dump(each, true);
+
+    return true;
+}
+
+static void sequence_dump(const Node *value, bool pad)
+{
+    int padding = pad ? ((int)value->depth + 1) * INDENT : 0;
+    String *repr = sequence_repr(value);
+    fprintf(stdout, "%*c%s\n", padding, ' ', C(repr));
+    dispose_string(repr);
+
+    sequence_iterate(sequence(value), seq_dumper, NULL);
+}
+
 static const struct vtable_s sequence_vtable = 
 {
     sequence_free,
     sequence_size,
-    sequence_equals
+    sequence_equals,
+    sequence_repr,
+    sequence_dump
 };
 
 Sequence *make_sequence_node(void)
