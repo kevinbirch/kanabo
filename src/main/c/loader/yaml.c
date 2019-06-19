@@ -402,12 +402,8 @@ static Scalar *build_scalar(Loader *context, const yaml_event_t *event)
         scalar->kind = SCALAR_TIMESTAMP;
 
         struct tm tm;
-        if(NULL == strptime((const char *)event->data.scalar.value, TIMESTAMP_FMT, &tm))
-        {
-            add_loader_error(context->errors, scalar->position, ERR_BAD_TIMESTAMP);
-            scalar->integer = 0;
-        }
-        else
+        // N.B. - we ignore unparseable timestamps
+        if(NULL != strptime((const char *)event->data.scalar.value, TIMESTAMP_FMT, &tm))
         {
             scalar->timestamp = mktime(&tm);
         }
