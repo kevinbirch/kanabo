@@ -787,11 +787,11 @@ void hashtable_dump(const Hashtable *hashtable, FILE *stream)
 {
     fprintf(stream,
             "hashtable summary:\n"
-            "mutable: %s\n"
-            "occupied: %zu of %zu\n"
-            "capacity: %zu (%zu * %g)\n"
-            "table length: %zu\n"
-            "load factor: %g\n"
+            "    mutable: %s\n"
+            "    occupied: %zu of %zu\n"
+            "    capacity: %zu (%zu * %g)\n"
+            "    table length: %zu\n"
+            "    load factor: %g\n"
             "bucket report:\n",
             hashtable_is_mutable(hashtable) ? "yes" : "no",
             hashtable->occupied,
@@ -809,10 +809,10 @@ void hashtable_dump(const Hashtable *hashtable, FILE *stream)
         {
             count++;
             Chain *chain = (Chain *)hashtable->entries[i + 1];
-            fprintf(stream, "[%zu]: chain (length: %zu, hash: 0x%zx)\n", i, chain->length, hashtable->hash(chain->entries[0]));
+            fprintf(stream, "    [%zu]: chain (length: %zu, hash: 0x%zx)\n", i, chain->length, hashtable->hash(chain->entries[0]));
             for(size_t j = 0; j < chain->length && NULL != chain->entries[j]; j += 2)
             {
-                fprintf(stream, "  [%zu]: chained key: \"%s\"\n", j, chain->entries[j]);
+                fprintf(stream, "        [%zu]: chained key\n", j);
             }
             if(max < chain->length)
             {
@@ -827,8 +827,8 @@ void hashtable_dump(const Hashtable *hashtable, FILE *stream)
         }
         else if(NULL != hashtable->entries[i])
         {
-            fprintf(stream, "[%zu]: key: \"%s\" hash: 0x%zx\n", i, hashtable->entries[i], hashtable->hash(hashtable->entries[i]));
+            fprintf(stream, "    [%zu]: hash: 0x%zx\n", i, hashtable->hash(hashtable->entries[i]));
         }
     }
-    fprintf(stream, "chains: %zu (length min: %zu, max: %zu, avg: %g)\n", count, min, max, avg);
+    fprintf(stream, "    chains: %zu (length min: %zu, max: %zu, avg: %g)\n", count, min, max, avg);
 }
