@@ -15,6 +15,7 @@
     * repr can use this when printing position
     * string interning?
   * track jsonpath step literal for each node
+    * add to repr output
   * failure in `add_node` or error from libyaml are fatal
   * add extra context string to capture scalar value *or* libyaml message
   * save input scalar quote style and use for yaml output (e.g. strings are optionally quoted with singe ordouble)

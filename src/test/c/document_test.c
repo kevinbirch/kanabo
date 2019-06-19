@@ -36,9 +36,8 @@ static void model_setup(void)
         "one", seq(string("foo1"), real("1.5")),
         "two", string("foo2"),
         "three", string("false"),
-        "four", string("true")
-                     );
-    
+        "four", string("true"));
+
     Document *doc = make_document_node();
     document_set_root(doc, root);
 

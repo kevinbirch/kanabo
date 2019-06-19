@@ -61,7 +61,7 @@ struct document_s
 {
     union
     {
-        Node base;
+        Node   base;
         struct node_s;
     };
     Node      *root;
@@ -86,7 +86,7 @@ struct scalar_s
 {
     union
     {
-        Node base;
+        Node   base;
         struct node_s;
     };
     ScalarKind  kind;
@@ -107,7 +107,7 @@ struct sequence_s
 {
     union
     {
-        Node base;
+        Node   base;
         struct node_s;
     };
     Vector *values;
@@ -119,7 +119,7 @@ struct mapping_s
 {
     union
     {
-        Node base;
+        Node   base;
         struct node_s;
     };
     Hashtable *values;
@@ -131,7 +131,7 @@ struct alias_s
 {
     union
     {
-        Node base;
+        Node   base;
         struct node_s;
     };
     struct node_s *target;

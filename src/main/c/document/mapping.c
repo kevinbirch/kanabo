@@ -1,5 +1,7 @@
 #include <errno.h>
 
+#include <yaml.h>
+
 #include "conditions.h"
 #include "document.h"
 #include "xalloc.h"
@@ -12,11 +14,27 @@ struct context_adapter_s
 
 typedef struct context_adapter_s context_adapter;
 
+static bool key_comparitor(const void *one, const void *two)
+{
+    // N.B. - mapping key specific comparitor using only scalar value
+    if(one == two)
+    {
+        return true;
+    }
+
+    if((NULL == one && NULL != two) || (NULL != one && NULL == two))
+    {
+        return false;
+    }
+
+    return node(one)->vtable->equals(node(one), node(two));
+}
+
 static bool mapping_equals(const Node *one, const Node *two)
 {
     return hashtable_equals(((const Mapping *)one)->values,
                             ((const Mapping *)two)->values,
-                            node_comparitor);
+                            key_comparitor);
 }
 
 static size_t mapping_size(const Node *self)
@@ -94,7 +112,7 @@ Mapping *make_mapping_node(void)
 {
     Mapping *self = xcalloc(sizeof(Mapping));
     node_init(node(self), MAPPING, &mapping_vtable);
-    self->values = make_hashtable_with_function(node_comparitor, scalar_hash);
+    self->values = make_hashtable_with_function(key_comparitor, scalar_hash);
 
     return self;
 }
@@ -104,7 +122,6 @@ Node *mapping_get(const Mapping *self, String *value)
     ENSURE_NONNULL_ELSE_NULL(self, value);
 
     Scalar *key = make_scalar_node(value, SCALAR_STRING);
-
     Node *result = hashtable_get(self->values, key);
 
     key->value = NULL;
