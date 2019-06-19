@@ -77,5 +77,6 @@ void sequence_add(Sequence *self, Node *item)
 
     vector_add(self->values, item);
     item->parent = node(self);
+    item->depth = self->depth + 1;
 }
 

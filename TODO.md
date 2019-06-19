@@ -14,7 +14,6 @@
   * move input name from doc set to source position? lots of redundant strings?
     * repr can use this when printing position
     * string interning?
-  * track depth of all nodes, from 0
   * track jsonpath step literal for each node
   * failure in `add_node` or error from libyaml are fatal
   * add extra context string to capture scalar value *or* libyaml message

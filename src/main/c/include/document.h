@@ -46,10 +46,11 @@ struct node_s
         String   *name;
     } tag;
 
-    Position               position;
-    const struct vtable_s *vtable;
     struct node_s         *parent;
+    Position               position;
     String                *anchor;
+    const struct vtable_s *vtable;
+    size_t                 depth;
 };
 
 struct document_s

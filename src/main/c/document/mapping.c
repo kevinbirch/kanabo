@@ -119,6 +119,7 @@ bool mapping_put(Mapping *self, Scalar *key, Node *value)
     {
         key->parent = node(self);
         value->parent = node(self);
+        value->depth = self->depth + 1;
     }
 
     return 0 == errno;
