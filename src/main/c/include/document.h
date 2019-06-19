@@ -96,7 +96,6 @@ struct scalar_s
     {
         int64_t integer;
         double  real;
-        time_t  timestamp;  // time_t instead of timespec b/c strptime has only 1 second granularity
         bool    boolean;
     };
 };

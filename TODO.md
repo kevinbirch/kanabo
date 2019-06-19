@@ -5,15 +5,6 @@
 ## fixes
 
 * loader
-  * scalars
-    * concrete subtypes, each holding reified value
-    * does libyaml recognize scalar subtypes by value pattern without a tag?
-    * does libyaml validate scalars with built-in tags that have bogus values? (e.g. not timestamp fmt)
-    * what should we do if tag and value disagree?
-    * assign yaml tag by detected value?
-  * move input name from doc set to source position? lots of redundant strings?
-    * repr can use this when printing position
-    * string interning?
   * track jsonpath step literal for each node
     * add to repr output
   * failure in `add_node` or error from libyaml are fatal
@@ -126,6 +117,10 @@ start: 0.8-alpha, end: 0.9-beta
 * can we mmap the input file and build a no-copy tree that points to strings by byte ranges?
 * support sets and ordered maps
 * http://cbor.io/ ?
+* parse and reify yaml timestamps
+* use sourcelocation instead of position in model, track input file across all nodes
+  * reuse the same string object from documentset?
+  * write out full position in node repr
 
 ### evaluator
 

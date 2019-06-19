@@ -2,7 +2,6 @@
 #include <regex.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <time.h>
 
 #include <yaml.h>
 
@@ -17,7 +16,6 @@
 static const char * const INTEGER_PATTERN = "^(0|([+-]?[1-9][[:digit:]]*))$";
 static const char * const DECIMAL_PATTERN = "^(0|([+-]?[1-9][[:digit:]]*))?\\.[[:digit:]]+([eE][+-]?[[:digit:]]+)?$";
 static const char * const TIMESTAMP_PATTERN = "^[0-9][0-9][0-9][0-9]-[0-9][0-9]?-[0-9][0-9]?(([Tt]|[ \t]+)[0-9][0-9]?:[0-9][0-9](:[0-9][0-9])?([.][0-9]+)?([ \t]*(Z|([-+][0-9][0-9]?(:[0-9][0-9])?)))?)?$";
-static const char * const TIMESTAMP_FMT = "%Y-%m-%dT%H:%M:%S";
 
 static regex_t decimal_regex;
 static regex_t integer_regex;
@@ -400,14 +398,6 @@ static Scalar *build_scalar(Loader *context, const yaml_event_t *event)
     {
         loader_trace("found scalar timestamp \"%s\"", event->data.scalar.value);
         scalar->kind = SCALAR_TIMESTAMP;
-
-        struct tm tm;
-        // N.B. - we ignore unparseable timestamps
-        if(NULL != strptime((const char *)event->data.scalar.value, TIMESTAMP_FMT, &tm))
-        {
-            scalar->timestamp = mktime(&tm);
-        }
-
         node_set_tag(scalar, make_string(YAML_TIMESTAMP_TAG));
     }
     else
