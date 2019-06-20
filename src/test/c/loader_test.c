@@ -200,10 +200,10 @@ static void assert_model_state(DocumentSet *model)
     assert_node_kind(five_0, SCALAR);
     assert_scalar_value((five_0), "1.5");
     assert_scalar_kind(five_0, SCALAR_REAL);
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
     assert_true(1.5 == scalar(five_0)->real);
-#pragma clang diagnostic pop
+#pragma GCC diagnostic pop
     Node *five_1 = sequence_get(sequence(five), 1);
     assert_node_kind(five_1, SCALAR);
     assert_scalar_value((five_1), "42");
