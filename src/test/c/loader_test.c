@@ -192,8 +192,6 @@ static void assert_model_state(DocumentSet *model)
     assert_false(scalar_boolean_is_true(scalar(four_1)));
     assert_false(scalar(four_1)->boolean);
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wfloat-equal"
     key = make_string("five");
     Node *five = mapping_get(mapping(root), key);
     assert_not_null(five);
@@ -202,7 +200,10 @@ static void assert_model_state(DocumentSet *model)
     assert_node_kind(five_0, SCALAR);
     assert_scalar_value((five_0), "1.5");
     assert_scalar_kind(five_0, SCALAR_REAL);
-    ck_assert_double_eq(1.5, scalar(five_0)->real);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wfloat-equal"
+    assert_true(1.5 == scalar(five_0)->real);
+#pragma clang diagnostic pop
     Node *five_1 = sequence_get(sequence(five), 1);
     assert_node_kind(five_1, SCALAR);
     assert_scalar_value((five_1), "42");
@@ -212,7 +213,6 @@ static void assert_model_state(DocumentSet *model)
     assert_node_kind(five_2, SCALAR);
     assert_scalar_value(five_2, "1978-07-26 10:15:00");
     assert_scalar_kind(five_2, SCALAR_TIMESTAMP);
-#pragma clang diagnostic pop
 }
 
 START_TEST (load_from_file)
