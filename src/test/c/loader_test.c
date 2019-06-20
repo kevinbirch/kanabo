@@ -213,6 +213,7 @@ static void assert_model_state(DocumentSet *model)
     assert_node_kind(five_2, SCALAR);
     assert_scalar_value(five_2, "1978-07-26 10:15:00");
     assert_scalar_kind(five_2, SCALAR_TIMESTAMP);
+    dispose_string(key);
 }
 
 START_TEST (load_from_file)
