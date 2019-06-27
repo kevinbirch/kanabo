@@ -180,7 +180,7 @@ static bool apply_name_test(Node *each, void *argument, Nodelist *target)
     }
 
     Mapping *map = mapping(each);
-    Node *value = mapping_get(map, name_test_step_name(context_step));
+    Node *value = mapping_lookup(map, name_test_step_name(context_step));
 
     if(NULL == value)
     {

@@ -117,17 +117,24 @@ Mapping *make_mapping_node(void)
     return self;
 }
 
-Node *mapping_get(const Mapping *self, String *value)
+Node *mapping_lookup(const Mapping *self, String *value)
 {
     ENSURE_NONNULL_ELSE_NULL(self, value);
 
     Scalar *key = make_scalar_node(value, SCALAR_STRING);
-    Node *result = hashtable_get(self->values, key);
+    Node *result = mapping_get(self, key);
 
     key->value = NULL;
     dispose_node(key);
 
     return result;
+}
+
+Node *mapping_get(const Mapping *self, Scalar *key)
+{
+    ENSURE_NONNULL_ELSE_NULL(self, key);
+
+    return hashtable_get(self->values, key);
 }
 
 bool mapping_contains(const Mapping *self, String *value)

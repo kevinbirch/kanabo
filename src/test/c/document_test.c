@@ -16,7 +16,7 @@ END_TEST
 
 START_TEST (null_mapping)
 {
-    assert_null(mapping_get(NULL, NULL));
+    assert_null(mapping_lookup(NULL, NULL));
 }
 END_TEST
 
@@ -151,7 +151,7 @@ START_TEST (scalar_type)
     assert_node_kind(r, MAPPING);
 
     String *key = make_string("two");
-    Node *s = mapping_get(mapping(r), key);
+    Node *s = mapping_lookup(mapping(r), key);
     dispose_string(key);
 
     assert_not_null(s);
@@ -167,7 +167,7 @@ START_TEST (scalar_boolean)
     assert_node_kind(r, MAPPING);
 
     String *key1 = make_string("three");
-    Node *three = mapping_get(mapping(r), key1);
+    Node *three = mapping_lookup(mapping(r), key1);
     dispose_string(key1);
     assert_not_null(three);
     assert_node_kind(three, SCALAR);
@@ -175,7 +175,7 @@ START_TEST (scalar_boolean)
     assert_false(scalar_boolean_is_true(scalar(three)));
 
     String *key2 = make_string("four");
-    Node *four = mapping_get(mapping(r), key2);
+    Node *four = mapping_lookup(mapping(r), key2);
     dispose_string(key2);
     assert_not_null(four);
     assert_node_kind(four, SCALAR);
@@ -191,7 +191,7 @@ START_TEST (sequence_type)
     assert_node_kind(r, MAPPING);
 
     String *key = make_string("one");
-    Node *s = mapping_get(mapping(r), key);
+    Node *s = mapping_lookup(mapping(r), key);
     dispose_string(key);
     assert_not_null(s);
     assert_node_kind(s, SEQUENCE);
@@ -233,11 +233,11 @@ START_TEST (mapping_type)
     assert_node_size(r, 4);
 
     String *bogus = make_string("bogus");
-    assert_null(mapping_get(mapping(r), bogus));
+    assert_null(mapping_lookup(mapping(r), bogus));
     dispose_string(bogus);
 
     String *key = make_string("two");
-    Node *scalar_value = mapping_get(mapping(r), key);
+    Node *scalar_value = mapping_lookup(mapping(r), key);
     dispose_string(key);
     assert_not_null(scalar_value);
     assert_node_kind(scalar_value, SCALAR);
@@ -251,7 +251,7 @@ START_TEST (sequence_iteration)
     assert_node_kind(r, MAPPING);
     
     String *key = make_string("one");
-    Node *s = mapping_get(mapping(r), key);
+    Node *s = mapping_lookup(mapping(r), key);
     dispose_string(key);
     assert_not_null(s);
     assert_node_kind(s, SEQUENCE);
@@ -270,7 +270,7 @@ START_TEST (fail_sequence_iteration)
     assert_node_kind(r, MAPPING);
     
     String *key = make_string("one");
-    Node *s = mapping_get(mapping(r), key);
+    Node *s = mapping_lookup(mapping(r), key);
     dispose_string(key);
     assert_not_null(s);
     assert_node_kind(s, SEQUENCE);

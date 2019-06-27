@@ -140,7 +140,7 @@ static void assert_model_state(DocumentSet *model)
     String *key = NULL;
 
     key = make_string("one");
-    Node *one = mapping_get(mapping(root), key);
+    Node *one = mapping_lookup(mapping(root), key);
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
@@ -156,7 +156,7 @@ static void assert_model_state(DocumentSet *model)
     assert_scalar_kind(one_1, SCALAR_STRING);
 
     key = make_string("two");
-    Node *two = mapping_get(mapping(root), key);
+    Node *two = mapping_lookup(mapping(root), key);
     assert_not_null(two);
     assert_node_kind(two, SCALAR);
     assert_scalar_value((two), "foo2");
@@ -164,7 +164,7 @@ static void assert_model_state(DocumentSet *model)
     dispose_string(key);
 
     key = make_string("three");
-    Node *three = mapping_get(mapping(root), key);
+    Node *three = mapping_lookup(mapping(root), key);
     assert_not_null(three);
     assert_node_kind(three, SCALAR);
     assert_scalar_value((three), "null");
@@ -172,7 +172,7 @@ static void assert_model_state(DocumentSet *model)
     dispose_string(key);
 
     key = make_string("four");
-    Node *four = mapping_get(mapping(root), key);
+    Node *four = mapping_lookup(mapping(root), key);
     assert_not_null(four);
     assert_node_kind(four, SEQUENCE);
     dispose_string(key);
@@ -193,7 +193,7 @@ static void assert_model_state(DocumentSet *model)
     assert_false(scalar(four_1)->boolean);
 
     key = make_string("five");
-    Node *five = mapping_get(mapping(root), key);
+    Node *five = mapping_lookup(mapping(root), key);
     assert_not_null(five);
     assert_node_kind(five, SEQUENCE);
     Node *five_0 = sequence_get(sequence(five), 0);
@@ -231,7 +231,7 @@ START_TEST (shorthand_tags)
     assert_node_tag(node(root), "tag:vampire-squid.com,2008:instrument");
 
     String *asset_class = make_string("asset-class");
-    Node *asset_class_value = mapping_get(root, asset_class);
+    Node *asset_class_value = mapping_lookup(root, asset_class);
     assert_not_null(asset_class_value);
     assert_node_kind(asset_class_value, SCALAR);
     assert_scalar_kind(asset_class_value, SCALAR_STRING);
@@ -239,7 +239,7 @@ START_TEST (shorthand_tags)
     dispose_string(asset_class);
 
     String *type = make_string("type");
-    Node *type_value = mapping_get(root, type);
+    Node *type_value = mapping_lookup(root, type);
     assert_not_null(type_value);
     assert_node_kind(type_value, SCALAR);
     assert_scalar_kind(type_value, SCALAR_STRING);
@@ -247,7 +247,7 @@ START_TEST (shorthand_tags)
     dispose_string(type);
 
     String *symbol = make_string("symbol");
-    Node *symbol_value = mapping_get(root, symbol);
+    Node *symbol_value = mapping_lookup(root, symbol);
     assert_not_null(symbol_value);
     assert_node_kind(symbol_value, SCALAR);
     assert_scalar_kind(symbol_value, SCALAR_STRING);
@@ -261,7 +261,7 @@ START_TEST (explicit_tags)
     Mapping *root = mapping(document_set_get_root(model_fixture, 0));
 
     String *name = make_string("name");
-    Node *name_value = mapping_get(root, name);
+    Node *name_value = mapping_lookup(root, name);
     assert_not_null(name_value);
     assert_node_kind(name_value, SCALAR);
     assert_scalar_kind(name_value, SCALAR_STRING);
@@ -269,7 +269,7 @@ START_TEST (explicit_tags)
     dispose_string(name);
 
     String *exchange_rate = make_string("exchange-rate");
-    Node *exchange_rate_value = mapping_get(root, exchange_rate);
+    Node *exchange_rate_value = mapping_lookup(root, exchange_rate);
     assert_not_null(exchange_rate_value);
     assert_node_kind(exchange_rate_value, SCALAR);
     assert_scalar_kind(exchange_rate_value, SCALAR_REAL);
@@ -277,7 +277,7 @@ START_TEST (explicit_tags)
     dispose_string(exchange_rate);
 
     String *spot_date = make_string("spot-date");
-    Node *spot_date_value = mapping_get(root, spot_date);
+    Node *spot_date_value = mapping_lookup(root, spot_date);
     assert_not_null(spot_date_value);
     assert_node_kind(spot_date_value, SCALAR);
     assert_scalar_kind(spot_date_value, SCALAR_TIMESTAMP);
@@ -285,7 +285,7 @@ START_TEST (explicit_tags)
     dispose_string(spot_date);
 
     String *settlement_date = make_string("settlement-date");
-    Node *settlement_date_value = mapping_get(root, settlement_date);
+    Node *settlement_date_value = mapping_lookup(root, settlement_date);
     assert_not_null(settlement_date_value);
     assert_node_kind(settlement_date_value, SCALAR);
     assert_scalar_kind(settlement_date_value, SCALAR_TIMESTAMP);
@@ -301,14 +301,14 @@ START_TEST (anchor)
     String *key = NULL;
 
     key = make_string("one");
-    Node *one = mapping_get(root, key);
+    Node *one = mapping_lookup(root, key);
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
     dispose_string(key);
 
     key = make_string("two");
-    Node *a = mapping_get(root, key);
+    Node *a = mapping_lookup(root, key);
     assert_not_null(a);
     assert_node_kind(a, ALIAS);
     dispose_string(key);
@@ -328,7 +328,7 @@ START_TEST (key_anchor)
     String *key = NULL;
 
     key = make_string("one");
-    Node *one = mapping_get(root, key);
+    Node *one = mapping_lookup(root, key);
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
@@ -345,7 +345,7 @@ START_TEST (key_anchor)
     assert_scalar_value(one_1, "one");
 
     key = make_string("two");
-    Node *alias2 = mapping_get(root, key);
+    Node *alias2 = mapping_lookup(root, key);
     assert_not_null(alias2);
     dispose_string(key);
 
@@ -365,7 +365,7 @@ START_TEST (duplicate_clobber)
     assert_node_size(root, 3);
 
     String *key = make_string("one");
-    Node *one = mapping_get(mapping(root), key);
+    Node *one = mapping_lookup(mapping(root), key);
     assert_not_null(one);
     assert_node_kind(one, SCALAR);
     assert_scalar_value(one, "bar2");

@@ -284,7 +284,8 @@ bool         sequence_iterate(const Sequence *seq, sequence_iterator iterator, v
  * Mapping API
  */
 
-Node        *mapping_get(const Mapping *map, String *key);
+Node        *mapping_lookup(const Mapping *map, String *key);
+Node        *mapping_get(const Mapping *map, Scalar *key);
 bool         mapping_contains(const Mapping *map, String *key);
 bool         mapping_put(Mapping *self, Scalar *key, Node *value);
 #define      mapping_is_empty(SELF) hashtable_is_empty(const_mapping((SELF))->values)

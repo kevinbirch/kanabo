@@ -147,7 +147,7 @@ static void add_to_mapping(Loader *context, Node *node)
     Scalar *key = scalar(context->key_cache);
 
     Mapping *mapping = mapping(context->current);
-    Node *previous = mapping_get(mapping, scalar_value(key));
+    Node *previous = mapping_lookup(mapping, scalar_value(key));
 
     if(NULL != previous)
     {
