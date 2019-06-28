@@ -72,7 +72,7 @@ static bool fail_sequence(Node *each, void *context)
     }
 }
 
-static bool check_mapping(String *key, Node *value, void *context)
+static bool check_mapping(Scalar *key, Node *value, void *context)
 {
     assert_not_null(key);
     assert_not_null(value);
@@ -81,7 +81,7 @@ static bool check_mapping(String *key, Node *value, void *context)
     return true;
 }
 
-static bool fail_mapping(String *key, Node *value, void *context)
+static bool fail_mapping(Scalar *key, Node *value, void *context)
 {
     assert_not_null(key);
     assert_not_null(value);

@@ -27,7 +27,7 @@ static bool emit_scalar(const Scalar *each)
     return emit_string(scalar_value(each));
 }
 
-static bool emit_mapping_item(String *key, Node *value, void *context)
+static bool emit_mapping_item(Scalar *key, Node *value, void *context)
 {
     size_t *count = (size_t *)context;
     if(0 != (*count)++)
@@ -35,7 +35,7 @@ static bool emit_mapping_item(String *key, Node *value, void *context)
         EMIT(",");
     }
 
-    if(!emit_quoted_scalar(key))
+    if(!emit_quoted_scalar(scalar_value(key)))
     {
         return false;
     }

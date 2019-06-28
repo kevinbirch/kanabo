@@ -5,6 +5,7 @@
 ## fixes
 
 * loader
+  * fix yaml emitter to use scalar objects directly on output (they always have tags now)
   * track jsonpath step literal for each node
     * add to repr output
   * failure in `add_node` or error from libyaml are fatal

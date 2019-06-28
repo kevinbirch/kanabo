@@ -5,7 +5,7 @@
 
 #define component "zsh"
 
-static bool emit_mapping_item(String *key, Node *each, void *context)
+static bool emit_mapping_item(Scalar *key, Node *each, void *context)
 {
     if(!is_scalar(each))
     {
@@ -13,7 +13,7 @@ static bool emit_mapping_item(String *key, Node *each, void *context)
         return true;
     }
 
-    if(!emit_quoted_string(key))
+    if(!emit_quoted_string(scalar_value(key)))
     {
         return false;
     }

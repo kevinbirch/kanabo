@@ -3,7 +3,7 @@
 
 #define component "bash"
 
-static bool emit_mapping_item(String *key, Node *each, void *context)
+static bool emit_mapping_item(Scalar *key, Node *each, void *context)
 {
     if(!is_scalar(each))
     {
@@ -12,7 +12,7 @@ static bool emit_mapping_item(String *key, Node *each, void *context)
     }
 
     EMIT("[");
-    if(!emit_string(key))
+    if(!emit_string(scalar_value(key)))
     {
         return false;
     }

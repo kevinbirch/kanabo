@@ -73,10 +73,12 @@ static String *mapping_repr(const Node *value)
     return format("<Mapping len: %zd, depth: %zd, pos: %zd:%zd>", len, self->depth, line, offset);
 }
 
-static bool map_dumper(String *key, Node *value, void *context)
+static bool map_dumper(Scalar *key, Node *value, void *context)
 {
     int padding = ((int)value->depth + 1) * INDENT;
-    fprintf(stdout, "%*c\"%s\" -> ", padding, ' ', C(key));
+    String *repr = node_repr(node(key));
+    fprintf(stdout, "%*c%s -> ", padding, ' ', C(repr));
+    dispose_string(repr);
 
     node_dump(value, false);
 
@@ -151,10 +153,10 @@ bool mapping_contains(const Mapping *self, String *value)
     return result;
 }
 
-static bool mapping_iterator_adpater(void *key, void *value, void *context)
+static bool mapping_iterator_adapter(void *key, void *value, void *context)
 {
     context_adapter *adapter = (context_adapter *)context;
-    return adapter->iterator(scalar_value(key), node(value), adapter->context);
+    return adapter->iterator(scalar(key), node(value), adapter->context);
 }
 
 bool mapping_iterate(const Mapping *self, mapping_iterator iterator, void *context)
@@ -162,7 +164,7 @@ bool mapping_iterate(const Mapping *self, mapping_iterator iterator, void *conte
     ENSURE_NONNULL_ELSE_FALSE(self, iterator);
 
     context_adapter adapter = {.iterator=iterator, .context=context};
-    return hashtable_iterate(self->values, mapping_iterator_adpater, &adapter);
+    return hashtable_iterate(self->values, mapping_iterator_adapter, &adapter);
 }
 
 bool mapping_put(Mapping *self, Scalar *key, Node *value)

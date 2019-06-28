@@ -290,7 +290,7 @@ bool         mapping_contains(const Mapping *map, String *key);
 bool         mapping_put(Mapping *self, Scalar *key, Node *value);
 #define      mapping_is_empty(SELF) hashtable_is_empty(const_mapping((SELF))->values)
 
-typedef bool (*mapping_iterator)(String *key, Node *value, void *context);
+typedef bool (*mapping_iterator)(Scalar *key, Node *value, void *context);
 bool         mapping_iterate(const Mapping *map, mapping_iterator iterator, void *context);
 
 #define      mapping(SELF) _Generic((SELF),\
