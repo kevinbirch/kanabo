@@ -44,7 +44,11 @@ static String *document_repr(const Node *value)
         name = node_kind_name(self->root);
     }
 
-    return format("<Document root: %s, pos: %zd:%zd>", name, self->position.line, self->position.offset);
+    return format(
+        "<Document version: %d.%d, root: %s, anchors: %zu, tags: %zu, pos: %zu:%zu>",
+        self->yaml.major, self->yaml.minor, name,
+        hashtable_size(self->yaml.anchors), vector_length(self->yaml.tags),
+        self->position.line, self->position.offset);
 }
 
 static void document_dump(const Node *value, bool pad)
