@@ -1,3 +1,5 @@
+#include <string.h>  // for strdup
+
 #include <yaml.h>
 
 #include "emitter/yaml.h"
@@ -202,6 +204,7 @@ static bool emit_document(const Nodelist *list, yaml_emitter_t *emitter)
     end = cur;
 
   emit:
+    ;
     yaml_version_directive_t *version = &(yaml_version_directive_t){major, minor};
     yaml_document_start_event_initialize(&event, version, start, end, 0);
     if(!yaml_emitter_emit(emitter, &event))
