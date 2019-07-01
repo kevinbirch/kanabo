@@ -240,6 +240,15 @@ const char *string_as_c_str(const String *self)
     return (const char *)self->value;
 }
 
+char *string_copy(const String *self)
+{
+    char *result = xcalloc(self->length + 1);
+    memcpy(result, self->value, self->length);
+    result[self->length] = '\0';
+
+    return result;
+}
+
 static inline size_t calculate_allocation_size(size_t capacity)
 {
     return sizeof(MutableString) + capacity + 1;

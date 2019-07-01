@@ -22,6 +22,7 @@ String        *vformat(const char *format, va_list args) __attribute__ ((format 
 #define        S(VALUE) make_string((VALUE))
 
 String        *string_clone(const String *self);
+char          *string_clone_c_string(const String *self);
 
 // String Destructor
 
@@ -59,6 +60,7 @@ const uint8_t *string_data(const String *self);
 // String Coercion API
 
 const char    *string_as_c_str(const String *self);
+char          *string_copy(const String *self);
 
 // Mutable String Constructors
 
@@ -68,6 +70,7 @@ MutableString *make_mstring_with_c_str(const char *value);
 MutableString *make_mstring_with_string(const String *value);
 
 MutableString *mstring_clone(const MutableString *self);
+char          *mstring_clone_c_string(const MutableString *self);
 
 // Mutable String Destructor
 
@@ -265,18 +268,27 @@ ing) \
 #define cstr strcst
 #define C strcst
 
+#define strdup(SELF) _Generic((SELF),                               \
+                              String *: string_copy,                \
+                              const String *: string_copy,          \
+                              MutableString *: mstring_copy,        \
+                              const MutableString *: mstring_copy   \
+                              )(SELF)
+
 #define strcln(SELF) _Generic((SELF),                              \
                               String *: string_clone,              \
                               const String *: string_clone,        \
                               MutableString *: mstring_clone,      \
                               const MutableString *: mstring_clone \
                               )(SELF)
+
 #define strdsp(SELF) _Generic((SELF),                                 \
                               String *: string_dispose,               \
                               const String *: string_dispose,         \
                               MutableString *: mstring_dispose,       \
                               const MutableString *: mstring_dispose  \
                               )(SELF)
+
 
 #define strdta(SELF) _Generic((SELF),                              \
                               String *: string_data,               \

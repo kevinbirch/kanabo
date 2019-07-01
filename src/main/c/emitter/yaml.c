@@ -1,5 +1,3 @@
-#include <string.h>  // for strdup
-
 #include <yaml.h>
 
 #include "emitter/yaml.h"
@@ -197,8 +195,8 @@ static bool emit_document(const Nodelist *list, yaml_emitter_t *emitter)
     for(size_t i = 0; i < length; i++)
     {
         TagDirective *td = vector_get(doc->yaml.tags, i);
-        cur->handle = (yaml_char_t *)strdup(C(td->handle));
-        cur->prefix = (yaml_char_t *)strdup(C(td->prefix));
+        cur->handle = (yaml_char_t *)strdup(td->handle);
+        cur->prefix = (yaml_char_t *)strdup(td->handle);
         cur++;
     }
     end = cur;
