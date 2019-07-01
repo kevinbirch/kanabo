@@ -199,41 +199,81 @@ void dispose_hashtable(Hashtable *hashtable)
 
 bool hashtable_is_mutable(const Hashtable *hashtable)
 {
+    if(NULL == hashtable)
+    {
+        return false;
+    }
+
     return hashtable->mutable;
 }
 
 void hashtable_set_mutable(Hashtable *hashtable)
 {
+    if(NULL == hashtable)
+    {
+        return;
+    }
+
     hashtable->mutable = true;
 }
 
 void hashtable_set_immutable(Hashtable *hashtable)
 {
+    if(NULL == hashtable)
+    {
+        return;
+    }
+
     hashtable->mutable = false;
 }
 
 bool hashtable_is_immutable(const Hashtable *hashtable)
 {
+    if(NULL == hashtable)
+    {
+        return true;
+    }
+
     return !hashtable->mutable;
 }
 
 float hashtable_load_factor(const Hashtable *hashtable)
 {
+    if(NULL == hashtable)
+    {
+        return DEFAULT_LOAD_FACTOR;
+    }
+
     return hashtable->load_factor;
 }
 
 size_t hashtable_size(const Hashtable *hashtable)
 {
+    if(NULL == hashtable)
+    {
+        return 0;
+    }
+
     return hashtable->occupied;
 }
 
 size_t hashtable_capacity(const Hashtable *hashtable)
 {
+    if(NULL == hashtable)
+    {
+        return 0;
+    }
+
     return hashtable->capacity;
 }
 
 bool hashtable_is_empty(const Hashtable *hashtable)
 {
+    if(NULL == hashtable)
+    {
+        return true;
+    }
+
     return 0 == hashtable->occupied;
 }
 

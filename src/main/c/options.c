@@ -30,6 +30,7 @@ static argument arguments[] =
     {"no-warranty", no_argument,       NULL, 'w'}, // print no-warranty and exit
     {"help",        no_argument,       NULL, 'h'}, // print help and exit
     // operating modes:
+    {"dump",        no_argument,       NULL, 'x'}, // dump document and exit
     {"query",       required_argument, NULL, 'q'}, // evaluate given expression and exit
     // optional arguments:
     {"output",      required_argument, NULL, 'o'}, // emit expressions for the given shell
@@ -105,7 +106,7 @@ void process_options(const int argc, char * const *argv, struct options *options
     options->input_file_name = NULL;
     options->mode = INTERACTIVE_MODE;
 
-    while(!done && (opt = getopt_long(argc, argv, "vwhq:o:d:", arguments, NULL)) != -1)
+    while(!done && (opt = getopt_long(argc, argv, "vwhxq:o:d:", arguments, NULL)) != -1)
     {
         switch(opt)
         {
@@ -127,7 +128,9 @@ void process_options(const int argc, char * const *argv, struct options *options
             case 'q':
                 options->mode = EXPRESSION_MODE;
                 options->expression = optarg;
-                options->mode = EXPRESSION_MODE;
+                break;
+            case 'x':
+                options->mode = DUMP_MODE;
                 break;
             case 'o':
             {
@@ -187,6 +190,11 @@ void process_options(const int argc, char * const *argv, struct options *options
     else if(EXPRESSION_MODE == options->mode && NULL == options->input_file_name)
     {
         fputs("error: an input filename (or \"-\") must be provided for single expression evaluation\n", stderr);
+        options->mode = SHOW_HELP;
+    }
+    else if(DUMP_MODE == options->mode && NULL == options->input_file_name)
+    {
+        fputs("error: an input filename (or \"-\") must be provided\n", stderr);
         options->mode = SHOW_HELP;
     }
 }

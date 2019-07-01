@@ -16,7 +16,8 @@ enum command
     SHOW_WARRANTY,
     SHOW_HELP,
     INTERACTIVE_MODE,
-    EXPRESSION_MODE
+    EXPRESSION_MODE,
+    DUMP_MODE
 };
 
 enum duplicate_key_strategy

@@ -481,6 +481,23 @@ static int expression_mode(struct options *options)
     return result;
 }
 
+static int dump_mode(struct options *options)
+{
+    int result = EXIT_FAILURE;
+
+    DocumentSet *documents = load_input(options->input_file_name, options);
+    if(NULL == documents)
+    {
+        goto end;
+    }
+
+    document_set_dump(documents);
+    dispose_document_set(documents);
+
+  end:
+    return result;
+}
+
 static int run(const int argc, char * const *argv)
 {
     struct options options;
@@ -505,6 +522,9 @@ static int run(const int argc, char * const *argv)
             break;
         case EXPRESSION_MODE:
             result = expression_mode(&options);
+            break;
+        case DUMP_MODE:
+            result = dump_mode(&options);
             break;
     }
 

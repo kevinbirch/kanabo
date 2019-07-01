@@ -47,7 +47,7 @@ Node *document_set_get_root(const DocumentSet *self, size_t index)
 
 static bool docset_dumper(void *each, void *context)
 {
-    fprintf(stdout, "--\n");
+    fprintf(stdout, "---\n");
     node_dump(each, true);
 
     return true;
