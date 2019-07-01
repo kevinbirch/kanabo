@@ -43,6 +43,11 @@ static inline String *string_init_with_bytestring(String *self, const uint8_t *v
 
 String *make_string(const char *value)
 {
+    if(NULL == value)
+    {
+        return NULL;
+    }
+
     size_t length = strlen(value);
     String *self = string_alloc(length);
 
@@ -51,6 +56,11 @@ String *make_string(const char *value)
 
 String *make_string_with_bytestring(const uint8_t *value, size_t length)
 {
+    if(NULL == value)
+    {
+        return NULL;
+    }
+
     String *self = string_alloc(length);
 
     return string_init_with_bytestring(self, value, length);
@@ -58,6 +68,11 @@ String *make_string_with_bytestring(const uint8_t *value, size_t length)
 
 String *format(const char *format, ...)
 {
+    if(NULL == format)
+    {
+        return NULL;
+    }
+
     va_list args;
     va_start(args, format);
 
@@ -70,6 +85,11 @@ String *format(const char *format, ...)
 
 String *vformat(const char *format, va_list format_args)
 {
+    if(NULL == format)
+    {
+        return NULL;
+    }
+
     va_list count_args;
     va_copy(count_args, format_args);
 
@@ -109,22 +129,42 @@ void dispose_string(String *self)
 
 String *string_clone(const String *self)
 {
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
     String *that = string_alloc(self->length);
     return string_init(that, (const char *)self->value, self->length);
 }
 
 size_t string_length(const String *self)
 {
+    if(NULL == self)
+    {
+        return 0;
+    }
+
     return self->length;
 }
 
 const uint8_t * string_data(const String *self)
 {
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
     return self->value;
 }
 
 uint8_t string_get(const String *self, size_t index)
 {
+    if(NULL == self)
+    {
+        return 0;
+    }
+
     return self->value[index];
 }
 
@@ -145,6 +185,11 @@ bool string_equals(const String *self, const String *other)
 
 bool string_equals_c_string(const String *self, const char *other)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     if(self->length != strlen(other))
     {
         return false;
@@ -155,6 +200,11 @@ bool string_equals_c_string(const String *self, const char *other)
 
 bool string_equals_bytestring(const String *self, const uint8_t *other, size_t length)
 {
+    if(NULL == self || NULL == other)
+    {
+        return false;
+    }
+
     if(self->length != length)
     {
         return false;
@@ -165,6 +215,11 @@ bool string_equals_bytestring(const String *self, const uint8_t *other, size_t l
 
 bool string_iterate(const String *self, string_iterator iterator, void *parameter)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     for(size_t i = 0; i < string_length(self); i++)
     {
         if(!iterator(i, self->value[i], parameter))
@@ -178,6 +233,11 @@ bool string_iterate(const String *self, string_iterator iterator, void *paramete
 
 bool string_startswith(const String *self, const String *value)
 {
+    if(NULL == self || NULL == value)
+    {
+        return false;
+    }
+
     if(value->length > self->length)
     {
         return false;
@@ -188,6 +248,11 @@ bool string_startswith(const String *self, const String *value)
 
 bool string_startswith_c_string(const String *self, const char *value)
 {
+    if(NULL == self || NULL == value)
+    {
+        return false;
+    }
+
     size_t length = strlen(value);
     if(length > self->length)
     {
@@ -199,6 +264,11 @@ bool string_startswith_c_string(const String *self, const char *value)
 
 bool string_endswith(const String *self, const String *value)
 {
+    if(NULL == self || NULL == value)
+    {
+        return false;
+    }
+
     if(value->length > self->length)
     {
         return false;
@@ -211,6 +281,11 @@ bool string_endswith(const String *self, const String *value)
 
 bool string_endswith_c_string(const String *self, const char *value)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     size_t length = strlen(value);
     if(length > self->length)
     {
@@ -224,6 +299,11 @@ bool string_endswith_c_string(const String *self, const char *value)
 
 bool string_contains(const String *self, uint8_t value)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     for(size_t i = 0; i < self->length; i++)
     {
         if(value == self->value[i])
@@ -237,11 +317,21 @@ bool string_contains(const String *self, uint8_t value)
 
 const char *string_as_c_str(const String *self)
 {
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
     return (const char *)self->value;
 }
 
 char *string_copy(const String *self)
 {
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
     char *result = xcalloc(self->length + 1);
     memcpy(result, self->value, self->length);
     result[self->length] = '\0';
@@ -316,21 +406,41 @@ void dispose_mstring(MutableString *self)
 
 size_t mstring_length(const MutableString *self)
 {
+    if(NULL == self)
+    {
+        return 0;
+    }
+
     return self->base.length;
 }
 
 const uint8_t * mstring_data(const MutableString *self)
 {
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
     return self->base.value;
 }
 
 uint8_t mstring_get(const MutableString *self, size_t index)
 {
+    if(NULL == self)
+    {
+        return 0;
+    }
+
     return self->base.value[index];
 }
 
 bool mstring_equals(const MutableString *self, const MutableString *other)
 {
+    if(NULL == self || NULL == other)
+    {
+        return false;
+    }
+
     if(self->base.length != other->base.length)
     {
         return false;
@@ -341,6 +451,11 @@ bool mstring_equals(const MutableString *self, const MutableString *other)
 
 bool mstring_equals_string(const MutableString *self, const String *other)
 {
+    if(NULL == self || NULL == other)
+    {
+        return false;
+    }
+
     if(self->base.length != other->length)
     {
         return false;
@@ -351,6 +466,11 @@ bool mstring_equals_string(const MutableString *self, const String *other)
 
 bool mstring_equals_c_string(const MutableString *self, const char *other)
 {
+    if(NULL == self || NULL == other)
+    {
+        return false;
+    }
+
     if(self->base.length != strlen(other))
     {
         return false;
@@ -361,6 +481,11 @@ bool mstring_equals_c_string(const MutableString *self, const char *other)
 
 bool mstring_equals_bytestring(const MutableString *self, const uint8_t *other, size_t length)
 {
+    if(NULL == self || NULL == other)
+    {
+        return false;
+    }
+
     if(self->base.length != length)
     {
         return false;
@@ -371,46 +496,91 @@ bool mstring_equals_bytestring(const MutableString *self, const uint8_t *other, 
 
 bool mstring_iterate(const MutableString *self, string_iterator iterator, void *parameter)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     return string_iterate(&self->base, iterator, parameter);
 }
 
 bool mstring_startswith(const MutableString *self, const String *value)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     return string_startswith(&self->base, value);
 }
 
 bool mstring_startswith_c_string(const MutableString *self, const char *value)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     return string_startswith_c_string(&self->base, value);
 }
 
 bool mstring_endswith(const MutableString *self, const String *value)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     return string_endswith(&self->base, value);
 }
 
 bool mstring_endswith_c_string(const MutableString *self, const char *value)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     return string_endswith_c_string(&self->base, value);
 }
 
 bool mstring_contains(const MutableString *self, uint8_t value)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     return string_contains(&self->base, value);
 }
 
 size_t mstring_get_capacity(const MutableString *self)
 {
+    if(NULL == self)
+    {
+        return 0;
+    }
+
     return self->capacity;
 }
 
 bool mstring_has_capacity(const MutableString *self, size_t length)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     return (self->capacity - self->base.length) >= length;
 }
 
 MutableString *mstring_clone(const MutableString *self)
 {
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
     MutableString *that = mstring_alloc(self->capacity);
     mstring_init(that, self->capacity);
     if(self->base.length)
@@ -423,22 +593,42 @@ MutableString *mstring_clone(const MutableString *self)
 
 String *mstring_as_string(const MutableString *self)
 {
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
     String *that = string_alloc(self->base.length);
     return string_init(that, (const char *)self->base.value, self->base.length);
 }
 
 String *mstring_as_string_no_copy(MutableString *self)
 {
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
     return &self->base;
 }
 
 const char *mstring_as_c_str(const MutableString *self)
 {
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
     return (const char *)self->base.value;
 }
 
 char *mstring_copy(const MutableString *self)
 {
+    if(NULL == self)
+    {
+        return NULL;
+    }
+
     char *result = xcalloc(self->base.length + 1);
     memcpy(result, self->base.value, self->base.length);
     result[self->base.length] = '\0';
@@ -470,18 +660,33 @@ static inline void append(MutableString *self, const void *data, size_t length)
 
 void mstring_append_byte(MutableString **self, const uint8_t value)
 {
+    if(NULL == self)
+    {
+        return;
+    }
+
     ensure_capacity(self, 1);
     append(*self, &value, 1);
 }
 
 void mstring_append_char(MutableString **self, const char value)
 {
+    if(NULL == self)
+    {
+        return;
+    }
+
     ensure_capacity(self, 1);
     append(*self, &value, 1);
 }
 
 void mstring_append_c_str(MutableString **self, const char *value)
 {
+    if(NULL == self)
+    {
+        return;
+    }
+
     size_t length = strlen(value);
     ensure_capacity(self, length);
     append(*self, value, length);
@@ -489,24 +694,44 @@ void mstring_append_c_str(MutableString **self, const char *value)
 
 void mstring_append_string(MutableString **self, const String *string)
 {
+    if(NULL == self)
+    {
+        return;
+    }
+
     ensure_capacity(self, string->length);
     append(*self, string->value, string->length);
 }
 
 void mstring_append_mstring(MutableString **self, const MutableString *string)
 {
+    if(NULL == self)
+    {
+        return;
+    }
+
     ensure_capacity(self, string->base.length);
     append(*self, string->base.value, string->base.length);
 }
 
 void mstring_append_stream(MutableString **self, const uint8_t *value, size_t length)
 {
+    if(NULL == self)
+    {
+        return;
+    }
+
     ensure_capacity(self, length);
     append(*self, value, length);
 }
 
 bool mformat(MutableString **self, const char *format, ...)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     va_list args;
     va_start(args, format);
 
@@ -519,6 +744,11 @@ bool mformat(MutableString **self, const char *format, ...)
 
 bool mvformat(MutableString **self, const char *format, va_list format_args)
 {
+    if(NULL == self)
+    {
+        return false;
+    }
+
     va_list count_args;
     va_copy(count_args, format_args);
 
@@ -549,6 +779,11 @@ bool mvformat(MutableString **self, const char *format, va_list format_args)
 
 void mstring_set(MutableString *self, size_t position, uint8_t value)
 {
+    if(NULL == self)
+    {
+        return;
+    }
+
     if(position > self->base.length)
     {
         return;
@@ -558,6 +793,11 @@ void mstring_set(MutableString *self, size_t position, uint8_t value)
 
 void mstring_set_range(MutableString *self, size_t position, size_t length, const uint8_t *value)
 {
+    if(NULL == self)
+    {
+        return;
+    }
+
     if(position > self->base.length || position + length > self->base.length)
     {
         return;
