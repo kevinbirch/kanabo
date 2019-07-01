@@ -133,6 +133,8 @@ static bool emit_node(Node *each, void *context)
             log_trace(component, "resolving alias");
             return emit_node(alias_target(alias(each)), context);
             break;
+        default:
+            return false;
     }
 }
 
