@@ -32,14 +32,14 @@ static const char * const HELP =
     "    kanabo (--version | --no-warranty | --help)\n"
     "\n"
     "Options:\n"
-    "-q  <jsonpath>, --query <jsonpath>     Execute a JSONPath query and exit. Requires an input file.\n"
-    "-o  <format>, --output <format>        Specify the output format (\"json\" (default), \"bash\", \"zsh\" or \"yaml\").\n"
+    "-q <jsonpath>, --query <jsonpath>      Execute a JSONPath query and exit. Requires an input file.\n"
+    "-o <format>,   --output <format>       Specify the output format (\"json\" (default), \"bash\", \"zsh\" or \"yaml\").\n"
     "-d <strategy>, --duplicate <strategy>  Specify how to handle duplicate mapping keys (\"clobber\" (default) or \"fail\").\n"
     "\n"
     "Standalone Options:\n"
-    "-v, --version               Print the version information and exit.\n"
-    "-w, --no-warranty           Print the no-warranty information and exit.\n"
-    "-h, --help                  Print the usage summary and exit.\n";
+    "-v, --version                          Print the version information and exit.\n"
+    "-w, --no-warranty                      Print the no-warranty information and exit.\n"
+    "-h, --help                             Print the usage summary and exit.\n";
 
 static const char * const DEFAULT_PROMPT = ">> ";
 static const char * const BANNER =
