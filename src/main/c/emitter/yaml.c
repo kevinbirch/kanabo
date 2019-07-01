@@ -198,7 +198,7 @@ static bool emit_document(const Nodelist *list, yaml_emitter_t *emitter)
     {
         TagDirective *td = vector_get(doc->yaml.tags, i);
         cur->handle = (yaml_char_t *)strdup(td->handle);
-        cur->prefix = (yaml_char_t *)strdup(td->handle);
+        cur->prefix = (yaml_char_t *)strdup(td->prefix);
         cur++;
     }
     end = cur;

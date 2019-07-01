@@ -68,9 +68,13 @@ static void tagged_yaml_setup(void)
     model_fixture = must_load("test-resources/tagged.yaml", DUPE_FAIL);
 
     Document *document = document_set_get(model_fixture, 0);
-    assert_uint_eq(1, vector_length(document->yaml.tags));
     assert_int_eq(1, document->yaml.major);
     assert_int_eq(1, document->yaml.minor);
+    assert_uint_eq(1, vector_length(document->yaml.tags));
+    TagDirective *tg = vector_get(document->yaml.tags, 0);
+    assert_not_null(tg);
+    ck_assert_str_eq("!squid!", C(tg->handle));
+    ck_assert_str_eq("tag:vampire-squid.com,2008:", C(tg->prefix));
 
     Node *root = document_set_get_root(model_fixture, 0);
     assert_not_null(root);
