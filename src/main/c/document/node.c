@@ -5,7 +5,6 @@
 #include "document.h"
 #include "log.h"
 #include "panic.h"
-#include "xalloc.h"
 
 static const char * const NODE_KINDS [] =
 {
@@ -67,7 +66,7 @@ void node_init(Node *self, NodeKind kind, const struct vtable_s *vtable)
         self->tag.kind = kind;
         self->tag.name = NULL;
         self->vtable = vtable;
-        self->anchor = NULL;
+        self->base_yaml.anchor = NULL;
     }
 }
 
@@ -80,7 +79,7 @@ void (dispose_node)(Node *value)
 
     value->vtable->free(value);
     free(value->tag.name);
-    dispose_string(value->anchor);
+    dispose_string(value->base_yaml.anchor);
 
     free(value);
 }
@@ -95,7 +94,7 @@ void (node_set_anchor)(Node *self, String *value)
 {
     ENSURE_NONNULL_ELSE_VOID(self, value);
 
-    self->anchor = value;
+    self->base_yaml.anchor = value;
 }
 
 bool (node_equals)(const Node *one, const Node *two)

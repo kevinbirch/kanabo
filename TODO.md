@@ -4,8 +4,12 @@
 
 ## fixes
 
+* emitter
+  * emit anchors, they may be useful
+  * track scalar style
+  * track block/flow styles for seq & map
+  * yaml emitter settings canonical? indent? line width? line break? 
 * loader
-  * fix yaml emitter to use scalar objects directly on output (they always have tags now)
   * track jsonpath step literal for each node
     * add to repr output
   * failure in `add_node` or error from libyaml are fatal
@@ -47,6 +51,7 @@ start: 0.8-alpha, end: 0.9-beta
 
 1. how to select an item of a seq of seq?
    * clean up `evaluate_nodelist` (should be function?)
+1. support full complement of yaml types: https://yaml.org/type/index.html
 1. add `scalar()` selector
 1. add `parent()` selector
 1. join

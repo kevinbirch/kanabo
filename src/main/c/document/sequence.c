@@ -105,6 +105,7 @@ void sequence_add(Sequence *self, Node *item)
     ENSURE_NONNULL_ELSE_VOID(self, item);
 
     vector_add(self->values, item);
+    item->document = self->document;
     item->parent = node(self);
     item->depth = self->depth + 1;
 }

@@ -80,7 +80,7 @@ static void interpret_yaml_error(Loader *context, yaml_parser_t *parser)
         case YAML_SCANNER_ERROR:
             code = ERR_SCANNER_FAILED;
             break;
-        case YAML_PARSER_ERROR:
+         case YAML_PARSER_ERROR:
             code = ERR_PARSER_FAILED;
             break;
         default:
@@ -201,6 +201,37 @@ static void start_document(Loader *context, const yaml_event_t *event)
     Document *document = make_document_node();
     document->position = position(event->start_mark);
 
+    document->yaml.implicit = event->data.document_start.implicit;
+
+    document->yaml.major = 1;
+    document->yaml.minor = 1;
+    yaml_version_directive_t *version = event->data.document_start.version_directive;
+    if(NULL != version)
+    {
+        document->yaml.major = version->major;
+        document->yaml.minor = version->minor;
+    }
+
+    yaml_tag_directive_t *start = event->data.document_start.tag_directives.start;
+    yaml_tag_directive_t *end = event->data.document_start.tag_directives.end;
+    if(NULL == start)
+    {
+        goto set_context;
+    }
+
+    Vector *tags = make_vector_with_capacity(1);
+    yaml_tag_directive_t *cur = start;
+    while(cur != end)
+    {
+        TagDirective *td = xcalloc(sizeof(TagDirective));
+        td->handle = make_string((const char *)cur->handle);
+        td->prefix = make_string((const char *)cur->prefix);
+        vector_add(tags, td);
+        cur++;
+    }
+    document->yaml.tags = tags;
+    
+  set_context:
     context->current = node(document);
     document_set_add(context->documents, document);
 
@@ -223,6 +254,10 @@ static void start_sequence(Loader *context, const yaml_event_t *event)
     {
         loader_debug("found event tag adding sequence");
         node_set_tag(sequence, make_string((const char *)event->data.sequence_start.tag));
+    }
+    else
+    {
+        node_set_tag(sequence, make_string(YAML_DEFAULT_SEQUENCE_TAG));
     }
     set_anchor(context, node(sequence), event->data.sequence_start.anchor);
 
@@ -250,6 +285,10 @@ static void start_mapping(Loader *context, const yaml_event_t *event)
     {
         loader_debug("found event tag adding mapping");
         node_set_tag(mapping, make_string((const char *)event->data.mapping_start.tag));
+    }
+    else
+    {
+        node_set_tag(mapping, make_string(YAML_DEFAULT_MAPPING_TAG));
     }
     set_anchor(context, node(mapping), event->data.mapping_start.anchor);
 

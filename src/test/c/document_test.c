@@ -33,7 +33,9 @@ static void model_setup(void)
       four: true
      */
     Node *root = map(
-        "one", seq(string("foo1"), real("1.5")),
+        "one", seq(
+            string("foo1"),
+            real("1.5")),
         "two", string("foo2"),
         "three", string("false"),
         "four", string("true"));

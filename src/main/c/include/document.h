@@ -42,6 +42,8 @@ struct vtable_s
     void    (*dump)   (const Node *, bool);
 };
 
+typedef struct document_s Document;
+
 struct node_s
 {
     struct
@@ -50,12 +52,24 @@ struct node_s
         String   *name;
     } tag;
 
-    struct node_s         *parent;
+    Document              *document;
+    Node                  *parent;
     Position               position;
-    String                *anchor;
     const struct vtable_s *vtable;
     size_t                 depth;
+    struct
+    {
+        String *anchor;
+    } base_yaml;
 };
+
+struct tag_directive_s
+{
+    String *handle;
+    String *prefix;
+};
+
+typedef struct tag_directive_s TagDirective;
 
 struct document_s
 {
@@ -65,10 +79,15 @@ struct document_s
         struct node_s;
     };
     Node      *root;
-    Hashtable *anchors;
+    struct
+    {
+        int        implicit;
+        int        major;
+        int        minor;
+        Hashtable *anchors;
+        Vector    *tags;
+    } yaml;
 };
-
-typedef struct document_s Document;
 
 enum scalar_kind
 {

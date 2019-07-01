@@ -8,14 +8,25 @@ static bool document_equals(const Node *one, const Node *two)
                        document_root((const Document *)two));
 }
 
+static void tag_destroyer(void *each)
+{
+    TagDirective *td = (TagDirective *)each;
+    dispose_string(td->handle);
+    dispose_string(td->prefix);
+    free(td);
+}
+
 static void document_free(Node *value)
 {
     Document *doc = (Document *)value;
     dispose_node(doc->root);
     doc->root = NULL;
 
-    dispose_hashtable(doc->anchors);  // N.B. - keys and values are owned by nodes
-    doc->anchors = NULL;
+    dispose_hashtable(doc->yaml.anchors);  // N.B. - keys and values are owned by nodes
+    doc->yaml.anchors = NULL;
+
+    vector_destroy(doc->yaml.tags, tag_destroyer);
+    doc->yaml.tags = NULL;
 }
 
 static size_t document_size(const Node *self)
@@ -68,6 +79,7 @@ void document_set_root(Document *self, Node *root)
     ENSURE_NONNULL_ELSE_VOID(self, root);
 
     self->root = root;
+    root->document = self;
     root->parent = node(self);
     root->depth = 0;
 }
@@ -87,14 +99,14 @@ void document_track_anchor(Document *self, uint8_t *value, Node *target)
 {
     ENSURE_NONNULL_ELSE_VOID(self, value, target);
 
-    if(NULL == self->anchors)
+    if(NULL == self->yaml.anchors)
     {
-        self->anchors = make_hashtable_with_function(anchor_comparitor, anchor_hash);
+        self->yaml.anchors = make_hashtable_with_function(anchor_comparitor, anchor_hash);
     }
 
     String *anchor = make_string_with_bytestring(value, strlen((char *)value));
     node_set_anchor(target, anchor);
-    hashtable_put(self->anchors, anchor, target);
+    hashtable_put(self->yaml.anchors, anchor, target);
 }
 
 Node *document_resolve_anchor(Document *self, uint8_t *value)
@@ -102,7 +114,7 @@ Node *document_resolve_anchor(Document *self, uint8_t *value)
     ENSURE_NONNULL_ELSE_NULL(self, value);
 
     String *anchor = make_string_with_bytestring(value, strlen((char *)value));
-    Node *target = hashtable_get(self->anchors, anchor);
+    Node *target = hashtable_get(self->yaml.anchors, anchor);
     dispose_string(anchor);
 
     return target;

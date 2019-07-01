@@ -175,7 +175,10 @@ bool mapping_put(Mapping *self, Scalar *key, Node *value)
     hashtable_put(self->values, key, value);
     if(0 == errno)
     {
+        key->document = self->document;
         key->parent = node(self);
+        key->depth = self->depth + 1;
+        value->document = self->document;
         value->parent = node(self);
         value->depth = self->depth + 1;
     }
