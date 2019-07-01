@@ -81,7 +81,6 @@ struct document_s
     Node      *root;
     struct
     {
-        int        implicit;
         int        major;
         int        minor;
         Hashtable *anchors;

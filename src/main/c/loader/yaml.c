@@ -201,8 +201,6 @@ static void start_document(Loader *context, const yaml_event_t *event)
     Document *document = make_document_node();
     document->position = position(event->start_mark);
 
-    document->yaml.implicit = event->data.document_start.implicit;
-
     document->yaml.major = 1;
     document->yaml.minor = 1;
     yaml_version_directive_t *version = event->data.document_start.version_directive;
