@@ -24,17 +24,11 @@ static String *alias_repr(const Node *value)
     size_t line = self->position.line;
     size_t offset = self->position.offset;
 
-    const char *name = "NULL";
-    if(NULL != self->target)
-    {
-        name = node_kind_name(self->target);
-    }
-
     const char *anchor = NULL == self->base_yaml.anchor ? "NULL" : C(self->base_yaml.anchor);
 
     return format(
         "<Alias target: %s, anchor: %s, depth: %zu, pos: %zu:%zu>",
-        name, anchor, self->depth, line, offset);
+        C(self->anchor), anchor, self->depth, line, offset);
 }
 
 static void alias_dump(const Node *value, bool pad)
@@ -58,11 +52,12 @@ static const struct vtable_s alias_vtable =
     alias_dump
 };
 
-Alias *make_alias_node(Node *target)
+Alias *make_alias_node(Node *target, String *anchor)
 {
     Alias *self = xcalloc(sizeof(Alias));
     node_init(node(self), ALIAS, &alias_vtable);
     self->target = target;
+    self->anchor = anchor;
 
     return self;
 }

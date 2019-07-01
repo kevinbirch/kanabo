@@ -152,6 +152,7 @@ struct alias_s
         struct node_s;
     };
     struct node_s *target;
+    String *anchor;
 };
 
 typedef struct alias_s Alias;
@@ -165,7 +166,7 @@ Document    *make_document_node(void);
 Sequence    *make_sequence_node(void);
 Mapping     *make_mapping_node(void);
 Scalar      *make_scalar_node(String *value, ScalarKind kind);
-Alias       *make_alias_node(Node *target);
+Alias       *make_alias_node(Node *target, String *anchor);
 
 /*
  * Destructors

@@ -324,7 +324,8 @@ static void add_alias(Loader *context, const yaml_event_t *event)
         }
     }
 
-    Alias *alias = make_alias_node(target);
+    String *anchor = make_string((const char *)event->data.alias.anchor);
+    Alias *alias = make_alias_node(target, anchor);
     alias->position = position(event->start_mark);
 
     add_node(context, node(alias), event);

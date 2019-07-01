@@ -5,7 +5,6 @@
 ## fixes
 
 * emitter
-  * emit anchors, they may be useful
   * track scalar style
   * track block/flow styles for seq & map
   * yaml emitter settings canonical? indent? line width? line break? 
