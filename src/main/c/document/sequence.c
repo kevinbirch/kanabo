@@ -48,10 +48,11 @@ static String *sequence_repr(const Node *value)
     size_t line = self->position.line;
     size_t offset = self->position.offset;
     const char *anchor = NULL == self->base_yaml.anchor ? "NULL" : C(self->base_yaml.anchor);
+    const char *tag = NULL == self->tag.name ? "NULL" : C(self->tag.name);
 
     return format(
-        "<Sequence length: %zu, anchor: %s, depth: %zu, pos: %zu:%zu>",
-        length, anchor, self->depth, line, offset);
+        "<Sequence length: %zu, anchor: %s, tag: %s, depth: %zu, pos: %zu:%zu>",
+        length, anchor, tag, self->depth, line, offset);
 }
 
 static bool seq_dumper(Node *each, void *context)

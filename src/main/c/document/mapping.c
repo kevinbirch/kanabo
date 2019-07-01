@@ -70,10 +70,11 @@ static String *mapping_repr(const Node *value)
     size_t line = self->position.line;
     size_t offset = self->position.offset;
     const char *anchor = NULL == self->base_yaml.anchor ? "NULL" : C(self->base_yaml.anchor);
+    const char *tag = NULL == self->tag.name ? "NULL" : C(self->tag.name);
 
     return format(
-        "<Mapping size: %zu, anchor: %s, depth: %zu, pos: %zu:%zu>",
-        size, anchor, self->depth, line, offset);
+        "<Mapping size: %zu, anchor: %s, tag: %s, depth: %zu, pos: %zu:%zu>",
+        size, anchor, tag, self->depth, line, offset);
 }
 
 static bool map_dumper(Scalar *key, Node *value, void *context)
