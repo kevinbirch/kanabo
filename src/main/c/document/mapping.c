@@ -66,11 +66,14 @@ static void mapping_free(Node *value)
 static String *mapping_repr(const Node *value)
 {
     Mapping *self = (Mapping *)value;
-    size_t len = hashtable_size(self->values);
+    size_t size = hashtable_size(self->values);
     size_t line = self->position.line;
     size_t offset = self->position.offset;
+    const char *anchor = NULL == self->base_yaml.anchor ? "NULL" : C(self->base_yaml.anchor);
 
-    return format("<Mapping len: %zd, depth: %zd, pos: %zd:%zd>", len, self->depth, line, offset);
+    return format(
+        "<Mapping size: %zu, anchor: %s, depth: %zu, pos: %zu:%zu>",
+        size, anchor, self->depth, line, offset);
 }
 
 static bool map_dumper(Scalar *key, Node *value, void *context)

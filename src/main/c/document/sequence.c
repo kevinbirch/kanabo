@@ -44,11 +44,14 @@ static void sequence_free(Node *value)
 static String *sequence_repr(const Node *value)
 {
     Sequence *self = (Sequence *)value;
-    size_t len = vector_length(self->values);
+    size_t length = vector_length(self->values);
     size_t line = self->position.line;
     size_t offset = self->position.offset;
+    const char *anchor = NULL == self->base_yaml.anchor ? "NULL" : C(self->base_yaml.anchor);
 
-    return format("<Sequence len: %zd, depth: %zd, pos: %zd:%zd>", len, self->depth, line, offset);
+    return format(
+        "<Sequence length: %zu, anchor: %s, depth: %zu, pos: %zu:%zu>",
+        length, anchor, self->depth, line, offset);
 }
 
 static bool seq_dumper(Node *each, void *context)

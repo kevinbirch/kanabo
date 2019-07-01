@@ -51,13 +51,15 @@ start: 0.8-alpha, end: 0.9-beta
 
 1. how to select an item of a seq of seq?
    * clean up `evaluate_nodelist` (should be function?)
-1. support full complement of yaml types: https://yaml.org/type/index.html
 1. add `scalar()` selector
 1. add `parent()` selector
 1. join
    * support only paths, not indices
+1. defer resolving aliases until document is fully loaded
 1. tag selector
-1. new scalar types (timestamp, etc)
+1. support full complement of yaml types
+   * https://yaml.org/type/index.html
+   * new scalar types (timestamp, etc)
    * should unparseable, yet tagged timestamps be marked so they are ignored for comparisons?
 1. filter
    * pratt parser for expressions

@@ -23,13 +23,18 @@ static String *alias_repr(const Node *value)
     Alias *self = (Alias *)value;
     size_t line = self->position.line;
     size_t offset = self->position.offset;
+
     const char *name = "NULL";
     if(NULL != self->target)
     {
         name = node_kind_name(self->target);
     }
 
-    return format("<Alias target: %s, depth: %zd, pos: %zd:%zd>", name, self->depth, line, offset);
+    const char *anchor = NULL == self->base_yaml.anchor ? "NULL" : C(self->base_yaml.anchor);
+
+    return format(
+        "<Alias target: %s, anchor: %s, depth: %zu, pos: %zu:%zu>",
+        name, anchor, self->depth, line, offset);
 }
 
 static void alias_dump(const Node *value, bool pad)
