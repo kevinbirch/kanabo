@@ -45,12 +45,10 @@ static String *scalar_repr(const Node *value)
     size_t line = self->position.line;
     size_t offset = self->position.offset;
     const char *name = scalar_kind_name(self);
-    const char *anchor = NULL == self->base_yaml.anchor ? "NULL" : C(self->base_yaml.anchor);
-    const char *tag = NULL == self->tag.name ? "NULL" : C(self->tag.name);
 
     return format(
         "<Scalar kind: %s, value: \"%s\", anchor: %s, tag: %s, depth: %zu, pos: %zu:%zu>",
-        name, C(self->value), anchor, tag, self->depth, line, offset);
+        name, C(self->value), C(self->base_yaml.anchor), C(self->tag.name), self->depth, line, offset);
 }
 
 static void scalar_dump(const Node *value, bool pad)
