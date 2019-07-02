@@ -363,11 +363,11 @@ bool         mapping_iterate(const Mapping *map, mapping_iterator iterator, void
 
 #define      alias(SELF) _Generic((SELF),\
                                   Alias *: (SELF),                      \
-                                  default: (CHECKED_CAST((SELF), ALIAS, Alias)) \
+                                  default: CHECKED_CAST((SELF), ALIAS, Alias) \
                                   )
 #define      const_alias(SELF) _Generic((SELF),\
                                         const Alias *: (SELF),          \
                                         Alias *: (const Alias *)(SELF), \
-                                        default: (CONST_CHECKED_CAST((SELF), ALIAS, Alias)) \
+                                        default: CONST_CHECKED_CAST((SELF), ALIAS, Alias) \
                                         )
 #define      is_alias(SELF) (ALIAS == node_kind((SELF)))

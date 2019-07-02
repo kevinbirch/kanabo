@@ -4,7 +4,7 @@
 
 static void alias_free(Node *self)
 {
-    dispose_string(alias(self->anchor));
+    dispose_string(alias(self)->anchor);
 }
 
 static bool alias_equals(const Node *one, const Node *two)
