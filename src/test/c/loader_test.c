@@ -51,9 +51,8 @@ static Maybe(DocumentSet) load(const char *filename, DuplicateKeyStrategy strate
 static inline bool loader_error_printer(void *each, void *context)
 {
     LoaderError *error = (LoaderError *)each;
-    struct options *options = (struct options *)context;
 
-    const char *name = options->input_file_name;
+    const char *name = (const char *)context;
     size_t line = error->position.line + 1;
     size_t offset = error->position.offset + 1;
     const char *message = loader_strerror(error->code);
@@ -84,7 +83,7 @@ static DocumentSet *must_load(const char *filename, DuplicateKeyStrategy strateg
     Maybe(DocumentSet) yaml = load_yaml(from_just(input), strategy);
     if(is_nothing(yaml))
     {
-        vector_iterate(from_nothing(yaml), loader_error_printer, NULL);
+        vector_iterate(from_nothing(yaml), loader_error_printer, filename);
         loader_dispose_errors(from_nothing(yaml));
     }
     assert_just(yaml);
