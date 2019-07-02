@@ -1,6 +1,10 @@
 one:
-  - foo1
-  - bar1
+  - |-
+    literal multiline scalar
+    line breaks are preserved
+  - >-
+    folded multiline scalar,
+    line breaks are collapsed
 
 two: "foo2"
 
@@ -8,7 +12,7 @@ three: null
 
 four:
   - true
-  - false
+  - 'false'
 
 five:
   - 1.5

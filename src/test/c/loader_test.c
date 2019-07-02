@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <yaml.h>
+
 #include "test.h"
 #include "loader.h"
 #include "test_document.h"
@@ -157,19 +159,23 @@ static void assert_model_state(DocumentSet *model)
 
     Node *one_0 = sequence_get(sequence(one), 0);
     assert_node_kind(one_0, SCALAR);
-    assert_scalar_value((one_0), "foo1");
+    printf("one-0: '%s'\n", C(scalar_value(one_0)));
+    assert_scalar_value((one_0), "literal multiline scalar\nline breaks are preserved");
     assert_scalar_kind(one_0, SCALAR_STRING);
+    assert_int_eq(STYLE_LITERAL, scalar(one_0)->yaml.style);
     Node *one_1 = sequence_get(sequence(one), 1);
     assert_node_kind(one_1, SCALAR);
-    assert_scalar_value((one_1), "bar1");
+    assert_scalar_value((one_1), "folded multiline scalar, line breaks are collapsed");
     assert_scalar_kind(one_1, SCALAR_STRING);
+    assert_int_eq(STYLE_FOLDED, scalar(one_1)->yaml.style);
 
     key = make_string("two");
     Node *two = mapping_lookup(mapping(root), key);
     assert_not_null(two);
     assert_node_kind(two, SCALAR);
-    assert_scalar_value((two), "foo2");
+    assert_scalar_value(two, "foo2");
     assert_scalar_kind(two, SCALAR_STRING);
+    assert_int_eq(STYLE_DOUBLE_QUOTE, scalar(two)->yaml.style);
     dispose_string(key);
 
     key = make_string("three");
@@ -200,6 +206,7 @@ static void assert_model_state(DocumentSet *model)
     assert_true(scalar_boolean_is_false(scalar(four_1)));
     assert_false(scalar_boolean_is_true(scalar(four_1)));
     assert_false(scalar(four_1)->boolean);
+    assert_int_eq(STYLE_SINGLE_QUOTE, scalar(four_1)->yaml.style);
 
     key = make_string("five");
     Node *five = mapping_lookup(mapping(root), key);
@@ -320,6 +327,8 @@ START_TEST (anchor)
     Node *a = mapping_lookup(root, key);
     assert_not_null(a);
     assert_node_kind(a, ALIAS);
+    assert_not_null(alias(a)->anchor);
+    ck_assert_str_eq("value", C(alias(a)->anchor));
     dispose_string(key);
 
     Node *two = alias_target(alias(a));

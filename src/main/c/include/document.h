@@ -100,6 +100,17 @@ enum scalar_kind
 
 typedef enum scalar_kind ScalarKind;
 
+enum scalar_style
+{
+    STYLE_PLAIN,
+    STYLE_SINGLE_QUOTE,
+    STYLE_DOUBLE_QUOTE,
+    STYLE_LITERAL,
+    STYLE_FOLDED
+};
+
+typedef enum scalar_style ScalarStyle;
+
 struct scalar_s
 {
     union
@@ -116,6 +127,11 @@ struct scalar_s
         double  real;
         bool    boolean;
     };
+
+    struct
+    {
+        ScalarStyle style;
+    } yaml;
 };
 
 typedef struct scalar_s Scalar;

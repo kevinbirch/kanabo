@@ -375,32 +375,48 @@ static Scalar *build_scalar(Loader *context, const yaml_event_t *event)
     Scalar *scalar = make_scalar_node(value, SCALAR_STRING);
     scalar->position = position(event->start_mark);
 
-    if(YAML_SINGLE_QUOTED_SCALAR_STYLE == event->data.scalar.style ||
-            YAML_DOUBLE_QUOTED_SCALAR_STYLE == event->data.scalar.style)
+    switch(event->data.scalar.style)
     {
-        loader_trace("found quoted scalar string \"%s\"", event->data.scalar.value);
-        scalar->kind = SCALAR_STRING;
-        node_set_tag(scalar, make_string(YAML_STR_TAG));
+        case YAML_SINGLE_QUOTED_SCALAR_STYLE:
+            scalar->yaml.style = STYLE_SINGLE_QUOTE;
+            break;
+        case YAML_DOUBLE_QUOTED_SCALAR_STYLE:
+            scalar->yaml.style = STYLE_DOUBLE_QUOTE;
+            break;
+        case YAML_LITERAL_SCALAR_STYLE:
+            scalar->yaml.style = STYLE_LITERAL;
+            break;
+        case YAML_FOLDED_SCALAR_STYLE:
+            scalar->yaml.style = STYLE_FOLDED;
+            break;
+        default:
+            scalar->yaml.style = STYLE_PLAIN;
+            break;
     }
-    else if(0 == memcmp("null", event->data.scalar.value, 4))
+
+    const char *yaml_tag = YAML_STR_TAG;
+
+    if(0 == memcmp("null", event->data.scalar.value, 4))
     {
         loader_trace("found scalar null");
         scalar->kind = SCALAR_NULL;
-        node_set_tag(scalar, make_string(YAML_NULL_TAG));
+        yaml_tag = YAML_NULL_TAG;
     }
     else if(0 == memcmp("true", event->data.scalar.value, 4))
     {
         loader_trace("found scalar boolean \"%s\"", event->data.scalar.value);
         scalar->kind = SCALAR_BOOLEAN;
+
         scalar->boolean = true;
-        node_set_tag(scalar, make_string(YAML_BOOL_TAG));
+        yaml_tag = YAML_BOOL_TAG;
     }
     else if(0 == memcmp("false", event->data.scalar.value, 5))
     {
         loader_trace("found scalar boolean \"%s\"", event->data.scalar.value);
         scalar->kind = SCALAR_BOOLEAN;
+
         scalar->boolean = false;
-        node_set_tag(scalar, make_string(YAML_BOOL_TAG));
+        yaml_tag = YAML_BOOL_TAG;
     }
     else if(match_decimal((const char *)event->data.scalar.value))
     {
@@ -415,7 +431,7 @@ static Scalar *build_scalar(Loader *context, const yaml_event_t *event)
             scalar->real = 0.0;
         }
 
-        node_set_tag(scalar, make_string(YAML_FLOAT_TAG));
+        yaml_tag = YAML_FLOAT_TAG;
     }
     else if(match_integer((const char *)event->data.scalar.value))
     {
@@ -430,24 +446,22 @@ static Scalar *build_scalar(Loader *context, const yaml_event_t *event)
             scalar->integer = 0;
         }
 
-        node_set_tag(scalar, make_string(YAML_INT_TAG));
+        yaml_tag = YAML_INT_TAG;
     }
     else if(match_timestamp((const char *)event->data.scalar.value))
     {
         loader_trace("found scalar timestamp \"%s\"", event->data.scalar.value);
         scalar->kind = SCALAR_TIMESTAMP;
-        node_set_tag(scalar, make_string(YAML_TIMESTAMP_TAG));
-    }
-    else
-    {
-        loader_trace("found scalar string \"%s\"", event->data.scalar.value);
-        node_set_tag(scalar, make_string(YAML_STR_TAG));
+        yaml_tag = YAML_TIMESTAMP_TAG;
     }
 
     if(NULL != event->data.scalar.tag)
     {
-        dispose_string(scalar->tag.name);
         node_set_tag(scalar, make_string((const char *)event->data.scalar.tag));
+    }
+    else
+    {
+        node_set_tag(scalar, make_string(yaml_tag));
     }
 
     return scalar;

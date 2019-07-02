@@ -15,8 +15,27 @@ static bool emit_scalar(const Scalar *each, yaml_emitter_t *emitter)
     yaml_char_t *value = (yaml_char_t *)C(scalar_value(each));
     int length = (int)strlen(scalar_value(each));
     int implicit = 0 == memcmp("tag:yaml.org", tag, 12) ? 1 : 0;  // N.B. - emit custom tags
-    yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
     yaml_char_t *anchor = (yaml_char_t *)C(each->base_yaml.anchor);
+    yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
+
+    switch(each->yaml.style)
+    {
+        case STYLE_PLAIN:
+            style = YAML_PLAIN_SCALAR_STYLE;
+            break;
+        case STYLE_SINGLE_QUOTE:
+            style = YAML_SINGLE_QUOTED_SCALAR_STYLE;
+            break;
+        case STYLE_DOUBLE_QUOTE:
+            style = YAML_DOUBLE_QUOTED_SCALAR_STYLE;
+            break;
+        case STYLE_LITERAL:
+            style = YAML_PLAIN_SCALAR_STYLE;
+            break;
+        case STYLE_FOLDED:
+            style = YAML_PLAIN_SCALAR_STYLE;
+            break;
+    }
 
     yaml_event_t event;
 
