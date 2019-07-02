@@ -34,6 +34,7 @@ struct loader_context_s
     Vector       *detached;
     Node         *current;
     Node         *key_cache;
+    bool          fatal_error;
 };
 
 typedef struct loader_context_s Loader;
@@ -60,6 +61,7 @@ static void context_init(Loader *context, DuplicateKeyStrategy strategy, const S
     context->documents = make_document_set();
     context->strategy = strategy;
     context->input_name = input_name;
+    context->fatal_error = false;
 }
 
 static inline void detach(Loader *context, Node *node)
@@ -108,6 +110,7 @@ static void interpret_yaml_error(Loader *context, yaml_parser_t *parser)
         }
     }
     add_loader_error_with_extra(context->errors, pos, code, extra);
+    context->fatal_error = true;
 }
 
 static void set_anchor(Loader *context, Node *target, uint8_t *value)
@@ -135,7 +138,9 @@ static void add_to_mapping(Loader *context, Node *node)
     if(!is_scalar(context->key_cache))
     {
         loader_debug("uh oh! found a non scalar mapping key");
-        add_loader_error(context->errors, context->key_cache->position, ERR_NON_SCALAR_KEY);
+        String *extra = make_string(node_kind_name(context->key_cache));
+        Position pos = context->key_cache->position;
+        add_loader_error_with_extra(context->errors, pos, ERR_NON_SCALAR_KEY, extra);
 
         loader_trace("detaching value for non-scalar key");
         detach(context, context->key_cache);  // N.B. - key is not needed, mapping is abandoned
@@ -156,7 +161,9 @@ static void add_to_mapping(Loader *context, Node *node)
 
         if(DUPE_FAIL == context->strategy)
         {
-            add_loader_error(context->errors, key->position, ERR_DUPLICATE_KEY);
+            String *extra = strcln(scalar_value(key));
+            Position pos = key->position;
+            add_loader_error_with_extra(context->errors, pos, ERR_DUPLICATE_KEY, extra);
             detach(context, node);  // N.B. - value not needed, mapping is abandoned
 
             goto cleanup;
@@ -189,7 +196,10 @@ static void add_node(Loader *context, Node *node, const yaml_event_t *event)
             break;
         default:
             loader_debug("uh oh! an unsupported node kind has become the context node: %s", node_kind_name(context->current));
-            add_loader_error(context->errors, position(event->start_mark), ERR_INTERNAL_CTX_NODE);
+            String *extra = make_string(node_kind_name(node));
+            Position pos = position(event->start_mark);
+            add_loader_error_with_extra(context->errors, pos, ERR_INTERNAL_CTX_NODE, extra);
+            context->fatal_error = true;
             loader_trace("detaching unsupported context node");
             detach(context, node);
             break;
@@ -336,7 +346,9 @@ static void add_alias(Loader *context, const yaml_event_t *event)
     if(NULL == target)
     {
         loader_debug("uh oh! alias anchor is not known");
-        add_loader_error(context->errors, position(event->start_mark), ERR_NO_ANCHOR_FOR_ALIAS);
+        String *extra = make_string((char *)event->data.alias.anchor);
+        Position pos = position(event->start_mark);
+        add_loader_error_with_extra(context->errors, pos, ERR_NO_ANCHOR_FOR_ALIAS, extra);
         return;
     }
 
@@ -345,7 +357,9 @@ static void add_alias(Loader *context, const yaml_event_t *event)
         if(cur == target)
         {
             loader_debug("uh oh! an alias loop was detected");
-            add_loader_error(context->errors, position(event->start_mark), ERR_ALIAS_LOOP);
+            String *extra = make_string((char *)event->data.alias.anchor);
+            Position pos = position(event->start_mark);
+            add_loader_error_with_extra(context->errors, pos, ERR_ALIAS_LOOP, extra);
             return;
         }
     }
@@ -453,7 +467,9 @@ static Scalar *build_scalar(Loader *context, const yaml_event_t *event)
         scalar->real = strtod((const char *)event->data.scalar.value, NULL);
         if(ERANGE == errno)
         {
-            add_loader_error(context->errors, scalar->position, ERR_NUMBER_OUT_OF_RANGE);
+            String *extra = make_string((const char *)event->data.scalar.value);
+            Position pos = scalar->position;
+            add_loader_error_with_extra(context->errors, pos, ERR_NUMBER_OUT_OF_RANGE, extra);
             scalar->real = 0.0;
         }
 
@@ -468,7 +484,9 @@ static Scalar *build_scalar(Loader *context, const yaml_event_t *event)
         scalar->integer = strtoll((const char *)event->data.scalar.value, NULL, 10);
         if(ERANGE == errno)
         {
-            add_loader_error(context->errors, scalar->position, ERR_NUMBER_OUT_OF_RANGE);
+            String *extra = make_string((const char *)event->data.scalar.value);
+            Position pos = scalar->position;
+            add_loader_error_with_extra(context->errors, pos, ERR_NUMBER_OUT_OF_RANGE, extra);
             scalar->integer = 0;
         }
 
@@ -562,6 +580,11 @@ static bool dispatch_event(Loader *context, yaml_event_t *event)
     }
 
     yaml_event_delete(event);
+
+    if(context->fatal_error)
+    {
+        return false;
+    }
 
     return true;
 }

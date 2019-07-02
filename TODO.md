@@ -4,11 +4,6 @@
 
 ## fixes
 
-* loader
-  * track jsonpath step literal for each node
-    * add to repr output
-  * failure in `add_node` or error from libyaml are fatal
-  * add extra context string to capture scalar value *or* libyaml message
 * parser
   * detect ERR_SLICE_PREDICATE_DIRECTION early (`for [a:b:c] -> (c > 0 && a > b) || (c < 0 && a < b)`)
   * anootate json path with positions of structural elements from original expression
@@ -18,6 +13,8 @@
     * use single add_parser_error function
     * why are postion macros different for parser and scanner?
 * evaluator
+  * BUG: failed eval of step causes `expression:1:0 evaluator: internal error: model argument is NULL`
+  * BUG: provide implicit root for relative paths in top-level expressions
   * track path error location and provide with error type
   * track path of all loaded document nodes, use in error reports
   * add json path to diagnostic
@@ -36,6 +33,7 @@
 * update spacecadet with local changes
 * emitter
   * return error object with underlying failure
+  * `plain` output mode for scalars results sep by newline, collections ignored
 * read default output, duplicate settings from env vars
 
 ## new features
@@ -112,9 +110,13 @@ start: 0.8-alpha, end: 0.9-beta
 * libbacktrace instead of execinfo?
   * panic backtrace looks like crap on Linux
 * https://gcc.gnu.org/onlinedocs/gcc-6.1.0/gcc/Integer-Overflow-Builtins.html#Integer-Overflow-Builtins
+* allow optional argument for`-q`, prompt for expression if not given on cli
+  * make entering shell-unfriendly paths easy (e.g. `$.data.'upload.key`)
 
 ### loader
 
+* track jsonpath step literal for each node
+  * add to (simpilifed?) repr dump
 * can we mmap the input file and build a no-copy tree that points to strings by byte ranges?
 * support sets and ordered maps
 * http://cbor.io/ ?
@@ -153,6 +155,25 @@ start: 0.8-alpha, end: 0.9-beta
   * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
 * add completions for currently loaded model to linenoise
 
+### parser
+
+* print out detail error help with arrow ala clang/gcc
+  * use bold style escape seq for whole message line
+  * use red style escape seq for `-ERR`
+
+```
+>> @.@data.&foo.*bar
+-ERR expression:1:3 expected step selector or transformer definition
+@.@data.&foo.*bar
+  ^----
+-ERR expression:1:9 expected step selector or transformer definition
+@.@data.&foo.*bar
+    ----^
+-ERR expression:1:15 expected qualified step definition
+@.@data.&foo.*bar
+         ----^
+```
+
 ### emitters
 
 * check return status value of all calls to output funtions?
@@ -183,13 +204,10 @@ start: 0.8-alpha, end: 0.9-beta
   * pre/post-compile/build hooks?
 * https://snapcraft.io/ ?
 
-## known bugs
+## known limitations
 
 * `-9223372036854775808` (`INT64_MIN`) is not accepted as an index value
-* timestamps:
-  * assume UTC time zone
-  * single second granulartiy, sub-second parts ignored
-  * only accepts "YYYY-mm-ddTHH:MM:SS" format
+* timestamps are not reified internaly
 
 ## competition
 
