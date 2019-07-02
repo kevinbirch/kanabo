@@ -59,11 +59,11 @@ static inline bool loader_error_printer(void *each, void *context)
 
     if(NULL == error->extra)
     {
-        printf("%s:%zu:%zu: %s", name, line, offset, message);
+        printf("%s:%zu:%zu: %s\n", name, line, offset, message);
     }
     else
     {
-        printf("%s:%zu:%zu: %s: %s", name, line, offset, message, C(error->extra));
+        printf("%s:%zu:%zu: %s: %s\n", name, line, offset, message, C(error->extra));
     }
 
     return true;
@@ -85,6 +85,7 @@ static DocumentSet *must_load(const char *filename, DuplicateKeyStrategy strateg
     {
         vector_iterate(from_nothing(yaml), loader_error_printer, (char *)filename);
         loader_dispose_errors(from_nothing(yaml));
+        dispose_input(from_just(input));
     }
     assert_just(yaml);
 
