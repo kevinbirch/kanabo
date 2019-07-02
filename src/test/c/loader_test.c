@@ -52,7 +52,7 @@ static inline bool loader_error_printer(void *each, void *context)
 {
     LoaderError *error = (LoaderError *)each;
 
-    const char *name = (const char *)context;
+    char *name = (char *)context;
     size_t line = error->position.line + 1;
     size_t offset = error->position.offset + 1;
     const char *message = loader_strerror(error->code);
@@ -83,7 +83,7 @@ static DocumentSet *must_load(const char *filename, DuplicateKeyStrategy strateg
     Maybe(DocumentSet) yaml = load_yaml(from_just(input), strategy);
     if(is_nothing(yaml))
     {
-        vector_iterate(from_nothing(yaml), loader_error_printer, filename);
+        vector_iterate(from_nothing(yaml), loader_error_printer, (char *)filename);
         loader_dispose_errors(from_nothing(yaml));
     }
     assert_just(yaml);
