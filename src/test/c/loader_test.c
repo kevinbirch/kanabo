@@ -48,13 +48,45 @@ static Maybe(DocumentSet) load(const char *filename, DuplicateKeyStrategy strate
     return documents;
 }
 
+static inline bool loader_error_printer(void *each, void *context)
+{
+    LoaderError *error = (LoaderError *)each;
+    struct options *options = (struct options *)context;
+
+    const char *name = options->input_file_name;
+    size_t line = error->position.line + 1;
+    size_t offset = error->position.offset + 1;
+    const char *message = loader_strerror(error->code);
+
+    if(NULL == error->extra)
+    {
+        printf("%s:%zu:%zu: %s", name, line, offset, message);
+    }
+    else
+    {
+        printf("%s:%zu:%zu: %s: %s", name, line, offset, message, C(error->extra));
+    }
+
+    return true;
+}
+
 static DocumentSet *must_load(const char *filename, DuplicateKeyStrategy strategy)
 {
     assert_not_null(filename);
     Maybe(Input) input = make_input_from_file(filename);
+    if(is_nothing(input))
+    {
+        InputError err = from_nothing(input);
+        printf("%s: %s: %s\n", filename, input_strerror(err.code), strerror(err.errno_val));
+    }
     assert_just(input);
 
     Maybe(DocumentSet) yaml = load_yaml(from_just(input), strategy);
+    if(is_nothing(yaml))
+    {
+        vector_iterate(from_nothing(yaml), loader_error_printer, NULL);
+        loader_dispose_errors(from_nothing(yaml));
+    }
     assert_just(yaml);
 
     DocumentSet *documents = from_just(yaml);
