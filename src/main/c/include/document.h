@@ -136,6 +136,14 @@ struct scalar_s
 
 typedef struct scalar_s Scalar;
 
+enum container_style
+{
+    STYLE_BLOCK,
+    STYLE_FLOW
+};
+
+typedef enum container_style ContainerStyle;
+
 struct sequence_s
 {
     union
@@ -144,6 +152,10 @@ struct sequence_s
         struct node_s;
     };
     Vector *values;
+    struct
+    {
+        ContainerStyle style;
+    } yaml;
 };
 
 typedef struct sequence_s Sequence;
@@ -156,6 +168,10 @@ struct mapping_s
         struct node_s;
     };
     Hashtable *values;
+    struct
+    {
+        ContainerStyle style;
+    } yaml;
 };
 
 typedef struct mapping_s Mapping;

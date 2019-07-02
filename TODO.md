@@ -4,9 +4,6 @@
 
 ## fixes
 
-* emitter
-  * track block/flow styles for seq & map
-  * yaml emitter settings canonical? indent? line width? line break? 
 * loader
   * track jsonpath step literal for each node
     * add to repr output

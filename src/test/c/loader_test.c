@@ -144,9 +144,9 @@ static void assert_model_state(DocumentSet *model)
 
     Node *root = document_set_get_root(model, 0);
     assert_not_null(root);
-
     assert_node_kind(root, MAPPING);
-    assert_node_size(root, 5);
+    assert_node_size(root, 6);
+    assert_int_eq(STYLE_BLOCK, mapping(root)->yaml.style);
 
     String *key = NULL;
 
@@ -155,6 +155,7 @@ static void assert_model_state(DocumentSet *model)
     assert_not_null(one);
     assert_node_kind(one, SEQUENCE);
     assert_node_size(one, 2);
+    assert_int_eq(STYLE_BLOCK, sequence(one)->yaml.style);
     dispose_string(key);
 
     Node *one_0 = sequence_get(sequence(one), 0);
@@ -190,6 +191,7 @@ static void assert_model_state(DocumentSet *model)
     Node *four = mapping_lookup(mapping(root), key);
     assert_not_null(four);
     assert_node_kind(four, SEQUENCE);
+    assert_int_eq(STYLE_BLOCK, sequence(four)->yaml.style);
     dispose_string(key);
 
     Node *four_0 = sequence_get(sequence(four), 0);
@@ -212,6 +214,8 @@ static void assert_model_state(DocumentSet *model)
     Node *five = mapping_lookup(mapping(root), key);
     assert_not_null(five);
     assert_node_kind(five, SEQUENCE);
+    assert_int_eq(STYLE_FLOW, sequence(five)->yaml.style);
+
     Node *five_0 = sequence_get(sequence(five), 0);
     assert_node_kind(five_0, SCALAR);
     assert_scalar_value((five_0), "1.5");
@@ -229,6 +233,28 @@ static void assert_model_state(DocumentSet *model)
     assert_node_kind(five_2, SCALAR);
     assert_scalar_value(five_2, "1978-07-26 10:15:00");
     assert_scalar_kind(five_2, SCALAR_TIMESTAMP);
+    dispose_string(key);
+
+    key = make_string("six");
+    Node *six = mapping_lookup(mapping(root), key);
+    assert_not_null(six);
+    assert_node_kind(six, MAPPING);
+    assert_int_eq(STYLE_FLOW, mapping(six)->yaml.style);
+    dispose_string(key);
+
+    key = make_string("one");
+    Node *six_0 = mapping_lookup(mapping(six), key);
+    assert_node_kind(six_0, SCALAR);
+    assert_scalar_value((six_0), "1");
+    assert_scalar_kind(six_0, SCALAR_INTEGER);
+    assert_int_eq(1, scalar(six_0)->integer);
+    dispose_string(key);
+    key = make_string("two");
+    Node *six_1 = mapping_lookup(mapping(six), key);
+    assert_node_kind(six_0, SCALAR);
+    assert_scalar_value((six_1), "2");
+    assert_scalar_kind(six_1, SCALAR_INTEGER);
+    assert_int_eq(2, scalar(six_1)->integer);
     dispose_string(key);
 }
 

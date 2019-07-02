@@ -248,6 +248,19 @@ static void start_sequence(Loader *context, const yaml_event_t *event)
     Sequence *sequence = make_sequence_node();
     sequence->position = position(event->start_mark);
 
+    switch(event->data.sequence_start.style)
+    {
+        case YAML_BLOCK_SEQUENCE_STYLE:
+            sequence->yaml.style = STYLE_BLOCK;
+            break;
+        case YAML_FLOW_SEQUENCE_STYLE:
+            sequence->yaml.style = STYLE_FLOW;
+            break;
+        default:
+            sequence->yaml.style = STYLE_BLOCK;
+            break;
+    }
+
     if(NULL != event->data.sequence_start.tag)
     {
         loader_debug("found event tag adding sequence");
@@ -278,6 +291,19 @@ static void start_mapping(Loader *context, const yaml_event_t *event)
 {
     Mapping *mapping = make_mapping_node();
     mapping->position = position(event->start_mark);
+
+    switch(event->data.mapping_start.style)
+    {
+        case YAML_BLOCK_MAPPING_STYLE:
+            mapping->yaml.style = STYLE_BLOCK;
+            break;
+        case YAML_FLOW_MAPPING_STYLE:
+            mapping->yaml.style = STYLE_FLOW;
+            break;
+        default:
+            mapping->yaml.style = STYLE_BLOCK;
+            break;
+    }
 
     if(NULL != event->data.mapping_start.tag)
     {

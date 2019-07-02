@@ -11,11 +11,11 @@ static bool emit_node(Node *each, void *context);
 
 static bool emit_scalar(const Scalar *each, yaml_emitter_t *emitter)
 {
+    yaml_char_t *anchor = (yaml_char_t *)C(each->base_yaml.anchor);
     yaml_char_t *tag = (yaml_char_t *)C(node_name(each));
     yaml_char_t *value = (yaml_char_t *)C(scalar_value(each));
-    int length = (int)strlen(scalar_value(each));
+    int length = (int)node_size(each);
     int implicit = 0 == memcmp("tag:yaml.org", tag, 12) ? 1 : 0;  // N.B. - emit custom tags
-    yaml_char_t *anchor = (yaml_char_t *)C(each->base_yaml.anchor);
     yaml_scalar_style_t style = YAML_PLAIN_SCALAR_STYLE;
 
     switch(each->yaml.style)
@@ -30,10 +30,10 @@ static bool emit_scalar(const Scalar *each, yaml_emitter_t *emitter)
             style = YAML_DOUBLE_QUOTED_SCALAR_STYLE;
             break;
         case STYLE_LITERAL:
-            style = YAML_PLAIN_SCALAR_STYLE;
+            style = YAML_LITERAL_SCALAR_STYLE;
             break;
         case STYLE_FOLDED:
-            style = YAML_PLAIN_SCALAR_STYLE;
+            style = YAML_FOLDED_SCALAR_STYLE;
             break;
     }
 
@@ -60,13 +60,19 @@ static bool emit_sequence(Sequence *value, yaml_emitter_t *emitter)
         return true;
     }
 
+    yaml_char_t *anchor = (yaml_char_t *)C(value->base_yaml.anchor);
     yaml_char_t *tag = (yaml_char_t *)C(node_name(value));
     int implicit = 0 == memcmp("tag:yaml.org", tag, 12) ? 1 : 0;  // N.B. - emit custom tags
-    yaml_char_t *anchor = (yaml_char_t *)C(value->base_yaml.anchor);
+    yaml_sequence_style_t style = YAML_BLOCK_SEQUENCE_STYLE;
+
+    if(STYLE_FLOW == value->yaml.style)
+    {
+        style = YAML_FLOW_SEQUENCE_STYLE;
+    }
 
     yaml_event_t event;
 
-    yaml_sequence_start_event_initialize(&event, anchor, tag, implicit, YAML_BLOCK_SEQUENCE_STYLE);
+    yaml_sequence_start_event_initialize(&event, anchor, tag, implicit, style);
     if(!yaml_emitter_emit(emitter, &event))
     {
         return false;
@@ -103,13 +109,19 @@ static bool emit_mapping(Mapping *value, yaml_emitter_t *emitter)
         return true;
     }
 
+    yaml_char_t *anchor = (yaml_char_t *)C(value->base_yaml.anchor);
     yaml_char_t *tag = (yaml_char_t *)C(node_name(value));
     int implicit = 0 == memcmp("tag:yaml.org", tag, 12) ? 1 : 0;  // N.B. - emit custom tags
-    yaml_char_t *anchor = (yaml_char_t *)C(value->base_yaml.anchor);
+    yaml_mapping_style_t style = YAML_BLOCK_MAPPING_STYLE;
 
+    if(STYLE_FLOW == value->yaml.style)
+    {
+        style = YAML_FLOW_MAPPING_STYLE;
+    }
+    
     yaml_event_t event;
 
-    yaml_mapping_start_event_initialize(&event, anchor, tag, implicit, YAML_BLOCK_MAPPING_STYLE);
+    yaml_mapping_start_event_initialize(&event, anchor, tag, implicit, style);
     if(!yaml_emitter_emit(emitter, &event))
     {
         return false;
