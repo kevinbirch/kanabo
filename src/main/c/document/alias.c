@@ -2,9 +2,9 @@
 #include "document.h"
 #include "xalloc.h"
 
-static void alias_free(Node *value)
+static void alias_free(Node *self)
 {
-    // this space intentionally left blank
+    dispose_string(self->anchor);
 }
 
 static bool alias_equals(const Node *one, const Node *two)
