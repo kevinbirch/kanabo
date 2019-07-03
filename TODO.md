@@ -5,7 +5,6 @@
 ## fixes
 
 * parser
-  * detect ERR_SLICE_PREDICATE_DIRECTION early (`for [a:b:c] -> (c > 0 && a > b) || (c < 0 && a < b)`)
   * anootate json path with positions of structural elements from original expression
   * don't copy lexeme, don't paste minus and integer lexemes together
   * eliminate possible error in lexeme extraction (then we don't need the internal error?)
@@ -110,15 +109,12 @@ start: 0.8-alpha, end: 0.9-beta
 * libbacktrace instead of execinfo?
   * panic backtrace looks like crap on Linux
 * https://gcc.gnu.org/onlinedocs/gcc-6.1.0/gcc/Integer-Overflow-Builtins.html#Integer-Overflow-Builtins
-* allow optional argument for`-q`, prompt for expression if not given on cli
-  * make entering shell-unfriendly paths easy (e.g. `$.data.'upload.key`)
 
 ### loader
 
 * track jsonpath step literal for each node
   * add to (simpilifed?) repr dump
-* can we mmap the input file and build a no-copy tree that points to strings by byte ranges?
-* support sets and ordered maps
+* mmap input file and build a no-copy tree that points to strings by byte ranges?
 * http://cbor.io/ ?
 * parse and reify yaml timestamps
 * use sourcelocation instead of position in model, track input file across all nodes
@@ -173,10 +169,6 @@ start: 0.8-alpha, end: 0.9-beta
 @.@data.&foo.*bar
          ----^
 ```
-
-### emitters
-
-* check return status value of all calls to output funtions?
 
 ### unit testing
 
