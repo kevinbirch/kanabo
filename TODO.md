@@ -34,11 +34,17 @@
   * return error object with underlying failure
   * `plain` output mode for scalars results sep by newline, collections ignored
 * read default output, duplicate settings from env vars
+* merge to master
+* build 0.8-alpha release
 
 ## new features
 
 start: 0.8-alpha, end: 0.9-beta
 
+1. add docker image build job to ci
+   * sha1 and version tag for all image builds
+   * `latest` and `stable` tags only for (even-numbered?) master builds
+   * even number minor versions are stable and odd are experimental?
 1. how to select an item of a seq of seq?
    * clean up `evaluate_nodelist` (should be function?)
 1. add `scalar()` selector
