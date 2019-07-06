@@ -78,6 +78,8 @@ start: 0.8-alpha, end: 0.9-beta
   * interactive mode
   * pandoc?
   * ronn? http://rtomayko.github.io/ronn/ronn-format.7.html
+* syntax diagram
+  * https://en.wikipedia.org/wiki/Syntax_diagram
 * install file
 * readme file
 * static site
