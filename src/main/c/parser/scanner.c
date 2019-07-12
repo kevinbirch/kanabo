@@ -332,6 +332,7 @@ Scanner *make_scanner(const char *data, size_t length)
 
     Scanner *self = xcalloc(sizeof(Scanner) + length);
     input_init(&self->input, NULL, length);
+    self->input.track_lines = true;
     memcpy(self->input.source.buffer, data, length);
 
     return self;

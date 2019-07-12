@@ -12,13 +12,7 @@
 
 static inline void incr(Input *self)
 {
-    self->position.index++;
-    if(!self->track_lines)
-    {
-        return;
-    }
-
-    if(0x0A == current(self))
+    if(self->track_lines && 0x0A == current(self))
     {
         self->position.line++;
         self->position.offset = 0;
@@ -27,6 +21,8 @@ static inline void incr(Input *self)
     {
         self->position.offset++;
     }
+
+    self->position.index++;
 }
 
 static inline void advance_by(Input *self, size_t amount)

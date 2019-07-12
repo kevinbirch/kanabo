@@ -7,7 +7,7 @@
 
 #include "parser/scanner.h"
 
-#define expected_token(KIND, EXTENT, INDEX) (Token){.kind=(KIND), .location.extent=(EXTENT), .location.index=(INDEX), .location.line=0, .location.offset=0}
+#define expected_token(KIND, EXTENT, INDEX) (Token){.kind=(KIND), .location.extent=(EXTENT), .location.index=(INDEX), .location.line=0, .location.offset=(INDEX)}
 
 #define assert_token(E, A) ck_assert_msg(E.kind == A.kind, "Assertion '"#E".kind == "#A".kind' failed: "#E".kind==%s, "#A".kind==%s", token_name(E.kind), token_name(A.kind)); \
     ck_assert_msg(E.location.index == A.location.index, "Assertion for expected %s '"#E".location.index == "#A"location.index failed: "#E".location.index==%zu, "#A"location.index==%zu", token_name(E.kind), E.location.index, A.location.index); \
@@ -1130,8 +1130,8 @@ START_TEST (name_includes_newline)
         expected_token(DOLLAR, 1, 0),
         expected_token(DOT, 1, 1),
         expected_token(NAME, 3, 2),
-        expected_token(NAME, 3, 6),
-        expected_token(END_OF_INPUT, 0, 9),
+        (Token){.kind=NAME, .location.extent=3, .location.index=6, .location.line=1, .location.offset=0},
+        (Token){.kind=END_OF_INPUT, .location.extent=0, .location.index=9, .location.line=1, .location.offset=3},
     };
     ParserError expected_errors[] = {
         (ParserError){UNSUPPORTED_CONTROL_CHARACTER, .position.index=5},
