@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 #include "maybe.h"
-#include "position.h"
+#include "location.h"
 #include "str.h"
 #include "vector.h"
 
@@ -97,7 +97,7 @@ enum type_test_kind
 struct step_s
 {
     enum step_kind kind;
-    Position position;
+    Location location;
 
     struct
     {

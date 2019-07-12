@@ -9,6 +9,7 @@
 
 #define current(PARSER) (PARSER)->scanner->current.kind
 #define token(PARSER) (PARSER)->scanner->current
+#define location(PARSER) (PARSER)->scanner->current.location
 #define next(PARSER) scanner_next((PARSER)->scanner)
 #define lexeme(PARSER) scanner_extract_lexeme((PARSER)->scanner, (PARSER)->scanner->current.location)
 
@@ -55,7 +56,7 @@ static inline int64_t parse_index(Parser *self)
 
     if(NULL == raw)
     {
-        Location loc = self->scanner->current.location;
+        Location loc = location(self);
         add_parser_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", loc.index, loc.extent);
         goto end;
     }
@@ -209,7 +210,7 @@ static void parse_predicate(Parser *self, Step *step)
 
 static void parse_quoted_name(Parser *self, Step *step)
 {
-    Location loc = self->scanner->current.location;
+    Location loc = location(self);
     Location unquoted = 
         {
             // N.B. - trim leading and trailing quotes
@@ -265,7 +266,7 @@ static void recover(Parser *self, Step *step)
 
 static void parse_step(Parser *self, Step *step)
 {
-    step->position = position(self);
+    step->location = location(self);
 
     switch(current(self))
     {
@@ -379,6 +380,7 @@ static void parse_qualified_head_step(Parser *self, JsonPath *path)
     Step *step = xcalloc(sizeof(Step));
     step->kind = ROOT;
     step->test.kind = NAME_TEST;
+    step->location = location(self);
 
     vector_add(path->steps, step);
 

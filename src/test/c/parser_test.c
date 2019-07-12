@@ -449,7 +449,8 @@ START_TEST (dollar_only)
 
     assert_parser_success(maybe, ABSOLUTE_PATH, 1);
     assert_root_step(from_just(maybe));
-    assert_uint_eq(0, path_get(from_just(maybe), 0)->position.index);
+    assert_uint_eq(0, path_get(from_just(maybe), 0)->location.index);
+    assert_uint_eq(1, path_get(from_just(maybe), 0)->location.extent);
 
     dispose_maybe(maybe);
 }
@@ -463,7 +464,8 @@ START_TEST (absolute_single_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_no_predicate(from_just(maybe), 0);
 
     dispose_maybe(maybe);
@@ -478,7 +480,8 @@ START_TEST (absolute_recursive_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_recursive_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_no_predicate(from_just(maybe), 0);
 
     dispose_maybe(maybe);
@@ -493,13 +496,17 @@ START_TEST (absolute_multi_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 5);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_single_name_step(from_just(maybe), 2, "baz");
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->position.index);
+    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 2)->location.extent);
     assert_recursive_name_step(from_just(maybe), 3, "yobble");
-    assert_uint_eq(11, path_get(from_just(maybe), 3)->position.index);
+    assert_uint_eq(11, path_get(from_just(maybe), 3)->location.index);
+    assert_uint_eq(6, path_get(from_just(maybe), 3)->location.extent);
     assert_single_name_step(from_just(maybe), 4, "thingum");
-    assert_uint_eq(18, path_get(from_just(maybe), 4)->position.index);
+    assert_uint_eq(18, path_get(from_just(maybe), 4)->location.index);
+    assert_uint_eq(7, path_get(from_just(maybe), 4)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
     assert_no_predicate(from_just(maybe), 3);
@@ -516,7 +523,8 @@ START_TEST (relative_path_begins_with_dot)
 
     assert_parser_success(maybe, RELATIVE_PATH, 1);
     assert_single_name_step(from_just(maybe), 0, "x");
-    assert_uint_eq(1, path_get(from_just(maybe), 0)->position.index);
+    assert_uint_eq(1, path_get(from_just(maybe), 0)->location.index);
+    assert_uint_eq(1, path_get(from_just(maybe), 0)->location.extent);
     assert_no_predicate(from_just(maybe), 0);
 
     dispose_maybe(maybe);
@@ -530,11 +538,14 @@ START_TEST (relative_multi_step)
 
     assert_parser_success(maybe, RELATIVE_PATH, 3);
     assert_single_name_step(from_just(maybe), 0, "foo");
-    assert_uint_eq(0, path_get(from_just(maybe), 0)->position.index);
+    assert_uint_eq(0, path_get(from_just(maybe), 0)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 0)->location.extent);
     assert_single_name_step(from_just(maybe), 1, "bar");
-    assert_uint_eq(4, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(4, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_recursive_name_step(from_just(maybe), 2, "baz");
-    assert_uint_eq(9, path_get(from_just(maybe), 2)->position.index);
+    assert_uint_eq(9, path_get(from_just(maybe), 2)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 2)->location.extent);
     assert_no_predicate(from_just(maybe), 0);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
@@ -551,11 +562,14 @@ START_TEST (quoted_empty_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 4);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_single_name_step(from_just(maybe), 2, "");
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->position.index);
+    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 2)->location.extent);
     assert_single_name_step(from_just(maybe), 3, "bar");
-    assert_uint_eq(9, path_get(from_just(maybe), 3)->position.index);
+    assert_uint_eq(9, path_get(from_just(maybe), 3)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 3)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
     assert_no_predicate(from_just(maybe), 3);
@@ -572,11 +586,14 @@ START_TEST (quoted_escape_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 4);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_single_name_step(from_just(maybe), 2, "mon'key");
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->position.index);
+    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
+    assert_uint_eq(10, path_get(from_just(maybe), 2)->location.extent);
     assert_single_name_step(from_just(maybe), 3, "bar");
-    assert_uint_eq(17, path_get(from_just(maybe), 3)->position.index);
+    assert_uint_eq(17, path_get(from_just(maybe), 3)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 3)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
     assert_no_predicate(from_just(maybe), 3);
@@ -593,11 +610,14 @@ START_TEST (quoted_multi_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 4);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_single_name_step(from_just(maybe), 2, "happy fun ball");
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->position.index);
+    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
+    assert_uint_eq(16, path_get(from_just(maybe), 2)->location.extent);
     assert_single_name_step(from_just(maybe), 3, "bar");
-    assert_uint_eq(23, path_get(from_just(maybe), 3)->position.index);
+    assert_uint_eq(23, path_get(from_just(maybe), 3)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 3)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
     assert_no_predicate(from_just(maybe), 3);
@@ -614,9 +634,11 @@ START_TEST (wildcard)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_single_wildcard_step(from_just(maybe), 2);
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->position.index);
+    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
+    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
 
@@ -632,9 +654,11 @@ START_TEST (recursive_wildcard)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_recursive_wildcard_step(from_just(maybe), 2);
-    assert_uint_eq(7, path_get(from_just(maybe), 2)->position.index);
+    assert_uint_eq(7, path_get(from_just(maybe), 2)->location.index);
+    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
 
@@ -650,10 +674,12 @@ START_TEST (wildcard_with_subscript_predicate)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
     assert_single_wildcard_step(from_just(maybe), 2);
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->position.index);
+    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
+    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.extent);
     assert_subscript_predicate(from_just(maybe), 2, 0);
 
     dispose_maybe(maybe);
@@ -668,7 +694,8 @@ START_TEST (escape_artistry)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo\xC2\xA0\xE2\x80\xA8\xC2\x85\xE2\x80\xA9zap");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(16, path_get(from_just(maybe), 1)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
 
     dispose_maybe(maybe);
@@ -683,7 +710,8 @@ START_TEST (hex_escape)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo \xC2 bar");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(14, path_get(from_just(maybe), 1)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
 
     dispose_maybe(maybe);
@@ -698,7 +726,8 @@ START_TEST (ucs2_escape)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo \xe2\x98\x83 bar");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(16, path_get(from_just(maybe), 1)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
 
     dispose_maybe(maybe);
@@ -713,6 +742,8 @@ START_TEST (ucs4_escape)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo \xf0\x9f\x92\xa9 bar");
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(20, path_get(from_just(maybe), 1)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
 
     dispose_maybe(maybe);
@@ -766,17 +797,20 @@ START_TEST (whitespace)
     assert_parser_success(maybe, ABSOLUTE_PATH, 4);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(8, path_get(from_just(maybe), 1)->position.index);
-    assert_uint_eq(1, path_get(from_just(maybe), 1)->position.line);
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.offset);
+    assert_uint_eq(8, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(1, path_get(from_just(maybe), 1)->location.line);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.offset);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_recursive_name_step(from_just(maybe), 2, "happy fun ball");
-    assert_uint_eq(17, path_get(from_just(maybe), 2)->position.index);
-    assert_uint_eq(2, path_get(from_just(maybe), 2)->position.line);
-    assert_uint_eq(4, path_get(from_just(maybe), 2)->position.offset);
+    assert_uint_eq(17, path_get(from_just(maybe), 2)->location.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 2)->location.line);
+    assert_uint_eq(4, path_get(from_just(maybe), 2)->location.offset);
+    assert_uint_eq(16, path_get(from_just(maybe), 2)->location.extent);
     assert_single_type_step(from_just(maybe), 3, STRING_TEST);
-    assert_uint_eq(38, path_get(from_just(maybe), 3)->position.index);
-    assert_uint_eq(2, path_get(from_just(maybe), 3)->position.line);
-    assert_uint_eq(25, path_get(from_just(maybe), 3)->position.offset);
+    assert_uint_eq(38, path_get(from_just(maybe), 3)->location.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 3)->location.line);
+    assert_uint_eq(25, path_get(from_just(maybe), 3)->location.offset);
+    assert_uint_eq(8, path_get(from_just(maybe), 3)->location.extent);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
     assert_no_predicate(from_just(maybe), 3);
@@ -968,14 +1002,16 @@ START_TEST (subscript_predicate_with_whitespace)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
-    assert_uint_eq(0, path_get(from_just(maybe), 1)->position.line);
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.offset);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(0, path_get(from_just(maybe), 1)->location.line);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.offset);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_subscript_predicate(from_just(maybe), 1, 42);
     assert_single_name_step(from_just(maybe), 2, "bar");
-    assert_uint_eq(15, path_get(from_just(maybe), 2)->position.index);
-    assert_uint_eq(1, path_get(from_just(maybe), 2)->position.line);
-    assert_uint_eq(1, path_get(from_just(maybe), 2)->position.offset);
+    assert_uint_eq(15, path_get(from_just(maybe), 2)->location.index);
+    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.line);
+    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.offset);
+    assert_uint_eq(3, path_get(from_just(maybe), 2)->location.extent);
     assert_no_predicate(from_just(maybe), 2);
 
     dispose_maybe(maybe);
@@ -1118,14 +1154,16 @@ START_TEST (slice_predicate_with_whitespace)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.index);
-    assert_uint_eq(0, path_get(from_just(maybe), 1)->position.line);
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->position.offset);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
+    assert_uint_eq(0, path_get(from_just(maybe), 1)->location.line);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.offset);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
     assert_slice_predicate(from_just(maybe), 1, 1, 5, 3);
     assert_single_name_step(from_just(maybe), 2, "bar");
-    assert_uint_eq(22, path_get(from_just(maybe), 2)->position.index);
-    assert_uint_eq(2, path_get(from_just(maybe), 2)->position.line);
-    assert_uint_eq(1, path_get(from_just(maybe), 2)->position.offset);
+    assert_uint_eq(22, path_get(from_just(maybe), 2)->location.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 2)->location.line);
+    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.offset);
+    assert_uint_eq(3, path_get(from_just(maybe), 2)->location.extent);
     assert_no_predicate(from_just(maybe), 2);
 
     dispose_maybe(maybe);
