@@ -137,11 +137,11 @@ selector expression
     ;
 
 subscript
-     = signed integer
+     = integer
      ;
 
 slice
-    = [ signed integer ], ":", [ signed integer ], [ ":", [ non-zero signed integer ] ]
+    = [ integer ], ":", [ integer ], [ ":", [ non-zero signed integer ] ]
     ;
 
 join
@@ -201,7 +201,7 @@ scalar
     ;
 
 number
-    = signed integer, [ fractional part ], [ exponent ]
+    = integer, [ fractional part ], [ exponent ]
     ;
 
 fractional part
@@ -253,11 +253,7 @@ boolean
     ;
 
 integer
-    = [ "+" ], ( "0" | digit one to nine, { digit } )
-    ;
-
-signed integer
-    = [ "-" ], integer
+    = [ "-" | "+" ], ( "0" | digit one to nine, { digit } )
     ;
 
 non-zero signed integer
@@ -273,7 +269,7 @@ digit
     ;
 
 hex digit
-    = digit |  hex lower | hex upper
+    = digit | hex lower | hex upper
     ;
 
 hex lower
