@@ -5,12 +5,12 @@
 ## fixes
 
 * parser
-  * anootate json path with positions of structural elements from original expression
   * don't copy lexeme, don't paste minus and integer lexemes together
   * eliminate possible error in lexeme extraction (then we don't need the internal error?)
   * don't use callback between scanner and parser for errors, track error vector in each
     * use single add_parser_error function
     * why are postion macros different for parser and scanner?
+  * `"$["` should emit `PREMATURE_END_OF_INPUT` error also (`unclosed_empty_root_predicate` test)
 * evaluator
   * BUG: failed eval of step causes `expression:1:0 evaluator: internal error: model argument is NULL`
   * BUG: provide implicit root for relative paths in top-level expressions

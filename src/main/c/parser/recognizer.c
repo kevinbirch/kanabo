@@ -261,8 +261,12 @@ static void recover(Parser *self, Step *step)
     }
 }
 
+#include <stdio.h>
+
 static void parse_step(Parser *self, Step *step)
 {
+    step->position = position(self);
+
     switch(current(self))
     {
         case ASTERISK:

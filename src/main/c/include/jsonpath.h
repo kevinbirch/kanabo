@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "maybe.h"
+#include "position.h"
 #include "str.h"
 #include "vector.h"
 
@@ -42,6 +43,7 @@ enum slice_specifiers
 struct predicate_s
 {
     enum predicate_kind kind;
+    Position position;
 
     union
     {
@@ -95,6 +97,7 @@ enum type_test_kind
 struct step_s
 {
     enum step_kind kind;
+    Position position;
 
     struct
     {
