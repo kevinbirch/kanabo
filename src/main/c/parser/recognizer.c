@@ -278,6 +278,11 @@ static void parse_step(Parser *self, Step *step)
             break;
         case NAME:
             step->test.name = lexeme(self);
+            if(NULL == step->test.name)
+            {
+                add_parser_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", step->location.index, step->location.extent);
+                return;
+            }
             break;
         /*
         case EQUALS:

@@ -192,7 +192,6 @@ static void assert_model_state(DocumentSet *model)
 
     Node *one_0 = sequence_get(sequence(one), 0);
     assert_node_kind(one_0, SCALAR);
-    printf("one-0: '%s'\n", C(scalar_value(one_0)));
     assert_scalar_value((one_0), "literal multiline scalar\nline breaks are preserved");
     assert_scalar_kind(one_0, SCALAR_STRING);
     assert_int_eq(STYLE_LITERAL, scalar(one_0)->yaml.style);

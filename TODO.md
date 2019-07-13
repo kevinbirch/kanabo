@@ -5,7 +5,6 @@
 ## fixes
 
 * parser
-  * eliminate possible error in lexeme extraction (then we don't need the internal error?)
   * don't use callback between scanner and parser for errors, track error vector in each
     * use single add_parser_error function
     * why are postion macros different for parser and scanner?
