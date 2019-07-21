@@ -89,6 +89,7 @@ start: 0.8-alpha, end: 0.9-beta
   * site target
   * http://jashkenas.github.io/docco/
 * http://www.reddit.com/r/sideprojectdemo
+* example using darksky or weather.gov apis: https://lobste.rs/s/ll18ft/weather_gov_s_free_weather_api
 
 ## static analysis
 
