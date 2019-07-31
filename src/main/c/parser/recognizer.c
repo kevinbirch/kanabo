@@ -176,7 +176,6 @@ static void parse_predicate_expression(Parser *self, Step *step)
             next(self);
             return;
         case END_OF_INPUT:
-            goto unclosed;
             break;
         default:
             add_parser_error(self, position(self), EXPECTED_PREDICATE_PRODUCTION);
@@ -187,7 +186,6 @@ static void parse_predicate_expression(Parser *self, Step *step)
 
     expect(self, CLOSE_BRACKET);
 
-  unclosed:
     if(CLOSE_BRACKET != current(self))
     {
         add_parser_error(self, start, UNBALANCED_PRED_DELIM);

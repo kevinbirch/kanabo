@@ -170,6 +170,21 @@ START_TEST (unclosed_empty_root_predicate)
     char *expression = "$[";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=2},
+        (ParserError){UNBALANCED_PRED_DELIM, .position.index=1},
+    };
+
+    assert_parser_failure(maybe, errors);
+    dispose_maybe(maybe);
+}
+END_TEST
+
+START_TEST (unclosed_nonempty_root_predicate)
+{
+    char *expression = "$[1";
+    Maybe(JsonPath) maybe = parse(expression);
+    ParserError errors[] = {
+        (ParserError){PREMATURE_END_OF_INPUT, .position.index=3},
         (ParserError){UNBALANCED_PRED_DELIM, .position.index=1},
     };
 
@@ -1321,6 +1336,7 @@ Suite *parser_suite(void)
     tcase_add_test(bad_input_case, missing_recursive_step_test);
     tcase_add_test(bad_input_case, missing_dot);
     tcase_add_test(bad_input_case, unclosed_empty_root_predicate);
+    tcase_add_test(bad_input_case, unclosed_nonempty_root_predicate);
     tcase_add_test(bad_input_case, stray_root_predicate_closure);
     tcase_add_test(bad_input_case, empty_root_predicate);
     tcase_add_test(bad_input_case, tripple_troubble);

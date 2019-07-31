@@ -8,7 +8,6 @@
   * don't use callback between scanner and parser for errors, track error vector in each
     * use single add_parser_error function
     * why are postion macros different for parser and scanner?
-  * BUG: `"$["` should emit `PREMATURE_END_OF_INPUT` error also (`unclosed_empty_root_predicate` test)
 * evaluator
   * BUG: failed eval of step causes `expression:1:0 evaluator: internal error: model argument is NULL`
   * BUG: provide implicit root for relative paths in top-level expressions
@@ -127,6 +126,7 @@ start: 0.8-alpha, end: 0.9-beta
 * use sourcelocation instead of position in model, track input file across all nodes
   * reuse the same string object from documentset?
   * write out full position in node repr
+* https://github.com/lemire/simdjson ?
 
 ### evaluator
 
