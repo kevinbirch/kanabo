@@ -7,7 +7,6 @@
 * parser
   * don't use callback between scanner and parser for errors, track error vector in each
     * use single add_parser_error function
-    * why are postion macros different for parser and scanner?
 * evaluator
   * BUG: failed eval of step causes `expression:1:0 evaluator: internal error: model argument is NULL`
   * BUG: provide implicit root for relative paths in top-level expressions

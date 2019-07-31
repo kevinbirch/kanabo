@@ -5,7 +5,7 @@
 #include "vector.h"
 #include "xalloc.h"
 
-#define position(SCANNER) (SCANNER)->input.position
+#define scan_position(SCANNER) (SCANNER)->input.position
 
 static inline void add_scanner_error_at(Scanner *self, Position position, ParserErrorCode code)
 {
@@ -19,7 +19,7 @@ static inline void add_scanner_error_at(Scanner *self, Position position, Parser
 
 static inline void add_scanner_error(Scanner *self, ParserErrorCode code)
 {
-    add_scanner_error_at(self, position(self), code);
+    add_scanner_error_at(self, scan_position(self), code);
 }
 
 static bool read_hex_sequence(Scanner *self, size_t count)
@@ -57,7 +57,7 @@ static bool read_escape_sequence(Scanner *self)
         return false;
     }
 
-    Position start = position(self);
+    Position start = scan_position(self);
     switch(input_consume_one(&self->input))
     {
         case '"':
@@ -93,7 +93,7 @@ static bool read_escape_sequence(Scanner *self)
 
 static bool read_name_escape_sequence(Scanner *self)
 {
-    Position start = position(self);
+    Position start = scan_position(self);
     if(input_peek(&self->input) == '\\')
     {
         input_consume_one(&self->input);
@@ -116,7 +116,7 @@ static bool read_name_escape_sequence(Scanner *self)
 
 static void match_quoted_term(Scanner *self, char quote, EscapeSequenceReader reader)
 {
-    Position start = position(self);
+    Position start = scan_position(self);
 
     if(input_peek(&self->input) == quote)
     {
@@ -155,7 +155,7 @@ static void match_quoted_term(Scanner *self, char quote, EscapeSequenceReader re
 
 static bool read_digit_sequence(Scanner *self)
 {
-    Position start = position(self);
+    Position start = scan_position(self);
 
     while(true)
     {
@@ -218,7 +218,7 @@ static void match_number(Scanner *self)
 
 static void match_name(Scanner *self)
 {
-    Position start = position(self);
+    Position start = scan_position(self);
 
     while(true)
     {
@@ -357,7 +357,7 @@ void scanner_next(Scanner *self)
 
     input_skip_whitespace(&self->input);
 
-    Position start = position(self);
+    Position start = scan_position(self);
     if(!input_has_more(&self->input))
     {
         self->current.kind = END_OF_INPUT;
@@ -500,7 +500,7 @@ void scanner_next(Scanner *self)
 
   finish:
     ;
-    Position end = position(self);    
+    Position end = scan_position(self);    
     self->current.location.position = start;
     self->current.location.extent = end.index - start.index;
 }
