@@ -1,34 +1,35 @@
 #include <string.h>
 
-#include "parser/context.h"
-#include "parser/recognize.h"
 #include "xalloc.h"
 
-static void error_handler(Position position, ParserErrorCode code, void *parameter)
-{
-    Parser *self = (Parser *)parameter;
-    add_parser_error(self, position, code);
-}
+#include "parser.h"
+#include "parser/recognizer.h"
 
 Maybe(JsonPath) parse(const char *expression)
 {
-    Parser parser = {.errors = make_vector_with_capacity(1)};
+    Parser parser = {
+        .errors = make_vector_with_capacity(1),
+        .input = {
+            .source = {
+                .cache = false,
+                .ref = expression,
+            },
+        },
+    };
 
     if(NULL == expression || 0 == strlen(expression))
     {
-        add_parser_error(&parser, (Position){}, EMPTY_INPUT);
+        parser_add_error(&parser, EMPTY_INPUT);
         return fail(JsonPath, parser.errors);
     }
 
-    Scanner *scanner = make_scanner(expression, strlen(expression));
-    scanner->handler.callback = error_handler;
-    scanner->handler.parameter = &parser;
-
-    parser.scanner = scanner;
+    input_init(&parser.input, "expression", strlen(expression));
+    input_set_track_lines(&parser.input, true);
 
     JsonPath *path = recognize(&parser);
 
-    dispose_scanner(scanner);
+    input_release(&parser.input);
+
     if(vector_is_empty(parser.errors))
     {
         dispose_vector(parser.errors);

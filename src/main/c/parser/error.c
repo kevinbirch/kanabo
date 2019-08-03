@@ -1,18 +1,26 @@
 #include <stdarg.h>
-#include <stdio.h>
 
-#include "parser/context.h"
 #include "xalloc.h"
+
+#include "parser.h"
 
 static const char * const FALLBACK_MSG = "message formatting failed";
 
-void add_parser_internal_error(Parser *self, const char *restrict filename, int line, const char * restrict format, ...)
+void parser_add_error_at(Parser *self, ParserErrorCode code, Position position)
+{
+    ParserError *err = xcalloc(sizeof(ParserError));
+    err->code = code;
+    err->position = position;
+
+    vector_append(self->errors, err);
+}
+
+void parser_add_internal_error_at(Parser *self, const char * restrict location, const char * restrict format, ...)
 {
     ParserInternalError *err = xcalloc(sizeof(ParserInternalError));
     err->code = INTERNAL_ERROR;
-    err->position = self->scanner->current.location.position;
-    err->filename = filename;
-    err->line = line;
+    err->position = position(self);
+    err->location = location;
 
     va_list args;
     va_start(args, format);
@@ -23,16 +31,6 @@ void add_parser_internal_error(Parser *self, const char *restrict filename, int 
     {
         err->message = make_string(FALLBACK_MSG);
     }
-
-    vector_append(self->errors, err);
-}
-
-
-void add_parser_error(Parser *self, Position position, ParserErrorCode code)
-{
-    ParserError *err = xcalloc(sizeof(ParserError));
-    err->code = code;
-    err->position = position;
 
     vector_append(self->errors, err);
 }

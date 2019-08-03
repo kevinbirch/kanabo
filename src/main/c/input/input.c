@@ -6,20 +6,27 @@
 #include "input.h"
 #include "xalloc.h"
 
-#define current(INPUT) (INPUT)->source.buffer[(INPUT)->position.index]
-#define cursor(INPUT) (INPUT)->source.buffer + (INPUT)->position.index
+#define read_at(INPUT, IDX) ((INPUT)->source.cache ? (INPUT)->source.buffer[(IDX)] : *((INPUT)->source.ref + (IDX)))
+#define read(INPUT) read_at(INPUT, (INPUT)->position.index)
+
+#define cursor_at(INPUT, IDX) ((INPUT)->source.cache ? (INPUT)->source.buffer : (INPUT)->source.ref) + (IDX)
+#define cursor(INPUT) cursor_at(INPUT, (INPUT)->position.index)
+
 #define index(INPUT) (INPUT)->position.index
 
 static inline void incr(Input *self)
 {
-    if(self->track_lines && 0x0A == current(self))
+    if(self->track_lines)
     {
-        self->position.line++;
-        self->position.offset = 0;
-    }
-    else
-    {
-        self->position.offset++;
+        if(0x0A == read(self))
+        {
+            self->position.line++;
+            self->position.offset = 0;
+        }
+        else
+        {
+            self->position.offset++;
+        }
     }
 
     self->position.index++;
@@ -98,7 +105,7 @@ void input_skip_whitespace(Input *self)
 {
     ENSURE_NONNULL_ELSE_VOID(self);
 
-    while(input_has_more(self) && isspace(current(self)))
+    while(input_has_more(self) && isspace(read(self)))
     {
         incr(self);
     }
@@ -109,7 +116,7 @@ char input_peek(Input *self)
     ENSURE_NONNULL_ELSE_ZERO(self);
     ENSURE_ELSE_ZERO(input_has_more(self));
 
-    return current(self);
+    return read(self);
 }
 
 char input_consume_one(Input *self)
@@ -117,7 +124,7 @@ char input_consume_one(Input *self)
     ENSURE_NONNULL_ELSE_ZERO(self);
     ENSURE_ELSE_ZERO(input_has_more(self));
 
-    char current = current(self);
+    char current = read(self);
     incr(self);
 
     return current;
@@ -173,9 +180,9 @@ void input_push_back(Input *self)
 
     if(0 == self->position.offset)
     {
-        // NB - track back from the position preceeding the previous newline
+        // N.B. - track back from the position preceeding the previous newline
         size_t i = index(self) - 1;
-        while(i > 0 && 0x0A != self->source.buffer[i])
+        while(i > 0 && 0x0A != read_at(self, i))
         {
             i--;
         }
@@ -194,5 +201,5 @@ String *input_extract(Input *self, Location location)
     ENSURE_ELSE_NULL(location.index < self->source.length);
     ENSURE_ELSE_NULL(location.index + location.extent <= self->source.length);
 
-    return make_string_with_bytestring((const uint8_t *)(self->source.buffer + location.index), location.extent);
+    return make_string_with_bytestring((const uint8_t *)cursor_at(self, location.index), location.extent);
 }

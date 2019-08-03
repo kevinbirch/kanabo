@@ -1,4 +1,4 @@
-#include "parser/token.h"
+#include "parser.h"
 
 static const char * const NAMES[] =
 {

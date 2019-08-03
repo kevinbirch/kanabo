@@ -1,35 +1,34 @@
 #include <errno.h>
-#include <limits.h>
-#include <stdlib.h>
+#include <stdint.h>
 
-#include "parser/context.h"
-#include "parser/recognize.h"
-#include "parser/escape.h"
 #include "xalloc.h"
 
-#define current(PARSER) (PARSER)->scanner->current.kind
-#define token(PARSER) (PARSER)->scanner->current
-#define location(PARSER) (PARSER)->scanner->current.location
-#define next(PARSER) scanner_next((PARSER)->scanner)
-#define lexeme(PARSER) scanner_extract_lexeme((PARSER)->scanner, (PARSER)->scanner->current.location)
+#include "parser/escape.h"
+#include "parser/recognizer.h"
+#include "parser/scanner.h"
+
+#define current_kind(SELF) (SELF)->current.kind
+#define lexeme_at(PARSER, LOC) scanner_extract_lexeme((PARSER), (LOC))
+#define lexeme(PARSER) lexeme_at((PARSER), location(PARSER))
+#define parser_add_lexeme_error(SELF, LOC) parser_add_internal_error((SELF), "can't extract lexeme at %zu:%zu", (LOC).index, (LOC).extent)
 
 static inline void expect(Parser *self, TokenKind kind)
 {
     bool squaked = false;
 
-    while(kind != current(self))
+    while(kind != current_kind(self))
     {
-        if(END_OF_INPUT == current(self))
+        if(END_OF_INPUT == current_kind(self))
         {
-            add_parser_error(self, position(self), PREMATURE_END_OF_INPUT);
+            parser_add_error(self, PREMATURE_END_OF_INPUT);
             break;
         }
         if(!squaked)
         {
             squaked = true;
-            add_parser_error(self, position(self), UNEXPECTED_INPUT);
+            parser_add_error(self, UNEXPECTED_INPUT);
         }
-        next(self);
+        scanner_next(self);
     }
 }
 
@@ -39,25 +38,24 @@ static inline int64_t parse_index(Parser *self)
     int64_t index = -1;
 
     bool negate = false;
-    if(MINUS == current(self))
+    if(MINUS == current_kind(self))
     {
         negate = true;
-        next(self);
+        scanner_next(self);
 
-        if(INTEGER_LITERAL != current(self))
+        if(INTEGER_LITERAL != current_kind(self))
         {
-            add_parser_error(self, start, EXPECTED_INTEGER);
+            parser_add_error_at(self, EXPECTED_INTEGER, start);
             goto end;
         }
     }
     
     String *raw = lexeme(self);
-    next(self);
+    scanner_next(self);
 
     if(NULL == raw)
     {
-        Location loc = location(self);
-        add_parser_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", loc.index, loc.extent);
+        parser_add_lexeme_error(self, location(self));
         goto end;
     }
 
@@ -65,11 +63,11 @@ static inline int64_t parse_index(Parser *self)
     index = strtoll(C(raw), NULL, 10);
     if(ERANGE == errno && negate)
     {
-        add_parser_error(self, start, INTEGER_TOO_SMALL);
+        parser_add_error_at(self, INTEGER_TOO_SMALL, start);
     }
     else if(ERANGE == errno)
     {
-        add_parser_error(self, start, INTEGER_TOO_BIG);
+        parser_add_error_at(self, INTEGER_TOO_BIG, start);
     }
 
     if(negate)
@@ -86,38 +84,38 @@ static void parse_slice_predicate(Parser *self, Predicate *predicate)
 {
     predicate->kind = SLICE;
 
-    if(INTEGER_LITERAL == current(self) || MINUS == current(self))
+    if(INTEGER_LITERAL == current_kind(self) || MINUS == current_kind(self))
     {
         predicate->slice.specified |= SLICE_FROM;
         predicate->slice.from = parse_index(self);
     }
 
-    if(COLON != current(self))
+    if(COLON != current_kind(self))
     {
-        add_parser_error(self, position(self), UNEXPECTED_INPUT);
+        parser_add_error(self, UNEXPECTED_INPUT);
         return;
     }
 
     // N.B. - eat the colon
-    next(self);
+    scanner_next(self);
 
-    if(INTEGER_LITERAL == current(self) || MINUS == current(self))
+    if(INTEGER_LITERAL == current_kind(self) || MINUS == current_kind(self))
     {
         predicate->slice.specified |= SLICE_TO;
         predicate->slice.to = parse_index(self);
     }
 
-    if(COLON == current(self))
+    if(COLON == current_kind(self))
     {
-        next(self);
-        if(INTEGER_LITERAL == current(self) || MINUS == current(self))
+        scanner_next(self);
+        if(INTEGER_LITERAL == current_kind(self) || MINUS == current_kind(self))
         {
             predicate->slice.specified |= SLICE_STEP;
             Position start = position(self);
             predicate->slice.step = parse_index(self);
             if(0 == predicate->slice.step)
             {
-                add_parser_error(self, start, STEP_CANNOT_BE_ZERO);
+                parser_add_error_at(self, STEP_CANNOT_BE_ZERO, start);
             }
         }
     }
@@ -127,7 +125,7 @@ static void parse_indexed_predicate(Parser *self, Predicate *predicate)
 {
     int64_t index = parse_index(self);
 
-    if(COLON == current(self))
+    if(COLON == current_kind(self))
     {
         predicate->slice.specified |= SLICE_FROM;
         predicate->slice.from = index;
@@ -144,16 +142,16 @@ static void parse_predicate_expression(Parser *self, Step *step)
     Position start = position(self);
 
     // N.B. - eat the opening bracket
-    next(self);
+    scanner_next(self);
 
     Predicate *predicate = xcalloc(sizeof(Predicate));
     step->predicate = predicate;
 
-    switch(current(self))
+    switch(current_kind(self))
     {
         case ASTERISK:
             predicate->kind = WILDCARD;
-            next(self);
+            scanner_next(self);
             break;
         case MINUS:
         case INTEGER_LITERAL:
@@ -168,39 +166,39 @@ static void parse_predicate_expression(Parser *self, Step *step)
         case DOT_DOT:
         case NAME:
             // xxx - parse_join_predicate(parent, self);
-            add_parser_error(self, position(self), EXPECTED_PREDICATE_PRODUCTION);
-            next(self);
+            parser_add_error(self, EXPECTED_PREDICATE_PRODUCTION);
+            scanner_next(self);
             break;
         case CLOSE_BRACKET:
-            add_parser_error(self, position(self), EXPECTED_PREDICATE_PRODUCTION);
-            next(self);
+            parser_add_error(self, EXPECTED_PREDICATE_PRODUCTION);
+            scanner_next(self);
             return;
         case END_OF_INPUT:
             break;
         default:
-            add_parser_error(self, position(self), EXPECTED_PREDICATE_PRODUCTION);
-            next(self);
+            parser_add_error(self, EXPECTED_PREDICATE_PRODUCTION);
+            scanner_next(self);
             // N.B. - keep going until the predicate closing `]`
             break;
     }
 
     expect(self, CLOSE_BRACKET);
 
-    if(CLOSE_BRACKET != current(self))
+    if(CLOSE_BRACKET != current_kind(self))
     {
-        add_parser_error(self, start, UNBALANCED_PRED_DELIM);
+        parser_add_error_at(self, UNBALANCED_PRED_DELIM, start);
     }
 
-    next(self);
+    scanner_next(self);
 }
 
 static void parse_predicate(Parser *self, Step *step)
 {
-    if(OPEN_BRACKET == current(self))
+    if(OPEN_BRACKET == current_kind(self))
     {
         parse_predicate_expression(self, step);
     }
-    else if(OPEN_FILTER == current(self))
+    else if(OPEN_FILTER == current_kind(self))
     {
         // parse_filter_expression(parent, self)
     }
@@ -218,10 +216,10 @@ static void parse_quoted_name(Parser *self, Step *step)
             .extent = loc.extent - 2
         };
         
-    String *raw = scanner_extract_lexeme(self->scanner, unquoted);
+    String *raw = lexeme_at(self, unquoted);
     if(NULL == raw)
     {
-        add_parser_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", loc.index, loc.extent);
+        parser_add_lexeme_error(self, unquoted);
         return;
     }
 
@@ -239,11 +237,11 @@ static void parse_quoted_name(Parser *self, Step *step)
 
 static void recover(Parser *self, Step *step)
 {
-    next(self);
+    scanner_next(self);
 
     while(true)
     {
-        switch(current(self))
+        switch(current_kind(self))
         {
             case OPEN_BRACKET:
             case OPEN_FILTER:
@@ -254,19 +252,17 @@ static void recover(Parser *self, Step *step)
             case END_OF_INPUT:
                 return;
             default:
-                next(self);
+                scanner_next(self);
                 break;
         }
     }
 }
 
-#include <stdio.h>
-
 static void parse_step(Parser *self, Step *step)
 {
     step->location = location(self);
 
-    switch(current(self))
+    switch(current_kind(self))
     {
         case ASTERISK:
             step->test.kind = WILDCARD_TEST;
@@ -278,7 +274,7 @@ static void parse_step(Parser *self, Step *step)
             step->test.name = lexeme(self);
             if(NULL == step->test.name)
             {
-                add_parser_internal_error(self, __FILE__, __LINE__, "can't extract lexeme at %zu:%zu", step->location.index, step->location.extent);
+                parser_add_lexeme_error(self, step->location);
                 return;
             }
             break;
@@ -335,15 +331,15 @@ static void parse_step(Parser *self, Step *step)
             step->test.type = NULL_TEST;
             break;
         case END_OF_INPUT:
-            add_parser_error(self, position(self), EXPECTED_STEP_PRODUCTION);
+            parser_add_error(self, EXPECTED_STEP_PRODUCTION);
             return;
         default:
-            add_parser_error(self, position(self), EXPECTED_STEP_PRODUCTION);
+            parser_add_error(self, EXPECTED_STEP_PRODUCTION);
             recover(self, step);
             return;
     }
 
-    next(self);
+    scanner_next(self);
     parse_predicate(self, step);
 }
 
@@ -360,9 +356,9 @@ static inline Step *make_step(enum step_kind kind, JsonPath *path)
 
 static void parse_recursive_step(Parser *self, JsonPath *path)
 {
-    if(DOT_DOT == current(self))
+    if(DOT_DOT == current_kind(self))
     {
-        next(self);
+        scanner_next(self);
     }
 
     parse_step(self, make_step(RECURSIVE, path));
@@ -370,9 +366,9 @@ static void parse_recursive_step(Parser *self, JsonPath *path)
 
 static void parse_relative_step(Parser *self, JsonPath *path)
 {
-    if(DOT == current(self))
+    if(DOT == current_kind(self))
     {
-        next(self);
+        scanner_next(self);
     }
     
     parse_step(self, make_step(SINGLE, path));
@@ -387,13 +383,13 @@ static void parse_qualified_head_step(Parser *self, JsonPath *path)
 
     vector_add(path->steps, step);
 
-    next(self);
+    scanner_next(self);
     parse_predicate(self, step);
 }
 
 static void parse_head_step(Parser *self, JsonPath *path)
 {
-    switch(current(self))
+    switch(current_kind(self))
     {
         case DOLLAR:
             path->kind = ABSOLUTE_PATH;
@@ -416,13 +412,13 @@ JsonPath *recognize(Parser *self)
 {
     JsonPath *path = make_jsonpath(RELATIVE_PATH);
 
-    next(self);
+    scanner_next(self);
     parse_head_step(self, path);
 
     bool done = false;
     while(!done)
     {
-        switch(current(self))
+        switch(current_kind(self))
         {
             case DOT:
                 parse_relative_step(self, path);
@@ -434,7 +430,7 @@ JsonPath *recognize(Parser *self)
                 done = true;
                 break;
             default:
-                add_parser_error(self, position(self), EXPECTED_QUALIFIED_STEP_PRODUCTION);
+                parser_add_error(self, EXPECTED_QUALIFIED_STEP_PRODUCTION);
                 done = true;
                 break;
         }

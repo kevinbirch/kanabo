@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>  // for size_t
+
 typedef void (*OOMErrorHandler)(const char * restrict, size_t);
 
 void set_oom_handler(OOMErrorHandler handler);

@@ -2,8 +2,6 @@
 #include <stdio.h>
 
 #include "parser/escape.h"
-#include "parser/context.h"
-#include "str.h"
 
 #define SURROGATE_START    0xD800
 #define SURROGATE_END      0xDFFF
@@ -59,7 +57,7 @@ static inline bool unescape_unicode(Parser *self, uint32_t ucs4, MutableString *
 
     if(!(length > 0))
     {
-        add_parser_error(self, position(self), UNSUPPORTED_UNICODE_SEQUENCE);
+        parser_add_error(self, UNSUPPORTED_UNICODE_SEQUENCE);
         return false;
     }
 
@@ -162,7 +160,7 @@ String *unescape(Parser *self, const String *lexeme)
                 break;
             }
             default:
-                add_parser_error(self, position(self), UNSUPPORTED_ESCAPE_SEQUENCE);
+                parser_add_error(self, UNSUPPORTED_ESCAPE_SEQUENCE);
                 goto cleanup;
                 break;
         }

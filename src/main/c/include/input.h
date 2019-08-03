@@ -13,8 +13,13 @@
 
 struct source_s
 {
-    size_t length;
-    char   buffer[];
+    bool    cache;
+    size_t  length;
+    union
+    {
+        const char *ref;
+        char  buffer[];
+    };
 };
 
 typedef struct source_s Source;
@@ -53,6 +58,7 @@ defmaybep_error(Input, InputError);
 
 Maybe(Input) make_input_from_file(const char *filename);
 Input       *make_input_from_buffer(const char *data, size_t length);
+Input       *make_input_from_buffer_no_copy(const char *data, size_t length);
 
 void         input_init(Input *self, const char *filename, size_t length);
 

@@ -138,7 +138,7 @@ static inline bool parser_error_printer(void *each, void *context)
     if(INTERNAL_ERROR == error->code)
     {
         ParserInternalError *ierror = (ParserInternalError *)error;
-        err(options, "%s:%d parser: internal error: %s", ierror->filename, ierror->line, C(ierror->message));
+        err(options, "%s parser: internal error: %s", ierror->location, C(ierror->message));
     }
     else
     {

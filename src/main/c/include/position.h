@@ -15,8 +15,12 @@ typedef struct postion_s Position;
 
 struct source_position_s
 {
+    union
+    {
+        struct    postion_s;
+        Position  position;
+    };
     String   *name;
-    Position  position;
 };
 
 typedef struct source_position_s SourcePosition;

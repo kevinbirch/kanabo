@@ -1,40 +1,28 @@
 #include <ctype.h>
 
 #include "conditions.h"
-#include "parser/scanner.h"
 #include "vector.h"
 #include "xalloc.h"
 
-#define scan_position(SCANNER) (SCANNER)->input.position
+#include "parser/scanner.h"
 
-static inline void add_scanner_error_at(Scanner *self, Position position, ParserErrorCode code)
-{
-    if(NULL == self->handler.callback)
-    {
-        return;
-    }
+#define scan_position(SELF) (SELF)->input.position
+#define scanner_add_error_at(SELF, CODE, LOC) parser_add_error_at((SELF), (CODE), (LOC))
+#define scanner_add_error(SELF, CODE) scanner_add_error_at((SELF), (CODE), scan_position(SELF))
 
-    self->handler.callback(position, code, self->handler.parameter);
-}
-
-static inline void add_scanner_error(Scanner *self, ParserErrorCode code)
-{
-    add_scanner_error_at(self, scan_position(self), code);
-}
-
-static bool read_hex_sequence(Scanner *self, size_t count)
+static bool read_hex_sequence(Parser *self, size_t count)
 {
     for(size_t i = 0; i < count; i++)
     {
         if(!input_has_more(&self->input))
         {
-            add_scanner_error(self, PREMATURE_END_OF_INPUT);
+            scanner_add_error(self, PREMATURE_END_OF_INPUT);
             return false;
         }
 
         if(!isxdigit(input_peek(&self->input)))
         {
-            add_scanner_error(self, UNSUPPORTED_ESCAPE_SEQUENCE);
+            scanner_add_error(self, UNSUPPORTED_ESCAPE_SEQUENCE);
         }
         input_consume_one(&self->input);
     }
@@ -42,9 +30,9 @@ static bool read_hex_sequence(Scanner *self, size_t count)
     return true;
 }
 
-typedef bool (*EscapeSequenceReader)(Scanner *self);
+typedef bool (*EscapeSequenceReader)(Parser *self);
 
-static bool read_escape_sequence(Scanner *self)
+static bool read_escape_sequence(Parser *self)
 {
     if(input_peek(&self->input) == '\\')
     {
@@ -53,7 +41,7 @@ static bool read_escape_sequence(Scanner *self)
 
     if(!input_has_more(&self->input))
     {
-        add_scanner_error(self, PREMATURE_END_OF_INPUT);
+        scanner_add_error(self, PREMATURE_END_OF_INPUT);
         return false;
     }
 
@@ -85,13 +73,13 @@ static bool read_escape_sequence(Scanner *self)
         case 'U':
             return read_hex_sequence(self, 8);
         default:
-            add_scanner_error_at(self, start, UNSUPPORTED_ESCAPE_SEQUENCE);
+            scanner_add_error_at(self, UNSUPPORTED_ESCAPE_SEQUENCE, start);
     }
 
     return true;
 }
 
-static bool read_name_escape_sequence(Scanner *self)
+static bool read_name_escape_sequence(Parser *self)
 {
     Position start = scan_position(self);
     if(input_peek(&self->input) == '\\')
@@ -100,7 +88,7 @@ static bool read_name_escape_sequence(Scanner *self)
     }
     if(!input_has_more(&self->input))
     {
-        add_scanner_error(self, PREMATURE_END_OF_INPUT);
+        scanner_add_error(self, PREMATURE_END_OF_INPUT);
         return false;
     }
 
@@ -114,7 +102,7 @@ static bool read_name_escape_sequence(Scanner *self)
     return read_escape_sequence(self);
 }
 
-static void match_quoted_term(Scanner *self, char quote, EscapeSequenceReader reader)
+static void match_quoted_term(Parser *self, char quote, EscapeSequenceReader reader)
 {
     Position start = scan_position(self);
 
@@ -127,13 +115,13 @@ static void match_quoted_term(Scanner *self, char quote, EscapeSequenceReader re
     {
         if(!input_has_more(&self->input))
         {
-            add_scanner_error_at(self, start, UNCLOSED_QUOTATION);
-            add_scanner_error(self, PREMATURE_END_OF_INPUT);
+            scanner_add_error_at(self, UNCLOSED_QUOTATION, start);
+            scanner_add_error(self, PREMATURE_END_OF_INPUT);
             break;
         }
         if(iscntrl(input_peek(&self->input)))
         {
-            add_scanner_error(self, UNSUPPORTED_CONTROL_CHARACTER);
+            scanner_add_error(self, UNSUPPORTED_CONTROL_CHARACTER);
         }
         if(input_peek(&self->input) == '\\')
         {
@@ -153,7 +141,7 @@ static void match_quoted_term(Scanner *self, char quote, EscapeSequenceReader re
     }
 }
 
-static bool read_digit_sequence(Scanner *self)
+static bool read_digit_sequence(Parser *self)
 {
     Position start = scan_position(self);
 
@@ -163,7 +151,7 @@ static bool read_digit_sequence(Scanner *self)
         {
             if(input_index(&self->input) == start.index)
             {
-                add_scanner_error(self, PREMATURE_END_OF_INPUT);
+                scanner_add_error(self, PREMATURE_END_OF_INPUT);
                 return false;
             }
 
@@ -183,7 +171,7 @@ static bool read_digit_sequence(Scanner *self)
     return true;
 }
 
-static void match_number(Scanner *self)
+static void match_number(Parser *self)
 {
     self->current.kind = INTEGER_LITERAL;
 
@@ -216,7 +204,7 @@ static void match_number(Scanner *self)
     }
 }
 
-static void match_name(Scanner *self)
+static void match_name(Parser *self)
 {
     Position start = scan_position(self);
 
@@ -226,7 +214,7 @@ static void match_name(Scanner *self)
         {
             if(input_index(&self->input) == start.index)
             {
-                add_scanner_error(self, PREMATURE_END_OF_INPUT);
+                scanner_add_error(self, PREMATURE_END_OF_INPUT);
             }
 
             break;
@@ -234,7 +222,7 @@ static void match_name(Scanner *self)
 
         if(iscntrl(input_peek(&self->input)))
         {
-            add_scanner_error(self, UNSUPPORTED_CONTROL_CHARACTER);
+            scanner_add_error(self, UNSUPPORTED_CONTROL_CHARACTER);
             break;
         }
 
@@ -260,7 +248,7 @@ static void match_name(Scanner *self)
     }
 }
 
-static void match_symbol(Scanner *self)
+static void match_symbol(Parser *self)
 {
     if(input_consume_if(&self->input, "object()"))
     {
@@ -325,28 +313,7 @@ static void match_symbol(Scanner *self)
     }
 }
 
-Scanner *make_scanner(const char *data, size_t length)
-{
-    ENSURE_NONNULL_ELSE_NULL(data);
-    ENSURE_ELSE_NULL(0 != length);
-
-    Scanner *self = xcalloc(sizeof(Scanner) + length);
-    input_init(&self->input, NULL, length);
-    self->input.track_lines = true;
-    memcpy(self->input.source.buffer, data, length);
-
-    return self;
-}
-
-void dispose_scanner(Scanner *self)
-{
-    ENSURE_NONNULL_ELSE_VOID(self);
-
-    input_release(&self->input);
-    free(self);
-}
-
-void scanner_next(Scanner *self)
+void scanner_next(Parser *self)
 {
     ENSURE_NONNULL_ELSE_VOID(self);
 
@@ -505,14 +472,14 @@ void scanner_next(Scanner *self)
     self->current.location.extent = end.index - start.index;
 }
 
-void scanner_reset(Scanner *self)
+void scanner_reset(Parser *self)
 {
     ENSURE_NONNULL_ELSE_VOID(self);
 
     input_reset(&self->input);
 }
 
-String *scanner_extract_lexeme(Scanner *self, Location location)
+String *scanner_extract_lexeme(Parser *self, Location location)
 {
     ENSURE_NONNULL_ELSE_NULL(self);
 
