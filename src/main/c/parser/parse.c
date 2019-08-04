@@ -23,7 +23,7 @@ Maybe(JsonPath) parse(const char *expression)
         return fail(JsonPath, parser.errors);
     }
 
-    input_init(&parser.input, "expression", strlen(expression));
+    input_init(&parser.input, NULL, strlen(expression));
     input_set_track_lines(&parser.input, true);
 
     JsonPath *path = recognize(&parser);

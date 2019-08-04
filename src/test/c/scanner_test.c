@@ -55,7 +55,7 @@ START_TEST (basic)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -72,7 +72,7 @@ START_TEST (dotdot)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -89,7 +89,7 @@ START_TEST (wildcard)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -104,7 +104,7 @@ START_TEST (recursive_wildcard)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -121,7 +121,7 @@ START_TEST (object_selector)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -138,7 +138,7 @@ START_TEST (array_selector)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -155,7 +155,7 @@ START_TEST (string_selector)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -172,7 +172,7 @@ START_TEST (number_selector)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -189,7 +189,7 @@ START_TEST (integer_selector)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -206,7 +206,7 @@ START_TEST (decimal_selector)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -223,7 +223,7 @@ START_TEST (timestamp_selector)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -240,7 +240,7 @@ START_TEST (boolean_selector)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -257,7 +257,7 @@ START_TEST (null_selector)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -277,7 +277,7 @@ START_TEST (wildcard_predicate)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -297,7 +297,7 @@ START_TEST (subscript_predicate)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -318,7 +318,7 @@ START_TEST (slice_predicate)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -340,7 +340,7 @@ START_TEST (slice_predicate_negative_from)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -363,7 +363,7 @@ START_TEST (slice_predicate_with_step)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -384,7 +384,7 @@ START_TEST (slice_predicate_copy)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -407,7 +407,7 @@ START_TEST (slice_predicate_negative_step)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -424,7 +424,7 @@ START_TEST (quoted_name)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -441,7 +441,7 @@ START_TEST (quoted_name_escaped_quote)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -458,7 +458,7 @@ START_TEST (quoted_name_escaped_newline)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -475,7 +475,7 @@ START_TEST (quoted_name_escaped_hex)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -492,7 +492,7 @@ START_TEST (quoted_name_escaped_utf16)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -509,7 +509,7 @@ START_TEST (quoted_name_escaped_utf32)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -524,7 +524,7 @@ START_TEST (quoted_name_escaped_buffet)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -539,7 +539,7 @@ START_TEST (integer_expression)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -554,7 +554,7 @@ START_TEST (real_expression)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -569,7 +569,7 @@ START_TEST (real_expression_with_shorthand)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -587,7 +587,7 @@ START_TEST (root_step_predicated)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -603,7 +603,7 @@ START_TEST (relative_path_explicit)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -621,7 +621,7 @@ START_TEST (relative_path_explicit_predicated)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -643,7 +643,7 @@ START_TEST (transfomer_step)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -661,7 +661,7 @@ START_TEST (tag_selector)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -679,7 +679,7 @@ START_TEST (anchor_selector)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -700,7 +700,7 @@ START_TEST (join_predicate)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -720,7 +720,7 @@ START_TEST (filter_predicate)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -742,7 +742,7 @@ START_TEST (filter_predicate_parenthesized)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -764,7 +764,7 @@ START_TEST (filter_predicate_equals_null)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -788,7 +788,7 @@ START_TEST (filter_predicate_path_gt_integer)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -814,7 +814,7 @@ START_TEST (filter_predicate_path_expr_gte_path_expr)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -836,7 +836,7 @@ START_TEST (filter_predicate_path_lt_integer)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -860,7 +860,7 @@ START_TEST (filter_predicate_path_eq_string)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -882,7 +882,7 @@ START_TEST (filter_predicate_path_ne_bool)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -908,7 +908,7 @@ START_TEST (filter_predicate_multiple_bool_expr)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -925,7 +925,7 @@ START_TEST (unquoted_name_escape_dot_attempt)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -940,7 +940,7 @@ START_TEST (unquoted_name_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -955,7 +955,7 @@ START_TEST (unquoted_name_illegal_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -970,7 +970,7 @@ START_TEST (expression_with_bare_exponent)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -989,7 +989,7 @@ START_TEST (type_selector_interstitial_whitespace)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_expectations(&parser, expectations);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1005,7 +1005,7 @@ START_TEST (integer_eoi_exponent)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1021,7 +1021,7 @@ START_TEST (real_eoi_fraction)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1037,7 +1037,7 @@ START_TEST (real_eoi_exponent)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1056,7 +1056,7 @@ START_TEST (name_includes_newline)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1075,7 +1075,7 @@ START_TEST (name_includes_tab)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1092,7 +1092,7 @@ START_TEST (name_includes_ack)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1110,7 +1110,7 @@ START_TEST (quoted_name_illegal_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1128,7 +1128,7 @@ START_TEST (quoted_name_illegal_hex_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1146,7 +1146,7 @@ START_TEST (quoted_name_short_hex_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1164,7 +1164,7 @@ START_TEST (quoted_name_eoi_hex_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1183,7 +1183,7 @@ START_TEST (quoted_name_illegal_utf16_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1202,7 +1202,7 @@ START_TEST (quoted_name_short_utf16_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1220,7 +1220,7 @@ START_TEST (quoted_name_eoi_utf16_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1239,7 +1239,7 @@ START_TEST (quoted_name_illegal_utf32_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1260,7 +1260,7 @@ START_TEST (quoted_name_short_utf32_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1278,7 +1278,7 @@ START_TEST (quoted_name_eoi_utf32_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1297,7 +1297,7 @@ START_TEST (quoted_name_multiple_illegal_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1316,7 +1316,7 @@ START_TEST (quoted_name_unterminated_literal)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1335,7 +1335,7 @@ START_TEST (quoted_name_eoi)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
@@ -1353,7 +1353,7 @@ START_TEST (quoted_name_eoi_escape_sequence)
     };
     Parser parser = make_scanner(expression, strlen(expression));
     assert_errors(&parser, expectations, expected_errors);
-    dispose_vector(parser.errors);
+    parser_dispose_errors(parser.errors);
 }
 END_TEST
 
