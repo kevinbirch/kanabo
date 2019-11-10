@@ -9,7 +9,7 @@ static bool evaluate_root_step(Evaluator *evaluator)
     evaluator_trace("evaluating root step");
     Document *doc = nodelist_get(evaluator->results, 0);
     Node *root = document_root(doc);
-    evaluator_trace("root test: adding root node (%p) from document (%p)", root, doc);
+    evaluator_trace("root test: adding root node (%p) from document (%p)", (void *)root, (void *)doc);
     nodelist_set(evaluator->results, root, 0);
     return true;
 }

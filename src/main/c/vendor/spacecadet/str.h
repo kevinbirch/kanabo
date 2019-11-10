@@ -109,7 +109,6 @@ bool           mstring_contains(const MutableString *self, uint8_t value);
 // Mutable String Coercion API
 
 String        *mstring_as_string(const MutableString *self);
-String        *mstring_as_string_no_copy(MutableString *self);
 const char    *mstring_as_c_str(const MutableString *self);
 char          *mstring_copy(const MutableString *self);
 

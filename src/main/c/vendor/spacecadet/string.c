@@ -14,9 +14,9 @@ struct string_s
 struct mutable_string_s
 {
     size_t  capacity;
-    String  base;
+    size_t  length;
+    uint8_t value[];
 };
-
 
 static inline String *string_alloc(size_t length)
 {
@@ -220,7 +220,7 @@ bool string_iterate(const String *self, string_iterator iterator, void *paramete
         return false;
     }
 
-    for(size_t i = 0; i < string_length(self); i++)
+    for(size_t i = 0; i < self->length; i++)
     {
         if(!iterator(i, self->value[i], parameter))
         {
@@ -357,7 +357,7 @@ static inline void mstring_realloc(MutableString **self, size_t capacity)
 
 static inline MutableString *mstring_init(MutableString *self, size_t capacity)
 {
-    self->base.length = 0;
+    self->length = 0;
     self->capacity = capacity;
 
     return self;
@@ -411,7 +411,7 @@ size_t mstring_length(const MutableString *self)
         return 0;
     }
 
-    return self->base.length;
+    return self->length;
 }
 
 const uint8_t * mstring_data(const MutableString *self)
@@ -421,7 +421,7 @@ const uint8_t * mstring_data(const MutableString *self)
         return NULL;
     }
 
-    return self->base.value;
+    return self->value;
 }
 
 uint8_t mstring_get(const MutableString *self, size_t index)
@@ -431,7 +431,7 @@ uint8_t mstring_get(const MutableString *self, size_t index)
         return 0;
     }
 
-    return self->base.value[index];
+    return self->value[index];
 }
 
 bool mstring_equals(const MutableString *self, const MutableString *other)
@@ -441,12 +441,12 @@ bool mstring_equals(const MutableString *self, const MutableString *other)
         return false;
     }
 
-    if(self->base.length != other->base.length)
+    if(self->length != other->length)
     {
         return false;
     }
 
-    return 0 == memcmp(self->base.value, other->base.value, self->base.length);
+    return 0 == memcmp(self->value, other->value, self->length);
 }
 
 bool mstring_equals_string(const MutableString *self, const String *other)
@@ -456,12 +456,12 @@ bool mstring_equals_string(const MutableString *self, const String *other)
         return false;
     }
 
-    if(self->base.length != other->length)
+    if(self->length != other->length)
     {
         return false;
     }
 
-    return 0 == memcmp(self->base.value, other->value, self->base.length);
+    return 0 == memcmp(self->value, other->value, self->length);
 }
 
 bool mstring_equals_c_string(const MutableString *self, const char *other)
@@ -471,12 +471,12 @@ bool mstring_equals_c_string(const MutableString *self, const char *other)
         return false;
     }
 
-    if(self->base.length != strlen(other))
+    if(self->length != strlen(other))
     {
         return false;
     }
 
-    return 0 == memcmp(self->base.value, other, self->base.length);
+    return 0 == memcmp(self->value, other, self->length);
 }
 
 bool mstring_equals_bytestring(const MutableString *self, const uint8_t *other, size_t length)
@@ -486,12 +486,12 @@ bool mstring_equals_bytestring(const MutableString *self, const uint8_t *other, 
         return false;
     }
 
-    if(self->base.length != length)
+    if(self->length != length)
     {
         return false;
     }
 
-    return 0 == memcmp(self->base.value, other, self->base.length);
+    return 0 == memcmp(self->value, other, self->length);
 }
 
 bool mstring_iterate(const MutableString *self, string_iterator iterator, void *parameter)
@@ -501,7 +501,15 @@ bool mstring_iterate(const MutableString *self, string_iterator iterator, void *
         return false;
     }
 
-    return string_iterate(&self->base, iterator, parameter);
+    for(size_t i = 0; i < self->length; i++)
+    {
+        if(!iterator(i, self->value[i], parameter))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool mstring_startswith(const MutableString *self, const String *value)
@@ -511,7 +519,12 @@ bool mstring_startswith(const MutableString *self, const String *value)
         return false;
     }
 
-    return string_startswith(&self->base, value);
+    if(value->length > self->length)
+    {
+        return false;
+    }
+
+    return 0 == memcmp(self->value, value->value, value->length);
 }
 
 bool mstring_startswith_c_string(const MutableString *self, const char *value)
@@ -521,7 +534,13 @@ bool mstring_startswith_c_string(const MutableString *self, const char *value)
         return false;
     }
 
-    return string_startswith_c_string(&self->base, value);
+    size_t length = strlen(value);
+    if(length > self->length)
+    {
+        return false;
+    }
+
+    return 0 == memcmp(self->value, value, length);
 }
 
 bool mstring_endswith(const MutableString *self, const String *value)
@@ -531,7 +550,14 @@ bool mstring_endswith(const MutableString *self, const String *value)
         return false;
     }
 
-    return string_endswith(&self->base, value);
+    if(value->length > self->length)
+    {
+        return false;
+    }
+
+    size_t offset = self->length - value->length;
+
+    return 0 == memcmp(self->value + offset, value->value, value->length);
 }
 
 bool mstring_endswith_c_string(const MutableString *self, const char *value)
@@ -541,7 +567,15 @@ bool mstring_endswith_c_string(const MutableString *self, const char *value)
         return false;
     }
 
-    return string_endswith_c_string(&self->base, value);
+    size_t length = strlen(value);
+    if(length > self->length)
+    {
+        return false;
+    }
+
+    size_t offset = self->length - length;
+
+    return 0 == memcmp(self->value + offset, value, length);
 }
 
 bool mstring_contains(const MutableString *self, uint8_t value)
@@ -551,7 +585,15 @@ bool mstring_contains(const MutableString *self, uint8_t value)
         return false;
     }
 
-    return string_contains(&self->base, value);
+    for(size_t i = 0; i < self->length; i++)
+    {
+        if(value == self->value[i])
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 size_t mstring_get_capacity(const MutableString *self)
@@ -571,7 +613,7 @@ bool mstring_has_capacity(const MutableString *self, size_t length)
         return false;
     }
 
-    return (self->capacity - self->base.length) >= length;
+    return (self->capacity - self->length) >= length;
 }
 
 MutableString *mstring_clone(const MutableString *self)
@@ -583,9 +625,9 @@ MutableString *mstring_clone(const MutableString *self)
 
     MutableString *that = mstring_alloc(self->capacity);
     mstring_init(that, self->capacity);
-    if(self->base.length)
+    if(self->length)
     {
-        memcpy(that->base.value, self->base.value, self->capacity + 1);
+        memcpy(that->value, self->value, self->capacity + 1);
     }
 
     return that;
@@ -598,18 +640,8 @@ String *mstring_as_string(const MutableString *self)
         return NULL;
     }
 
-    String *that = string_alloc(self->base.length);
-    return string_init(that, (const char *)self->base.value, self->base.length);
-}
-
-String *mstring_as_string_no_copy(MutableString *self)
-{
-    if(NULL == self)
-    {
-        return NULL;
-    }
-
-    return &self->base;
+    String *that = string_alloc(self->length);
+    return string_init(that, (const char *)self->value, self->length);
 }
 
 const char *mstring_as_c_str(const MutableString *self)
@@ -619,7 +651,7 @@ const char *mstring_as_c_str(const MutableString *self)
         return NULL;
     }
 
-    return (const char *)self->base.value;
+    return (const char *)self->value;
 }
 
 char *mstring_copy(const MutableString *self)
@@ -629,9 +661,9 @@ char *mstring_copy(const MutableString *self)
         return NULL;
     }
 
-    char *result = xcalloc(self->base.length + 1);
-    memcpy(result, self->base.value, self->base.length);
-    result[self->base.length] = '\0';
+    char *result = xcalloc(self->length + 1);
+    memcpy(result, self->value, self->length);
+    result[self->length] = '\0';
 
     return result;
 }
@@ -645,7 +677,7 @@ static inline void ensure_capacity(MutableString **self, size_t length)
 {
     if(!mstring_has_capacity(*self, length))
     {
-        size_t min_capacity = (*self)->base.length + length;
+        size_t min_capacity = (*self)->length + length;
         size_t new_capacity = calculate_new_capacity(min_capacity);
         mstring_realloc(self, new_capacity);
     }
@@ -653,9 +685,9 @@ static inline void ensure_capacity(MutableString **self, size_t length)
 
 static inline void append(MutableString *self, const void *data, size_t length)
 {
-    memcpy(self->base.value + self->base.length, data, length);
-    self->base.length += length;
-    self->base.value[self->base.length] = '\0';
+    memcpy(self->value + self->length, data, length);
+    self->length += length;
+    self->value[self->length] = '\0';
 }
 
 void mstring_append_byte(MutableString **self, const uint8_t value)
@@ -710,8 +742,8 @@ void mstring_append_mstring(MutableString **self, const MutableString *string)
         return;
     }
 
-    ensure_capacity(self, string->base.length);
-    append(*self, string->base.value, string->base.length);
+    ensure_capacity(self, string->length);
+    append(*self, string->value, string->length);
 }
 
 void mstring_append_stream(MutableString **self, const uint8_t *value, size_t length)
@@ -764,7 +796,7 @@ bool mvformat(MutableString **self, const char *format, va_list format_args)
     size_t length = (size_t)count;
     ensure_capacity(self, length);
     
-    char *end = ((char *)(*self)->base.value) + (*self)->base.length;
+    char *end = ((char *)(*self)->value) + (*self)->length;
     errno = 0;
     count = vsnprintf(end, length + 1, format, format_args);  // N.B. - sizeof(self->value) == length + 1
     if(0 > count)
@@ -772,7 +804,7 @@ bool mvformat(MutableString **self, const char *format, va_list format_args)
         return false;
     }
 
-    (*self)->base.length += length;
+    (*self)->length += length;
 
     return true;
 }
@@ -784,11 +816,11 @@ void mstring_set(MutableString *self, size_t position, uint8_t value)
         return;
     }
 
-    if(position > self->base.length)
+    if(position > self->length)
     {
         return;
     }
-    self->base.value[position] = value;
+    self->value[position] = value;
 }
 
 void mstring_set_range(MutableString *self, size_t position, size_t length, const uint8_t *value)
@@ -798,9 +830,9 @@ void mstring_set_range(MutableString *self, size_t position, size_t length, cons
         return;
     }
 
-    if(position > self->base.length || position + length > self->base.length)
+    if(position > self->length || position + length > self->length)
     {
         return;
     }
-    memcpy(self->base.value, value, length);
+    memcpy(self->value, value, length);
 }

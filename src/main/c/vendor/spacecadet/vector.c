@@ -31,7 +31,7 @@ static inline void ensure_capacity(Vector *vector, size_t min_capacity)
     if(vector->capacity < min_capacity)
     {
         size_t new_capacity = calculate_new_capacity(min_capacity);
-        return reallocate(vector, new_capacity);
+        reallocate(vector, new_capacity);
     }
 }
 
@@ -666,6 +666,6 @@ void vector_dump(const Vector *vector, FILE *stream)
             vector->length, vector->capacity);
     for(size_t i = 0; i < vector->length; i++)
     {
-        fprintf(stream, "[%zu]: (%p)\n", i, vector->items[i]);
+        fprintf(stream, "[%zu]: (%p)\n", i, (void *)vector->items[i]);
     }
 }

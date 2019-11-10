@@ -66,7 +66,7 @@ static void context_init(Loader *context, DuplicateKeyStrategy strategy, const S
 
 static inline void detach(Loader *context, Node *node)
 {
-    loader_trace("detaching node (%p)", node);
+    loader_trace("detaching node (%p)", (void *)node);
     vector_append(context->detached, node);
 }
 
@@ -129,7 +129,7 @@ static void add_to_mapping(Loader *context, Node *node)
 
     if(NULL == context->key_cache)  // N.B. - node is a mapping key
     {
-        loader_trace("caching node (%p) as key for mapping context (%p)", node, context->current);
+        loader_trace("caching node (%p) as key for mapping context (%p)", (void *)node, (void *)context->current);
         context->key_cache = node;
 
         return;
@@ -183,15 +183,15 @@ static void add_node(Loader *context, Node *node, const yaml_event_t *event)
     switch(node_kind(context->current))
     {
         case DOCUMENT:
-            loader_trace("adding node (%p) to document context (%p)", node, context->current);
+            loader_trace("adding node (%p) to document context (%p)", (void *)node, (void *)context->current);
             document_set_root(document(context->current), node);
             break;
         case SEQUENCE:
-            loader_trace("adding node (%p) to sequence context (%p)", node, context->current);
+            loader_trace("adding node (%p) to sequence context (%p)", (void *)node, (void *)context->current);
             sequence_add(sequence(context->current), node);
             break;
         case MAPPING:
-            loader_trace("adding node (%p) to mapping context (%p)", node, context->current);
+            loader_trace("adding node (%p) to mapping context (%p)", (void *)node, (void *)context->current);
             add_to_mapping(context, node);
             break;
         default:
@@ -243,12 +243,12 @@ static void start_document(Loader *context, const yaml_event_t *event)
     context->current = node(document);
     document_set_add(context->documents, document);
 
-    loader_trace("started document (%p)", document);
+    loader_trace("started document (%p)", (void *)document);
 }
 
 static void end_document(Loader *context)
 {
-    loader_trace("completed document (%p)", context->current);
+    loader_trace("completed document (%p)", (void *)context->current);
 
     context->current = NULL;
 }
@@ -285,7 +285,7 @@ static void start_sequence(Loader *context, const yaml_event_t *event)
     add_node(context, node(sequence), event);
     context->current = node(sequence);
 
-    loader_trace("started sequence (%p)", sequence);
+    loader_trace("started sequence (%p)", (void *)sequence);
 }
 
 static void end_sequence(Loader *context)
@@ -294,7 +294,7 @@ static void end_sequence(Loader *context)
     vector_trim(sequence->values);
     context->current = sequence->parent;
 
-    loader_trace("completed sequence (%p) of length: %zu", sequence, node_size(sequence));
+    loader_trace("completed sequence (%p) of length: %zu", (void *)sequence, node_size(sequence));
 }
 
 static void start_mapping(Loader *context, const yaml_event_t *event)
@@ -329,7 +329,7 @@ static void start_mapping(Loader *context, const yaml_event_t *event)
     add_node(context, node(mapping), event);
     context->current = node(mapping);
 
-    loader_trace("started mapping (%p)", mapping);
+    loader_trace("started mapping (%p)", (void *)mapping);
 }
 
 static void end_mapping(Loader *context)
@@ -337,7 +337,7 @@ static void end_mapping(Loader *context)
     Mapping *mapping = mapping(context->current);
     context->current = mapping->parent;
 
-    loader_trace("completed mapping (%p) of length: %zu", mapping, node_size(mapping));
+    loader_trace("completed mapping (%p) of length: %zu", (void *)mapping, node_size(mapping));
 }
 
 static void add_alias(Loader *context, const yaml_event_t *event)
@@ -370,7 +370,7 @@ static void add_alias(Loader *context, const yaml_event_t *event)
 
     add_node(context, node(alias), event);
 
-    loader_trace("added alias \"%s\" for target (%p)", event->data.alias.anchor, target);
+    loader_trace("added alias \"%s\" for target (%p)", event->data.alias.anchor, (void *)target);
 }
 
 static bool match_decimal(const char *value)
@@ -518,7 +518,7 @@ static void add_scalar(Loader *context, const yaml_event_t *event)
 
     add_node(context, node(scalar), event);
 
-    loader_trace("added scalar (%p)", scalar);
+    loader_trace("added scalar (%p)", (void *)scalar);
 }
 
 static bool dispatch_event(Loader *context, yaml_event_t *event)

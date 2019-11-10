@@ -9,23 +9,23 @@ static bool apply_wildcard_predicate(Node *value, Evaluator *evaluator, Nodelist
     switch(node_kind(value))
     {
         case SCALAR:
-            evaluator_trace("wildcard predicate: adding scalar \"%s\" (%p)", C(scalar_value(value)), value);
+            evaluator_trace("wildcard predicate: adding scalar \"%s\" (%p)", C(scalar_value(value)), (void *)value);
             nodelist_add(target, value);
             break;
         case MAPPING:
-            evaluator_trace("wildcard predicate: adding mapping (%p)", value);
+            evaluator_trace("wildcard predicate: adding mapping (%p)", (void *)value);
             nodelist_add(target, value);
             break;
         case SEQUENCE:
-            evaluator_trace("wildcard predicate: adding %zu sequence (%p) items", node_size(value), value);
+            evaluator_trace("wildcard predicate: adding %zu sequence (%p) items", node_size(value), (void *)value);
             result = sequence_iterate(sequence(value), add_to_nodelist_sequence_iterator, target);
             break;
         case ALIAS:
-            evaluator_trace("wildcard predicate: resolving alias (%p)", value);
+            evaluator_trace("wildcard predicate: resolving alias (%p)", (void *)value);
             result = apply_wildcard_predicate(alias_target(value), evaluator, target);
             break;
         case DOCUMENT:
-            evaluator_debug("wildcard predicate: uh-oh! found a document node (%p)", value);
+            evaluator_debug("wildcard predicate: uh-oh! found a document node (%p)", (void *)value);
             evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             result = false;
             break;
@@ -55,7 +55,7 @@ static bool apply_subscript_predicate(const Sequence *seq, Evaluator *evaluator,
     }
 
     Node *selected = sequence_get(seq, normal);
-    evaluator_trace("subscript predicate: adding index %"PRId64" (%p) from sequence (%p) of %zu items", normal, selected, seq, length);
+    evaluator_trace("subscript predicate: adding index %"PRId64" (%p) from sequence (%p) of %zu items", normal, (void *)selected, (void *)seq, length);
     nodelist_add(target, selected);
 
     return true;
@@ -163,7 +163,7 @@ static bool apply_slice_predicate(const Sequence *seq, Evaluator *evaluator, Nod
             {
                 break;
             }
-            evaluator_trace("slice predicate: adding index: %zu (%p)", i, selected);
+            evaluator_trace("slice predicate: adding index: %zu (%p)", i, (void *)selected);
             nodelist_add(target, selected);
         }
 
@@ -184,7 +184,7 @@ static bool apply_slice_predicate(const Sequence *seq, Evaluator *evaluator, Nod
         {
             break;
         }
-        evaluator_trace("slice predicate: adding index: %zu (%p)", i, selected);
+        evaluator_trace("slice predicate: adding index: %zu (%p)", i, (void *)selected);
         nodelist_add(target, selected);
     }
 
@@ -216,7 +216,7 @@ static bool apply_predicate(Node *each, void *argument, Nodelist *target)
             evaluator_trace("evaluating subscript predicate");
             if(!is_sequence(each))
             {
-                evaluator_trace("subscript predicate: node is not a sequence type, cannot use an index on it (kind: %d), dropping (%p)", node_kind(each), each);
+                evaluator_trace("subscript predicate: node is not a sequence type, cannot use an index on it (kind: %d), dropping (%p)", node_kind(each), (void *)each);
             }
             else
             {
@@ -227,7 +227,7 @@ static bool apply_predicate(Node *each, void *argument, Nodelist *target)
             evaluator_trace("evaluating slice predicate");
             if(!is_sequence(each))
             {
-                evaluator_trace("slice predicate: node is not a sequence type, cannot use a slice on it (kind: %d), dropping (%p)", node_kind(each), each);
+                evaluator_trace("slice predicate: node is not a sequence type, cannot use a slice on it (kind: %d), dropping (%p)", node_kind(each), (void *)each);
             }
             else
             {
