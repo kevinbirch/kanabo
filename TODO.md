@@ -128,6 +128,7 @@ start: 0.8-alpha, end: 0.9-beta
   * reuse the same string object from documentset?
   * write out full position in node repr
 * https://github.com/lemire/simdjson ?
+* https://dhall-lang.org/# ?
 
 ### evaluator
 
@@ -172,10 +173,10 @@ start: 0.8-alpha, end: 0.9-beta
   ^----
 -ERR expression:1:9 expected step selector or transformer definition
 @.@data.&foo.*bar
-    ----^
+        ^---
 -ERR expression:1:15 expected qualified step definition
 @.@data.&foo.*bar
-         ----^
+             ^---
 ```
 
 ### unit testing
@@ -203,6 +204,7 @@ start: 0.8-alpha, end: 0.9-beta
   * post compile step 2 converts raw compilation db to json
   * pre/post-compile/build hooks?
 * https://snapcraft.io/ ?
+* https://conan.io
 
 ## known limitations
 
