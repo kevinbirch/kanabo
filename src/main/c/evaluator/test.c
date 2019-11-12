@@ -30,15 +30,15 @@ static bool add_values_to_nodelist_map_iterator(Scalar *key, Node *value, void *
         case SCALAR:
         case MAPPING:
         case SEQUENCE:
-            evaluator_trace("wildcard test: adding mapping value: %s (%p)", node_kind_name(value), (void *)value);
+            evaluator_tracef("wildcard test: adding mapping value: %s (%p)", node_kind_name(value), (void *)value);
             nodelist_add(iterator_context->target, value);
             break;
         case ALIAS:
-            evaluator_trace("wildcard test: resolving alias (%p)", (void *)value);
+            evaluator_tracef("wildcard test: resolving alias (%p)", (void *)value);
             result = add_values_to_nodelist_map_iterator(key, alias_target(alias(value)), context);
             break;
         case DOCUMENT:
-            evaluator_debug("wildcard test: uh-oh! found a document node (%p)", (void *)value);
+            evaluator_debugf("wildcard test: uh-oh! found a document node (%p)", (void *)value);
             iterator_context->evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             result = false;
             break;
@@ -55,23 +55,23 @@ static bool apply_greedy_wildcard_test(Node *each, void *argument, Nodelist *tar
     switch(node_kind(each))
     {
         case MAPPING:
-            evaluator_trace("wildcard test: adding %zu mapping values (%p)", node_size(each), (void *)each);
+            evaluator_tracef("wildcard test: adding %zu mapping values (%p)", node_size(each), (void *)each);
             result = mapping_iterate(mapping(each), add_values_to_nodelist_map_iterator, &(meta_context){evaluator, target});
             break;
         case SEQUENCE:
-            evaluator_trace("wildcard test: adding %zu sequence items (%p)", node_size(each), (void *)each);
+            evaluator_tracef("wildcard test: adding %zu sequence items (%p)", node_size(each), (void *)each);
             result = sequence_iterate(sequence(each), add_to_nodelist_sequence_iterator, target);
             break;
         case SCALAR:
-            evaluator_trace("wildcard test: adding scalar: \"%s\" (%p)", C(scalar_value(scalar(each))), (void *)each);
+            evaluator_tracef("wildcard test: adding scalar: \"%s\" (%p)", C(scalar_value(scalar(each))), (void *)each);
             nodelist_add(target, each);
             break;
         case ALIAS:
-            evaluator_trace("wildcard test: resolving alias (%p)", (void *)each);
+            evaluator_tracef("wildcard test: resolving alias (%p)", (void *)each);
             result = apply_greedy_wildcard_test(alias_target(alias(each)), argument, target);
             break;
         case DOCUMENT:
-            evaluator_debug("wildcard test: uh-oh! found a document node somehow (%p)", (void *)each);
+            evaluator_debugf("wildcard test: uh-oh! found a document node somehow (%p)", (void *)each);
             evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             result = false;
             break;
@@ -88,23 +88,23 @@ static bool apply_recursive_wildcard_test(Node *each, void *argument, Nodelist *
     switch(node_kind(each))
     {
         case MAPPING:
-            evaluator_trace("recurisve wildcard test: adding mapping node (%p)", (void *)each);
+            evaluator_tracef("recurisve wildcard test: adding mapping node (%p)", (void *)each);
             nodelist_add(target, each);
             break;
         case SEQUENCE:
-            evaluator_trace("recurisve wildcard test: adding sequence node (%p)", (void *)each);
+            evaluator_tracef("recurisve wildcard test: adding sequence node (%p)", (void *)each);
             nodelist_add(target, each);
             break;
         case SCALAR:
-            evaluator_trace("recurisve wildcard test: adding scalar: \"%s\" (%p)", C(scalar_value(scalar(each))), (void *)each);
+            evaluator_tracef("recurisve wildcard test: adding scalar: \"%s\" (%p)", C(scalar_value(scalar(each))), (void *)each);
             nodelist_add(target, each);
             break;
         case ALIAS:
-            evaluator_trace("recurisve wildcard test: resolving alias (%p)", (void *)each);
+            evaluator_tracef("recurisve wildcard test: resolving alias (%p)", (void *)each);
             result = apply_recursive_wildcard_test(alias_target(alias(each)), argument, target);
             break;
         case DOCUMENT:
-            evaluator_debug("recurisve wildcard test: uh oh! found a document node somehow (%p)", (void *)each);
+            evaluator_debugf("recurisve wildcard test: uh oh! found a document node somehow (%p)", (void *)each);
             evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
             result = false;
             break;
@@ -118,7 +118,7 @@ static bool apply_type_test(Node *each, void *argument, Nodelist *target)
     bool match = false;
     if(is_alias(each))
     {
-        evaluator_trace("type test: resolved alias from: (%p) to: (%p)",
+        evaluator_tracef("type test: resolved alias from: (%p) to: (%p)",
                         (void *)each, (void *)alias_target((alias(each))));
         return apply_type_test(alias_target(alias(each)), argument, target);
     }
@@ -154,13 +154,13 @@ static bool apply_type_test(Node *each, void *argument, Nodelist *target)
 
     if(match)
     {
-        evaluator_trace("type test: match! adding node (%p)", (void *)each);
+        evaluator_tracef("type test: match! adding node (%p)", (void *)each);
         nodelist_add(target, each);
     }
     else
     {
         const char *name = is_scalar(each) ? scalar_kind_name(scalar(each)) : node_kind_name(each);
-        evaluator_trace("type test: no match (actual: %s). dropping (%p)", name, (void *)each);
+        evaluator_tracef("type test: no match (actual: %s). dropping (%p)", name, (void *)each);
     }
 
     return true;
@@ -171,11 +171,11 @@ static bool apply_name_test(Node *each, void *argument, Nodelist *target)
     Evaluator *evaluator = (Evaluator *)argument;
     Step *context_step = current_step(evaluator);
 
-    evaluator_trace("name test: using key \"%s\"", C(name_test_step_name(context_step)));
+    evaluator_tracef("name test: using key \"%s\"", C(name_test_step_name(context_step)));
 
     if(!is_mapping(each))
     {
-        evaluator_trace("name test: node is not a mapping type, cannot use a key on it (kind: %d), dropping (%p)", node_kind(each), (void *)each);
+        evaluator_tracef("name test: node is not a mapping type, cannot use a key on it (kind: %d), dropping (%p)", node_kind(each), (void *)each);
         return true;
     }
 
@@ -184,15 +184,15 @@ static bool apply_name_test(Node *each, void *argument, Nodelist *target)
 
     if(NULL == value)
     {
-        evaluator_trace("name test: key not found in mapping, dropping (%p)", (void *)each);
+        evaluator_tracef("name test: key not found in mapping, dropping (%p)", (void *)each);
         return true;
     }
 
-    evaluator_trace("name test: match! adding node (%p)", (void *)value);
+    evaluator_tracef("name test: match! adding node (%p)", (void *)value);
 
     if(is_alias(value))
     {
-        evaluator_trace("name test: resolved alias from: (%p) to: (%p)",
+        evaluator_tracef("name test: resolved alias from: (%p) to: (%p)",
                         (void *)value, (void *)alias_target(alias(value)));
         value = alias_target(alias(value));
     }
@@ -217,22 +217,22 @@ bool apply_recursive_node_test(Node *each, void *argument, Nodelist *target)
         switch(node_kind(each))
         {
             case MAPPING:
-                evaluator_trace("recursive step: processing %zu mapping values (%p)", node_size(each), (void *)each);
+                evaluator_tracef("recursive step: processing %zu mapping values (%p)", node_size(each), (void *)each);
                 result = mapping_iterate(mapping(each), recursive_test_map_iterator, &(meta_context){evaluator, target});
                 break;
             case SEQUENCE:
-                evaluator_trace("recursive step: processing %zu sequence items (%p)", node_size(each), (void *)each);
+                evaluator_tracef("recursive step: processing %zu sequence items (%p)", node_size(each), (void *)each);
                 result = sequence_iterate(sequence(each), recursive_test_sequence_iterator, &(meta_context){evaluator, target});
                 break;
             case SCALAR:
-                evaluator_trace("recursive step: found scalar, recursion finished on this path (%p)", (void *)each);
+                evaluator_tracef("recursive step: found scalar, recursion finished on this path (%p)", (void *)each);
                 break;
             case ALIAS:
-                evaluator_trace("recursive step: resolving alias (%p)", (void *)each);
+                evaluator_tracef("recursive step: resolving alias (%p)", (void *)each);
                 result = apply_recursive_node_test(alias_target(alias(each)), argument, target);
                 break;
             case DOCUMENT:
-                evaluator_debug("recursive step: uh-oh! found a document node somehow (%p)", (void *)each);
+                evaluator_debugf("recursive step: uh-oh! found a document node somehow (%p)", (void *)each);
                 evaluator->code = ERR_UNEXPECTED_DOCUMENT_NODE;
                 result = false;
                 break;
