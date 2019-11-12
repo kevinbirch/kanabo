@@ -44,10 +44,9 @@ Maybe(Input) make_input_from_file(const char *filename)
 
     Input *self = xcalloc(sizeof(Input) + (size_t)size);
     input_init(self, filename, (size_t)size);
-    self->source.cache = true;
 
     errno = 0;
-    size_t count = fread(self->source.buffer, (size_t)size, 1, file);
+    size_t count = fread(self->buffer, (size_t)size, 1, file);
     if(1 != count || ferror(file))
     {
         result = fail(Input, ((InputError){.code=READ_ERROR, .errno_val=errno}));

@@ -73,7 +73,7 @@ struct parser_s
 {
     Vector  *errors;
     Token    current;
-    Input    input;
+    Input   *input;
 };
 
 typedef struct parser_s Parser;
@@ -140,3 +140,4 @@ void parser_add_internal_error_at(Parser *self, const char *restrict location, c
 
 const char *parser_strerror(ParserErrorCode code);
 void parser_dispose_errors(Vector *errors);
+void parser_release(Parser *self);

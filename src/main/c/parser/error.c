@@ -34,20 +34,3 @@ void parser_add_internal_error_at(Parser *self, const char * restrict location, 
 
     vector_append(self->errors, err);
 }
-
-static void freedom_iterator(void *each)
-{
-    ParserError *err = (ParserError *)each;
-    if(INTERNAL_ERROR == err->code)
-    {
-        ParserInternalError *ierr = (ParserInternalError *)err;
-        dispose_string(ierr->message);
-    }
-
-    free(each);
-}
-
-void parser_dispose_errors(Vector *errors)
-{
-    vector_destroy(errors, freedom_iterator);
-}

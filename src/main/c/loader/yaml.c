@@ -687,7 +687,7 @@ Maybe(DocumentSet) load_yaml(Input *input, DuplicateKeyStrategy strategy)
     }
 
     loader_debug("loading yaml from \"%s\"", C(input_name(input)));
-    yaml_parser_set_input_string(&parser, (const unsigned char *)input->source.buffer, input_length(input));
+    yaml_parser_set_input_string(&parser, (const unsigned char *)input->buffer, input_length(input));
 
     Maybe(DocumentSet) result = parse(input_name(input), &parser, strategy);
 

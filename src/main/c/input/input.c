@@ -6,10 +6,10 @@
 #include "input.h"
 #include "xalloc.h"
 
-#define read_at(INPUT, IDX) ((INPUT)->source.cache ? (INPUT)->source.buffer[(IDX)] : *((INPUT)->source.ref + (IDX)))
+#define read_at(INPUT, IDX) (INPUT)->buffer[(IDX)]
 #define read(INPUT) read_at(INPUT, (INPUT)->position.index)
 
-#define cursor_at(INPUT, IDX) ((INPUT)->source.cache ? (INPUT)->source.buffer : (INPUT)->source.ref) + (IDX)
+#define cursor_at(INPUT, IDX) (INPUT)->buffer + (IDX)
 #define cursor(INPUT) cursor_at(INPUT, (INPUT)->position.index)
 
 #define index(INPUT) (INPUT)->position.index
@@ -35,7 +35,7 @@ static inline void incr(Input *self)
 static inline void advance_by(Input *self, size_t amount)
 {
     size_t count = 0;
-    while(index(self) < self->source.length && count++ < amount)
+    while(index(self) < self->length && count++ < amount)
     {
         incr(self);
     }
@@ -48,13 +48,13 @@ void input_init(Input *self, const char *name, size_t length)
     self->position.index = 0;
     self->position.line = 0;
     self->position.offset = 0;
-    self->track_lines = false;
+    self->track_lines = true;
 
     if(NULL != name)
     {
         self->name = S(name);
     }
-    self->source.length = length;
+    self->length = length;
 }
 
 void input_release(Input *self)
@@ -75,7 +75,7 @@ void dispose_input(Input *self)
 void input_goto(Input *self, Position position)
 {
     ENSURE_NONNULL_ELSE_VOID(self);
-    ENSURE_ELSE_VOID(position.index < self->source.length);
+    ENSURE_ELSE_VOID(position.index < self->length);
 
     self->position = position;
 }
@@ -93,12 +93,12 @@ size_t input_remaining(Input *self)
 {
     ENSURE_NONNULL_ELSE_ZERO(self);
 
-    if(index(self) >= self->source.length)
+    if(index(self) >= self->length)
     {
         return 0;
     }
 
-    return self->source.length - index(self);
+    return self->length - index(self);
 }
 
 void input_skip_whitespace(Input *self)
@@ -198,8 +198,8 @@ void input_push_back(Input *self)
 String *input_extract(Input *self, Location location)
 {
     ENSURE_NONNULL_ELSE_NULL(self);
-    ENSURE_ELSE_NULL(location.index < self->source.length);
-    ENSURE_ELSE_NULL(location.index + location.extent <= self->source.length);
+    ENSURE_ELSE_NULL(location.index < self->length);
+    ENSURE_ELSE_NULL(location.index + location.extent <= self->length);
 
     return make_string_with_bytestring((const uint8_t *)cursor_at(self, location.index), location.extent);
 }

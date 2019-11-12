@@ -9,12 +9,6 @@ Maybe(JsonPath) parse(const char *expression)
 {
     Parser parser = {
         .errors = make_vector_with_capacity(1),
-        .input = {
-            .source = {
-                .cache = false,
-                .ref = expression,
-            },
-        },
     };
 
     if(NULL == expression || 0 == strlen(expression))
@@ -23,12 +17,11 @@ Maybe(JsonPath) parse(const char *expression)
         return fail(JsonPath, parser.errors);
     }
 
-    input_init(&parser.input, NULL, strlen(expression));
-    input_set_track_lines(&parser.input, true);
+    parser.input =  make_input_from_buffer(expression, strlen(expression));
 
     JsonPath *path = recognize(&parser);
 
-    input_release(&parser.input);
+    dispose_input(parser.input);
 
     if(vector_is_empty(parser.errors))
     {
@@ -38,4 +31,27 @@ Maybe(JsonPath) parse(const char *expression)
 
     dispose_path(path);
     return fail(JsonPath, parser.errors);
+}
+
+static void freedom_iterator(void *each)
+{
+    ParserError *err = (ParserError *)each;
+    if(INTERNAL_ERROR == err->code)
+    {
+        ParserInternalError *ierr = (ParserInternalError *)err;
+        dispose_string(ierr->message);
+    }
+
+    free(each);
+}
+
+void parser_dispose_errors(Vector *errors)
+{
+    vector_destroy(errors, freedom_iterator);
+}
+
+void parser_release(Parser *self)
+{
+    vector_destroy(self->errors, freedom_iterator);
+    dispose_input(self->input);
 }

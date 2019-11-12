@@ -7,7 +7,6 @@
 * parser
   * use SourceLocation for parser errors
     * upgrade token to use SourceLocation also, pull from here
-* reformat includes to move spacecadet to own block
 * move position.h/location.h/input.[c/h] to spacecadet
 * evaluator
   * BUG: failed eval of step causes `expression:1:0 evaluator: internal error: model argument is NULL`
@@ -218,3 +217,4 @@ start: 0.8-alpha, end: 0.9-beta
 * interesting features? http://trentm.com/json/
 * https://github.com/antonmedv/fx
 * tools comparison: https://news.ycombinator.com/item?id=11649142
+* https://github.com/johnkerl/miller

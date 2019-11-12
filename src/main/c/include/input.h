@@ -11,28 +11,28 @@
 
 // Input Entities
 
-struct source_s
-{
-    bool    cache;
-    size_t  length;
-    union
-    {
-        const char *ref;
-        char  buffer[];
-    };
-};
-
-typedef struct source_s Source;
-
 struct input_s
 {
     String   *name;
-    Position  position;
     bool      track_lines;
-    Source    source;
+    Position  position;
+    size_t    length;
+    char      buffer[];
 };
 
 typedef struct input_s Input;
+
+struct input_location_s
+{
+    union
+    {
+        struct   location_s;
+        Location location;
+    };
+    Input *input;
+};
+
+typedef struct input_location_s InputLocation;
 
 enum input_error_e
 {
@@ -58,7 +58,6 @@ defmaybep_error(Input, InputError);
 
 Maybe(Input) make_input_from_file(const char *filename);
 Input       *make_input_from_buffer(const char *data, size_t length);
-Input       *make_input_from_buffer_no_copy(const char *data, size_t length);
 
 void         input_init(Input *self, const char *filename, size_t length);
 
@@ -72,7 +71,7 @@ void         dispose_input(Input *self);
 // Property API
 
 #define      input_name(SELF) (SELF)->name
-#define      input_length(SELF) (SELF)->source.length
+#define      input_length(SELF) (SELF)->length
 #define      input_set_track_lines(SELF, VALUE) (SELF)->track_lines = (VALUE)
 #define      input_is_tracking_lines(SELF) (SELF)->track_lines == true
 
@@ -90,7 +89,7 @@ void         input_reset(Input *self);
 
 // Query API
 
-#define      input_has_more(SELF) ((SELF)->position.index < (SELF)->source.length)
+#define      input_has_more(SELF) ((SELF)->position.index < (SELF)->length)
 size_t       input_remaining(Input *self);
 
 // Consumption API
