@@ -7,7 +7,7 @@ static bool emit_mapping_item(Scalar *key, Node *each, void *context)
 {
     if(!is_scalar(each))
     {
-        log_trace(component, "skipping non-scalar mapping item value: %s", node_kind_name(each));
+        log_debug(component, "skipping non-scalar mapping item value: %s", node_kind_name(each));
         return true;
     }
 
@@ -19,7 +19,6 @@ static bool emit_mapping_item(Scalar *key, Node *each, void *context)
     EMIT("]=");
 
     Scalar *value = scalar(each);
-    log_trace(component, "emitting scalar: \"%s\"", C(scalar_value(value)));
     if(!emit_scalar(value))
     {
         return false;

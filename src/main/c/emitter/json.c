@@ -64,27 +64,22 @@ static bool emit_node(Node *each, void *context __attribute__((unused)))
     switch(node_kind(each))
     {
         case DOCUMENT:
-            log_trace(component, "emitting document");
             result = emit_node(document_root(document(each)), context);
             break;
         case SCALAR:
-            log_trace(component, "emitting scalar: \"%s\"", C(scalar_value(scalar(each))));
             result = emit_scalar(scalar(each));
             break;
         case SEQUENCE:
-            log_trace(component, "emitting seqence, len: %zu", node_size(each));
             EMIT("[");
             result = sequence_iterate(sequence(each), emit_sequence_item, &sequence_count);
             EMIT("]");
             break;
         case MAPPING:
-            log_trace(component, "emitting mapping, len: %zu", node_size(each));
             EMIT("{");
             result = mapping_iterate(mapping(each), emit_mapping_item, &mapping_count);
             EMIT("}");
             break;
         case ALIAS:
-            log_trace(component, "resolving alias");
             result = emit_node(alias_target(alias(each)), context);
             break;
     }
