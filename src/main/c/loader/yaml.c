@@ -195,7 +195,7 @@ static void add_node(Loader *context, Node *node, const yaml_event_t *event)
             add_to_mapping(context, node);
             break;
         default:
-            loader_debugf("uh oh! an unsupported node kind has become the context node: %s", node_kind_name(context->current));
+            loader_debugff("uh oh! an unsupported node kind has become the context node: %s", node_kind_name(context->current));
             String *extra = make_string(node_kind_name(node));
             Position pos = position(event->start_mark);
             add_loader_error_with_extra(context->errors, pos, ERR_INTERNAL_CTX_NODE, extra);
@@ -633,7 +633,7 @@ static Maybe(DocumentSet) parse(const String *input_name, yaml_parser_t *parser,
 
     if(vector_is_empty(context.errors))
     {
-        loader_debugf("found %zu documents.", document_set_size(context.documents));
+        loader_debugff("found %zu documents.", document_set_size(context.documents));
 
         if(0 == document_set_size(context.documents))
         {
@@ -686,7 +686,7 @@ Maybe(DocumentSet) load_yaml(Input *input, DuplicateKeyStrategy strategy)
         panic("loader: initialize: allocate yaml parser");
     }
 
-    loader_debugf("loading yaml from \"%s\"", C(input_name(input)));
+    loader_debugff("loading yaml from \"%s\"", C(input_name(input)));
     yaml_parser_set_input_string(&parser, (const unsigned char *)input->buffer, input_length(input));
 
     Maybe(DocumentSet) result = parse(input_name(input), &parser, strategy);
