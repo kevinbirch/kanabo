@@ -21,6 +21,8 @@
   * `log(const char *, ...)` vararg params are all subtypes of `event`
   * https://github.com/uber-go/zap
   * https://www.structlog.org/en/stable/getting-started.html
+  * https://github.com/google/pblog
+  * https://github.com/gward/lolog
   * rework log.h to assume `component_name` is defined before import
   * eliminate all uses of `trace_string`
 * jsonpath model dumper secret command line option, nice tree-like layout
