@@ -40,7 +40,7 @@ struct loader_context_s
 typedef struct loader_context_s Loader;
 
 #define current_document(CONTEXT) vector_last((CONTEXT)->documents->values)
-#define position(MARK) (Position){index=(MARK).index, line=(MARK).line, offset=(MARK).column}
+#define position(MARK) (Position){.index=(MARK).index, .line=(MARK).line, .offset=(MARK).column}
 
 static void must_make_regex(regex_t *regex, const char * pattern)
 {
