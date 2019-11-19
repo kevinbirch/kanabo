@@ -132,17 +132,31 @@ static emit_function get_emitter(enum emit_mode emit_mode)
 
 static inline bool parser_error_printer(void *each, void *context)
 {
-    ParserError *error = (ParserError *)each;
+    ParserErrorBase *base = (ParserErrorBase *)each;
     struct options *options = (struct options *)context;
 
-    if(INTERNAL_ERROR == error->code)
+    if(INTERNAL_ERROR == base->code)
     {
-        ParserInternalError *ierror = (ParserInternalError *)error;
-        err(options, "%s parser: internal error: %s", ierror->location, C(ierror->message));
+        ParserInternalError *error = (ParserInternalError *)each;
+        err(options, "%s parser: internal error: %s", error->location, C(error->message));
+        return true;
+    }
+
+    ParserError *error = (ParserError *)each;
+    const char *filename = NULL == error->location.name ? "expression" : C(error->location.name);
+    size_t start_line = error->location.start.line + 1;
+    size_t start_col = error->location.start.offset + 1;
+    size_t end_col = error->location.end.offset + 1;
+    const char *message = parser_strerror(error->code);
+
+    if(error->location.start.line == error->location.end.line)
+    {
+        err(options, "%s:%zu.%zu-%zu: %s", filename, start_line, start_col, end_col, message);
     }
     else
     {
-        err(options, "expression:1:%zu %s", error->position.index + 1, parser_strerror(error->code));
+        size_t end_line = error->location.end.line + 1;
+        err(options, "%s:%zu.%zu-%zu.%zu: %s", filename, start_line, start_col, end_line, end_col, message);
     }
 
     return true;

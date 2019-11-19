@@ -49,15 +49,14 @@ static inline int8_t ucs4_to_utf8(uint32_t ucs4, uint8_t utf8[4])
     return -1;
 }
 
-static inline bool unescape_unicode(Parser *self, uint32_t ucs4, MutableString **string)
+static inline bool unescape_unicode(uint32_t ucs4, MutableString **string)
 {
     uint8_t utf8[4];
 
     int8_t length = ucs4_to_utf8(ucs4, utf8);
 
-    if(!(length > 0))
+    if(length <= 0)
     {
-        parser_add_error(self, UNSUPPORTED_UNICODE_SEQUENCE);
         return false;
     }
 
@@ -141,8 +140,10 @@ String *unescape(Parser *self, const String *lexeme)
             {
                 uint32_t ucs4;
                 sscanf(C(lexeme) + i + 1, "%4"SCNx32, &ucs4);
-                if(!unescape_unicode(self, ucs4, &cooked))
+                if(!unescape_unicode(ucs4, &cooked))
                 {
+                    SourceLocation loc = location(self);
+                    parser_add_error_at(self, UNSUPPORTED_UNICODE_SEQUENCE, loc, loc.start.index + i);
                     goto cleanup;
                 }
                 i += 4;
@@ -152,15 +153,19 @@ String *unescape(Parser *self, const String *lexeme)
             {
                 uint32_t ucs4;
                 sscanf(C(lexeme) + i + 1, "%8"SCNx32, &ucs4);
-                if(!unescape_unicode(self, ucs4, &cooked))
+                // xxx - add scan position to the error message
+                if(!unescape_unicode(ucs4, &cooked))
                 {
+                    SourceLocation loc = location(self);
+                    parser_add_error_at(self, UNSUPPORTED_UNICODE_SEQUENCE, loc, loc.start.index + i);
                     goto cleanup;
                 }
                 i += 8;
                 break;
             }
             default:
-                parser_add_error(self, UNSUPPORTED_ESCAPE_SEQUENCE);
+                SourceLocation loc = location(self);
+                parser_add_error_at(self, UNSUPPORTED_ESCAPE_SEQUENCE, loc, loc.start.index + i);
                 goto cleanup;
                 break;
         }

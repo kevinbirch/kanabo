@@ -63,8 +63,8 @@ typedef enum token_kind_e TokenKind;
 
 struct token_s
 {
-    TokenKind kind;
-    Location  location;
+    TokenKind       kind;
+    SourceLocation  location;
 };
 
 typedef struct token_s Token;
@@ -100,44 +100,49 @@ enum parser_error_e
 
 typedef enum parser_error_e ParserErrorCode;
 
-struct parser_error_s
+struct parser_error_base_s
 {
     ParserErrorCode code;
-    Position        position;
+};
+
+typedef struct parser_error_base_s ParserErrorBase;
+
+struct parser_error_s
+{
+    union
+    {
+        ParserErrorBase base;
+        struct parser_error_base_s;
+    };
+    SourceLocation location;
+    size_t         index;  // N.B. absolute index of diagnostic point of `location`
 };
 
 typedef struct parser_error_s ParserError;
 
-struct internal_error_s
+struct parser_internal_error_s
 {
     union
     {
-        ParserError base;
-        struct parser_error_s;
+        ParserErrorBase base;
+        struct parser_error_base_s;
     };
     const char *location;
     String     *message;
 };
 
-typedef struct internal_error_s ParserInternalError;
+typedef struct parser_internal_error_s ParserInternalError;
 
 defmaybep_error(JsonPath, Vector *);
 
 #define location(SELF) (SELF)->current.location
-#define position(SELF) (SELF)->current.location.position
 
 const char *token_name(TokenKind kind);
 
 Maybe(JsonPath) parse(const char *expression);
 
-#define VAL(x) #x
-#define STR(x) VAL(x)
-
-void parser_add_error_at(Parser *self, ParserErrorCode code, Position position);
-#define parser_add_error(SELF, CODE) parser_add_error_at((SELF), (CODE), position(SELF))
-void parser_add_internal_error_at(Parser *self, const char *restrict location, const char * restrict fmt, ...);
-#define parser_add_internal_error(SELF, FMT, ...) parser_add_internal_error_at((SELF), __FILE__":"STR(__LINE__), (FMT), ##__VA_ARGS__)
-
+void parser_add_error_at(Parser *self, ParserErrorCode code, SourceLocation location, size_t offset);
 const char *parser_strerror(ParserErrorCode code);
+
 void parser_dispose_errors(Vector *errors);
 void parser_release(Parser *self);

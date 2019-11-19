@@ -5,8 +5,7 @@
 ## fixes
 
 * parser
-  * use SourceLocation for parser errors
-    * upgrade token to use SourceLocation also, pull from here
+  * can `UNEXPECTED_INPUT` error be decomposed into more specific errors? (only used twice)
 * move position.h/location.h/input.[c/h] to spacecadet
 * evaluator
   * BUG: failed eval of step causes `expression:1:0 evaluator: internal error: model argument is NULL`
@@ -206,6 +205,9 @@ start: 0.8-alpha, end: 0.9-beta
   * pre/post-compile/build hooks?
 * https://snapcraft.io/ ?
 * https://conan.io
+* re-enable `-pedantic-errors` flag?
+  * can vendored libs be placed in `src/vendor` to have custom build commands?
+  * does this have to be done by hand with an existing hook?  can it be detected and automated?
 
 ## known limitations
 

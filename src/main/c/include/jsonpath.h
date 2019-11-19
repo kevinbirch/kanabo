@@ -97,7 +97,7 @@ enum type_test_kind
 struct step_s
 {
     enum step_kind kind;
-    Location location;
+    SourceLocation location;
 
     struct
     {

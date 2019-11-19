@@ -198,8 +198,8 @@ void input_push_back(Input *self)
 String *input_extract(Input *self, Location location)
 {
     ENSURE_NONNULL_ELSE_NULL(self);
-    ENSURE_ELSE_NULL(location.index < self->length);
-    ENSURE_ELSE_NULL(location.index + location.extent <= self->length);
+    ENSURE_ELSE_NULL(location.start.index < self->length);
+    ENSURE_ELSE_NULL(location.end.index <= self->length);
 
-    return make_string_with_bytestring((const uint8_t *)cursor_at(self, location.index), location.extent);
+    return make_string_with_bytestring((const uint8_t *)cursor_at(self, location.start.index), location.end.index);
 }

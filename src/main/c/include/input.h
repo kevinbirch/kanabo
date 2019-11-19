@@ -22,18 +22,6 @@ struct input_s
 
 typedef struct input_s Input;
 
-struct input_location_s
-{
-    union
-    {
-        struct   location_s;
-        Location location;
-    };
-    Input *input;
-};
-
-typedef struct input_location_s InputLocation;
-
 enum input_error_e
 {
     MISSING_FILENAME,

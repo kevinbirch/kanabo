@@ -2,15 +2,16 @@
 
 #include "xalloc.h"
 
-#include "parser.h"
+#include "parser/recognizer.h"
 
 static const char * const FALLBACK_MSG = "message formatting failed";
 
-void parser_add_error_at(Parser *self, ParserErrorCode code, Position position)
+void parser_add_error_at(Parser *self, ParserErrorCode code, SourceLocation location, size_t index)
 {
     ParserError *err = xcalloc(sizeof(ParserError));
     err->code = code;
-    err->position = position;
+    err->location = location;
+    err->index = index;
 
     vector_append(self->errors, err);
 }
@@ -19,7 +20,6 @@ void parser_add_internal_error_at(Parser *self, const char * restrict location, 
 {
     ParserInternalError *err = xcalloc(sizeof(ParserInternalError));
     err->code = INTERNAL_ERROR;
-    err->position = position(self);
     err->location = location;
 
     va_list args;

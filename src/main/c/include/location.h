@@ -4,12 +4,8 @@
 
 struct location_s
 {
-    union
-    {
-        struct   postion_s;
-        Position position;
-    };
-    size_t extent;  //!< the length from `.position.index`
+    Position start;
+    Position end;
 };
 
 typedef struct location_s Location;

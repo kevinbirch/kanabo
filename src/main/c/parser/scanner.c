@@ -6,9 +6,7 @@
 
 #include "parser/scanner.h"
 
-#define scan_position(SELF) (SELF)->input->position
-#define scanner_add_error_at(SELF, CODE, LOC) parser_add_error_at((SELF), (CODE), (LOC))
-#define scanner_add_error(SELF, CODE) scanner_add_error_at((SELF), (CODE), scan_position(SELF))
+#define scan_position(PARSER) (PARSER)->input->position
 
 static bool read_hex_sequence(Parser *self, size_t count)
 {
@@ -20,11 +18,10 @@ static bool read_hex_sequence(Parser *self, size_t count)
             return false;
         }
 
-        if(!isxdigit(input_peek(self->input)))
+        if(!isxdigit(input_consume_one(self->input)))
         {
             scanner_add_error(self, UNSUPPORTED_ESCAPE_SEQUENCE);
         }
-        input_consume_one(self->input);
     }
 
     return true;
@@ -45,7 +42,6 @@ static bool read_escape_sequence(Parser *self)
         return false;
     }
 
-    Position start = scan_position(self);
     switch(input_consume_one(self->input))
     {
         case '"':
@@ -73,7 +69,7 @@ static bool read_escape_sequence(Parser *self)
         case 'U':
             return read_hex_sequence(self, 8);
         default:
-            scanner_add_error_at(self, UNSUPPORTED_ESCAPE_SEQUENCE, start);
+            scanner_add_error(self, UNSUPPORTED_ESCAPE_SEQUENCE);
     }
 
     return true;
@@ -82,10 +78,12 @@ static bool read_escape_sequence(Parser *self)
 static bool read_name_escape_sequence(Parser *self)
 {
     Position start = scan_position(self);
+
     if(input_peek(self->input) == '\\')
     {
         input_consume_one(self->input);
     }
+
     if(!input_has_more(self->input))
     {
         scanner_add_error(self, PREMATURE_END_OF_INPUT);
@@ -104,26 +102,25 @@ static bool read_name_escape_sequence(Parser *self)
 
 static void match_quoted_term(Parser *self, char quote, EscapeSequenceReader reader)
 {
-    Position start = scan_position(self);
-
     if(input_peek(self->input) == quote)
     {
         input_consume_one(self->input);
     }
 
-    while(true)
+    bool done = false;
+
+    while(!done)
     {
         if(!input_has_more(self->input))
         {
-            scanner_add_error_at(self, UNCLOSED_QUOTATION, start);
+            scanner_add_error(self, UNCLOSED_QUOTATION);
             scanner_add_error(self, PREMATURE_END_OF_INPUT);
             break;
         }
-        if(iscntrl(input_peek(self->input)))
-        {
-            scanner_add_error(self, UNSUPPORTED_CONTROL_CHARACTER);
-        }
-        if(input_peek(self->input) == '\\')
+
+        char c = input_peek(self->input);
+
+        if(c == '\\')
         {
             if(reader(self))
             {
@@ -132,40 +129,35 @@ static void match_quoted_term(Parser *self, char quote, EscapeSequenceReader rea
 
             break;
         }
-    
-        char c = input_consume_one(self->input);
-        if(c == quote)
+        else if(iscntrl(c))
         {
-            break;
+            scanner_add_error(self, UNSUPPORTED_CONTROL_CHARACTER);
         }
+        else if(c == quote)
+        {
+            done = true;
+        }
+
+        input_consume_one(self->input);
     }
 }
 
 static bool read_digit_sequence(Parser *self)
 {
-    Position start = scan_position(self);
+    if(!input_has_more(self->input))
+    {
+        scanner_add_error(self, PREMATURE_END_OF_INPUT);
+        return false;
+    }
 
     while(true)
     {
-        if(!input_has_more(self->input))
-        {
-            if(input_index(self->input) == start.index)
-            {
-                scanner_add_error(self, PREMATURE_END_OF_INPUT);
-                return false;
-            }
-
-            break;
-        }
-
-        if(isdigit(input_peek(self->input)))
-        {
-            input_consume_one(self->input);
-        }
-        else
+        if(!input_has_more(self->input) || !isdigit(input_peek(self->input)))
         {
             break;
         }
+
+        input_consume_one(self->input);
     }
 
     return true;
@@ -206,30 +198,29 @@ static void match_number(Parser *self)
 
 static void match_name(Parser *self)
 {
-    Position start = scan_position(self);
+    if(!input_has_more(self->input))
+    {
+        scanner_add_error(self, PREMATURE_END_OF_INPUT);
+        return;
+    }
 
     while(true)
     {
         if(!input_has_more(self->input))
         {
-            if(input_index(self->input) == start.index)
-            {
-                scanner_add_error(self, PREMATURE_END_OF_INPUT);
-            }
-
-            break;
-        }
-
-        if(iscntrl(input_peek(self->input)))
-        {
-            scanner_add_error(self, UNSUPPORTED_CONTROL_CHARACTER);
-            break;
+            return;
         }
 
         char c = input_peek(self->input);
-        if(isspace(c))
+
+        if(iscntrl(c))
         {
-            break;
+            scanner_add_error(self, UNSUPPORTED_CONTROL_CHARACTER);
+            goto consume;
+        }
+        else if(isspace(c))
+        {
+            return;
         }
         switch(c)
         {
@@ -243,13 +234,22 @@ static void match_name(Parser *self)
             case ')':
                 return;
             default:
-                input_consume_one(self->input);
+                break;
         }
+
+      consume:
+        input_consume_one(self->input);
     }
 }
 
 static void match_symbol(Parser *self)
 {
+    if(!input_has_more(self->input))
+    {
+        scanner_add_error(self, PREMATURE_END_OF_INPUT);
+        return;
+    }
+
     if(input_consume_if(self->input, "object()"))
     {
         self->current.kind = OBJECT_SELECTOR;
@@ -322,9 +322,12 @@ void scanner_next(Parser *self)
         return;
     }
 
+    size_t error_count = vector_length(self->errors);
+
     input_skip_whitespace(self->input);
 
-    Position start = scan_position(self);
+    self->current.location.start = scan_position(self);
+
     if(!input_has_more(self->input))
     {
         self->current.kind = END_OF_INPUT;
@@ -341,7 +344,6 @@ void scanner_next(Parser *self)
             break;
         case '.':
         {
-            self->current.kind = DOT;
             char next = input_peek(self->input);
             if(next == '.')
             {
@@ -350,6 +352,7 @@ void scanner_next(Parser *self)
             }
             else if('0' <= next && next <= '9')
             {
+                self->current.kind = DOT;
                 input_push_back(self->input);
                 match_number(self);
             }
@@ -427,9 +430,17 @@ void scanner_next(Parser *self)
         }
         case '+':
             self->current.kind = PLUS;
+            if(isdigit(input_peek(self->input)))
+            {
+                match_number(self);
+            }
             break;
         case '-':
             self->current.kind = MINUS;
+            if(isdigit(input_peek(self->input)))
+            {
+                match_number(self);
+            }
             break;
         case '/':
             self->current.kind = SLASH;
@@ -467,9 +478,22 @@ void scanner_next(Parser *self)
 
   finish:
     ;
-    Position end = scan_position(self);    
-    self->current.location.position = start;
-    self->current.location.extent = end.index - start.index;
+    self->current.location.end = scan_position(self);
+    size_t new_error_count = vector_length(self->errors);
+    if(error_count < new_error_count)
+    {
+        // N.B. - fixup the end positions for new errors
+        // xxx - this feels clumsy, is there a better way?
+        for(size_t i = error_count - 1; i < new_error_count; i++)
+        {
+            ParserError *err = vector_get(self->errors, i);
+            if(INTERNAL_ERROR == err->code)
+            {
+                continue;
+            }
+            err->location.end = self->current.location.end;
+        }
+    }
 }
 
 void scanner_reset(Parser *self)
