@@ -1,0 +1,9 @@
+level1: &id001
+  key1-1: foo
+  key1-2: bar
+  level2:
+    key2-1: foo
+    key2-2: bar
+    level3:
+      - *id001
+      - bar1

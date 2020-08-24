@@ -1,0 +1,26 @@
+version: 2
+jobs:
+  gcc-linux-amd64:
+    docker:
+      - image: gcc:8
+    steps:
+      - run: apt-get update; apt-get install -y --no-install-recommends libyaml-dev check
+      - checkout
+      - run: make test
+      - run: make gcc-coverage
+      - run: build/codecov.sh
+
+  clang-linux-amd64:
+    docker:
+      - image: kevinbirch/ci-clang-linux-amd64:latest
+    steps:
+      - run: apt-get update; apt-get install -y --no-install-recommends libyaml-dev check
+      - checkout
+      - run: CC=clang-9 make test
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - gcc-linux-amd64
+      - clang-linux-amd64

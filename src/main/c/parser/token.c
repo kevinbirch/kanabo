@@ -1,0 +1,56 @@
+#include "parser.h"
+
+static const char * const NAMES[] =
+{
+    [END_OF_INPUT] = "<end of input>",
+    [DOLLAR] = "<dollar>",
+    [AT] = "<at>",
+    [DOT_DOT] = "<dot dot>",
+    [DOT] = "<dot>",
+    [EQUALS] = "<equals>",
+    [COLON] = "<colon>",
+    [COMMA] = "<comma>",
+    [EXCLAMATION] = "<exclamation>",
+    [AMPERSAND] = "<ampersand>",
+    [ASTERISK] = "<asterisk>",
+    [OPEN_BRACKET] = "<open bracket>",
+    [CLOSE_BRACKET] = "<close bracket>",
+    [OPEN_BRACE] = "<open brace>",
+    [CLOSE_BRACE] = "<close brace>",
+    [OPEN_PARENTHESIS] = "<open parenthesis>",
+    [CLOSE_PARENTHESIS] = "<close parenthesis>",
+    [OPEN_FILTER] = "<open filter>",
+    [GREATER_THAN] = "<greater than>",
+    [GREATER_THAN_EQUAL] = "<greater than equal>",
+    [LESS_THAN] = "<less than>",
+    [LESS_THAN_EQUAL] = "<less than equal>",
+    [NOT_EQUAL] = "<not equal>",
+    [PLUS] = "<plus>",
+    [MINUS] = "<minus>",
+    [SLASH] = "<slash>",
+    [PERCENT] = "<percent>",
+    [OBJECT_SELECTOR] = "<object selector>",
+    [ARRAY_SELECTOR] = "<array selector>",
+    [STRING_SELECTOR] = "<string selector>",
+    [NUMBER_SELECTOR] = "<number selector>",
+    [INTEGER_SELECTOR] = "<integer selector>",
+    [DECIMAL_SELECTOR] = "<decimal selector>",
+    [TIMESTAMP_SELECTOR] = "<timestamp selector>",
+    [BOOLEAN_SELECTOR] = "<boolean selector>",
+    [NULL_SELECTOR] = "<null selector>",
+    [NULL_LITERAL] = "<null>",
+    [BOOLEAN_OR] = "<or>",
+    [BOOLEAN_AND] = "<and>",
+    [BOOLEAN_LITERAL_TRUE] = "<true>",
+    [BOOLEAN_LITERAL_FALSE] = "<false>",
+    [STRING_LITERAL] = "<string>",
+    [INTEGER_LITERAL] = "<integer>",
+    [REAL_LITERAL] = "<real>",
+    [QUOTED_NAME] = "<quoted name>",
+    [NAME] = "<name>",
+};
+
+const char *token_name(TokenKind kind)
+{
+    return NAMES[kind];
+}

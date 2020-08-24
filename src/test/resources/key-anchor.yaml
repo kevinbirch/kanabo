@@ -1,0 +1,4 @@
+&value one:
+  - foo1
+  - *value
+two: *value

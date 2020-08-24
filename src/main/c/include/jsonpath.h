@@ -1,47 +1,13 @@
-/*
- * 金棒 (kanabō)
- * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- *
- * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
- * made stronger.
- *
- * For more information, consult the README file in the project root.
- *
- * Distributed under an [MIT-style][license] license.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal with
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * - Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimers.
- * - Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimers in the documentation and/or
- *   other materials provided with the distribution.
- * - Neither the names of the copyright holders, nor the names of the authors, nor
- *   the names of other contributors may be used to endorse or promote products
- *   derived from this Software without specific prior written permission.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE CONTRIBUTORS
- * OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
- *
- * [license]: http://www.opensource.org/licenses/ncsa
- */
-
 #pragma once
 
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
-// jsonpath model entities
+#include "maybe.h"
+#include "location.h"
+#include "str.h"
+#include "vector.h"
 
 enum path_kind
 {
@@ -49,7 +15,60 @@ enum path_kind
     RELATIVE_PATH
 };
 
-typedef struct jsonpath jsonpath;
+typedef enum path_kind PathKind;
+
+struct jsonpath_s
+{
+    PathKind  kind;
+    Vector   *steps;
+};
+
+typedef struct jsonpath_s JsonPath;
+
+enum predicate_kind
+{
+    WILDCARD,
+    SUBSCRIPT,
+    SLICE,
+    JOIN
+};
+
+enum slice_specifiers
+{
+    SLICE_FROM = 1,
+    SLICE_TO   = 2,
+    SLICE_STEP = 4
+};
+
+struct predicate_s
+{
+    enum predicate_kind kind;
+    Position position;
+
+    union
+    {
+        struct
+        {
+            int64_t index;
+        } subscript;
+
+        struct
+        {
+            uint8_t specified;
+            int64_t from;
+            int64_t to;
+            int64_t step;
+        } slice;
+
+        struct
+        {
+            JsonPath *left;
+            JsonPath *right;
+        } join;
+    };
+};
+
+typedef struct predicate_s Predicate;
 
 enum step_kind
 {
@@ -74,88 +93,76 @@ enum type_test_kind
     BOOLEAN_TEST,
     NULL_TEST,
 };
-typedef struct step step;
 
-enum predicate_kind
+struct step_s
 {
-    WILDCARD,
-    SUBSCRIPT,
-    SLICE,
-    JOIN
-};
-typedef struct predicate predicate;
+    enum step_kind kind;
+    SourceLocation location;
 
-enum parser_status_code
-{
-    JSONPATH_SUCCESS = 0,
-    ERR_NULL_EXPRESSION,             // the expression argument given was NULL
-    ERR_ZERO_LENGTH,                 // expression length was 0
-    ERR_PARSER_OUT_OF_MEMORY,        // unable to allocate memory
-    ERR_NOT_JSONPATH,                // not a JSONPath expression
-    ERR_PREMATURE_END_OF_INPUT,      // premature end of input before expression was complete
-    ERR_UNEXPECTED_VALUE,            // expected one character but found another
-    ERR_EMPTY_PREDICATE,             // a predicate is empty
-    ERR_UNBALANCED_PRED_DELIM,       // missing closing predicate delimiter `]' before end of step
-    ERR_UNSUPPORTED_PRED_TYPE,       // unsupported predicate found
-    ERR_EXTRA_JUNK_AFTER_PREDICATE,  // extra characters after valid predicate definition
-    ERR_EXPECTED_NAME_CHAR,          // expected a name character, but found something else instead
-    ERR_EXPECTED_NODE_TYPE_TEST,     // expected a node type test
-    ERR_EXPECTED_INTEGER,            // expected an integer
-    ERR_INVALID_NUMBER,              // invalid number
-    ERR_STEP_CANNOT_BE_ZERO,         // slice step value must be non-zero
+    struct
+    {
+        enum test_kind kind;
+
+        union
+        {
+            String *name;
+            enum type_test_kind type;
+        };
+    } test;
+
+    Predicate *predicate;
 };
 
-typedef enum parser_status_code parser_status_code;
+typedef struct step_s Step;
 
-typedef struct parser_context parser_context;
+/* Constructor */
 
-// jsonpath parser api
-parser_context *make_parser(const uint8_t *expression, size_t length);
-parser_status_code parser_status(const parser_context *context);
+JsonPath *make_jsonpath(PathKind kind);
 
-void parser_free(parser_context *context);
+/* Destructor */
 
-jsonpath *parse(parser_context *context);
-void path_free(jsonpath *path);
+void dispose_path(JsonPath *path);
 
-char *parser_status_message(const parser_context *context);
+/* Path API */
 
-// jsonpath model api
+const char *        path_kind_name(enum path_kind value);
+String *            path_repr(const JsonPath *path);
 
-typedef bool (*path_iterator)(step *each, void *context);
-bool path_iterate(const jsonpath *path, path_iterator iterator, void *context);
+typedef bool        (*path_iterator)(Step *each, void *parser);
+bool                path_iterate(const JsonPath *path, path_iterator iterator, void *context);
 
-uint8_t *path_expression(const jsonpath *path);
-size_t path_expression_length(const jsonpath *path);
+const char *        step_kind_name(enum step_kind value);
+#define             test_kind(SELF) (SELF)->test.kind
+const char *        test_kind_name(enum test_kind value);
 
-enum path_kind path_kind(const jsonpath *path);
-const char *   path_kind_name(enum path_kind value);
-size_t         path_length(const jsonpath *path);
-step *         path_get(const jsonpath *path, size_t index);
+/* Type Test API */
 
-enum step_kind step_kind(const step *value);
-const char *   step_kind_name(enum step_kind value);
-enum test_kind step_test_kind(const step *value);
-const char *   test_kind_name(enum test_kind value);
-
-enum type_test_kind type_test_step_kind(const step *value);
+#define             type_test_step_kind(SELF) (TYPE_TEST == (SELF)->test.kind ? (SELF)->test.type : 0)
 const char *        type_test_kind_name(enum type_test_kind value);
-uint8_t *           name_test_step_name(const step *value);
-size_t              name_test_step_length(const step *value);
 
-bool       step_has_predicate(const step *value);
-predicate *step_predicate(const step *value);
+/* Name Test API */
 
-enum predicate_kind predicate_kind(const predicate *value);
+#define             name_test_step_name(SELF) (NAME_TEST == (SELF)->test.kind ? (SELF)->test.name : NULL)
+#define             name_test_step_length(SELF) (NAME_TEST == (SELF)->test.kind ? strlen((SELF)->test.name) : 0)
+
+/* Predicate API */
+
 const char *        predicate_kind_name(enum predicate_kind value);
-size_t              subscript_predicate_index(const predicate *value);
 
-int_fast32_t        slice_predicate_to(const predicate *value);
-int_fast32_t        slice_predicate_from(const predicate *value);
-int_fast32_t        slice_predicate_step(const predicate *value);
-bool                slice_predicate_has_to(const predicate *value);
-bool                slice_predicate_has_from(const predicate *value);
-bool                slice_predicate_has_step(const predicate *value);
+/* Subscript Predicate API */
 
-jsonpath *          join_predicate_left(const predicate *value);
-jsonpath *          join_predicate_right(const predicate *value);
+#define             subscript_predicate_index(SELF) (SUBSCRIPT == (SELF)->kind ? (SELF)->subscript.index : 0)
+
+/* Slice Predicate API */
+
+#define             slice_predicate_from(SELF) (SLICE == (SELF)->kind ? (SELF)->slice.from : (int64_t)0)
+#define             slice_predicate_to(SELF) (SLICE == (SELF)->kind ? (SELF)->slice.to : (int64_t)0)
+#define             slice_predicate_step(SELF) (SLICE == (SELF)->kind ? (((SELF)->slice.specified & SLICE_STEP) ? (SELF)->slice.step : (int64_t)1) : (int64_t)1)
+#define             slice_predicate_has_from(SELF) (SLICE == (SELF)->kind ? (SELF)->slice.specified & SLICE_FROM : false)
+#define             slice_predicate_has_to(SELF) (SLICE == (SELF)->kind ? (SELF)->slice.specified & SLICE_TO : false)
+#define             slice_predicate_has_step(SELF) (SLICE == (SELF)->kind ? (SELF)->slice.specified & SLICE_STEP : false)
+
+/* Join (Union) Predicate API */
+
+#define             join_predicate_left(SELF) (JOIN == (SELF)->kind ? (SELF)->join.left : NULL)
+#define             join_predicate_right(SELF) (JOIN == (SELF)->kind ? (SELF)->join.right : NULL)

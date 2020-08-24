@@ -1,0 +1,24 @@
+FROM buildpack-deps:bionic-scm
+
+ARG llvmver=9
+
+# rsa4096/0x15CF4D18AF4F7421 2013-03-11 Sylvestre Ledru - Debian LLVM packages <sylvestre@debian.org>
+RUN set -ex; \
+	echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main\ndeb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic main" > /etc/apt/sources.list.d/llvm.list; \
+	gpg --recv-keys 0x15cf4d18af4f7421; \
+	gpg --armor --export 0x15cf4d18af4f7421 | apt-key add -
+
+RUN set -ex; \
+	apt-get update; \
+    apt-get install -y --no-install-recommends \
+		build-essential \
+		clang-$llvmver \
+		clang-tools-$llvmver \
+		clang-format-$llvmver \
+		python-clang-$llvmver \
+		libfuzzer-$llvmver-dev \
+		lldb-$llvmver \
+		lld-$llvmver \
+		libc++-$llvmver-dev \
+		libc++abi-$llvmver-dev \
+		libomp-$llvmver-dev

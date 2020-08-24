@@ -1,0 +1,19 @@
+one:
+  - |-
+    literal multiline scalar
+    line breaks are preserved
+  - >-
+    folded multiline scalar,
+    line breaks are collapsed
+
+two: "foo2"
+
+three: null
+
+four:
+  - true
+  - 'false'
+
+five: [1.5, 42, "1978-07-26 10:15:00"]
+
+six: {"one": 1, "two": 2}

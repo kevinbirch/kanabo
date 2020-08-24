@@ -1,0 +1,5 @@
+one:
+  - &value foo1
+  - &value bar1
+
+two: *value

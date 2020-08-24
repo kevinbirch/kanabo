@@ -1,142 +1,151 @@
-(*
- * 金棒 (kanabō)
- * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- *
- * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
- * made stronger.
- *
- * For more information, consult the README file in the project root.
- *
- * Distributed under an [MIT-style][license] license.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal with
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * - Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimers.
- * - Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimers in the documentation and/or
- *   other materials provided with the distribution.
- * - Neither the names of the copyright holders, nor the names of the authors, nor
- *   the names of other contributors may be used to endorse or promote products
- *   derived from this Software without specific prior written permission.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE CONTRIBUTORS
- * OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
- *
- * [license]: http://www.opensource.org/licenses/ncsa
- *)
-
-path
+jsonpath
     = absolute path
     | relative path
     ;
 
 absolute path
-    = "$", [ qualified path ]
+    = root step, { qualified step }
     ;
 
-qualified path
-    = recursive location
-    | relative location
+root step
+    = "$", [ predicate ]
     ;
 
-recurisive location
-    = "..", relative path
+qualified step
+    = recursive step
+    | relative step
     ;
 
-relative location
-    = ".", relative path
+recurisive step
+    = "..", step
+    ;
+
+relative step
+    = ".", step
     ;
 
 relative path
-    = step, [ qualified path ]
+    = ( relative head step | step ), { qualified step }
+    ;
+
+relative head step
+    = "@" , [ predicate ]
     ;
 
 step
-    = node test, [ predicate ]
+    = transformer
+    | ( selector, [ predicate ] )
     ;
 
-node test
-    = node type, "(", ")"
-    | name test
+transformer
+    = "=", value
     ;
 
-name test
-    = "*"
-    | name
+object
+    = "{",  [ key value, { ",", key value } ], "}"
     ;
 
-node type
+key value
+    = string, ":", value
+    ;
+
+array
+    = "[", [ value, { ",", value } ], "]"
+    ;
+
+value
+    = array
+    | object
+    | additive expr
+    ;
+
+selector
+    = tag selector
+    | anchor selector
+    | type selector
+    | index selector
+    | name selector
+    ;
+
+tag selector
+    = "!", name
+    ;
+
+anchor selector
+    = "&", name
+    ;
+
+type selector
+    = type, "()"
+    ;
+
+type
     = "object"
     | "array"
     | "string"
     | "number"
+    | "integer"
+    | "decimal"
+    | "timestamp"
     | "boolean"
     | "null"
     ;
 
-name
-    = "'", quoted name character, { quoted name character }, "'"
-    = name character, { name character }
-    ;
-
-quoted name character
-    = ? any unicode character except ''' (single quote), unlesss it is quoted with a '\' (backslash) ?
-    ;
-
-name character
-    = ? any unicode character except '.' and '[' ?
-    ;
-
-predicate
-    = "[", predicate expression , "]"
-    ;
-
-predicate expression
+name selector
     = wildcard
-    | subscript
-    | slice
-    | union
-    | filter
+    | name
+    ;
+
+index selector
+    = "[?", filter expression "]"
+    | "[", selector expression "]"
     ;
 
 wildcard
     = "*"
     ;
 
-subscript
-     = signed integer
-     ;
-
-slice
-    = [ signed integer ], ":", [ signed integer ], [ ":", [ non-zero signed integer ] ]
+name
+    = "'", quoted name character, { quoted name character }, "'"
+    | name character, { name character }
     ;
 
-union
-    = integer, ",", integer
-    | union expression, ",", union expression
+quoted name character
+    = ? any unicode character except ' or control characters ?
+    | "\'"
+    | escape
     ;
 
-union expression
-    = relative path
-    | filter expression
+name character
+    = ? any unicode character except '[', ']', '.', '=', ',', '}', '(', ')', whitespace or control characters ?
     ;
 
-filter
-    = "?(", filter expression, ")"
+predicate
+    = "[?", filter expression "]"
+    | "[", selector expression "]"
     ;
 
 filter expression
     = or expr
+    ;
+
+selector expression
+    = wildcard
+    | subscript
+    | slice
+    | join
+    ;
+
+subscript
+     = integer
+     ;
+
+slice
+    = [ integer ], ":", [ integer ], [ ":", [ non-zero signed integer ] ]
+    ;
+
+join
+    = jsonpath, ",", jsonpath, { ",", jsonpath }
     ;
 
 or expr
@@ -144,27 +153,20 @@ or expr
     ;
 
 and expr
-    = equality expr, [ "and", and expr ]
+    = comparison expr, [ "and", and expr ]
     ;
 
-equality expr
-    = relational expr, [ equality op, equality expr ]
+comparison expr
+    = additive expr, [ comparison op, comparison expr ]
     ;
 
-equality op
-    = "="
-    | "!="
-    ;
-
-relational expr
-    = additive expr, [ relational op, relational expr ]
-    ;
-
-relational op
+comparison op
     = ">"
     | "<"
     | ">="
     | "<="
+    | "="
+    | "!="
     ;
 
 additive expr
@@ -187,15 +189,19 @@ multiplicative op
     ;
 
 unary expr
-    = "@", qualified path
-    | number
+    = relative path
+    | scalar
+    ;
+
+scalar
+    = number
     | string
     | boolean
     | "null"
     ;
 
 number
-    = signed integer, [ fractional part ], [ exponent ]
+    = integer, [ fractional part ], [ exponent ]
     ;
 
 fractional part
@@ -222,16 +228,23 @@ escape
     = "\""
     | "\\"
     | "\/"
+    | "\ "
+    | "\_"
+    | "\0"
+    | "\a"
     | "\b"
+    | "\e"
     | "\f"
     | "\n"
     | "\r"
     | "\t"
+    | "\v"
+    | "\L"
+    | "\N"
+    | "\P"
+    | "\x", 2 * hex digit
     | "\u", 4 * hex digit
-    ;
-
-hex digit
-    = 2 * ( digit |  hex lower | hex upper )
+    | "\U", 8 * hex digit
     ;
 
 boolean
@@ -240,11 +253,7 @@ boolean
     ;
 
 integer
-    = [ "+" ], ( "0" | digit one to nine, { digit } )
-    ;
-
-signed integer
-    = [ "-" ], integer
+    = [ "-" | "+" ], ( "0" | digit one to nine, { digit } )
     ;
 
 non-zero signed integer
@@ -257,6 +266,10 @@ digit one to nine
 
 digit
     = "0" | digit one to nine
+    ;
+
+hex digit
+    = digit | hex lower | hex upper
     ;
 
 hex lower
