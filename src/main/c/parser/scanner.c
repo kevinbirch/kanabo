@@ -10,6 +10,8 @@
 
 static bool read_hex_sequence(Parser *self, size_t count)
 {
+    bool squelch = false;
+
     for(size_t i = 0; i < count; i++)
     {
         if(!input_has_more(self->input))
@@ -18,9 +20,12 @@ static bool read_hex_sequence(Parser *self, size_t count)
             return false;
         }
 
-        if(!isxdigit(input_consume_one(self->input)))
+        size_t point = self->input->position.index;
+
+        if(!isxdigit(input_consume_one(self->input)) && !squelch)
         {
-            scanner_add_error(self, UNSUPPORTED_ESCAPE_SEQUENCE);
+            squelch = true;
+            scanner_add_error_at(self, UNSUPPORTED_ESCAPE_SEQUENCE, location(self), point);
         }
     }
 
@@ -41,6 +46,8 @@ static bool read_escape_sequence(Parser *self)
         scanner_add_error(self, PREMATURE_END_OF_INPUT);
         return false;
     }
+
+    size_t point = self->input->position.index;
 
     switch(input_consume_one(self->input))
     {
@@ -69,7 +76,7 @@ static bool read_escape_sequence(Parser *self)
         case 'U':
             return read_hex_sequence(self, 8);
         default:
-            scanner_add_error(self, UNSUPPORTED_ESCAPE_SEQUENCE);
+            scanner_add_error_at(self, UNSUPPORTED_ESCAPE_SEQUENCE, location(self), point);
     }
 
     return true;
@@ -102,6 +109,8 @@ static bool read_name_escape_sequence(Parser *self)
 
 static void match_quoted_term(Parser *self, char quote, EscapeSequenceReader reader)
 {
+    size_t point = self->input->position.index;
+
     if(input_peek(self->input) == quote)
     {
         input_consume_one(self->input);
@@ -113,7 +122,7 @@ static void match_quoted_term(Parser *self, char quote, EscapeSequenceReader rea
     {
         if(!input_has_more(self->input))
         {
-            scanner_add_error(self, UNCLOSED_QUOTATION);
+            scanner_add_error_at(self, UNCLOSED_QUOTATION, location(self), point);
             scanner_add_error(self, PREMATURE_END_OF_INPUT);
             break;
         }
@@ -167,8 +176,7 @@ static void match_number(Parser *self)
 {
     self->current.kind = INTEGER_LITERAL;
 
-    char next = input_peek(self->input);
-    if('0' <= next && next <= '9')
+    if(isdigit(input_peek(self->input)))
     {
         if(!read_digit_sequence(self))
         {
@@ -344,15 +352,15 @@ void scanner_next(Parser *self)
             break;
         case '.':
         {
+            self->current.kind = DOT;
             char next = input_peek(self->input);
             if(next == '.')
             {
                 self->current.kind = DOT_DOT;
                 input_consume_one(self->input);
             }
-            else if('0' <= next && next <= '9')
+            else if(isdigit(next))
             {
-                self->current.kind = DOT;
                 input_push_back(self->input);
                 match_number(self);
             }
@@ -484,7 +492,7 @@ void scanner_next(Parser *self)
     {
         // N.B. - fixup the end positions for new errors
         // xxx - this feels clumsy, is there a better way?
-        for(size_t i = error_count - 1; i < new_error_count; i++)
+        for(size_t i = error_count; i < new_error_count; i++)
         {
             ParserError *err = vector_get(self->errors, i);
             if(INTERNAL_ERROR == err->code)

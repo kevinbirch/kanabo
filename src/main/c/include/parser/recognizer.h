@@ -4,7 +4,7 @@
 
 JsonPath *recognize(Parser *parser);
 
-#define parser_add_error(SELF, CODE) parser_add_error_at((SELF), (CODE), (SELF)->current.location, 0)
+#define parser_add_error(SELF, CODE) parser_add_error_at((SELF), (CODE), location(SELF), 0)
 
 #define VAL(x) #x
 #define STR(x) VAL(x)

@@ -20,7 +20,13 @@
             ParserError *err = vector_get(from_nothing(M), i);          \
             assert_not_null(err);                                       \
             ck_assert_msg(E[i].code == err->code, "Assertion '"#E"[%zu].code == err->code' failed: "#E"[%zu].code==\"%s\", err->code==\"%s\"", i, i, parser_strerror(E[i].code), parser_strerror(err->code)); \
-            assert_uint_eq(E[i].position.index, err->position.index);   \
+            assert_uint_eq(E[i].location.start.index, err->location.start.index); \
+            assert_uint_eq(E[i].location.start.line, err->location.start.line); \
+            assert_uint_eq(E[i].location.start.offset, err->location.start.offset); \
+            assert_uint_eq(E[i].location.end.index, err->location.end.index); \
+            assert_uint_eq(E[i].location.end.line, err->location.end.line); \
+            assert_uint_eq(E[i].location.end.offset, err->location.end.offset); \
+            assert_uint_eq(E[i].index, err->index);                     \
         }                                                               \
     } while(0)
 
@@ -32,6 +38,16 @@
 #define assert_step(PATH, INDEX, EXPECTED_STEP_KIND, EXPECTED_TEST_KIND) \
     assert_step_kind(path_get((PATH), (INDEX)), (EXPECTED_STEP_KIND));   \
     assert_test_kind(path_get((PATH), (INDEX)), (EXPECTED_TEST_KIND))
+
+#define assert_step_location(PATH, STEP_IDX, START, END) \
+    do {                                                 \
+        assert_uint_eq((START), path_get((PATH), STEP_IDX)->location.start.index); \
+        assert_uint_eq(0, path_get((PATH), STEP_IDX)->location.start.line); \
+        assert_uint_eq((START), path_get((PATH), STEP_IDX)->location.start.offset); \
+        assert_uint_eq((END), path_get((PATH), STEP_IDX)->location.end.index); \
+        assert_uint_eq(0, path_get((PATH), STEP_IDX)->location.end.line); \
+        assert_uint_eq((END), path_get((PATH), STEP_IDX)->location.end.offset); \
+    } while(0)                                                          \
 
 #define assert_name_length(STEP, NAME) assert_uint_eq(strlen((NAME)), name_test_step_length((STEP)))
 #define assert_name(STEP, NAME)                                         \
@@ -88,6 +104,8 @@
     assert_slice_to(path_get((PATH), (PATH_INDEX))->predicate, (TO_VALUE)); \
     assert_slice_step(path_get((PATH), (PATH_INDEX))->predicate, (STEP_VALUE))
 
+#define make_error(CODE, START, END, POINT) (ParserError){.code=(CODE), .location.start.index=(START), .location.start.line=0, .location.start.offset=(START), .location.end.index=(END), .location.end.line=0, .location.end.offset=(END), .index=(POINT)}
+
 static inline void dispose_maybe(Maybe(JsonPath) maybe)
 {
     if(is_nothing(maybe))
@@ -105,7 +123,7 @@ START_TEST (null_expression)
     char *expression = NULL;
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EMPTY_INPUT, .position.index=0},
+        make_error(EMPTY_INPUT, 0, 0, 0),
     };
 
     assert_parser_failure(maybe, errors);
@@ -118,7 +136,7 @@ START_TEST (zero_length)
     char *expression = "";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EMPTY_INPUT, .position.index=0},
+        make_error(EMPTY_INPUT, 0, 0, 0),
     };
 
     assert_parser_failure(maybe, errors);
@@ -131,7 +149,7 @@ START_TEST (missing_step_test)
     char *expression = "$.";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=2},
+        make_error(EXPECTED_STEP_PRODUCTION, 2, 2, 2),
     };
 
     assert_parser_failure(maybe, errors);
@@ -144,7 +162,7 @@ START_TEST (missing_recursive_step_test)
     char *expression = "$..";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=3},
+        make_error(EXPECTED_STEP_PRODUCTION, 3, 3, 3),
     };
     
     assert_parser_failure(maybe, errors);
@@ -157,7 +175,7 @@ START_TEST (missing_dot)
     char *expression = "$x";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=1},
+        make_error(EXPECTED_QUALIFIED_STEP_PRODUCTION, 1, 1, 1),
     };
 
     assert_parser_failure(maybe, errors);
@@ -170,8 +188,8 @@ START_TEST (unclosed_empty_root_predicate)
     char *expression = "$[";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){PREMATURE_END_OF_INPUT, .position.index=2},
-        (ParserError){UNBALANCED_PRED_DELIM, .position.index=1},
+        make_error(PREMATURE_END_OF_INPUT, 2, 2, 2),
+        make_error(UNBALANCED_PRED_DELIM, 1, 1, 1),
     };
 
     assert_parser_failure(maybe, errors);
@@ -184,8 +202,8 @@ START_TEST (unclosed_nonempty_root_predicate)
     char *expression = "$[1";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){PREMATURE_END_OF_INPUT, .position.index=3},
-        (ParserError){UNBALANCED_PRED_DELIM, .position.index=1},
+        make_error(PREMATURE_END_OF_INPUT, 3, 3, 3),
+        make_error(UNBALANCED_PRED_DELIM, 1, 1, 1),
     };
 
     assert_parser_failure(maybe, errors);
@@ -198,7 +216,7 @@ START_TEST (stray_root_predicate_closure)
     char *expression = "$]";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=1},
+        make_error(EXPECTED_QUALIFIED_STEP_PRODUCTION, 1, 1, 1),
     };
 
     assert_parser_failure(maybe, errors);
@@ -211,7 +229,7 @@ START_TEST (empty_root_predicate)
     char *expression = "$[].bar";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_PREDICATE_PRODUCTION, .position.index=2},
+        make_error(EXPECTED_PREDICATE_PRODUCTION, 2, 2, 2),
     };
     
     assert_parser_failure(maybe, errors);
@@ -224,7 +242,7 @@ START_TEST (tripple_troubble)
     char *expression = "$...foo";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=3},
+        make_error(EXPECTED_STEP_PRODUCTION, 3, 3, 3),
     };
 
     assert_parser_failure(maybe, errors);
@@ -237,7 +255,7 @@ START_TEST (tripple_troubble_redux)
     char *expression = "$.foo...bar";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=7},
+        make_error(EXPECTED_STEP_PRODUCTION, 7, 7, 7),
     };
 
     assert_parser_failure(maybe, errors);
@@ -250,7 +268,7 @@ START_TEST (tripple_troubble_trilux)
     char *expression = "$.foo...bar.baz";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=7},
+        make_error(EXPECTED_STEP_PRODUCTION, 7, 7, 7),
     };
 
     assert_parser_failure(maybe, errors);
@@ -263,8 +281,8 @@ START_TEST (premature_unclosed_quoted_step)
     char *expression = "$.foo.'";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){UNCLOSED_QUOTATION, .position.index=6},
-        (ParserError){PREMATURE_END_OF_INPUT, .position.index=7},
+        make_error(UNCLOSED_QUOTATION, 6, 6, 6),
+        make_error(PREMATURE_END_OF_INPUT, 7, 7, 7),
     };
 
     assert_parser_failure(maybe, errors);
@@ -277,8 +295,8 @@ START_TEST (unclosed_quoted_step)
     char *expression = "$.foo.'bar";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){UNCLOSED_QUOTATION, .position.index=6},
-        (ParserError){PREMATURE_END_OF_INPUT, .position.index=10},
+        make_error(UNCLOSED_QUOTATION, 6, 6, 6),
+        make_error(PREMATURE_END_OF_INPUT, 10, 10, 10),
     };
 
     assert_parser_failure(maybe, errors);
@@ -291,8 +309,8 @@ START_TEST (unclosed_escaped_quoted_step)
     char *expression = "$.foo.'bar\\'";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){UNCLOSED_QUOTATION, .position.index=6},
-        (ParserError){PREMATURE_END_OF_INPUT, .position.index=12},
+        make_error(UNCLOSED_QUOTATION, 6, 6, 6),
+        make_error(PREMATURE_END_OF_INPUT, 12, 12, 12),
     };
 
     assert_parser_failure(maybe, errors);
@@ -305,7 +323,7 @@ START_TEST (empty_predicate)
     char *expression = "$.foo[].bar";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_PREDICATE_PRODUCTION, .position.index=6},
+        make_error(EXPECTED_PREDICATE_PRODUCTION, 6, 6, 6),
     };
 
     assert_parser_failure(maybe, errors);
@@ -318,7 +336,7 @@ START_TEST (extra_junk_in_predicate)
     char *expression = "$.foo[ * quux].bar";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){UNEXPECTED_INPUT, .position.index=9},
+        make_error(UNEXPECTED_INPUT, 9, 9, 9),
     };
 
     assert_parser_failure(maybe, errors);
@@ -331,7 +349,7 @@ START_TEST (whitespace_predicate)
     char *expression = "$.foo[ \t ].bar";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_PREDICATE_PRODUCTION, .position.index=9},
+        make_error(EXPECTED_PREDICATE_PRODUCTION, 9, 9, 9),
     };
 
     assert_parser_failure(maybe, errors);
@@ -344,8 +362,8 @@ START_TEST (bogus_predicate)
     char *expression = "$.foo[!!].bar";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_PREDICATE_PRODUCTION, .position.index=6},
-        (ParserError){UNEXPECTED_INPUT, .position.index=7},
+        make_error(EXPECTED_PREDICATE_PRODUCTION, 6, 6, 6),
+        make_error(UNEXPECTED_INPUT, 7, 7, 7),
     };
 
     assert_parser_failure(maybe, errors);
@@ -358,7 +376,7 @@ START_TEST (bogus_type_test_name)
     char *expression = "$.foo.monkey()";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=12},
+        make_error(EXPECTED_QUALIFIED_STEP_PRODUCTION, 12, 12, 12),
     };
 
     assert_parser_failure(maybe, errors);
@@ -371,7 +389,7 @@ START_TEST (bogus_type_test_name_oblong)
     char *expression = "$.foo.oblong()";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=12},
+        make_error(EXPECTED_QUALIFIED_STEP_PRODUCTION, 12, 12, 12),
     };
 
     assert_parser_failure(maybe, errors);
@@ -384,7 +402,7 @@ START_TEST (bogus_type_test_name_alloy)
     char *expression = "$.foo.alloy()";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=11},
+        make_error(EXPECTED_QUALIFIED_STEP_PRODUCTION, 11, 11, 11),
     };
 
     assert_parser_failure(maybe, errors);
@@ -397,7 +415,7 @@ START_TEST (bogus_type_test_name_strong)
     char *expression = "$.foo.strong()";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=12},
+        make_error(EXPECTED_QUALIFIED_STEP_PRODUCTION, 12, 12, 12),
     };
 
     assert_parser_failure(maybe, errors);
@@ -410,7 +428,7 @@ START_TEST (bogus_type_test_name_numbered)
     char *expression = "$.foo.numbered()";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=14},
+        make_error(EXPECTED_QUALIFIED_STEP_PRODUCTION, 14, 14, 14),
     };
 
     assert_parser_failure(maybe, errors);
@@ -423,7 +441,7 @@ START_TEST (bogus_type_test_name_booger)
     char *expression = "$.foo.booger()";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=12},
+        make_error(EXPECTED_QUALIFIED_STEP_PRODUCTION, 12, 12, 12),
     };
 
     assert_parser_failure(maybe, errors);
@@ -436,7 +454,7 @@ START_TEST (bogus_type_test_name_narl)
     char *expression = "$.foo.narl()";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=10},
+        make_error(EXPECTED_QUALIFIED_STEP_PRODUCTION, 10, 10, 10),
     };
 
     assert_parser_failure(maybe, errors);
@@ -449,7 +467,7 @@ START_TEST (empty_type_test_name)
     char *expression = "$.foo.()";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_STEP_PRODUCTION, .position.index=6},
+        make_error(EXPECTED_STEP_PRODUCTION, 6, 6, 6),
     };
 
     assert_parser_failure(maybe, errors);
@@ -464,8 +482,7 @@ START_TEST (dollar_only)
 
     assert_parser_success(maybe, ABSOLUTE_PATH, 1);
     assert_root_step(from_just(maybe));
-    assert_uint_eq(0, path_get(from_just(maybe), 0)->location.index);
-    assert_uint_eq(1, path_get(from_just(maybe), 0)->location.extent);
+    assert_step_location(from_just(maybe), 0, 0, 1);
 
     dispose_maybe(maybe);
 }
@@ -479,8 +496,7 @@ START_TEST (absolute_single_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 3);
     assert_no_predicate(from_just(maybe), 0);
 
     dispose_maybe(maybe);
@@ -495,8 +511,7 @@ START_TEST (absolute_recursive_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_recursive_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 3, 3);
     assert_no_predicate(from_just(maybe), 0);
 
     dispose_maybe(maybe);
@@ -511,17 +526,13 @@ START_TEST (absolute_multi_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 5);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 3);
     assert_single_name_step(from_just(maybe), 2, "baz");
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 2)->location.extent);
+    assert_step_location(from_just(maybe), 2, 6, 3);
     assert_recursive_name_step(from_just(maybe), 3, "yobble");
-    assert_uint_eq(11, path_get(from_just(maybe), 3)->location.index);
-    assert_uint_eq(6, path_get(from_just(maybe), 3)->location.extent);
+    assert_step_location(from_just(maybe), 3, 11, 6);
     assert_single_name_step(from_just(maybe), 4, "thingum");
-    assert_uint_eq(18, path_get(from_just(maybe), 4)->location.index);
-    assert_uint_eq(7, path_get(from_just(maybe), 4)->location.extent);
+    assert_step_location(from_just(maybe), 4, 18, 7);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
     assert_no_predicate(from_just(maybe), 3);
@@ -538,8 +549,7 @@ START_TEST (relative_path_begins_with_dot)
 
     assert_parser_success(maybe, RELATIVE_PATH, 1);
     assert_single_name_step(from_just(maybe), 0, "x");
-    assert_uint_eq(1, path_get(from_just(maybe), 0)->location.index);
-    assert_uint_eq(1, path_get(from_just(maybe), 0)->location.extent);
+    assert_step_location(from_just(maybe), 0, 1, 1);
     assert_no_predicate(from_just(maybe), 0);
 
     dispose_maybe(maybe);
@@ -553,14 +563,11 @@ START_TEST (relative_multi_step)
 
     assert_parser_success(maybe, RELATIVE_PATH, 3);
     assert_single_name_step(from_just(maybe), 0, "foo");
-    assert_uint_eq(0, path_get(from_just(maybe), 0)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 0)->location.extent);
+    assert_step_location(from_just(maybe), 0, 0, 3);
     assert_single_name_step(from_just(maybe), 1, "bar");
-    assert_uint_eq(4, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 4, 3);
     assert_recursive_name_step(from_just(maybe), 2, "baz");
-    assert_uint_eq(9, path_get(from_just(maybe), 2)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 2)->location.extent);
+    assert_step_location(from_just(maybe), 2, 9, 3);
     assert_no_predicate(from_just(maybe), 0);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
@@ -577,14 +584,11 @@ START_TEST (quoted_empty_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 4);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 3);
     assert_single_name_step(from_just(maybe), 2, "");
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
-    assert_uint_eq(2, path_get(from_just(maybe), 2)->location.extent);
+    assert_step_location(from_just(maybe), 2, 6, 2);
     assert_single_name_step(from_just(maybe), 3, "bar");
-    assert_uint_eq(9, path_get(from_just(maybe), 3)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 3)->location.extent);
+    assert_step_location(from_just(maybe), 3, 9, 3);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
     assert_no_predicate(from_just(maybe), 3);
@@ -601,14 +605,11 @@ START_TEST (quoted_escape_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 4);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 3);
     assert_single_name_step(from_just(maybe), 2, "mon'key");
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
-    assert_uint_eq(10, path_get(from_just(maybe), 2)->location.extent);
+    assert_step_location(from_just(maybe), 2, 6, 10);
     assert_single_name_step(from_just(maybe), 3, "bar");
-    assert_uint_eq(17, path_get(from_just(maybe), 3)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 3)->location.extent);
+    assert_step_location(from_just(maybe), 3, 17, 3);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
     assert_no_predicate(from_just(maybe), 3);
@@ -625,14 +626,11 @@ START_TEST (quoted_multi_step)
     assert_parser_success(maybe, ABSOLUTE_PATH, 4);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 3);
     assert_single_name_step(from_just(maybe), 2, "happy fun ball");
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
-    assert_uint_eq(16, path_get(from_just(maybe), 2)->location.extent);
+    assert_step_location(from_just(maybe), 2, 6, 16);
     assert_single_name_step(from_just(maybe), 3, "bar");
-    assert_uint_eq(23, path_get(from_just(maybe), 3)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 3)->location.extent);
+    assert_step_location(from_just(maybe), 3, 23, 3);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
     assert_no_predicate(from_just(maybe), 3);
@@ -649,11 +647,9 @@ START_TEST (wildcard)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 3);
     assert_single_wildcard_step(from_just(maybe), 2);
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
-    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.extent);
+    assert_step_location(from_just(maybe), 2, 6, 1);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
 
@@ -669,11 +665,9 @@ START_TEST (recursive_wildcard)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 3);
     assert_recursive_wildcard_step(from_just(maybe), 2);
-    assert_uint_eq(7, path_get(from_just(maybe), 2)->location.index);
-    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.extent);
+    assert_step_location(from_just(maybe), 2, 7, 1);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
 
@@ -689,12 +683,10 @@ START_TEST (wildcard_with_subscript_predicate)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 3);
     assert_no_predicate(from_just(maybe), 1);
     assert_single_wildcard_step(from_just(maybe), 2);
-    assert_uint_eq(6, path_get(from_just(maybe), 2)->location.index);
-    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.extent);
+    assert_step_location(from_just(maybe), 2, 6, 1);
     assert_subscript_predicate(from_just(maybe), 2, 0);
 
     dispose_maybe(maybe);
@@ -709,8 +701,7 @@ START_TEST (escape_artistry)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo\xC2\xA0\xE2\x80\xA8\xC2\x85\xE2\x80\xA9zap");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(16, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 16);
     assert_no_predicate(from_just(maybe), 1);
 
     dispose_maybe(maybe);
@@ -725,8 +716,7 @@ START_TEST (hex_escape)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo \xC2 bar");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(14, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 14);
     assert_no_predicate(from_just(maybe), 1);
 
     dispose_maybe(maybe);
@@ -741,8 +731,7 @@ START_TEST (ucs2_escape)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo \xe2\x98\x83 bar");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(16, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 16);
     assert_no_predicate(from_just(maybe), 1);
 
     dispose_maybe(maybe);
@@ -757,8 +746,7 @@ START_TEST (ucs4_escape)
     assert_parser_success(maybe, ABSOLUTE_PATH, 2);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo \xf0\x9f\x92\xa9 bar");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(20, path_get(from_just(maybe), 1)->location.extent);
+    assert_step_location(from_just(maybe), 1, 2, 20);
     assert_no_predicate(from_just(maybe), 1);
 
     dispose_maybe(maybe);
@@ -770,7 +758,7 @@ START_TEST (ucs2_surrogate)
     char *expression = "$.'foo \\ud800 bar'";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){UNSUPPORTED_UNICODE_SEQUENCE, .position.index=2},
+        make_error(UNSUPPORTED_UNICODE_SEQUENCE, 2, 2, 2),
     };
 
     assert_parser_failure(maybe, errors);
@@ -783,7 +771,7 @@ START_TEST (ucs2_non_character)
     char *expression = "$.'foo \\ufffe bar'";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){UNSUPPORTED_UNICODE_SEQUENCE, .position.index=2},
+        make_error(UNSUPPORTED_UNICODE_SEQUENCE, 2, 2, 2),
     };
 
     assert_parser_failure(maybe, errors);
@@ -796,7 +784,7 @@ START_TEST (ucs4_overflow)
     char *expression = "$.'foo \\U00110000 bar'";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){UNSUPPORTED_UNICODE_SEQUENCE, .position.index=2},
+        make_error(UNSUPPORTED_UNICODE_SEQUENCE, 2, 2, 2),
     };
 
     assert_parser_failure(maybe, errors);
@@ -812,20 +800,20 @@ START_TEST (whitespace)
     assert_parser_success(maybe, ABSOLUTE_PATH, 4);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(8, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(1, path_get(from_just(maybe), 1)->location.line);
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.offset);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_uint_eq(8, path_get(from_just(maybe), 1)->location.start.index);
+    assert_uint_eq(1, path_get(from_just(maybe), 1)->location.start.line);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.start.offset);
+    assert_uint_eq(11, path_get(from_just(maybe), 1)->location.end.index);
     assert_recursive_name_step(from_just(maybe), 2, "happy fun ball");
-    assert_uint_eq(17, path_get(from_just(maybe), 2)->location.index);
-    assert_uint_eq(2, path_get(from_just(maybe), 2)->location.line);
-    assert_uint_eq(4, path_get(from_just(maybe), 2)->location.offset);
-    assert_uint_eq(16, path_get(from_just(maybe), 2)->location.extent);
+    assert_uint_eq(17, path_get(from_just(maybe), 2)->location.start.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 2)->location.start.line);
+    assert_uint_eq(4, path_get(from_just(maybe), 2)->location.start.offset);
+    assert_uint_eq(16, path_get(from_just(maybe), 2)->location.end.index);
     assert_single_type_step(from_just(maybe), 3, STRING_TEST);
-    assert_uint_eq(38, path_get(from_just(maybe), 3)->location.index);
-    assert_uint_eq(2, path_get(from_just(maybe), 3)->location.line);
-    assert_uint_eq(25, path_get(from_just(maybe), 3)->location.offset);
-    assert_uint_eq(8, path_get(from_just(maybe), 3)->location.extent);
+    assert_uint_eq(38, path_get(from_just(maybe), 3)->location.start.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 3)->location.start.line);
+    assert_uint_eq(25, path_get(from_just(maybe), 3)->location.start.offset);
+    assert_uint_eq(8, path_get(from_just(maybe), 3)->location.end.index);
     assert_no_predicate(from_just(maybe), 1);
     assert_no_predicate(from_just(maybe), 2);
     assert_no_predicate(from_just(maybe), 3);
@@ -839,7 +827,7 @@ START_TEST (type_test_missing_closing_paren)
     char *expression = "$.foo.object(";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){EXPECTED_QUALIFIED_STEP_PRODUCTION, .position.index=12},
+        make_error(EXPECTED_QUALIFIED_STEP_PRODUCTION, 12, 12, 12),
     };
 
     assert_parser_failure(maybe, errors);
@@ -1017,16 +1005,16 @@ START_TEST (subscript_predicate_with_whitespace)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(0, path_get(from_just(maybe), 1)->location.line);
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.offset);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.start.index);
+    assert_uint_eq(0, path_get(from_just(maybe), 1)->location.start.line);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.start.offset);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.end.index);
     assert_subscript_predicate(from_just(maybe), 1, 42);
     assert_single_name_step(from_just(maybe), 2, "bar");
-    assert_uint_eq(15, path_get(from_just(maybe), 2)->location.index);
-    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.line);
-    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.offset);
-    assert_uint_eq(3, path_get(from_just(maybe), 2)->location.extent);
+    assert_uint_eq(15, path_get(from_just(maybe), 2)->location.start.index);
+    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.start.line);
+    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.start.offset);
+    assert_uint_eq(3, path_get(from_just(maybe), 2)->location.end.index);
     assert_no_predicate(from_just(maybe), 2);
 
     dispose_maybe(maybe);
@@ -1169,16 +1157,16 @@ START_TEST (slice_predicate_with_whitespace)
     assert_parser_success(maybe, ABSOLUTE_PATH, 3);
     assert_root_step(from_just(maybe));
     assert_single_name_step(from_just(maybe), 1, "foo");
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.index);
-    assert_uint_eq(0, path_get(from_just(maybe), 1)->location.line);
-    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.offset);
-    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.extent);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.start.index);
+    assert_uint_eq(0, path_get(from_just(maybe), 1)->location.start.line);
+    assert_uint_eq(2, path_get(from_just(maybe), 1)->location.start.offset);
+    assert_uint_eq(3, path_get(from_just(maybe), 1)->location.end.index);
     assert_slice_predicate(from_just(maybe), 1, 1, 5, 3);
     assert_single_name_step(from_just(maybe), 2, "bar");
-    assert_uint_eq(22, path_get(from_just(maybe), 2)->location.index);
-    assert_uint_eq(2, path_get(from_just(maybe), 2)->location.line);
-    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.offset);
-    assert_uint_eq(3, path_get(from_just(maybe), 2)->location.extent);
+    assert_uint_eq(22, path_get(from_just(maybe), 2)->location.start.index);
+    assert_uint_eq(2, path_get(from_just(maybe), 2)->location.start.line);
+    assert_uint_eq(1, path_get(from_just(maybe), 2)->location.start.offset);
+    assert_uint_eq(3, path_get(from_just(maybe), 2)->location.end.index);
     assert_no_predicate(from_just(maybe), 2);
 
     dispose_maybe(maybe);
@@ -1206,7 +1194,7 @@ START_TEST (zero_step_slice_predicate)
     char *expression = "$.foo[::0].bar";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){STEP_CANNOT_BE_ZERO, .position.index=8},
+        make_error(STEP_CANNOT_BE_ZERO, 8, 8, 8),
     };
 
     assert_parser_failure(maybe, errors);
@@ -1219,7 +1207,7 @@ START_TEST (integer_overlflow)
     char *expression = "$.foo[9223372036854775808]";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){INTEGER_TOO_BIG, .position.index=6},
+        make_error(INTEGER_TOO_BIG, 6, 6, 6),
     };
 
     assert_parser_failure(maybe, errors);
@@ -1232,7 +1220,7 @@ START_TEST (integer_underflow)
     char *expression = "$.foo[-9223372036854775809]";
     Maybe(JsonPath) maybe = parse(expression);
     ParserError errors[] = {
-        (ParserError){INTEGER_TOO_SMALL, .position.index=6},
+        make_error(INTEGER_TOO_SMALL, 6, 6, 6),
     };
 
     assert_parser_failure(maybe, errors);

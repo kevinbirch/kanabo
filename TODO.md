@@ -6,6 +6,7 @@
 
 * parser
   * can `UNEXPECTED_INPUT` error be decomposed into more specific errors? (only used twice)
+  * are quoted name tokens shortened by one character?
 * move position.h/location.h/input.[c/h] to spacecadet
 * evaluator
   * BUG: failed eval of step causes `expression:1:0 evaluator: internal error: model argument is NULL`
