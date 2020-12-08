@@ -143,7 +143,7 @@ man3ext = .3
 man4ext = .4
 man5ext = .5
 man6ext = .6
-man6ext = .7
+man7ext = .7
 manext = $(man1ext)
 
 sysconfdir = $(prefix)/etc
